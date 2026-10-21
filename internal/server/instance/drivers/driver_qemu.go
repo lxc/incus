@@ -9614,6 +9614,22 @@ func (d *qemu) migrateSendLive(ctx context.Context, pool storagePools.Pool, clus
 
 	rootTransferDone := false
 
+	parameters := map[string]any{
+		"cpu-throttle-initial":       50,
+		"throttle-trigger-threshold": 20,
+	}
+
+	// Apply the global bandwidth limit to the memory and state transfer.
+	bwlimit := d.state.GlobalConfig.InstancesMigrationBwlimit()
+	if bwlimit != "" {
+		bwlimitBytes, err := units.ParseByteSizeString(bwlimit)
+		if err != nil {
+			return fmt.Errorf("Invalid migration bandwidth limit %q: %w", bwlimit, err)
+		}
+
+		parameters["max-bandwidth"] = bwlimitBytes
+	}
+
 	// Non-shared storage snapshot setup.
 	if !sameSharedStorage || dependentVolumeMove {
 		// Setup migration capabilities.
@@ -9635,11 +9651,6 @@ func (d *qemu) migrateSendLive(ctx context.Context, pool storagePools.Pool, clus
 		err = monitor.MigrateSetCapabilities(capabilities)
 		if err != nil {
 			return fmt.Errorf("Failed setting migration capabilities: %w", err)
-		}
-
-		parameters := map[string]any{
-			"cpu-throttle-initial":       50,
-			"throttle-trigger-threshold": 20,
 		}
 
 		err = monitor.MigrateSetParameters(parameters)
@@ -9694,11 +9705,6 @@ func (d *qemu) migrateSendLive(ctx context.Context, pool storagePools.Pool, clus
 		err = monitor.MigrateSetCapabilities(capabilities)
 		if err != nil {
 			return fmt.Errorf("Failed setting migration capabilities: %w", err)
-		}
-
-		parameters := map[string]any{
-			"cpu-throttle-initial":       50,
-			"throttle-trigger-threshold": 20,
 		}
 
 		err = monitor.MigrateSetParameters(parameters)
