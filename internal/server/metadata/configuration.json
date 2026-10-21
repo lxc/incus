@@ -6842,6 +6842,15 @@
 						}
 					},
 					{
+						"instances.migration.bwlimit": {
+							"defaultdesc": "`128MiB` (QEMU default)",
+							"longdesc": "The upper limit to be placed on the bandwidth used by the memory and state\ntransfer of each virtual machine live migration.\nWhen unset, the QEMU default of 128MiB/s (about 1Gbit/s) applies.",
+							"scope": "global",
+							"shortdesc": "Bandwidth limit for virtual machine live migrations",
+							"type": "string"
+						}
+					},
+					{
 						"instances.nic.host_name": {
 							"defaultdesc": "`random`",
 							"longdesc": "Possible values are `random` and `mac`.\n\nIf set to `random`, use the random host interface name as the host name.\nIf set to `mac`, generate a host name in the form `inc\u003cmac_address\u003e` (MAC without leading two digits).",
