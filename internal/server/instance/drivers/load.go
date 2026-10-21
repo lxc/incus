@@ -144,6 +144,24 @@ func validDevices(s *state.State, p api.Project, instanceType instancetype.Type,
 		}
 	}
 
+	// Reject device names that would take over the volatile keys of another device.
+	names := []string{}
+	for _, devices := range []deviceConfig.Devices{localDevices, expandedDevices} {
+		for name := range devices {
+			if !slices.Contains(names, name) {
+				names = append(names, name)
+			}
+		}
+	}
+
+	for _, name := range names {
+		for _, other := range names {
+			if internalInstance.DeviceVolatileKeyConflict(name, other) {
+				return fmt.Errorf("Device name %q conflicts with the volatile keys of device %q", name, other)
+			}
+		}
+	}
+
 	return nil
 }
 
