@@ -24,6 +24,9 @@ test_storage_volumes_vm() {
     incus project switch test-volumes
     incus profile device add default eth0 nic network=incusbr0 name=eth0
 
+    # Use non-shared memory so the VMs can get transparent huge pages.
+    incus profile set default security.nesting=true
+
     poolName="vmpool$$"
 
     for poolDriver in ${poolDriverList}; do

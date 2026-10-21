@@ -26,7 +26,7 @@ test_network_routed() {
     ip addr add 2001:db8::1/128 dev dummy0
 
     # Create VM and add routed NIC.
-    incus init images:debian/13 v1 --vm
+    incus init images:debian/13 v1 --vm -c security.nesting=true
     incus config device add v1 eth0 nic \
         nictype=routed \
         parent=dummy0 \
