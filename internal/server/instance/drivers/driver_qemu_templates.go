@@ -372,10 +372,14 @@ func qemuBalloon(opts *qemuDevOpts) []cfg.Section {
 		ccwName: "virtio-balloon-ccw",
 	}
 
+	// Let the guest hand freed memory back to the host.
+	entries := qemuDeviceEntries(&entriesOpts)
+	entries["free-page-reporting"] = "on"
+
 	return []cfg.Section{{
 		Name:    `device "qemu_balloon"`,
 		Comment: "Balloon driver",
-		Entries: qemuDeviceEntries(&entriesOpts),
+		Entries: entries,
 	}}
 }
 

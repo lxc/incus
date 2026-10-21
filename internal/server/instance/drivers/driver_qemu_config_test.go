@@ -301,6 +301,7 @@ func TestQemuConfigTemplates(t *testing.T) {
 			addr = "00.0"
 			bus = "qemu_pcie0"
 			driver = "virtio-balloon-pci"
+			free-page-reporting = "on"
 			multifunction = "on"
 			`,
 		}, {
@@ -308,6 +309,7 @@ func TestQemuConfigTemplates(t *testing.T) {
 			`# Balloon driver
 			[device "qemu_balloon"]
 			driver = "virtio-balloon-ccw"
+			free-page-reporting = "on"
 			`,
 		}}
 		for _, tc := range testCases {
