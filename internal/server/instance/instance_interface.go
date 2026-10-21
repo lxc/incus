@@ -259,6 +259,7 @@ type MigrateArgs struct {
 	ControlSend           func(m proto.Message) error
 	ControlReceive        func(m proto.Message, handshake bool) error
 	StateConn             func(ctx context.Context) (io.ReadWriteCloser, error)
+	StateConnExtra        func(ctx context.Context, count int) ([]io.ReadWriteCloser, error) // Extra state connections, nil when this side can't provide them.
 	FilesystemConn        func(ctx context.Context) (io.ReadWriteCloser, error)
 	Snapshots             bool
 	Live                  bool
