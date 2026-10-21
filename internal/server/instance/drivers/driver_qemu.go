@@ -6096,6 +6096,14 @@ func (d *qemu) addDriveConfig(qemuDev map[string]any, bootIndexes map[string]int
 				if isBlockDev && driveConf.DataFilePath == "" {
 					// Keep discarded clusters allocated so that fragmentation can't grow the image.
 					blockDev["discard-no-unref"] = true
+
+					// Let QEMU rebuild the refcounts after a crash rather than leak clusters.
+					if !imgInfo.FormatSpecific.Data.LazyRefcounts && !readonly && !d.IsLiveMigration() {
+						err = storageDrivers.Qcow2EnableLazyRefcounts(srcDevPath)
+						if err != nil {
+							d.logger.Warn("Failed enabling lazy refcounts on disk device", logger.Ctx{"device": driveConf.DevName, "err": err})
+						}
+					}
 				}
 
 				// If there are any children, load block information about them.
