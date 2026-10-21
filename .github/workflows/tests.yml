@@ -315,7 +315,6 @@ jobs:
             libtool \
             libudev-dev \
             libuv1-dev \
-            linux-modules-extra-$(uname -r) \
             llvm \
             make \
             pkg-config\
@@ -344,6 +343,9 @@ jobs:
             xfsprogs \
             xz-utils \
             zfsutils-linux
+
+          # Extra kernel modules, no longer a separate package on newer kernels.
+          sudo apt-get install --no-install-recommends -y linux-modules-extra-$(uname -r) || true
 
           # Make sure all AppArmor profiles are loaded.
           sudo systemctl start apparmor
@@ -624,7 +626,6 @@ jobs:
             libtool \
             libudev-dev \
             libuv1-dev \
-            linux-modules-extra-$(uname -r) \
             make \
             nftables \
             openvswitch-switch \
@@ -636,6 +637,9 @@ jobs:
             squashfs-tools \
             uuid-runtime \
             xz-utils
+
+          # Extra kernel modules, no longer a separate package on newer kernels.
+          sudo apt-get install --no-install-recommends -y linux-modules-extra-$(uname -r) || true
 
           # Make sure all AppArmor profiles are loaded.
           sudo systemctl start apparmor
@@ -787,7 +791,6 @@ jobs:
             libtool \
             libudev-dev \
             libuv1-dev \
-            linux-modules-extra-$(uname -r) \
             lvm2 \
             lxcfs \
             make \
@@ -800,6 +803,9 @@ jobs:
             uuid-runtime \
             xz-utils \
             zfsutils-linux
+
+          # Extra kernel modules, no longer a separate package on newer kernels.
+          sudo apt-get install --no-install-recommends -y linux-modules-extra-$(uname -r) || true
 
           # Make sure all AppArmor profiles are loaded.
           sudo systemctl start apparmor
