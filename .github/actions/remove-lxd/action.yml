@@ -1,0 +1,11 @@
+name: Remove LXD
+description: Remove the pre-installed LXD snap
+
+runs:
+  using: composite
+  steps:
+    - name: Remove LXD
+      shell: bash
+      run: |
+        set -eux
+        sudo snap remove lxd --purge
