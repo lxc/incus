@@ -3574,3 +3574,7 @@ Those clients are identified by the CA entry's fingerprint and inherit its type,
 This adds a `bgp.communities` network configuration key for `bridge` and `ovn` networks.
 It takes a comma-separated list of standard BGP communities (`ASN:value`)
 which are attached to all prefixes advertised by the network.
+
+## `instances_migration_bwlimit`
+This adds the `instances.migration.bwlimit` server configuration key which limits
+the bandwidth used by the memory and state transfer of each virtual machine live migration.
