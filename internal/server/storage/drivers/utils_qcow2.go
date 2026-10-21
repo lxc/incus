@@ -39,7 +39,8 @@ type Bitmap struct {
 
 // FormatData contains format specific data.
 type FormatData struct {
-	Bitmaps []Bitmap `json:"bitmaps"`
+	Bitmaps       []Bitmap `json:"bitmaps"`
+	LazyRefcounts bool     `json:"lazy-refcounts"`
 }
 
 // FormatSpecific contains format dependent metadata.
@@ -63,6 +64,8 @@ func Qcow2Create(path string, backingPath string, size int64) error {
 		"create",
 		"-f",
 		"qcow2",
+		"-o",
+		"lazy_refcounts=on",
 	}
 
 	if backingPath != "" {
@@ -77,6 +80,16 @@ func Qcow2Create(path string, backingPath string, size int64) error {
 	}
 
 	_, err := subprocess.RunCommand("qemu-img", args...)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// Qcow2EnableLazyRefcounts turns on lazy refcounts on an existing qcow2 image, the image must not be in use.
+func Qcow2EnableLazyRefcounts(path string) error {
+	_, err := subprocess.RunCommand("qemu-img", "amend", "-f", "qcow2", "-o", "lazy_refcounts=on", path)
 	if err != nil {
 		return err
 	}
