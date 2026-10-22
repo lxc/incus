@@ -140,12 +140,13 @@ func (m *incusAgentService) Execute(args []string, r <-chan svc.ChangeRequest, c
 	// Start the server.
 	err := osLoadModules()
 	if err == nil {
-		err := startHTTPServer(d, m.agentCmd.global.flagLogDebug)
-		if err != nil {
-			changes <- svc.Status{State: svc.StopPending}
-			elog.Error(1, fmt.Sprintf("Failed to start HTTP server: %s", err))
-			return ssec, errno
-		}
+		err = startHTTPServer(d, m.agentCmd.global.flagLogDebug)
+	}
+
+	if err != nil {
+		changes <- svc.Status{State: svc.StopPending}
+		elog.Error(1, fmt.Sprintf("Failed to start HTTP server: %s", err))
+		return true, 1
 	}
 
 	changes <- svc.Status{State: svc.Running, Accepts: cmdsAccepted}
@@ -161,6 +162,11 @@ loop:
 	for {
 		select {
 		case <-tick:
+		case err := <-errChan:
+			// Stop with an error, so that the recovery actions of the service can start it again.
+			changes <- svc.Status{State: svc.StopPending}
+			elog.Error(1, fmt.Sprintf("HTTP server stopped: %s", err))
+			return true, 1
 		case c := <-r:
 			switch c.Cmd {
 			case svc.Interrogate:
