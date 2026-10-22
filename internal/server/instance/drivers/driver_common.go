@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"maps"
 	"math"
 	"net/http"
@@ -533,6 +534,35 @@ func (d *common) StatePath() string {
 // TemplatesPath returns the instance's templates path.
 func (d *common) TemplatesPath() string {
 	return filepath.Join(d.Path(), "templates")
+}
+
+// readRegularFileInRoot reads name from within dir, refusing to follow symlinks out of it.
+// Snapshots may carry symlinks from imported data, so only a regular file is accepted.
+func readRegularFileInRoot(dir string, name string) ([]byte, error) {
+	root, err := os.OpenRoot(dir)
+	if err != nil {
+		return nil, err
+	}
+
+	defer func() { _ = root.Close() }()
+
+	fi, err := root.Lstat(name)
+	if err != nil {
+		return nil, err
+	}
+
+	if !fi.Mode().IsRegular() {
+		return nil, fmt.Errorf("%q isn't a regular file", name)
+	}
+
+	f, err := root.Open(name)
+	if err != nil {
+		return nil, err
+	}
+
+	defer func() { _ = f.Close() }()
+
+	return io.ReadAll(f)
 }
 
 // StoragePool returns the storage pool name.
