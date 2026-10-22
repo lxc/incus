@@ -695,6 +695,14 @@ func ImageUnpack(imageFile string, vol drivers.Volume, destBlockFile string, sys
 	// convertBlockImage converts the qcow2 block image file into a raw block device. If needed it will attempt
 	// to enlarge the destination volume to accommodate the unpacked qcow2 image file.
 	convertBlockImage := func(v drivers.Volume, imgPath string, dstPath string, tracker *ioprogress.ProgressTracker) (int64, error) {
+		// The metadata stream may have replaced the block file inside the volume with a symlink.
+		if strings.HasPrefix(dstPath, internalUtil.AddSlash(destPath)) {
+			fi, err := os.Lstat(dstPath)
+			if err == nil && !fi.Mode().IsRegular() {
+				return -1, fmt.Errorf("Block volume file %q isn't a regular file", dstPath)
+			}
+		}
+
 		virtualSize, err := ImageVirtualSize(sysOS, imgPath)
 		if err != nil {
 			return -1, err
