@@ -5345,8 +5345,8 @@ func (d *lxc) Export(metaWriter io.Writer, rootfsWriter io.Writer, properties ma
 	fnam := filepath.Join(cDir, "metadata.yaml")
 
 	if util.PathExists(fnam) {
-		// Parse the metadata.
-		content, err := os.ReadFile(fnam)
+		// Parse the metadata, confined to the instance directory so an imported snapshot's symlink isn't followed.
+		content, err := readRegularFileInRoot(cDir, "metadata.yaml")
 		if err != nil {
 			_ = metaTarWriter.Close()
 			if rootfsTarWriter != nil {
