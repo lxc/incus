@@ -8,10 +8,12 @@ import (
 	"encoding/pem"
 	"errors"
 	"fmt"
+	"io/fs"
 	"net"
 	"net/http"
 	"net/url"
 	"os"
+	"path/filepath"
 	"runtime"
 	"slices"
 	"sort"
@@ -21,6 +23,7 @@ import (
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/spf13/cobra"
+	"golang.org/x/crypto/ssh"
 	"software.sslmate.com/src/go-pkcs12"
 
 	incus "github.com/lxc/incus/v7/client"
@@ -157,7 +160,7 @@ The remote name can be ignored if a single target is provided.
 	cli.AddIntFlag(cmd.Flags(), &c.flagKeepAlive, "keepalive", i18n.G("Maintain remote connection for faster commands"), 0)
 	cli.AddStringFlag(cmd.Flags(), &c.flagCredHelper, "credentials-helper", "", "", i18n.G("Binary helper for retrieving credentials"))
 	cli.AddStringFlag(cmd.Flags(), &c.flagTLSCert, "tls-cert", "", "", i18n.G("Remote-specific TLS client certificate (PEM)"))
-	cli.AddStringFlag(cmd.Flags(), &c.flagTLSKey, "tls-key", "", "", i18n.G("Remote-specific TLS client key (PEM)"))
+	cli.AddStringFlag(cmd.Flags(), &c.flagTLSKey, "tls-key", "", "", i18n.G("Remote-specific TLS client key (PEM or encrypted OpenSSH)"))
 	cli.AddStringFlag(cmd.Flags(), &c.flagTLSP12, "tls-p12", "", "", i18n.G("Remote-specific TLS client keypair (PKCS#12)"))
 
 	return cmd
@@ -262,9 +265,23 @@ func (c *cmdRemoteAdd) setupClientCertificate(server string) error {
 	}
 
 	// Validate the keypair.
-	_, err := tls.X509KeyPair(certPEM, keyPEM)
+	tlsKeyPEM, err := conf.DecryptClientKey(keyPEM, c.flagTLSKey)
+	if err != nil {
+		return err
+	}
+
+	_, err = tls.X509KeyPair(certPEM, tlsKeyPEM)
 	if err != nil {
 		return fmt.Errorf(i18n.G("Invalid TLS client keypair: %w"), err)
+	}
+
+	var caPEM []byte
+	caPath := conf.ConfigPath("clientcerts", server+".ca")
+	if util.PathExists(caPath) {
+		caPEM, err = os.ReadFile(caPath)
+		if err != nil {
+			return err
+		}
 	}
 
 	// Record the keypair.
@@ -283,6 +300,15 @@ func (c *cmdRemoteAdd) setupClientCertificate(server string) error {
 	if err != nil {
 		return err
 	}
+
+	remote := conf.Remotes[server]
+	remote.TLS = &config.RemoteTLS{
+		Certificate: string(certPEM),
+		Key:         string(tlsKeyPEM),
+		CA:          string(caPEM),
+	}
+
+	conf.Remotes[server] = remote
 
 	return nil
 }
@@ -339,12 +365,13 @@ func (c *cmdRemoteAdd) addRemoteFromToken(addrs []string, server string, token s
 	var certificate *x509.Certificate
 	var err error
 
-	conf.Remotes[server] = config.Remote{
-		Addrs:     addrs,
-		Protocol:  c.flagProtocol,
-		AuthType:  c.flagAuthType,
-		KeepAlive: c.flagKeepAlive,
-	}
+	remote := conf.Remotes[server]
+	remote.Addrs = addrs
+	remote.Protocol = c.flagProtocol
+	remote.AuthType = c.flagAuthType
+	remote.KeepAlive = c.flagKeepAlive
+
+	conf.Remotes[server] = remote
 
 	_, err = conf.GetInstanceServer(server)
 	if err != nil {
@@ -407,7 +434,7 @@ func (c *cmdRemoteAdd) addRemoteFromToken(addrs []string, server string, token s
 	}
 
 	// Handle project.
-	remote := conf.Remotes[server]
+	remote = conf.Remotes[server]
 	project, err := c.findProject(d, c.flagProject)
 	if err != nil {
 		return fmt.Errorf(i18n.G("Failed to find project: %w"), err)
@@ -614,12 +641,13 @@ func (c *cmdRemoteAdd) run(cmd *cobra.Command, args []string) (err error) {
 		}
 	}
 
-	conf.Remotes[server] = config.Remote{
-		Addrs:     normalizedAddrs,
-		Protocol:  c.flagProtocol,
-		AuthType:  c.flagAuthType,
-		KeepAlive: c.flagKeepAlive,
-	}
+	remote = conf.Remotes[server]
+	remote.Addrs = normalizedAddrs
+	remote.Protocol = c.flagProtocol
+	remote.AuthType = c.flagAuthType
+	remote.KeepAlive = c.flagKeepAlive
+
+	conf.Remotes[server] = remote
 
 	// Attempt to connect
 	var d incus.ImageServer
@@ -857,6 +885,10 @@ func (c *cmdRemoteAdd) run(cmd *cobra.Command, args []string) (err error) {
 type cmdRemoteGenerateCertificate struct {
 	global *cmdGlobal
 	remote *cmdRemote
+
+	flagEncrypt bool
+	flagTLSCert string
+	flagTLSKey  string
 }
 
 var cmdRemoteGenerateCertificateUsage = u.Usage{}
@@ -866,8 +898,15 @@ func (c *cmdRemoteGenerateCertificate) command() *cobra.Command {
 	cmd.Use = cli.U("generate-certificate", cmdRemoteGenerateCertificateUsage...)
 	cmd.Short = i18n.G("Generate the client certificate")
 	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
-		`Manually trigger the generation of a client certificate`,
+		`Manually trigger the generation of a client certificate
+
+Use --tls-cert and --tls-key together to choose output files instead of the shared client credentials.
+Generation fails if either output file already exists.`,
 	))
+
+	cli.AddBoolFlag(cmd.Flags(), &c.flagEncrypt, "encrypt", i18n.G("Encrypt the private key with a password"))
+	cli.AddStringFlag(cmd.Flags(), &c.flagTLSCert, "tls-cert", "", "", i18n.G("Path to the generated TLS client certificate"))
+	cli.AddStringFlag(cmd.Flags(), &c.flagTLSKey, "tls-key", "", "", i18n.G("Path to the generated TLS client key"))
 
 	cmd.RunE = c.run
 
@@ -881,9 +920,35 @@ func (c *cmdRemoteGenerateCertificate) run(cmd *cobra.Command, args []string) er
 		return err
 	}
 
-	// Check if we already have a certificate.
-	if conf.HasClientCertificate() {
-		return errors.New(i18n.G("A client certificate is already present"))
+	certPath := conf.ConfigPath("client.crt")
+	keyPath := conf.ConfigPath("client.key")
+	if (c.flagTLSCert != "") != (c.flagTLSKey != "") {
+		return errors.New(i18n.G("--tls-cert and --tls-key must be used together"))
+	}
+
+	if c.flagTLSCert != "" {
+		certPath = c.flagTLSCert
+		keyPath = c.flagTLSKey
+	}
+
+	// Refuse existing files, including incomplete keypairs and symbolic links.
+	for _, path := range []string{certPath, keyPath} {
+		_, err := os.Lstat(path)
+		if err == nil {
+			return errors.New(i18n.G("A client certificate is already present"))
+		}
+
+		if !errors.Is(err, fs.ErrNotExist) {
+			return err
+		}
+	}
+
+	password := ""
+	if c.flagEncrypt {
+		password, err = c.global.asker.AskPassword(fmt.Sprintf(i18n.G("Password for %s: "), keyPath))
+		if err != nil {
+			return err
+		}
 	}
 
 	// Generate the certificate.
@@ -891,12 +956,72 @@ func (c *cmdRemoteGenerateCertificate) run(cmd *cobra.Command, args []string) er
 		fmt.Fprint(os.Stderr, i18n.G("Generating a client certificate. This may take a minute...")+"\n")
 	}
 
-	err = conf.GenerateClientCertificate()
+	err = c.generateCertificate(certPath, keyPath, password)
 	if err != nil {
 		return err
 	}
 
 	return nil
+}
+
+func (c *cmdRemoteGenerateCertificate) generateCertificate(certPath string, keyPath string, password string) error {
+	certPEM, keyPEM, err := localtls.GenerateMemCert(true, false)
+	if err != nil {
+		return err
+	}
+
+	if password != "" {
+		keypair, err := tls.X509KeyPair(certPEM, keyPEM)
+		if err != nil {
+			return err
+		}
+
+		key, err := ssh.MarshalPrivateKeyWithPassphrase(keypair.PrivateKey, "", []byte(password))
+		if err != nil {
+			return err
+		}
+
+		keyPEM = pem.EncodeToMemory(key)
+	}
+
+	for _, path := range []string{certPath, keyPath} {
+		err = os.MkdirAll(filepath.Dir(path), 0o750)
+		if err != nil {
+			return err
+		}
+	}
+
+	err = writeClientCertificateFile(keyPath, keyPEM, 0o600)
+	if err != nil {
+		return err
+	}
+
+	err = writeClientCertificateFile(certPath, certPEM, 0o644)
+	if err != nil {
+		_ = os.Remove(keyPath)
+		return err
+	}
+
+	return nil
+}
+
+func writeClientCertificateFile(path string, content []byte, mode os.FileMode) error {
+	file, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_EXCL, mode)
+	if err != nil {
+		return err
+	}
+
+	_, err = file.Write(content)
+	closeErr := file.Close()
+	if err == nil {
+		err = closeErr
+	}
+
+	if err != nil {
+		_ = os.Remove(path)
+	}
+
+	return err
 }
 
 // Get default.
