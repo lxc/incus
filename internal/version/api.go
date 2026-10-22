@@ -592,6 +592,7 @@ var APIExtensions = []string{
 	"oidc_id_token",
 	"certificate_ca_trust",
 	"network_bgp_communities",
+	"instances_migration_bwlimit",
 }
 
 // APIExtensionsCount returns the number of available API extensions.
