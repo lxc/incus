@@ -12793,6 +12793,33 @@ func (d *qemu) DeleteQcow2Snapshot(devName string, snapshotIndex int, backingFil
 		return err
 	}
 
+	// An intermediate commit base stays a snapshot layer, but QEMU keeps its metadata in memory until it's reopened.
+	if snapChildDevName != rootDevName {
+		protocol, err := monitor.GetBlockNodeProtocol(snapDevName)
+		if err != nil {
+			return err
+		}
+
+		var backing any
+		if snapshotIndex > 0 {
+			backing = blockDevs[snapshotIndex-1]
+		}
+
+		// Options left out are reset, so repeat the ones the node was added with.
+		err = monitor.BlockDevReopen([]map[string]any{{
+			"driver":           "qcow2",
+			"node-name":        snapDevName,
+			"read-only":        false,
+			"discard":          "unmap",
+			"discard-no-unref": true,
+			"file":             protocol.NodeName,
+			"backing":          backing,
+		}})
+		if err != nil {
+			return fmt.Errorf("Failed flushing commit base: %w", err)
+		}
+	}
+
 	err = monitor.RemoveBlockDevice(snapChildDevName)
 	if err != nil {
 		d.logger.Error("Remove block device error", logger.Ctx{"err": err})

@@ -1557,6 +1557,22 @@ func (m *Monitor) GetBlockNodeProtocol(nodeName string) (*BlockNodeProtocol, err
 	return nil, fmt.Errorf("Protocol node of block node %q not found", nodeName)
 }
 
+// BlockDevReopen reopens block nodes with new options.
+func (m *Monitor) BlockDevReopen(options []map[string]any) error {
+	var args struct {
+		Options []map[string]any `json:"options"`
+	}
+
+	args.Options = options
+
+	err := m.Run("blockdev-reopen", args, nil)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // blockJobDismiss dismisses a concluded block job.
 func (m *Monitor) blockJobDismiss(jobID string) error {
 	var args struct {
