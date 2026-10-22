@@ -1493,6 +1493,70 @@ func (m *Monitor) BlockNodeSize(nodeName string) (int64, error) {
 	return 0, fmt.Errorf("Block node %q not found", nodeName)
 }
 
+// BlockNodeProtocol represents the protocol node holding the data of a block node.
+type BlockNodeProtocol struct {
+	NodeName string
+	Direct   bool
+	NoFlush  bool
+}
+
+// GetBlockNodeProtocol returns the protocol node under a block node.
+func (m *Monitor) GetBlockNodeProtocol(nodeName string) (*BlockNodeProtocol, error) {
+	var resp struct {
+		Return []struct {
+			NodeName string `json:"node-name"`
+			Driver   string `json:"drv"`
+			File     string `json:"file"`
+			Cache    struct {
+				Direct  bool `json:"direct"`
+				NoFlush bool `json:"no-flush"`
+			} `json:"cache"`
+		} `json:"return"`
+	}
+
+	err := m.Run("query-named-block-nodes", nil, &resp)
+	if err != nil {
+		return nil, err
+	}
+
+	file := ""
+	for _, node := range resp.Return {
+		if node.NodeName == nodeName {
+			file = node.File
+			break
+		}
+	}
+
+	if file == "" {
+		return nil, fmt.Errorf("Block node %q not found", nodeName)
+	}
+
+	// Nodes with a backing or non-default options are described as "json:{...}".
+	jsonFile, isJSON := strings.CutPrefix(file, "json:")
+	if isJSON {
+		var desc struct {
+			File struct {
+				Filename string `json:"filename"`
+			} `json:"file"`
+		}
+
+		err = json.Unmarshal([]byte(jsonFile), &desc)
+		if err != nil {
+			return nil, fmt.Errorf("Failed parsing description of block node %q: %w", nodeName, err)
+		}
+
+		file = desc.File.Filename
+	}
+
+	for _, node := range resp.Return {
+		if node.File == file && (node.Driver == "host_device" || node.Driver == "file") {
+			return &BlockNodeProtocol{NodeName: node.NodeName, Direct: node.Cache.Direct, NoFlush: node.Cache.NoFlush}, nil
+		}
+	}
+
+	return nil, fmt.Errorf("Protocol node of block node %q not found", nodeName)
+}
+
 // blockJobDismiss dismisses a concluded block job.
 func (m *Monitor) blockJobDismiss(jobID string) error {
 	var args struct {

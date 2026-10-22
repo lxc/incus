@@ -12660,13 +12660,6 @@ func (d *qemu) CreateQcow2Snapshot(devPath string, devName string, snapshotName 
 		return err
 	}
 
-	f, err := os.OpenFile(devPath, unix.O_RDWR, 0)
-	if err != nil {
-		return fmt.Errorf("Failed opening file descriptor for disk device %s: %w", devPath, err)
-	}
-
-	defer logger.WarnOnError(f.Close, "Failed to close file")
-
 	devName = d.blockNodeName(linux.PathNameEncode(devName))
 
 	// Select all block devices related to a qcow2 backing chain.
@@ -12680,6 +12673,24 @@ func (d *qemu) CreateQcow2Snapshot(devPath string, devName string, snapshotName 
 	nextOverlayName := qcow2OverlayName(devName, overlayNodeIndex+1)
 
 	currentRootNode := blockDevs[len(blockDevs)-1]
+
+	// Open the overlay with the same caching as the layer it goes on top of.
+	protocol, err := monitor.GetBlockNodeProtocol(currentRootNode)
+	if err != nil {
+		return err
+	}
+
+	aioMode := "threads"
+	if protocol.Direct {
+		aioMode = "native"
+	}
+
+	f, err := os.OpenFile(devPath, driveOpenFlags(false, protocol.Direct), 0)
+	if err != nil {
+		return fmt.Errorf("Failed opening file descriptor for disk device %s: %w", devPath, err)
+	}
+
+	defer logger.WarnOnError(f.Close, "Failed to close file")
 
 	info, err := monitor.SendFileWithFDSet(nextOverlayName, f, false)
 	if err != nil {
@@ -12697,6 +12708,11 @@ func (d *qemu) CreateQcow2Snapshot(devPath string, devName string, snapshotName 
 		"file": map[string]any{
 			"driver":   "host_device",
 			"filename": fmt.Sprintf("/dev/fdset/%d", info.ID),
+			"aio":      aioMode,
+			"cache": map[string]any{
+				"direct":   protocol.Direct,
+				"no-flush": protocol.NoFlush,
+			},
 		},
 	}
 
