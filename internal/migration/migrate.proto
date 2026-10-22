@@ -103,6 +103,7 @@ message MigrationHeader {
 	optional uint32				indexHeaderVersion	= 13;
 	repeated DependentVolume		dependentVolumes        = 14;
 	optional blockFeatures			blockFeatures		= 15;
+	optional uint32				multifdChannels		= 16;
 }
 
 message MigrationControl {
