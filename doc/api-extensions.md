@@ -3583,3 +3583,7 @@ the bandwidth used by the memory and state transfer of each virtual machine live
 This adds a `region` field to the S3 backup target used when uploading
 instance or volume backups, for S3 compatible stores whose region can't
 be derived from their URL.
+
+## `nic_sriov_migration`
+
+This adds a new `failover` configuration key to both `sriov` networks and NICs, accepting a bridge network name (managed or not), which controls the creation of a so-called failover `virtio-net` NIC on said bridge. This failover NIC is used to live-migrate an SR-IOV NIC through the `virtio-net` failover mechanism on guests supporting the feature.

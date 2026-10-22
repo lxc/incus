@@ -594,6 +594,7 @@ var APIExtensions = []string{
 	"network_bgp_communities",
 	"instances_migration_bwlimit",
 	"backup_s3_region",
+	"nic_sriov_migration",
 }
 
 // APIExtensionsCount returns the number of available API extensions.
