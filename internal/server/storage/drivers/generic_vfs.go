@@ -834,6 +834,14 @@ func genericVFSBackupUnpack(d Driver, sysOS *sys.OS, vol Volume, snapshots []str
 				if hdr.Name == srcFile {
 					var allowUnsafeResize bool
 
+					// The filesystem stream may have replaced the block file inside the volume with a symlink.
+					if strings.HasPrefix(targetPath, internalUtil.AddSlash(mountPath)) {
+						fi, err := os.Lstat(targetPath)
+						if err == nil && !fi.Mode().IsRegular() {
+							return fmt.Errorf("Block volume file %q isn't a regular file", targetPath)
+						}
+					}
+
 					// Reset the disk.
 					err = linux.ClearBlock(targetPath, 0)
 					if err != nil {
