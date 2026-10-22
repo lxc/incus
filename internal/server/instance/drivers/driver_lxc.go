@@ -959,8 +959,8 @@ func (d *lxc) initLXC(config bool) (*liblxc.Container, error) {
 		}
 	}
 
-	// Configure devices cgroup
-	if d.IsPrivileged() && !d.state.OS.RunningInUserNS {
+	// Configure the devices cgroup for all containers so smuggled device nodes can't be opened.
+	if !d.state.OS.RunningInUserNS {
 		err = lxcSetConfigItem(cc, "lxc.cgroup2.devices.deny", "a")
 		if err != nil {
 			return nil, err
@@ -1630,8 +1630,8 @@ func (d *lxc) deviceAddCgroupRules(cgroups []deviceConfig.RunConfigItem) error {
 	}
 
 	for _, rule := range cgroups {
-		// Only apply devices cgroup rules if container is running privileged and host has devices cgroup controller.
-		if strings.HasPrefix(rule.Key, "devices.") && (!d.isCurrentlyPrivileged() || d.state.OS.RunningInUserNS) {
+		// Devices cgroup rules need the host's devices cgroup controller.
+		if strings.HasPrefix(rule.Key, "devices.") && d.state.OS.RunningInUserNS {
 			continue
 		}
 
@@ -2451,7 +2451,7 @@ func (d *lxc) startCommon() (string, []func() error, error) {
 		// Pass any cgroups rules into LXC.
 		if len(runConf.CGroups) > 0 {
 			for _, rule := range runConf.CGroups {
-				if strings.HasPrefix(rule.Key, "devices.") && (!d.isCurrentlyPrivileged() || d.state.OS.RunningInUserNS) {
+				if strings.HasPrefix(rule.Key, "devices.") && d.state.OS.RunningInUserNS {
 					continue
 				}
 
@@ -9419,19 +9419,6 @@ func (d *lxc) IsFrozen() bool {
 // IsNesting returns if instance is nested.
 func (d *lxc) IsNesting() bool {
 	return util.IsTrue(d.expandedConfig["security.nesting"])
-}
-
-func (d *lxc) isCurrentlyPrivileged() bool {
-	if !d.IsRunning() {
-		return d.IsPrivileged()
-	}
-
-	currentIdmap, err := d.CurrentIdmap()
-	if err != nil {
-		return d.IsPrivileged()
-	}
-
-	return currentIdmap == nil
 }
 
 // IsPrivileged returns if instance is privileged.
