@@ -915,6 +915,10 @@ func checkRestrictions(project api.Project, instances []api.Instance, profiles [
 					if !NetworkAllowed(project.Config, device["parent"], false) {
 						return errors.New("Network not allowed in project")
 					}
+				} else if device["failover"] != "" {
+					if !NetworkAllowed(project.Config, device["failover"], false) {
+						return errors.New("Network not allowed in project")
+					}
 				}
 
 				return nil
