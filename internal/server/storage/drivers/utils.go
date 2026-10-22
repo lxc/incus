@@ -1305,6 +1305,14 @@ func UnpackVolume(d Driver, vol Volume, r io.ReadSeeker, tarArgs []string, unpac
 		unpackBlockVolume := func(hdr *tar.Header) error {
 			var allowUnsafeResize bool
 
+			// The filesystem stream may have replaced the block file inside the volume with a symlink.
+			if strings.HasPrefix(targetPath, internalUtil.AddSlash(mountPath)) {
+				fi, err := os.Lstat(targetPath)
+				if err == nil && !fi.Mode().IsRegular() {
+					return fmt.Errorf("Block volume file %q isn't a regular file", targetPath)
+				}
+			}
+
 			// Reset the disk.
 			if !cleared {
 				err = linux.ClearBlock(targetPath, 0)
