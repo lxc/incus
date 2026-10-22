@@ -22,7 +22,6 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"regexp"
 	"slices"
 	"sort"
 	"strconv"
@@ -3253,10 +3252,12 @@ func (d *qemu) deviceDetachBlockDevice(deviceName string, rawConfig deviceConfig
 		}
 	}
 
-	// Release the data file of the metadata image, if any.
-	err = monitor.RemoveFDFromFDSet(blockDevName + "_raw")
-	if err != nil {
-		return err
+	// Release the data file of the metadata image, also under the name used by older servers.
+	for _, name := range []string{derivedBlockNodeName(blockDevName, "raw"), blockDevName + "_raw"} {
+		err = monitor.RemoveFDFromFDSet(name)
+		if err != nil {
+			return err
+		}
 	}
 
 	err = monitor.RemoveDevice(deviceID)
@@ -5619,7 +5620,7 @@ func (d *qemu) driveDirConfig9p(qemuDev map[string]any, busName string, agentMou
 			devAddr:       qemuDev["addr"].(string),
 			multifunction: qemuDev["multifunction"].(bool),
 		},
-		devName:  driveConf.DevName,
+		devName:  linux.PathNameEncode(driveConf.DevName),
 		mountTag: mountTag,
 		readonly: readonly,
 		path:     driveConf.DevPath,
@@ -6558,7 +6559,7 @@ func (d *qemu) addPCIDevConfig(conf *[]cfg.Section, bus *qemuBus, pciConfig []de
 			devAddr:       devAddr,
 			multifunction: multi,
 		},
-		devName:     devName,
+		devName:     linux.PathNameEncode(devName),
 		pciSlotName: pciSlotName,
 		firmware:    firmware,
 	}
@@ -6624,7 +6625,7 @@ func (d *qemu) addGPUDevConfig(conf *[]cfg.Section, bus *qemuBus, gpuConfig []de
 			devAddr:       devAddr,
 			multifunction: multi,
 		},
-		devName:     devName,
+		devName:     linux.PathNameEncode(devName),
 		pciSlotName: pciSlotName,
 		vga:         vgaMode,
 		vgpu:        vgpu,
@@ -6668,7 +6669,7 @@ func (d *qemu) addGPUDevConfig(conf *[]cfg.Section, bus *qemuBus, gpuConfig []de
 						multifunction: multi,
 					},
 					// Generate associated device name by combining main device name and VF ID.
-					devName:     fmt.Sprintf("%s_%s", devName, devAddr),
+					devName:     fmt.Sprintf("%s-%s", linux.PathNameEncode(devName), devAddr),
 					pciSlotName: iommuSlotName,
 					vga:         false,
 					vgpu:        "",
@@ -12670,7 +12671,7 @@ func (d *qemu) CreateQcow2Snapshot(devPath string, devName string, snapshotName 
 
 	// Fetch the current maximum overlay index.
 	overlayNodeIndex := currentQcow2OverlayIndex(blockDevs, devName)
-	nextOverlayName := fmt.Sprintf("%s_overlay%d", devName, overlayNodeIndex+1)
+	nextOverlayName := qcow2OverlayName(devName, overlayNodeIndex+1)
 
 	currentRootNode := blockDevs[len(blockDevs)-1]
 
@@ -12898,7 +12899,7 @@ func (d *qemu) isQCOW2(devPath string) (bool, error) {
 
 func (d *qemu) qcow2BlockDev(m *qmp.Monitor, nodeName string, aioMode string, directCache bool, noFlushCache bool, permissions int, readonly bool, backingPaths []string, iter int) (string, error) {
 	devName := backingPaths[0]
-	backingNodeName := fmt.Sprintf("%s_backing%d", nodeName, iter)
+	backingNodeName := qcow2BackingName(nodeName, iter)
 
 	f, err := os.OpenFile(devName, permissions, 0)
 	if err != nil {
@@ -12948,18 +12949,13 @@ func (d *qemu) qcow2BlockDev(m *qmp.Monitor, nodeName string, aioMode string, di
 }
 
 // currentQcow2OverlayIndex returns the current maximum overlay index.
-func currentQcow2OverlayIndex(names []string, prefix string) int {
-	re := regexp.MustCompile(fmt.Sprintf(`^%s_overlay(\d+)$`, prefix))
-
+func currentQcow2OverlayIndex(names []string, rootDevName string) int {
 	maxIndex := -1
 
 	for _, name := range names {
-		m := re.FindStringSubmatch(name)
-		if len(m) == 2 {
-			n, err := strconv.Atoi(m[1])
-			if err == nil && n > maxIndex {
-				maxIndex = n
-			}
+		info, ok := classifyQcow2Blockdev(name, rootDevName)
+		if ok && info.kind == overlayBlockdevKind && info.index > maxIndex {
+			maxIndex = info.index
 		}
 	}
 
@@ -13220,15 +13216,21 @@ func (d *qemu) ConnectNBDAllDisks(reuse bool) (net.Conn, func(), error) {
 	// Recover any overlay left behind by a previously failed teardown so the
 	// disks can be snapshotted and exported again.
 	for _, devName := range deviceNames {
-		overlayNode := ephemeralSnapshotName(d.blockNodeName(linux.PathNameEncode(devName)))
-		_, ok := nodeSet[overlayNode]
-		if !ok {
-			continue
-		}
+		nodeName := d.blockNodeName(linux.PathNameEncode(devName))
 
-		err = d.removeEphemeralOverlay(monitor, overlayNode)
-		if err != nil {
-			return nil, nil, fmt.Errorf("Failed recovering disk %q from an earlier failed teardown: %w", devName, err)
+		// Also look for the name used before the dash separated scheme.
+		for _, overlayNode := range []string{ephemeralSnapshotName(nodeName), nodeName + "_snap"} {
+			_, ok := nodeSet[overlayNode]
+			if !ok {
+				continue
+			}
+
+			err = d.removeEphemeralOverlay(monitor, overlayNode)
+			if err != nil {
+				return nil, nil, fmt.Errorf("Failed recovering disk %q from an earlier failed teardown: %w", devName, err)
+			}
+
+			break
 		}
 	}
 
@@ -13600,7 +13602,7 @@ func buildDataFileInfo(nodeName string, m *qmp.Monitor, driveConf deviceConfig.M
 
 	defer func() { _ = df.Close() }()
 
-	dataInfo, err := m.SendFileWithFDSet(nodeName+"_raw", df, readonly)
+	dataInfo, err := m.SendFileWithFDSet(derivedBlockNodeName(nodeName, "raw"), df, readonly)
 	if err != nil {
 		return nil, fmt.Errorf("Failed sending qcow2 data file descriptor %q: %w", driveConf.DataFilePath, err)
 	}
@@ -13609,7 +13611,7 @@ func buildDataFileInfo(nodeName string, m *qmp.Monitor, driveConf deviceConfig.M
 	defer reverter.Fail()
 
 	reverter.Add(func() {
-		_ = m.RemoveFDFromFDSet(nodeName + "_raw")
+		_ = m.RemoveFDFromFDSet(derivedBlockNodeName(nodeName, "raw"))
 	})
 
 	dataDev := map[string]any{

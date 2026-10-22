@@ -209,6 +209,7 @@ run_test() {
 run_standalone_core() {
     run_test test_certificate_edit "Certificate edit"
     run_test test_config_profiles "profiles and configuration"
+    run_test test_config_device_names "device names"
     run_test test_database_no_disk_space "database out of disk space"
     run_test test_database_restore "database restore"
     run_test test_filtering "API filtering"

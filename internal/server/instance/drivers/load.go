@@ -99,7 +99,7 @@ func validDevices(s *state.State, p api.Project, instanceType instancetype.Type,
 			}
 
 			// Validate the device name.
-			err := validate.IsAPIName(deviceName, false)
+			err := validate.IsDeviceName(deviceName)
 			if err != nil {
 				return fmt.Errorf("Invalid device name %q: %w", deviceName, err)
 			}
@@ -141,6 +141,24 @@ func validDevices(s *state.State, p api.Project, instanceType instancetype.Type,
 		err = checkDevices(instConf.expandedDevices, true)
 		if err != nil {
 			return err
+		}
+	}
+
+	// Reject device names that would take over the volatile keys of another device.
+	names := []string{}
+	for _, devices := range []deviceConfig.Devices{localDevices, expandedDevices} {
+		for name := range devices {
+			if !slices.Contains(names, name) {
+				names = append(names, name)
+			}
+		}
+	}
+
+	for _, name := range names {
+		for _, other := range names {
+			if internalInstance.DeviceVolatileKeyConflict(name, other) {
+				return fmt.Errorf("Device name %q conflicts with the volatile keys of device %q", name, other)
+			}
 		}
 	}
 
