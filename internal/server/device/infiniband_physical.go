@@ -11,8 +11,8 @@ import (
 	"github.com/lxc/incus/v7/internal/server/instance"
 	"github.com/lxc/incus/v7/internal/server/instance/instancetype"
 	"github.com/lxc/incus/v7/internal/server/ip"
+	"github.com/lxc/incus/v7/internal/server/network"
 	"github.com/lxc/incus/v7/shared/resources"
-	"github.com/lxc/incus/v7/shared/util"
 )
 
 type infinibandPhysical struct {
@@ -84,7 +84,7 @@ func (d *infinibandPhysical) validateEnvironment() error {
 		return errors.New("Requires name property to start")
 	}
 
-	if !util.PathExists(fmt.Sprintf("/sys/class/net/%s", d.config["parent"])) {
+	if !network.InterfaceExists(d.config["parent"]) {
 		return fmt.Errorf("Parent device '%s' doesn't exist", d.config["parent"])
 	}
 
