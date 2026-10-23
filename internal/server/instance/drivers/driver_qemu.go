@@ -3313,8 +3313,27 @@ func (d *qemu) detachBlockDeviceAndWait(m *qmp.Monitor, blockDevName string) err
 
 // deviceAttachNIC live attaches a NIC device to the instance.
 func (d *qemu) deviceAttachNIC(deviceName string, runConf *deviceConfig.RunConfig) error {
+	hasFailover := len(runConf.FailoverNetworkInterface) > 0
+	failover := deviceName + "/failover"
+	if hasFailover {
+		err := d.deviceAttachSingleNIC(failover, runConf.FailoverNetworkInterface, false, true)
+		if err != nil {
+			return err
+		}
+	}
+
+	err := d.deviceAttachSingleNIC(deviceName, runConf.NetworkInterface, runConf.UseUSBBus, false)
+	if err != nil && hasFailover {
+		_ = d.deviceDetachNIC(failover)
+	}
+
+	return err
+}
+
+// deviceAttachSingleNIC live attaches a single NIC device to the instance.
+func (d *qemu) deviceAttachSingleNIC(deviceName string, nicConfig []deviceConfig.RunConfigItem, useUSBBus bool, failover bool) error {
 	devName := ""
-	for _, dev := range runConf.NetworkInterface {
+	for _, dev := range nicConfig {
 		if dev.Key == "link" {
 			devName = dev.Value
 			break
@@ -3337,7 +3356,7 @@ func (d *qemu) deviceAttachNIC(deviceName string, runConf *deviceConfig.RunConfi
 	}
 
 	qemuDev := make(map[string]any)
-	if runConf.UseUSBBus {
+	if useUSBBus {
 		qemuBus = "usb"
 		qemuDev["bus"] = "qemu_usb.0"
 	} else if slices.Contains([]string{"pcie", "pci"}, qemuBus) {
@@ -3352,7 +3371,7 @@ func (d *qemu) deviceAttachNIC(deviceName string, runConf *deviceConfig.RunConfi
 		qemuDev["addr"] = "00.0"
 	}
 
-	monHook, err := d.addNetDevConfig(qemuBus, qemuDev, nil, runConf.NetworkInterface)
+	monHook, err := d.addNetDevConfig(qemuBus, qemuDev, nil, nicConfig)
 	if err != nil {
 		return err
 	}
@@ -3500,6 +3519,14 @@ func (d *qemu) deviceStop(dev device.Device, instanceRunning bool, _ string) err
 			err = d.deviceDetachNIC(dev.Name())
 			if err != nil {
 				return err
+			}
+
+			// QEMU only supports the failover mechanism on PCIe.
+			if len(runConf.FailoverNetworkInterface) > 0 {
+				err = d.deviceDetachNIC(dev.Name() + "/failover")
+				if err != nil {
+					return err
+				}
 			}
 		}
 
@@ -4956,13 +4983,28 @@ func (d *qemu) generateQemuConfig(bs *qemuBootState, mountInfo *storagePools.Mou
 				qemuDev["bus"] = "qemu_usb.0"
 			} else if slices.Contains([]string{"pcie", "pci"}, busName) {
 				// Allocate a PCI(e) port and write it to the config file so QMP can "hotplug" the
-				// NIC into it later.
-				devBus, devAddr, multi := bus.allocate(busFunctionGroupNone)
+				// NIC into it later. If we have a failover NIC, it needs to be handled first.
+				if len(runConf.FailoverNetworkInterface) > 0 {
+					failoverDev := make(map[string]any)
+					failoverBus, failoverAddr, failoverMulti := bus.allocate(busFunctionGroupNone)
+					failoverDev["bus"] = failoverBus
+					failoverDev["addr"] = failoverAddr
+					if failoverMulti {
+						failoverDev["multifunction"] = true
+					}
 
+					monHook, err := d.addNetDevConfig(busName, failoverDev, bootIndexes, runConf.FailoverNetworkInterface)
+					if err != nil {
+						return nil, err
+					}
+
+					monHooks = append(monHooks, monHook)
+				}
+
+				devBus, devAddr, multi := bus.allocate(busFunctionGroupNone)
 				// Populate the qemu device with port info.
 				qemuDev["bus"] = devBus
 				qemuDev["addr"] = devAddr
-
 				if multi {
 					qemuDev["multifunction"] = true
 				}
@@ -6206,6 +6248,11 @@ func (d *qemu) addNetDevConfig(busName string, qemuDev map[string]any, bootIndex
 			maxVQP = nicItem.Value
 		case "connected":
 			connected = util.IsTrueOrEmpty(nicItem.Value)
+		case "failover":
+			qemuDev["failover"] = util.IsTrue(nicItem.Value)
+
+		case "failoverPair":
+			qemuDev["failover_pair_id"] = qemuDeviceIDPrefix + linux.PathNameEncode(nicItem.Value)
 		}
 	}
 
