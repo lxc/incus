@@ -1734,7 +1734,7 @@ func (d *lxc) deviceDetachNIC(configCopy map[string]string, netIF []deviceConfig
 		// that device doesn't already exist on the host as if a device exists on the host
 		// we can't know whether that is because liblxc has moved it back already or whether
 		// it is a conflicting device.
-		if !util.PathExists(fmt.Sprintf("/sys/class/net/%s", devName)) {
+		if !network.InterfaceExists(devName) {
 			if stopHookNetnsPath == "" {
 				return fmt.Errorf("Cannot detach NIC device %q without stopHookNetnsPath being provided", devName)
 			}
