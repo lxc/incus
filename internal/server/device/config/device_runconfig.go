@@ -64,18 +64,19 @@ type DiskLimits struct {
 
 // RunConfig represents run-time config used for device setup/cleanup.
 type RunConfig struct {
-	RootFS           RootFSEntryItem  // RootFS to setup.
-	NetworkInterface []RunConfigItem  // Network interface configuration settings.
-	CGroups          []RunConfigItem  // Cgroup rules to setup.
-	Mounts           []MountEntryItem // Mounts to setup/remove.
-	Uevents          [][]string       // Uevents to inject.
-	PostHooks        []func() error   // Functions to be run after device attach/detach.
-	GPUDevice        []RunConfigItem  // GPU device configuration settings.
-	USBDevice        []USBDeviceItem  // USB device configuration settings.
-	TPMDevice        []RunConfigItem  // TPM device configuration settings.
-	PCIDevice        []RunConfigItem  // PCI device configuration settings.
-	Revert           revert.Hook      // Revert setup of device on post-setup error.
-	UseUSBBus        bool             // Whether to use a USB bus for the device.
+	RootFS                   RootFSEntryItem  // RootFS to setup.
+	NetworkInterface         []RunConfigItem  // Network interface configuration settings.
+	FailoverNetworkInterface []RunConfigItem  // Failover network interface configuration settings.
+	CGroups                  []RunConfigItem  // Cgroup rules to setup.
+	Mounts                   []MountEntryItem // Mounts to setup/remove.
+	Uevents                  [][]string       // Uevents to inject.
+	PostHooks                []func() error   // Functions to be run after device attach/detach.
+	GPUDevice                []RunConfigItem  // GPU device configuration settings.
+	USBDevice                []USBDeviceItem  // USB device configuration settings.
+	TPMDevice                []RunConfigItem  // TPM device configuration settings.
+	PCIDevice                []RunConfigItem  // PCI device configuration settings.
+	Revert                   revert.Hook      // Revert setup of device on post-setup error.
+	UseUSBBus                bool             // Whether to use a USB bus for the device.
 }
 
 // NICConfigDir shared constant used to indicate where NIC config is stored.
