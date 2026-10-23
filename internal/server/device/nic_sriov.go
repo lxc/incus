@@ -15,6 +15,7 @@ import (
 	"github.com/lxc/incus/v7/shared/api"
 	"github.com/lxc/incus/v7/shared/logger"
 	"github.com/lxc/incus/v7/shared/resources"
+	"github.com/lxc/incus/v7/shared/revert"
 	"github.com/lxc/incus/v7/shared/util"
 )
 
@@ -152,13 +153,21 @@ func (d *nicSRIOV) validateConfig(instConf instance.ConfigReader, partialValidat
 		//  required: no
 		//  shortdesc: Whether the NIC is plugged in or not
 		"attached",
+
+		// gendoc:generate(entity=devices, group=nic_sriov, key=failover)
+		//
+		// ---
+		// type: string
+		// required: no
+		// shortdesc: Failover bridge to use when live-migrating the NIC
+		"failover",
 	}
 
 	// Check that if network property is set that conflicting keys are not present.
 	if d.config["network"] != "" {
 		requiredFields = append(requiredFields, "network")
 
-		bannedKeys := []string{"nictype", "parent", "mtu", "vlan"}
+		bannedKeys := []string{"nictype", "parent", "mtu", "vlan", "failover"}
 		for _, bannedKey := range bannedKeys {
 			if d.config[bannedKey] != "" {
 				return fmt.Errorf("Cannot use %q property in conjunction with %q property", bannedKey, "network")
@@ -187,7 +196,7 @@ func (d *nicSRIOV) validateConfig(instConf instance.ConfigReader, partialValidat
 		d.config["parent"] = netConfig["parent"]
 
 		// Copy certain keys verbatim from the network's settings.
-		inheritKeys := []string{"mtu", "vlan"}
+		inheritKeys := []string{"mtu", "vlan", "failover"}
 		for _, inheritKey := range inheritKeys {
 			_, found := netConfig[inheritKey]
 			if found {
@@ -222,6 +231,19 @@ func (d *nicSRIOV) validateConfig(instConf instance.ConfigReader, partialValidat
 		d.config["pci"] = pcidev.NormaliseAddress(d.config["pci"])
 	}
 
+	// Non-PCI architectures are not supported by QEMU virtio-net standby, so fail early with those.
+	vm, ok := d.inst.(instance.VM)
+	if d.config["failover"] != "" && ok {
+		_, bus, err := vm.QemuArchConfig()
+		if err != nil {
+			return err
+		}
+
+		if bus != "pcie" {
+			return errors.New("Failover bridges are only supported on PCIe platforms")
+		}
+	}
+
 	return nil
 }
 
@@ -242,8 +264,8 @@ func (d *nicSRIOV) PreStartCheck() error {
 
 // validateEnvironment checks the runtime environment for correctness.
 func (d *nicSRIOV) validateEnvironment() error {
-	if d.inst.Type() == instancetype.VM && util.IsTrue(d.inst.ExpandedConfig()["migration.stateful"]) {
-		return errors.New("Network SR-IOV devices cannot be used when migration.stateful is enabled")
+	if d.inst.Type() == instancetype.VM && util.IsTrue(d.inst.ExpandedConfig()["migration.stateful"]) && d.config["failover"] == "" {
+		return errors.New("Network SR-IOV devices cannot be used when migration.stateful is enabled and no failover network is specified")
 	}
 
 	if d.inst.Type() == instancetype.Container && d.config["name"] == "" {
@@ -252,6 +274,14 @@ func (d *nicSRIOV) validateEnvironment() error {
 
 	if d.isParentRequired() && !network.InterfaceExists(d.config["parent"]) {
 		return fmt.Errorf("Parent device %q doesn't exist", d.config["parent"])
+	}
+
+	if d.config["failover"] != "" && !network.IsNativeBridge(d.config["failover"]) {
+		// Check whether a non-native managed bridge exists.
+		_, err := network.LoadByName(d.state, api.ProjectDefaultName, d.config["failover"])
+		if err != nil {
+			return fmt.Errorf("Failover network %q not found", d.config["failover"])
+		}
 	}
 
 	return nil
@@ -287,6 +317,19 @@ func (d *nicSRIOV) Start() (*deviceConfig.RunConfig, error) {
 		if err != nil {
 			return nil, err
 		}
+	}
+
+	reverter := revert.New()
+	defer reverter.Fail()
+	var failover string
+	if d.inst.Type() == instancetype.VM && d.config["failover"] != "" {
+		failover, err = d.setupFailover()
+		if err != nil {
+			return nil, fmt.Errorf("Failed setting up failover NIC: %w", err)
+		}
+
+		saveData["failover.host_name"] = failover
+		reverter.Add(func() { _ = d.cleanupFailover(failover) })
 	}
 
 	// Find free VF exclusively.
@@ -345,6 +388,18 @@ func (d *nicSRIOV) Start() (*deviceConfig.RunConfig, error) {
 			}...)
 	}
 
+	if failover != "" {
+		failoverDev := d.name + "/failover"
+		runConf.NetworkInterface = append(runConf.NetworkInterface, deviceConfig.RunConfigItem{Key: "failoverPair", Value: failoverDev})
+		runConf.FailoverNetworkInterface = []deviceConfig.RunConfigItem{
+			{Key: "devName", Value: failoverDev},
+			{Key: "failover", Value: "true"},
+			{Key: "hwaddr", Value: d.config["hwaddr"]},
+			{Key: "link", Value: failover},
+		}
+	}
+
+	reverter.Success()
 	return &runConf, nil
 }
 
@@ -359,6 +414,12 @@ func (d *nicSRIOV) Stop() (*deviceConfig.RunConfig, error) {
 		runConf.NetworkInterface = []deviceConfig.RunConfigItem{
 			{Key: "link", Value: v["host_name"]},
 		}
+
+		if v["failover.host_name"] != "" {
+			runConf.FailoverNetworkInterface = []deviceConfig.RunConfigItem{
+				{Key: "link", Value: v["failover.host_name"]},
+			}
+		}
 	}
 
 	return &runConf, nil
@@ -368,6 +429,7 @@ func (d *nicSRIOV) Stop() (*deviceConfig.RunConfig, error) {
 func (d *nicSRIOV) postStop() error {
 	defer func() {
 		_ = d.volatileSet(map[string]string{
+			"failover.host_name":       "",
 			"host_name":                "",
 			"last_state.hwaddr":        "",
 			"last_state.mtu":           "",
@@ -386,14 +448,12 @@ func (d *nicSRIOV) postStop() error {
 
 	network.SRIOVVirtualFunctionMutex.Lock()
 	err := networkSRIOVRestoreVF(d.deviceCommon, true, v)
-	if err != nil {
-		network.SRIOVVirtualFunctionMutex.Unlock()
-		return err
+	network.SRIOVVirtualFunctionMutex.Unlock()
+	if v["failover.host_name"] != "" {
+		err = errors.Join(err, d.cleanupFailover(v["failover.host_name"]))
 	}
 
-	network.SRIOVVirtualFunctionMutex.Unlock()
-
-	return nil
+	return err
 }
 
 // findParent selects the best NIC based on vendorid, productid or PCI address,
@@ -542,4 +602,61 @@ func (d *nicSRIOV) UpdatableFields(oldDevice Type) []string {
 	}
 
 	return []string{"boot.priority"}
+}
+
+// setupFailover creates the standby TAP on the user-provided bridge.
+func (d *nicSRIOV) setupFailover() (string, error) {
+	hostName, err := d.generateHostName("tap", "")
+	if err != nil {
+		return "", err
+	}
+
+	parent := d.config["failover"]
+	bridge := deviceConfig.Device{
+		"parent": parent,
+		"mtu":    d.config["mtu"],
+		"vlan":   d.config["vlan"],
+	}
+
+	_, err = networkCreateTap(hostName, bridge)
+	if err != nil {
+		return "", err
+	}
+
+	reverter := revert.New()
+	defer reverter.Fail()
+	reverter.Add(func() { _ = network.InterfaceRemove(hostName) })
+
+	err = network.AttachInterface(d.state, parent, hostName)
+	if err != nil {
+		return "", err
+	}
+
+	reverter.Add(func() { _ = network.DetachInterface(d.state, parent, hostName) })
+
+	nic := nicBridged{deviceCommon: d.deviceCommon}
+	nic.config = bridge
+
+	if network.IsNativeBridge(parent) {
+		err = nic.setupNativeBridgePortVLANs(hostName)
+	} else {
+		err = nic.setupOVSBridgePortVLANs(hostName)
+	}
+
+	if err != nil {
+		return "", err
+	}
+
+	reverter.Success()
+	return hostName, nil
+}
+
+// cleanupFailover removes the standby TAP from the user-provided bridge.
+func (d *nicSRIOV) cleanupFailover(hostName string) error {
+	err := network.DetachInterface(d.state, d.config["failover"], hostName)
+	if err != nil {
+		return err
+	}
+
+	return network.InterfaceRemove(hostName)
 }
