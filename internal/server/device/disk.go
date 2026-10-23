@@ -952,8 +952,6 @@ func (d *disk) validateConfig(instConf instance.ConfigReader, partialValidation 
 		}
 
 		switch d.config["io.bus"] {
-		case "nvme":
-			return errors.New("NVME disks aren't supported with migration.stateful=true")
 		case "virtiofs":
 			return errors.New("Virtiofs mounts aren't supported with migration.stateful=true")
 		}
