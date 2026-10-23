@@ -2110,6 +2110,14 @@
 						}
 					},
 					{
+						"failover": {
+							"longdesc": "",
+							"required": "no",
+							"shortdesc": "Failover bridge to use when live-migrating the NIC",
+							"type": "string"
+						}
+					},
+					{
 						"hwaddr": {
 							"default": "randomly assigned",
 							"longdesc": "",
@@ -3773,6 +3781,13 @@
 						"volatile.\u003cname\u003e.ceph_rbd": {
 							"longdesc": "",
 							"shortdesc": "RBD device path for Ceph disk devices",
+							"type": "string"
+						}
+					},
+					{
+						"volatile.\u003cname\u003e.failover.host_name": {
+							"longdesc": "",
+							"shortdesc": "Network device name on the host for the failover interface",
 							"type": "string"
 						}
 					},
@@ -5588,6 +5603,15 @@
 		"network_sriov": {
 			"common": {
 				"keys": [
+					{
+						"failover": {
+							"condition": "-",
+							"longdesc": "",
+							"scope": "local",
+							"shortdesc": "Failover bridge to use when live-migrating `sriov` NICs",
+							"type": "string"
+						}
+					},
 					{
 						"mtu": {
 							"condition": "-",
