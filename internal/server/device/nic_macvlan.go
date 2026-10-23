@@ -227,7 +227,7 @@ func (d *nicMACVLAN) validateEnvironment() error {
 		return errors.New("Requires name property to start")
 	}
 
-	if !util.PathExists(fmt.Sprintf("/sys/class/net/%s", d.config["parent"])) {
+	if !network.InterfaceExists(d.config["parent"]) {
 		return fmt.Errorf("Parent device '%s' doesn't exist", d.config["parent"])
 	}
 
@@ -418,7 +418,7 @@ func (d *nicMACVLAN) postStop() error {
 	v := d.volatileGet()
 
 	// Delete the detached device.
-	if v["host_name"] != "" && util.PathExists(fmt.Sprintf("/sys/class/net/%s", v["host_name"])) {
+	if v["host_name"] != "" && network.InterfaceExists(v["host_name"]) {
 		err := network.InterfaceRemove(v["host_name"])
 		if err != nil {
 			errs = append(errs, err)

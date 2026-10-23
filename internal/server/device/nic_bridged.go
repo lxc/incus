@@ -424,7 +424,7 @@ func (d *nicBridged) validateConfig(instConf instance.ConfigReader, partialValid
 			return errors.New("Specified network is not fully created")
 		}
 
-		if n.Type() != "bridge" && (n.Type() != "physical" || !util.PathExists(fmt.Sprintf("/sys/class/net/%s/bridge", d.config["parent"]))) {
+		if n.Type() != "bridge" && (n.Type() != "physical" || !network.IsNativeBridge(d.config["parent"])) {
 			return errors.New("Specified network must be of type bridge")
 		}
 
@@ -840,7 +840,7 @@ func (d *nicBridged) validateEnvironment() error {
 		return errors.New("Requires name property to start")
 	}
 
-	if !util.PathExists(fmt.Sprintf("/sys/class/net/%s", d.config["parent"])) {
+	if !network.InterfaceExists(d.config["parent"]) {
 		return fmt.Errorf("Parent device %q doesn't exist", d.config["parent"])
 	}
 
@@ -1194,7 +1194,7 @@ func (d *nicBridged) Update(oldDevices deviceConfig.Devices, isRunning bool) err
 	// If an IPv6 address has changed, if the instance is running we should bounce the host-side
 	// veth interface to give the instance a chance to detect the change and re-apply for an
 	// updated lease with new IP address.
-	if d.config["ipv6.address"] != oldConfig["ipv6.address"] && d.config["host_name"] != "" && util.PathExists(fmt.Sprintf("/sys/class/net/%s", d.config["host_name"])) {
+	if d.config["ipv6.address"] != oldConfig["ipv6.address"] && d.config["host_name"] != "" && network.InterfaceExists(d.config["host_name"]) {
 		link := &ip.Link{Name: d.config["host_name"]}
 		err := link.SetDown()
 		if err != nil {
