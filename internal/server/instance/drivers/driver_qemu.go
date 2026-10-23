@@ -4738,7 +4738,11 @@ func (d *qemu) generateQemuConfig(bs *qemuBootState, mountInfo *storagePools.Mou
 
 	// virtio-sound-pci devices can't be migrated and don't have a CCW equivalent.
 	// NOTE: We can't use CanLiveMigrate during instance startup as the boot state hasn't yet been recorded.
-	if virtioSound && !isWindows && util.IsFalseOrEmpty(d.expandedConfig["migration.stateful"]) && d.architecture != osarch.ARCH_64BIT_S390_BIG_ENDIAN {
+	qemuVer, _ := d.version()
+	qemuVer112, _ := version.NewDottedVersion("11.2.0")
+	if virtioSound && !isWindows && d.architecture != osarch.ARCH_64BIT_S390_BIG_ENDIAN &&
+		(util.IsFalseOrEmpty(d.expandedConfig["migration.stateful"]) ||
+			(qemuVer != nil && qemuVer.Compare(qemuVer112) >= 0)) {
 		devBus, devAddr, multi = bus.allocate(busFunctionGroupGeneric)
 		audioOpts := qemuAudioOpts{
 			dev: qemuDevOpts{
