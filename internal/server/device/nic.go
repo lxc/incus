@@ -74,6 +74,7 @@ func nicValidationRules(requiredFields []string, optionalFields []string, instCo
 		"pci":                                  validate.IsPCIAddress,
 		"attached":                             validate.Optional(validate.IsBool),
 		"connected":                            validate.Optional(validate.IsBool),
+		"failover":                             validate.Optional(validate.IsInterfaceName),
 	}
 
 	validators := map[string]func(value string) error{}
