@@ -1870,6 +1870,13 @@ The custom policy routing table ID to add IPv6 static routes to (in addition to 
 
 ```
 
+```{config:option} failover devices-nic_sriov
+:required: "no"
+:shortdesc: "Failover bridge to use when live-migrating the NIC"
+:type: "string"
+
+```
+
 ```{config:option} hwaddr devices-nic_sriov
 :default: "randomly assigned"
 :managed: "no"
@@ -3428,6 +3435,12 @@ The disk quota is applied the next time the instance starts.
 
 ```
 
+```{config:option} volatile.<name>.failover.host_name instance-volatile
+:shortdesc: "Network device name on the host for the failover interface"
+:type: "string"
+
+```
+
 ```{config:option} volatile.<name>.host_name instance-volatile
 :shortdesc: "Network device name on the host"
 :type: "string"
@@ -4982,6 +4995,14 @@ User keys can be used in search.
 
 <!-- config group network_physical-ovn end -->
 <!-- config group network_sriov-common start -->
+```{config:option} failover network_sriov-common
+:condition: "-"
+:scope: "local"
+:shortdesc: "Failover bridge to use when live-migrating `sriov` NICs"
+:type: "string"
+
+```
+
 ```{config:option} mtu network_sriov-common
 :condition: "-"
 :shortdesc: "The MTU of the new interface"
