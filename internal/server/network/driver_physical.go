@@ -250,7 +250,7 @@ func (n *physical) Validate(config map[string]string, clientType request.ClientT
 // checkParentUse checks if parent is already in use by another network or instance device.
 func (n *physical) checkParentUse(ourConfig map[string]string) (bool, error) {
 	// Check if we're dealing with a physical network backed by a bridge.
-	if ourConfig["parent"] != "" && util.PathExists(fmt.Sprintf("/sys/class/net/%s/bridge", ourConfig["parent"])) {
+	if ourConfig["parent"] != "" && IsNativeBridge(ourConfig["parent"]) {
 		return false, nil
 	}
 
