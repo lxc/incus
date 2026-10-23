@@ -3084,7 +3084,7 @@ func (d *qemu) deviceStart(dev device.Device, instanceRunning bool) (*deviceConf
 		if instanceRunning {
 			// Attach NIC to running instance.
 			if len(runConf.NetworkInterface) > 0 {
-				err = d.deviceAttachNIC(dev.Name(), configCopy, runConf)
+				err = d.deviceAttachNIC(dev.Name(), runConf)
 				if err != nil {
 					return nil, err
 				}
@@ -3307,7 +3307,7 @@ func (d *qemu) detachBlockDeviceAndWait(m *qmp.Monitor, blockDevName string) err
 }
 
 // deviceAttachNIC live attaches a NIC device to the instance.
-func (d *qemu) deviceAttachNIC(deviceName string, configCopy map[string]string, runConf *deviceConfig.RunConfig) error {
+func (d *qemu) deviceAttachNIC(deviceName string, runConf *deviceConfig.RunConfig) error {
 	devName := ""
 	for _, dev := range runConf.NetworkInterface {
 		if dev.Key == "link" {
