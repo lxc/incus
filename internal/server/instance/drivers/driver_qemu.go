@@ -1347,7 +1347,7 @@ func (d *qemu) restoreStateWait(ctx context.Context, monitor *qmp.Monitor) error
 
 // receiveMigrationSnapshot handles an incoming disk snapshot during migration.
 func (d *qemu) receiveMigrationSnapshot(monitor *qmp.Monitor, blockExport string, filesystemConn io.ReadWriteCloser) error {
-	nbdConn, err := monitor.NBDServerStart("", 1)
+	nbdConn, err := monitor.NBDServerStart(d.nbdPath(), 1)
 	if err != nil {
 		return fmt.Errorf("Failed starting NBD server: %w", err)
 	}
@@ -9946,12 +9946,39 @@ func (d *qemu) sendMigrationSnapshot(ctx context.Context, diskName string, files
 	targetDiskName := migrationNBDTarget(diskName)
 	snapshotDiskName := ephemeralSnapshotName(diskName)
 
-	listener, err := net.Listen("unix", "")
+	pid, err := d.pid()
+	if err != nil {
+		return nil, err
+	}
+
+	qemuDir, cleanupDir, err := d.openSocketsDir(monitor, "nbd-migration", false)
+	if err != nil {
+		return nil, err
+	}
+
+	defer cleanupDir()
+
+	sockPath := filepath.Join(d.socketsPath(), "nbd-migration.sock")
+
+	err = os.Remove(sockPath)
+	if err != nil && !errors.Is(err, fs.ErrNotExist) {
+		return nil, fmt.Errorf("Failed to remove stale socket %q: %w", sockPath, err)
+	}
+
+	listener, err := net.ListenUnix("unix", &net.UnixAddr{Name: sockPath, Net: "unix"})
 	if err != nil {
 		return nil, fmt.Errorf("Failed creating NBD unix listener: %w", err)
 	}
 
 	defer logger.WarnOnError(listener.Close, "Failed to close listener")
+
+	// Let the unprivileged QEMU connect to the root owned socket.
+	if d.state.OS.UnprivUser != "" {
+		err = os.Chown(sockPath, int(d.state.OS.UnprivUID), -1)
+		if err != nil {
+			return nil, fmt.Errorf("Failed to chown NBD socket: %w", err)
+		}
+	}
 
 	// NBD servers speak first, so wait for the target's greeting rather than
 	// blocking inside blockdev-add as the target can take minutes to get ready.
@@ -10003,9 +10030,25 @@ func (d *qemu) sendMigrationSnapshot(ctx context.Context, diskName string, files
 
 	g.Go(func() error {
 		d.logger.Debug("NBD listener waiting for accept")
-		nbdConn, err := listener.Accept()
-		if err != nil {
-			return fmt.Errorf("Failed accepting connection to NBD client unix listener: %w", err)
+
+		var nbdConn *net.UnixConn
+
+		for {
+			conn, err := listener.AcceptUnix()
+			if err != nil {
+				return fmt.Errorf("Failed accepting connection to NBD client unix listener: %w", err)
+			}
+
+			// Only our QEMU process may connect to the migration NBD socket.
+			cred, err := linux.GetUcred(conn)
+			if err != nil || int(cred.Pid) != pid {
+				d.logger.Warn("Rejected foreign connection on the migration NBD socket", logger.Ctx{"err": err})
+				_ = conn.Close()
+				continue
+			}
+
+			nbdConn = conn
+			break
 		}
 
 		defer logger.WarnOnError(nbdConn.Close, "Failed to close connection")
@@ -10013,7 +10056,7 @@ func (d *qemu) sendMigrationSnapshot(ctx context.Context, diskName string, files
 		d.logger.Debug("NBD connection on source started")
 
 		// Replay the NBD server greeting received during the readiness wait.
-		_, err = nbdConn.Write(greeting[:greetingLen])
+		_, err := nbdConn.Write(greeting[:greetingLen])
 		if err != nil {
 			return fmt.Errorf("Failed forwarding NBD server greeting: %w", err)
 		}
@@ -10035,9 +10078,8 @@ func (d *qemu) sendMigrationSnapshot(ctx context.Context, diskName string, files
 			"driver": "nbd",
 			"export": diskName,
 			"server": map[string]any{
-				"type":     "unix",
-				"abstract": true,
-				"path":     strings.TrimPrefix(listener.Addr().String(), "@"),
+				"type": "unix",
+				"path": filepath.Join(qemuDir, "nbd-migration.sock"),
 			},
 		},
 	}, nil, false)
@@ -13665,7 +13707,7 @@ func (d *qemu) ConnectNBD(diskName string, volSize int64, writable bool) (net.Co
 		return nil, nil, fmt.Errorf("Another NBD operation is already in progress for: %s", blocks[0].NodeName)
 	}
 
-	nbdConn, err := monitor.NBDServerStart("", 1)
+	nbdConn, err := monitor.NBDServerStart(d.nbdPath(), 1)
 	if err != nil {
 		return nil, nil, fmt.Errorf("Failed starting NBD server: %w", err)
 	}
