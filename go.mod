@@ -1,23 +1,23 @@
 module github.com/lxc/incus/v7
 
-go 1.26.7
+go 1.26.9
 
 require (
 	github.com/FuturFusion/vsock v0.0.0-20260219213046-d78a7104f821
 	github.com/LINBIT/golinstor v0.65.2
 	github.com/adhocore/gronx v1.20.5
 	github.com/apex/log v1.9.0
-	github.com/aws/aws-sdk-go-v2 v1.47.3
-	github.com/aws/aws-sdk-go-v2/credentials v1.20.9
-	github.com/aws/aws-sdk-go-v2/feature/s3/transfermanager v0.4.16
-	github.com/aws/aws-sdk-go-v2/service/s3 v1.114.3
-	github.com/aws/smithy-go v1.28.5
+	github.com/aws/aws-sdk-go-v2 v1.47.4
+	github.com/aws/aws-sdk-go-v2/credentials v1.20.10
+	github.com/aws/aws-sdk-go-v2/feature/s3/transfermanager v0.4.19
+	github.com/aws/aws-sdk-go-v2/service/s3 v1.114.5
+	github.com/aws/smithy-go v1.28.6
 	github.com/cenkalti/backoff/v7 v7.0.1
-	github.com/checkpoint-restore/go-criu/v8 v8.4.0
+	github.com/checkpoint-restore/go-criu/v8 v8.5.0
 	github.com/cowsql/go-cowsql v1.22.1-0.20261002182733-1e27cbabf99c
 	github.com/creack/pty v1.1.24
 	github.com/digitalocean/go-smbios v0.0.0-20180907143718-390a4f403a8e
-	github.com/dustinkirkland/golang-petname v0.0.0-20260929120758-6e3915f1a6a8
+	github.com/dustinkirkland/golang-petname v0.0.0-20261016130456-fdd95a3d0543
 	github.com/fatih/color v1.19.0
 	github.com/flosch/pongo2/v6 v6.1.0
 	github.com/fvbommel/sortorder v1.2.1
@@ -34,9 +34,9 @@ require (
 	github.com/jaypipes/pcidb v1.1.1
 	github.com/jochenvg/go-udev v0.0.0-20240801134859-b65ed646224b
 	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51
-	github.com/klauspost/pgzip v1.2.7
+	github.com/klauspost/pgzip v1.3.0
 	github.com/lxc/go-lxc v0.0.0-20260316180011-3af4ce000ed7
-	github.com/lxc/incus-os/incus-osd v0.0.0-20261016011649-0835c666d48c
+	github.com/lxc/incus-os/incus-osd v0.0.0-20261022144415-db9e8027c461
 	github.com/mattn/go-colorable v0.1.16
 	github.com/mattn/go-runewidth v0.0.31
 	github.com/mattn/go-sqlite3 v1.14.52
@@ -53,12 +53,12 @@ require (
 	github.com/opencontainers/umoci v0.6.1-0.20251213054154-70fc5ee1f4df
 	github.com/openfga/go-sdk v0.8.3
 	github.com/osrg/gobgp/v4 v4.10.0
-	github.com/ovn-kubernetes/libovsdb v0.8.1
+	github.com/ovn-kubernetes/libovsdb v0.9.0
 	github.com/pierrec/lz4/v4 v4.1.33
-	github.com/pires/go-proxyproto v0.15.0
-	github.com/pkg/sftp v1.13.11
+	github.com/pires/go-proxyproto v0.16.0
+	github.com/pkg/sftp v1.13.12
 	github.com/pkg/xattr v0.4.12
-	github.com/prometheus/procfs v0.22.0
+	github.com/prometheus/procfs v0.23.0
 	github.com/shirou/gopsutil/v4 v4.26.9
 	github.com/sirupsen/logrus v1.10.2
 	github.com/spf13/cobra v1.10.2
@@ -66,7 +66,7 @@ require (
 	github.com/stretchr/testify v1.12.1
 	github.com/vishvananda/netlink v1.3.1
 	github.com/zitadel/oidc/v3 v3.51.16
-	go.starlark.net v0.0.0-20261012215802-edf86ebe07b2
+	go.starlark.net v0.0.0-20261021141710-4f4267fb140d
 	go.yaml.in/yaml/v4 v4.0.0-rc.6
 	golang.org/x/crypto v0.58.0
 	golang.org/x/exp v0.0.0-20261014143641-f0251eb4aa3e
@@ -78,7 +78,7 @@ require (
 	golang.org/x/text v0.43.0
 	golang.org/x/tools v0.52.0
 	google.golang.org/protobuf v1.36.12
-	k8s.io/utils v0.0.0-20260707023825-cf1189d6abe3
+	k8s.io/utils v0.0.0-20261023123148-ca04ba58ecab
 	software.sslmate.com/src/go-pkcs12 v0.7.4
 )
 
@@ -87,14 +87,14 @@ require (
 	github.com/AdaLogics/go-fuzz-headers v0.0.0-20240806141605-e8a1dd7889d6 // indirect
 	github.com/FuturFusion/openfga-sync v0.0.0-20260917022851-ea6c912630c1 // indirect
 	github.com/Rican7/retry v0.3.1 // indirect
-	github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream v1.7.22 // indirect
-	github.com/aws/aws-sdk-go-v2/internal/configsources v1.5.6 // indirect
-	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.8.6 // indirect
-	github.com/aws/aws-sdk-go-v2/internal/v4a v1.5.6 // indirect
-	github.com/aws/aws-sdk-go-v2/service/internal/accept-encoding v1.13.21 // indirect
-	github.com/aws/aws-sdk-go-v2/service/internal/checksum v1.11.7 // indirect
-	github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.14.6 // indirect
-	github.com/aws/aws-sdk-go-v2/service/internal/s3shared v1.20.6 // indirect
+	github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream v1.7.24 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/configsources v1.5.7 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.8.7 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/v4a v1.5.7 // indirect
+	github.com/aws/aws-sdk-go-v2/service/internal/accept-encoding v1.13.22 // indirect
+	github.com/aws/aws-sdk-go-v2/service/internal/checksum v1.11.8 // indirect
+	github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.14.7 // indirect
+	github.com/aws/aws-sdk-go-v2/service/internal/s3shared v1.20.7 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/blang/semver/v4 v4.0.0 // indirect
 	github.com/bmatcuk/doublestar/v4 v4.10.3 // indirect
@@ -114,9 +114,9 @@ require (
 	github.com/donovanhide/eventsource v0.0.0-20210830082556-c59027999da0 // indirect
 	github.com/eapache/channels v1.1.0 // indirect
 	github.com/eapache/queue v1.1.0 // indirect
-	github.com/ebitengine/purego v0.11.1 // indirect
+	github.com/ebitengine/purego v0.11.2 // indirect
 	github.com/fsnotify/fsnotify v1.10.1 // indirect
-	github.com/gabriel-vasile/mimetype v1.4.15 // indirect
+	github.com/gabriel-vasile/mimetype v1.4.16 // indirect
 	github.com/gaissmai/bart v0.30.0 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/go-ole/go-ole v1.3.0 // indirect
@@ -180,7 +180,7 @@ require (
 	go.yaml.in/yaml/v3 v3.0.5 // indirect
 	golang.org/x/mod v0.42.0 // indirect
 	golang.org/x/time v0.16.0 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20261012220534-4341edf3f941 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20261019180522-ce908d29299b // indirect
 	google.golang.org/grpc v1.84.0 // indirect
 	moul.io/http2curl/v2 v2.3.0 // indirect
 )
