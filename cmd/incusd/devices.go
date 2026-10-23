@@ -20,6 +20,7 @@ import (
 	"github.com/lxc/incus/v7/internal/server/device"
 	"github.com/lxc/incus/v7/internal/server/instance"
 	"github.com/lxc/incus/v7/internal/server/instance/instancetype"
+	"github.com/lxc/incus/v7/internal/server/network"
 	"github.com/lxc/incus/v7/internal/server/state"
 	"github.com/lxc/incus/v7/shared/logger"
 	"github.com/lxc/incus/v7/shared/resources"
@@ -142,7 +143,7 @@ func deviceNetlinkListener() (chan []string, chan device.USBEvent, chan device.U
 					continue
 				}
 
-				if !util.PathExists(fmt.Sprintf("/sys/class/net/%s", props["INTERFACE"])) {
+				if !network.InterfaceExists(props["INTERFACE"]) {
 					continue
 				}
 			}

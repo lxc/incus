@@ -247,6 +247,7 @@ import (
 	"github.com/lxc/incus/v7/internal/netutils"
 	instanceDrivers "github.com/lxc/incus/v7/internal/server/instance/drivers"
 	"github.com/lxc/incus/v7/internal/server/ip"
+	"github.com/lxc/incus/v7/internal/server/network"
 	_ "github.com/lxc/incus/v7/shared/cgo" // Used by cgo
 	"github.com/lxc/incus/v7/shared/logger"
 	"github.com/lxc/incus/v7/shared/subprocess"
@@ -1306,7 +1307,7 @@ func (c *cmdForknet) runDetach(_ *cobra.Command, args []string) error {
 	}
 
 	// Check if the interface exists.
-	if !util.PathExists(fmt.Sprintf("/sys/class/net/%s", ifName)) {
+	if !network.InterfaceExists(ifName) {
 		return fmt.Errorf("Couldn't restore host interface %q as container interface %q couldn't be found", hostName, ifName)
 	}
 
