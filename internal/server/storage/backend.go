@@ -1402,6 +1402,16 @@ func (b *backend) RefreshCustomVolume(projectName string, srcProjectName string,
 		return fmt.Errorf("Volume of content type %q cannot be refreshed", contentType)
 	}
 
+	// A refresh must not change the target's content type, otherwise the two layouts get mixed.
+	dbVol, err := VolumeDBGet(b, projectName, volName, drivers.VolumeTypeCustom)
+	if err != nil && !response.IsNotFoundError(err) {
+		return err
+	}
+
+	if dbVol != nil && dbVol.ContentType != srcConfig.Volume.ContentType {
+		return fmt.Errorf("Volume of content type %q cannot be refreshed from a volume of content type %q", dbVol.ContentType, srcConfig.Volume.ContentType)
+	}
+
 	storagePoolSupported := slices.Contains(b.Driver().Info().VolumeTypes, drivers.VolumeTypeCustom)
 	if !storagePoolSupported {
 		return errors.New("Storage pool does not support custom volume type")
@@ -5490,6 +5500,11 @@ func (b *backend) CreateCustomVolumeFromMigration(projectName string, conn io.Re
 	dbVol, err := VolumeDBGet(b, projectName, args.Name, drivers.VolumeTypeCustom)
 	if err != nil && !response.IsNotFoundError(err) {
 		return err
+	}
+
+	// A refresh must not change an existing volume's content type, otherwise the two layouts get mixed.
+	if dbVol != nil && dbVol.ContentType != args.ContentType {
+		return fmt.Errorf("Volume of content type %q cannot be refreshed from a volume of content type %q", dbVol.ContentType, args.ContentType)
 	}
 
 	// Prefer using existing volume config (to allow mounting existing volume correctly).

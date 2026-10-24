@@ -16,6 +16,7 @@ import (
 	localMigration "github.com/lxc/incus/v6/internal/server/migration"
 	"github.com/lxc/incus/v6/internal/server/operations"
 	"github.com/lxc/incus/v6/internal/server/project"
+	"github.com/lxc/incus/v6/internal/server/response"
 	"github.com/lxc/incus/v6/internal/server/state"
 	storagePools "github.com/lxc/incus/v6/internal/server/storage"
 	storageDrivers "github.com/lxc/incus/v6/internal/server/storage/drivers"
@@ -394,6 +395,19 @@ func (c *migrationSink) DoStorage(state *state.State, projectName string, poolNa
 	}
 
 	if c.refresh {
+		// Reject a refresh that would change the content type before deleting any target snapshots.
+		dbVol, err := storagePools.VolumeDBGet(pool, projectName, req.Name, storageDrivers.VolumeTypeCustom)
+		if err != nil && !response.IsNotFoundError(err) {
+			c.sendControl(err)
+			return err
+		}
+
+		if dbVol != nil && dbVol.ContentType != req.ContentType {
+			err := fmt.Errorf("Volume of content type %q cannot be refreshed from a volume of content type %q", dbVol.ContentType, req.ContentType)
+			c.sendControl(err)
+			return err
+		}
+
 		// Get the remote snapshots on the source.
 		sourceSnapshots := offerHeader.GetSnapshots()
 		sourceSnapshotComparable := make([]storagePools.ComparableSnapshot, 0, len(sourceSnapshots))
