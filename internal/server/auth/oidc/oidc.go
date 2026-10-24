@@ -327,9 +327,20 @@ func (o *Verifier) verifyTokens(ctx context.Context, r *http.Request, accessToke
 		}
 
 		claims = &oidc.AccessTokenClaims{TokenClaims: idClaims.TokenClaims, Claims: idClaims.Claims}
-	} else if o.audience != "" && !slices.Contains(claims.GetAudience(), o.audience) {
+	} else if o.audience != "" {
 		// Check that the access token includes the configured audience.
-		return nil, errors.New("Provided OIDC token doesn't allow the configured audience")
+		if !slices.Contains(claims.GetAudience(), o.audience) {
+			return nil, errors.New("Provided OIDC token doesn't allow the configured audience")
+		}
+	} else if !slices.Contains(claims.GetAudience(), o.clientID) && claims.AuthorizedParty != o.clientID && claims.ClientID != o.clientID {
+		// Without a configured audience, only accept tokens issued for our own client ID.
+		return nil, errors.New("Provided OIDC token wasn't issued for the configured client ID")
+	}
+
+	// Provider-signed JWTs that don't identify a user can't be used to authenticate.
+	err = oidc.CheckSubject(claims)
+	if err != nil {
+		return nil, err
 	}
 
 	// Check if we have a subnet restriction.
