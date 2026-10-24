@@ -920,6 +920,9 @@ func doAPI10UpdateTriggers(d *Daemon, nodeChanged, clusterChanged map[string]str
 		case "authorization.client.default", "authorization.client.unix", "authorization.client.tls", "authorization.client.tls-restricted", "authorization.client.oidc":
 			authorizationChanged = true
 
+		case "core.trust_ca_certificates":
+			authorizationChanged = true
+
 		case "storage.linstor.controller_connection", "storage.linstor.ca_cert", "storage.linstor.client_cert", "storage.linstor.client_key":
 			linstorChanged = true
 		default:
