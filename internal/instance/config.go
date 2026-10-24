@@ -3,6 +3,7 @@ package instance
 import (
 	"errors"
 	"fmt"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -1958,6 +1959,11 @@ func ConfigKeyChecker(key string, instanceType api.InstanceType) (func(value str
 	}
 
 	return nil, fmt.Errorf("Unknown configuration key: %s", key)
+}
+
+// IsVMBootStateKey returns whether the key records the QEMU layout a VM was started with.
+func IsVMBootStateKey(configKey string) bool {
+	return slices.Contains([]string{"volatile.vm.boot_state", "volatile.vm.definition", "volatile.vm.hotplug.memory"}, configKey)
 }
 
 // InstanceIncludeWhenCopying is used to decide whether to include a config item or not when copying an instance.
