@@ -6194,13 +6194,13 @@ func (d *lxc) Export(metaWriter io.Writer, rootfsWriter io.Writer, properties ma
 	// Include all the rootfs files.
 	fnam = d.RootfsPath()
 	if rootfsWriter == nil {
-		err = filepath.Walk(fnam, writeToMetaTar)
+		err = instancewriter.Walk(fnam, writeToMetaTar)
 		if err != nil {
 			d.logger.Error("Failed exporting instance", ctxMap)
 			return nil, err
 		}
 	} else {
-		err = filepath.Walk(fnam, writeToRootfsTar)
+		err = instancewriter.Walk(fnam, writeToRootfsTar)
 		if err != nil {
 			d.logger.Error("Failed exporting instance", ctxMap)
 			return nil, err
@@ -6210,7 +6210,7 @@ func (d *lxc) Export(metaWriter io.Writer, rootfsWriter io.Writer, properties ma
 	// Include all the templates.
 	fnam = d.TemplatesPath()
 	if util.PathExists(fnam) {
-		err = filepath.Walk(fnam, writeToMetaTar)
+		err = instancewriter.Walk(fnam, writeToMetaTar)
 		if err != nil {
 			d.logger.Error("Failed exporting instance", ctxMap)
 			return nil, err

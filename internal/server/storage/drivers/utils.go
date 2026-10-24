@@ -1114,8 +1114,13 @@ func BackupVolume(d Driver, v Volume, writer instancewriter.InstanceWriter, moun
 			logMsg := "Copying virtual machine config volume"
 
 			d.Logger().Debug(logMsg, logger.Ctx{"sourcePath": mountPath, "prefix": prefix})
-			err = filepath.Walk(mountPath, func(srcPath string, fi os.FileInfo, err error) error {
+			err = instancewriter.Walk(mountPath, func(srcPath string, fi os.FileInfo, err error) error {
 				if err != nil {
+					if errors.Is(err, fs.ErrNotExist) {
+						logger.Warnf("File vanished during export: %q, skipping", srcPath)
+						return nil
+					}
+
 					return err
 				}
 
@@ -1127,6 +1132,11 @@ func BackupVolume(d Driver, v Volume, writer instancewriter.InstanceWriter, moun
 				name := filepath.Join(prefix, strings.TrimPrefix(srcPath, mountPath))
 				err = writer.WriteFile(name, srcPath, fi, false)
 				if err != nil {
+					if errors.Is(err, fs.ErrNotExist) {
+						logger.Warnf("File vanished during export: %q, skipping", srcPath)
+						return nil
+					}
+
 					return fmt.Errorf("Error adding %q as %q to tarball: %w", srcPath, name, err)
 				}
 
@@ -1196,7 +1206,7 @@ func BackupVolume(d Driver, v Volume, writer instancewriter.InstanceWriter, moun
 		}
 	}
 
-	return filepath.Walk(mountPath, func(srcPath string, fi os.FileInfo, err error) error {
+	return instancewriter.Walk(mountPath, func(srcPath string, fi os.FileInfo, err error) error {
 		if err != nil {
 			if errors.Is(err, fs.ErrNotExist) {
 				logger.Warnf("File vanished during export: %q, skipping", srcPath)
@@ -1213,6 +1223,11 @@ func BackupVolume(d Driver, v Volume, writer instancewriter.InstanceWriter, moun
 		// This means that the file in the tarball may be inconsistent.
 		err = writer.WriteFile(name, srcPath, fi, true)
 		if err != nil {
+			if errors.Is(err, fs.ErrNotExist) {
+				logger.Warnf("File vanished during export: %q, skipping", srcPath)
+				return nil
+			}
+
 			return fmt.Errorf("Error adding %q as %q to tarball: %w", srcPath, name, err)
 		}
 
