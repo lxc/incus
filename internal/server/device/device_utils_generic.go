@@ -2,6 +2,7 @@ package device
 
 import (
 	"bufio"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -12,6 +13,18 @@ import (
 	"github.com/lxc/incus/v6/shared/resources"
 	"github.com/lxc/incus/v6/shared/util"
 )
+
+// validateInstancePath rejects a path that could escape the instance when used as a mount target,
+// as liblxc resolves ".." components against the host before pivot_root.
+func validateInstancePath(value string) error {
+	for _, part := range strings.Split(value, "/") {
+		if part == ".." {
+			return errors.New("Path may not contain \"..\" components")
+		}
+	}
+
+	return nil
+}
 
 // deviceJoinPath joins together prefix and text delimited by a "." for device path generation.
 func deviceJoinPath(parts ...string) string {

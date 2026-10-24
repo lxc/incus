@@ -56,6 +56,11 @@ func (d *unixCommon) validateConfig(instConf instance.ConfigReader) error {
 				return nil
 			}
 
+			err := validateInstancePath(value)
+			if err != nil {
+				return err
+			}
+
 			if strings.HasPrefix(value, d.state.DevMonitor.PrefixPath()) {
 				return nil
 			}
@@ -100,7 +105,7 @@ func (d *unixCommon) validateConfig(instConf instance.ConfigReader) error {
 		// ---
 		//  type: string
 		//  shortdesc: Path inside the instance (one of `source` and `path` must be set)
-		"path": validate.IsAny,
+		"path": validateInstancePath,
 
 		// gendoc:generate(entity=devices, group=unix-char-block, key=required)
 		//
