@@ -9749,13 +9749,9 @@ func (d *qemu) Export(metaWriter io.Writer, rootfsWriter io.Writer, properties m
 	fPath := fmt.Sprintf("%s/rootfs.img", tmpPath)
 
 	// On some storage drivers (lvmcluster), the volume holds a qcow2 container rather than raw data.
+	// Take the format from the volume config, never from the disk's own (tenant-controlled) content.
 	srcFormat := "raw"
-	isQcow2, err := d.isQCOW2(mountInfo.DiskPath)
-	if err != nil {
-		return nil, fmt.Errorf("Failed checking disk format: %w", err)
-	}
-
-	if isQcow2 {
+	if mountInfo.Qcow2 {
 		srcFormat = storageDrivers.BlockVolumeTypeQcow2
 	}
 
