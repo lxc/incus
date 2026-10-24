@@ -2165,7 +2165,7 @@ func autoUpdateImages(ctx context.Context, s *state.State) error {
 			}
 
 			if len(nodes) > 1 {
-				err := distributeImage(ctx, s, nodes, fingerprint, newImage)
+				err := distributeImage(ctx, s, nodes, fingerprint, newImage, pruneOld)
 				if err != nil {
 					logger.Error("Failed to distribute new image", logger.Ctx{"err": err, "fingerprint": newImage.Fingerprint})
 
@@ -2200,7 +2200,7 @@ func autoUpdateImages(ctx context.Context, s *state.State) error {
 	return nil
 }
 
-func distributeImage(ctx context.Context, s *state.State, nodes []string, oldFingerprint string, newImage *api.Image) error {
+func distributeImage(ctx context.Context, s *state.State, nodes []string, oldFingerprint string, newImage *api.Image, pruneOld bool) error {
 	// Skip own node
 	localClusterAddress := s.LocalConfig.ClusterAddress()
 
@@ -2327,6 +2327,22 @@ func distributeImage(ctx context.Context, s *state.State, nodes []string, oldFin
 			if err != nil {
 				logger.Error("Failed deleting old image from storage pool", logger.Ctx{"err": err, "remote": nodeAddress, "pool": poolName, "fingerprint": oldFingerprint})
 			}
+		}
+
+		if !pruneOld {
+			continue
+		}
+
+		// Remove the old image files from the member while its database records still exist.
+		op, err := client.UseProject(newImage.Project).DeleteImage(oldFingerprint)
+		if err != nil {
+			logger.Error("Failed requesting old image deletion from cluster member", logger.Ctx{"err": err, "remote": nodeAddress, "fingerprint": oldFingerprint})
+			continue
+		}
+
+		err = op.Wait()
+		if err != nil {
+			logger.Error("Failed deleting old image from cluster member", logger.Ctx{"err": err, "remote": nodeAddress, "fingerprint": oldFingerprint})
 		}
 	}
 
@@ -4988,7 +5004,7 @@ func imageRefresh(d *Daemon, r *http.Request) response.Response {
 			}
 
 			if len(nodes) > 1 {
-				err := distributeImage(context.TODO(), s, nodes, fingerprint, newImage)
+				err := distributeImage(context.TODO(), s, nodes, fingerprint, newImage, !referenced)
 				if err != nil {
 					return fmt.Errorf("Failed to distribute new image %q: %w", newImage.Fingerprint, err)
 				}
