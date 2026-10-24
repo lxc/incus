@@ -29,6 +29,7 @@ type MountInfo struct {
 	DiskPath    string                               // The location of the block disk (if supported).
 	BackingPath []string                             // The location of the block disk (backing disk for qcow2).
 	PostHooks   []func(inst instance.Instance) error // Hooks to be called following a mount.
+	Qcow2       bool                                 // Whether the disk is qcow2 formatted (from the volume config, not its content).
 }
 
 // Type represents an Incus storage pool type.

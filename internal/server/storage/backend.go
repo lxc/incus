@@ -3533,6 +3533,7 @@ func (b *backend) MountInstance(inst instance.Instance, op *operations.Operation
 	mountInfo := &MountInfo{
 		DiskPath:    diskPath,
 		BackingPath: backingPaths,
+		Qcow2:       drivers.IsQcow2Block(vol),
 	}
 
 	reverter.Success() // From here on it is up to caller to call UnmountInstance() when done.
@@ -4626,6 +4627,7 @@ func (b *backend) MountInstanceSnapshot(inst instance.Instance, op *operations.O
 
 	mountInfo := &MountInfo{
 		DiskPath: diskPath,
+		Qcow2:    drivers.IsQcow2Block(vol),
 	}
 
 	return mountInfo, nil
@@ -7320,7 +7322,7 @@ func (b *backend) MountCustomVolume(projectName, volName string, op *operations.
 	vol := b.GetVolume(drivers.VolumeTypeCustom, drivers.ContentType(volume.ContentType), volStorageName, volume.Config)
 
 	// Perform the mount.
-	mountInfo := &MountInfo{}
+	mountInfo := &MountInfo{Qcow2: drivers.IsQcow2Block(vol)}
 	err = b.driver.MountVolume(vol, op)
 	if err != nil {
 		return nil, err
@@ -11187,8 +11189,14 @@ func (b *backend) GetInstanceNBD(inst instance.Instance, writable bool) (net.Con
 		return nil, nil, err
 	}
 
+	// Load the volume config so the disk format comes from it rather than from the disk's own bytes.
+	dbVol, err := VolumeDBGet(b, inst.Project().Name, inst.Name(), drivers.VolumeTypeVM)
+	if err != nil {
+		return nil, nil, err
+	}
+
 	volStorageName := project.Instance(inst.Project().Name, inst.Name())
-	vol := b.GetVolume(drivers.VolumeTypeVM, drivers.ContentTypeBlock, volStorageName, nil)
+	vol := b.GetVolume(drivers.VolumeTypeVM, drivers.ContentTypeBlock, volStorageName, dbVol.Config)
 
 	unlock, err := nbdOperationLock(inst.Project().Name, inst.Name())
 	if err != nil {
@@ -11301,7 +11309,7 @@ func (b *backend) GetCustomVolumeNBD(projectName string, volName string, writabl
 	}
 
 	volStorageName := project.StorageVolume(projectName, volName)
-	vol := b.GetVolume(drivers.VolumeTypeCustom, drivers.ContentTypeBlock, volStorageName, nil)
+	vol := b.GetVolume(drivers.VolumeTypeCustom, drivers.ContentTypeBlock, volStorageName, dbVol.Config)
 
 	// Convert the volume type name to our internal integer representation.
 	volumeDbType, err := VolumeTypeNameToDBType(dbVol.Type)
@@ -11359,6 +11367,14 @@ func (b *backend) connectOfflineNBD(vol drivers.Volume, writable bool) (net.Conn
 		cmd.Args = append(cmd.Args, "--read-only")
 	}
 
+	// Set the format from the volume config so qemu-nbd can't auto-detect a tenant-crafted header.
+	nbdFormat := "raw"
+	if drivers.IsQcow2Block(vol) {
+		nbdFormat = drivers.BlockVolumeTypeQcow2
+	}
+
+	cmd.Args = append(cmd.Args, fmt.Sprintf("--format=%s", nbdFormat))
+
 	// Share the qemu-nbd process safely between the worker and this goroutine.
 	var procMu sync.Mutex
 	var proc *os.Process
@@ -11374,12 +11390,13 @@ func (b *backend) connectOfflineNBD(vol drivers.Volume, writable bool) (net.Conn
 				return err
 			}
 
-			imgInfo, err := drivers.Qcow2Info(volDiskPath)
-			if err != nil {
-				return err
-			}
+			// Only probe for bitmaps on a volume the config says is qcow2.
+			if drivers.IsQcow2Block(vol) {
+				imgInfo, err := drivers.Qcow2Info(volDiskPath)
+				if err != nil {
+					return err
+				}
 
-			if imgInfo.Format == "qcow2" && len(imgInfo.FormatSpecific.Data.Bitmaps) > 0 {
 				for _, b := range imgInfo.FormatSpecific.Data.Bitmaps {
 					cmd.Args = append(cmd.Args, fmt.Sprintf("--bitmap=%s", b.Name))
 				}
