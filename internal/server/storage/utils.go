@@ -720,6 +720,31 @@ func ImageUnpack(imageFile string, vol drivers.Volume, destBlockFile string, sys
 
 	// convertBlockImage converts the qcow2 block image file into a raw block device. If needed it will attempt
 	// to enlarge the destination volume to accommodate the unpacked qcow2 image file.
+	// checkBlockImage refuses a root disk that qemu-img could follow to another file.
+	checkBlockImage := func(imgPath string) error {
+		// Reject a root disk symlink, which could point qemu-img at a host file.
+		imgStat, err := os.Lstat(imgPath)
+		if err != nil {
+			return err
+		}
+
+		if !imgStat.Mode().IsRegular() {
+			return fmt.Errorf("Image root disk isn't a regular file: %s", imageFile)
+		}
+
+		// The image must be self-contained, as qemu-img opens any backing or external data file it refers to.
+		standalone, err := drivers.Qcow2IsStandalone(imgPath)
+		if err != nil {
+			return fmt.Errorf("Failed reading image header %q: %w", imgPath, err)
+		}
+
+		if !standalone {
+			return errors.New("Image refers to a backing file or to an external data file")
+		}
+
+		return nil
+	}
+
 	convertBlockImage := func(v drivers.Volume, imgPath string, dstPath string, tracker *ioprogress.ProgressTracker) (int64, error) {
 		// The metadata stream may have replaced the block file inside the volume with a symlink.
 		if strings.HasPrefix(dstPath, internalUtil.AddSlash(destPath)) {
@@ -855,6 +880,11 @@ func ImageUnpack(imageFile string, vol drivers.Volume, destBlockFile string, sys
 		}
 
 		// Convert the qcow2 format to a raw block device.
+		err = checkBlockImage(imageRootfsFile)
+		if err != nil {
+			return -1, err
+		}
+
 		imgSize, err = convertBlockImage(vol, imageRootfsFile, destBlockFile, tracker)
 		if err != nil {
 			return -1, err
@@ -877,6 +907,11 @@ func ImageUnpack(imageFile string, vol drivers.Volume, destBlockFile string, sys
 		imgPath := filepath.Join(tempDir, "rootfs.img")
 
 		// Convert the qcow2 format to a raw block device.
+		err = checkBlockImage(imgPath)
+		if err != nil {
+			return -1, err
+		}
+
 		imgSize, err = convertBlockImage(vol, imgPath, destBlockFile, tracker)
 		if err != nil {
 			return -1, err
