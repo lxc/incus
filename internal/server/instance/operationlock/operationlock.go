@@ -36,6 +36,9 @@ const ActionUpdate Action = "update"
 // ActionDelete for deleting an instance.
 const ActionDelete Action = "delete"
 
+// ActionRename for renaming an instance.
+const ActionRename Action = "rename"
+
 // ActionMigrate for migrating an instance.
 const ActionMigrate Action = "migrate"
 
