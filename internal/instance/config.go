@@ -1652,6 +1652,13 @@ var ConfigDeviceVolatileKeys = map[string]func(value string) error{
 	//  type: string
 	//  shortdesc: SR-IOV virtual function original VLAN
 	"last_state.vf.vlan": validate.IsAny,
+
+	// gendoc:generate(entity=instance, group=volatile, key=volatile.<name>.failover.host_name)
+	//
+	// ---
+	//  type: string
+	//  shortdesc: Network device name on the host for the failover interface
+	"failover.host_name": validate.IsAny,
 }
 
 // DeviceVolatileKeyConflict returns whether a device of that name would own volatile keys of the other device, such as eth0.last_state next to eth0.

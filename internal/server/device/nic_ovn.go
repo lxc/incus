@@ -811,7 +811,7 @@ func (d *nicOVN) validateEnvironment() error {
 
 	integrationBridge := d.state.GlobalConfig.NetworkOVNIntegrationBridge()
 
-	if !util.PathExists(fmt.Sprintf("/sys/class/net/%s", integrationBridge)) {
+	if !network.InterfaceExists(integrationBridge) {
 		return fmt.Errorf("OVS integration bridge device %q doesn't exist", integrationBridge)
 	}
 
@@ -1508,7 +1508,7 @@ func (d *nicOVN) postStop() error {
 		if err != nil {
 			return fmt.Errorf("Failed to bring down the host interface %q: %w", d.config["host_name"], err)
 		}
-	} else if d.config["host_name"] != "" && util.PathExists(fmt.Sprintf("/sys/class/net/%s", d.config["host_name"])) {
+	} else if d.config["host_name"] != "" && network.InterfaceExists(d.config["host_name"]) {
 		// Removing host-side end of veth pair will delete the peer end too.
 		err := network.InterfaceRemove(d.config["host_name"])
 		if err != nil {
