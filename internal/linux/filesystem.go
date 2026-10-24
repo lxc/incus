@@ -259,6 +259,33 @@ func GetAllXattr(path string) (map[string]string, error) {
 	return xattrs, nil
 }
 
+// GetAllXattrFromFd returns all extended attributes of the inode referred to by fd, which should be
+// an O_PATH descriptor. Reading through /proc/self/fd avoids re-resolving the path.
+func GetAllXattrFromFd(fd int) (map[string]string, error) {
+	path := fmt.Sprintf("/proc/self/fd/%d", fd)
+
+	xattrNames, err := xattr.List(path)
+	if err != nil {
+		if errors.Is(err, unix.EOPNOTSUPP) {
+			return nil, nil
+		}
+
+		return nil, fmt.Errorf("Failed getting extended attributes: %w", err)
+	}
+
+	xattrs := make(map[string]string, len(xattrNames))
+	for _, xattrName := range xattrNames {
+		value, err := xattr.Get(path, xattrName)
+		if err != nil {
+			return nil, fmt.Errorf("Failed getting %q extended attribute: %w", xattrName, err)
+		}
+
+		xattrs[xattrName] = string(value)
+	}
+
+	return xattrs, nil
+}
+
 // IsBlockdev checks if the provided file is a block device.
 func IsBlockdev(fm os.FileMode) bool {
 	return ((fm&os.ModeDevice != 0) && (fm&os.ModeCharDevice == 0))
