@@ -2,6 +2,7 @@ package linux
 
 import (
 	"net"
+	"os"
 
 	"golang.org/x/sys/unix"
 )
@@ -27,4 +28,37 @@ func GetUcred(conn *net.UnixConn) (*unix.Ucred, error) {
 	}
 
 	return ucred, nil
+}
+
+// AcceptSameUser returns the first connection on l whose peer runs as this process's effective
+// user, closing any other. Abstract unix sockets have no owner or mode, so any local user can
+// connect to them.
+func AcceptSameUser(l net.Listener) (net.Conn, error) {
+	euid := uint32(os.Geteuid())
+
+	for {
+		conn, err := l.Accept()
+		if err != nil {
+			return nil, err
+		}
+
+		unixConn, ok := conn.(*net.UnixConn)
+		if !ok {
+			_ = conn.Close()
+			continue
+		}
+
+		ucred, err := GetUcred(unixConn)
+		if err != nil {
+			_ = conn.Close()
+			continue
+		}
+
+		if ucred.Uid != euid {
+			_ = conn.Close()
+			continue
+		}
+
+		return conn, nil
+	}
 }
