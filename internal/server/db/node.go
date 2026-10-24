@@ -16,6 +16,7 @@ import (
 
 	cowsqldb "github.com/cowsql/go-cowsql/cluster/db"
 
+	"github.com/lxc/incus/v7/internal/server/certificate"
 	"github.com/lxc/incus/v7/internal/server/db/cluster"
 	"github.com/lxc/incus/v7/internal/server/db/query"
 	localUtil "github.com/lxc/incus/v7/internal/server/util"
@@ -423,6 +424,13 @@ func (c *ClusterTx) RenameNode(ctx context.Context, old string, newName string) 
 
 	if n != 1 {
 		return fmt.Errorf("expected to update one row, not %d", n)
+	}
+
+	// Keep the server certificate in sync as it's tied to the node through its name.
+	stmt = `UPDATE certificates SET name=? WHERE name=? AND type=?`
+	_, err = c.tx.Exec(stmt, newName, old, certificate.TypeServer)
+	if err != nil {
+		return fmt.Errorf("failed to update server certificate name: %w", err)
 	}
 
 	return nil

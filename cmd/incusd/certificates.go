@@ -1091,6 +1091,11 @@ func doCertificateUpdate(d *Daemon, dbInfo api.Certificate, req api.CertificateP
 			return response.BadRequest(errors.New("The certificate type cannot be changed"))
 		}
 
+		// A server certificate's name is tied to its cluster member.
+		if dbInfo.Type == api.CertificateTypeServer && dbInfo.Name != req.Name {
+			return response.BadRequest(errors.New("The name of a server certificate cannot be changed"))
+		}
+
 		reqDBType, err := certificate.FromAPIType(req.Type)
 		if err != nil {
 			return response.BadRequest(err)
