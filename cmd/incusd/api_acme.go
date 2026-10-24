@@ -6,6 +6,7 @@ import (
 	"io"
 	"net"
 	"net/http"
+	"regexp"
 	"strings"
 	"time"
 
@@ -32,6 +33,9 @@ var acmeChallengeCmd = APIEndpoint{
 
 	Get: APIEndpointAction{Handler: acmeProvideChallenge, AllowUntrusted: true},
 }
+
+// acmeChallengePath matches an HTTP-01 challenge path (RFC 8555 tokens are base64url).
+var acmeChallengePath = regexp.MustCompile(`^/\.well-known/acme-challenge/[A-Za-z0-9_-]+$`)
 
 var internalACMEChallengeCmd = APIEndpoint{
 	Path: "acme/challenge",
@@ -76,7 +80,8 @@ func acmeChallengeListenerStart(d *Daemon) error {
 	server := &http.Server{
 		ReadHeaderTimeout: 3 * time.Second,
 		Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			if r.Method != http.MethodGet || !strings.HasPrefix(r.URL.Path, "/.well-known/acme-challenge/") {
+			// The request is replayed with our cluster credentials, so only let actual challenges through.
+			if r.Method != http.MethodGet || !acmeChallengePath.MatchString(r.URL.Path) {
 				http.NotFound(w, r)
 				return
 			}
