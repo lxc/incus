@@ -1352,6 +1352,11 @@ func allowInstanceUpdate(tx *db.ClusterTx, projectName, instanceName string, req
 		updatedInstance = &info.Instances[i]
 	}
 
+	// The instance may have been renamed or deleted since the caller loaded it.
+	if updatedInstance == nil {
+		return api.StatusErrorf(http.StatusNotFound, "Instance %q not found", instanceName)
+	}
+
 	instType, err := instancetype.New(updatedInstance.Type)
 	if err != nil {
 		return err
@@ -1497,6 +1502,7 @@ func AllowProfileUpdate(tx *db.ClusterTx, projectName, profileName string, req a
 	}
 
 	// Change the profile being updated.
+	found := false
 	for i, profile := range info.Profiles {
 		if profile.Name != profileName {
 			continue
@@ -1504,6 +1510,12 @@ func AllowProfileUpdate(tx *db.ClusterTx, projectName, profileName string, req a
 
 		info.Profiles[i].Config = req.Config
 		info.Profiles[i].Devices = req.Devices
+		found = true
+	}
+
+	// Refuse rather than pass an update we couldn't check (profile renamed or deleted meanwhile).
+	if !found {
+		return api.StatusErrorf(http.StatusNotFound, "Profile %q not found", profileName)
 	}
 
 	err = checkRestrictionsAndAggregateLimits(tx, info)

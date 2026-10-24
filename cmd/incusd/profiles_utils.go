@@ -90,6 +90,12 @@ func doProfileUpdate(ctx context.Context, s *state.State, p api.Project, profile
 
 	// Update the database.
 	err = s.DB.Cluster.Transaction(ctx, func(ctx context.Context, tx *db.ClusterTx) error {
+		// Re-check in the transaction doing the write, as the profile may have been renamed since.
+		err := project.AllowProfileUpdate(tx, p.Name, profileName, req)
+		if err != nil {
+			return err
+		}
+
 		devices, err := cluster.APIToDevices(req.Devices)
 		if err != nil {
 			return err
