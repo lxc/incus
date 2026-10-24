@@ -7472,7 +7472,7 @@ func (d *lxc) MigrateReceive(args instance.MigrateReceiveArgs) error {
 					d.logger.Debug("Waiting to receive pre-dump rsync")
 
 					// Transfer a CRIU pre-dump.
-					err = rsync.Recv(internalUtil.AddSlash(imagesDir), stateConn, nil, rsyncFeatures)
+					err = rsync.Recv(internalUtil.AddSlash(imagesDir), stateConn, nil, rsyncFeatures, true)
 					if err != nil {
 						return fmt.Errorf("Failed receiving pre-dump rsync: %w", err)
 					}
@@ -7502,7 +7502,7 @@ func (d *lxc) MigrateReceive(args instance.MigrateReceiveArgs) error {
 
 			// Final CRIU dump.
 			d.logger.Debug("About to receive final dump rsync")
-			err = rsync.Recv(internalUtil.AddSlash(imagesDir), stateConn, nil, rsyncFeatures)
+			err = rsync.Recv(internalUtil.AddSlash(imagesDir), stateConn, nil, rsyncFeatures, true)
 			if err != nil {
 				return fmt.Errorf("Failed receiving final dump rsync: %w", err)
 			}

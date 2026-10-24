@@ -1304,6 +1304,15 @@ func UnpackVolume(d Driver, vol Volume, r io.ReadSeeker, tarArgs []string, unpac
 		if err != nil {
 			return fmt.Errorf("Error starting unpack: %w", err)
 		}
+
+		// The backup's top-level entry can set the owner of the volume's top directory; for instance
+		// volumes put it back to root so the directory and its setuid files aren't reachable by its owner.
+		if vol.Type() != VolumeTypeCustom {
+			err = os.Chown(mountPath, 0, 0)
+			if err != nil {
+				return err
+			}
+		}
 	}
 
 	// Extract block file to block volume.
