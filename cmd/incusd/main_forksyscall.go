@@ -411,6 +411,14 @@ static void mount_emulate(void)
 			fuse_target = advance_arg(true);
 			fuse_opts = advance_arg(true);
 
+			// Don't leak the daemon's descriptors or environment into the container's mount.fuse.
+			if (incus_close_range(STDERR_FILENO + 1, UINT_MAX, CLOSE_RANGE_UNSHARE) < 0)
+				_exit(EXIT_FAILURE);
+
+			clearenv();
+			if (setenv("PATH", "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin", 1) < 0)
+				_exit(EXIT_FAILURE);
+
 			if (strcmp(fuse_opts, "") == 0)
 				execlp("mount.fuse", "mount.fuse", fuse_source, fuse_target, (char *) NULL);
 			else
