@@ -5121,7 +5121,7 @@ func (d *lxc) CGroupSet(key string, value string) error {
 // Update applies updated config.
 func (d *lxc) Update(args db.InstanceArgs, userRequested bool) error {
 	// Setup a new operation
-	op, err := operationlock.CreateWaitGet(d.Project().Name, d.Name(), d.op, operationlock.ActionUpdate, []operationlock.Action{operationlock.ActionCreate, operationlock.ActionRestart, operationlock.ActionRestore}, false, false)
+	op, err := operationlock.CreateWaitGet(d.Project().Name, d.Name(), d.op, operationlock.ActionUpdate, []operationlock.Action{operationlock.ActionRestart, operationlock.ActionRestore}, false, false)
 	if err != nil {
 		return fmt.Errorf("Failed to create instance update operation: %w", err)
 	}
