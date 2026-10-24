@@ -22,6 +22,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"slices"
 	"sort"
 	"strconv"
@@ -381,7 +382,8 @@ type qemu struct {
 	architectureName string
 
 	// Stateful migration streams.
-	migrationReceiveStateful map[string]io.ReadWriteCloser
+	migrationReceiveStateful   map[string]io.ReadWriteCloser
+	migrationReceiveStateExtra []io.ReadWriteCloser
 
 	// Cancelled if the migration source fails partway through.
 	migrationReceiveCtx context.Context
@@ -1108,7 +1110,118 @@ func (d *qemu) restoreStateHandle(ctx context.Context, monitor *qmp.Monitor, f *
 		return err
 	}
 
-	err = monitor.MigrateIncoming(ctx, "migration")
+	err = monitor.MigrateIncoming("migration")
+	if err != nil {
+		return err
+	}
+
+	return d.restoreStateWait(ctx, monitor)
+}
+
+// socketsPath returns the directory QEMU binds its runtime sockets in.
+func (d *qemu) socketsPath() string {
+	return filepath.Join(d.RunPath(), "sockets")
+}
+
+// openSocketsDir hands the sockets directory to QEMU as an fd and returns the path QEMU reaches it through.
+// The run directory stays root only, QEMU gets to the directory through /proc/self/fd rather than by path.
+func (d *qemu) openSocketsDir(monitor *qmp.Monitor, name string) (string, func(), error) {
+	path := d.socketsPath()
+
+	err := os.MkdirAll(path, 0o700)
+	if err != nil {
+		return "", nil, fmt.Errorf("Failed creating sockets directory: %w", err)
+	}
+
+	if d.state.OS.UnprivUser != "" {
+		err = os.Chown(path, int(d.state.OS.UnprivUID), -1)
+		if err != nil {
+			return "", nil, fmt.Errorf("Failed to chown sockets directory: %w", err)
+		}
+	}
+
+	dir, err := os.Open(path)
+	if err != nil {
+		return "", nil, fmt.Errorf("Failed opening sockets directory: %w", err)
+	}
+
+	defer func() { _ = dir.Close() }()
+
+	info, err := monitor.SendFileWithFDSet(name, dir, false)
+	if err != nil {
+		return "", nil, fmt.Errorf("Failed sending sockets directory: %w", err)
+	}
+
+	cleanup := func() {
+		_ = monitor.RemoveFDFromFDSet(name)
+	}
+
+	return fmt.Sprintf("/proc/self/fd/%d", info.FD), cleanup, nil
+}
+
+// restoreStateMultifd receives the VM state over several connections, each fed to QEMU through a unix socket.
+func (d *qemu) restoreStateMultifd(ctx context.Context, monitor *qmp.Monitor, conns []io.ReadWriteCloser) error {
+	qemuDir, cleanup, err := d.openSocketsDir(monitor, "migration")
+	if err != nil {
+		return err
+	}
+
+	defer cleanup()
+
+	sockPath := filepath.Join(d.socketsPath(), "migration.sock")
+
+	err = os.Remove(sockPath)
+	if err != nil && !errors.Is(err, fs.ErrNotExist) {
+		return fmt.Errorf("Failed to remove stale socket %q: %w", sockPath, err)
+	}
+
+	defer func() { _ = os.Remove(sockPath) }()
+
+	err = monitor.MigrateSetCapabilities(map[string]bool{"multifd": true})
+	if err != nil {
+		return fmt.Errorf("Failed setting migration capabilities: %w", err)
+	}
+
+	err = monitor.MigrateSetParameters(map[string]any{"multifd-channels": len(conns) - 1})
+	if err != nil {
+		return fmt.Errorf("Failed setting migration parameters: %w", err)
+	}
+
+	err = monitor.MigrateIncomingUnix(filepath.Join(qemuDir, "migration.sock"))
+	if err != nil {
+		return err
+	}
+
+	for _, conn := range conns {
+		go func(conn io.ReadWriteCloser) {
+			// QEMU blocks its main loop while it peeks at a new channel, so only connect once data is available.
+			buf := make([]byte, 64*1024)
+			n, err := conn.Read(buf)
+			if err != nil {
+				return
+			}
+
+			qemuConn, err := net.Dial("unix", sockPath)
+			if err != nil {
+				d.logger.Error("Failed connecting to the migration socket", logger.Ctx{"err": err})
+				return
+			}
+
+			_, err = qemuConn.Write(buf[:n])
+			if err == nil {
+				_, _ = util.SafeCopy(qemuConn, conn)
+			}
+
+			_ = qemuConn.Close()
+		}(conn)
+	}
+
+	return d.restoreStateWait(ctx, monitor)
+}
+
+// restoreStateWait waits for the incoming migration to complete, reporting a QEMU crash with its output.
+func (d *qemu) restoreStateWait(ctx context.Context, monitor *qmp.Monitor) error {
+	err := monitor.MigrateIncomingWait(ctx)
 	if err != nil {
 		if errors.Is(err, qmp.ErrMonitorDisconnect) {
 			// Crash output goes to stderr (early log), -D only captures QEMU's internal logging.
@@ -1218,28 +1331,35 @@ func (d *qemu) restoreState(monitor *qmp.Monitor) error {
 			}()
 		}
 
-		// Receive checkpoint from QEMU process on source.
-		d.logger.Debug("Stateful migration checkpoint receive starting")
-		pipeRead, pipeWrite, err := os.Pipe()
-		if err != nil {
-			return err
-		}
-
-		go func() {
-			_, _ = util.SafeCopy(pipeWrite, stateConn)
-
-			_ = pipeRead.Close()
-			_ = pipeWrite.Close()
-		}()
-
 		ctx := d.migrationReceiveCtx
 		if ctx == nil {
 			ctx = context.Background()
 		}
 
-		err = d.restoreStateHandle(ctx, monitor, pipeRead)
-		if err != nil {
-			return fmt.Errorf("Failed restoring checkpoint from source: %w", err)
+		// Receive checkpoint from QEMU process on source.
+		d.logger.Debug("Stateful migration checkpoint receive starting")
+		if len(d.migrationReceiveStateExtra) > 0 {
+			err := d.restoreStateMultifd(ctx, monitor, append([]io.ReadWriteCloser{stateConn}, d.migrationReceiveStateExtra...))
+			if err != nil {
+				return fmt.Errorf("Failed restoring checkpoint from source: %w", err)
+			}
+		} else {
+			pipeRead, pipeWrite, err := os.Pipe()
+			if err != nil {
+				return err
+			}
+
+			go func() {
+				_, _ = util.SafeCopy(pipeWrite, stateConn)
+
+				_ = pipeRead.Close()
+				_ = pipeWrite.Close()
+			}()
+
+			err = d.restoreStateHandle(ctx, monitor, pipeRead)
+			if err != nil {
+				return fmt.Errorf("Failed restoring checkpoint from source: %w", err)
+			}
 		}
 
 		d.logger.Debug("Stateful migration checkpoint receive finished")
@@ -1303,6 +1423,93 @@ func (d *qemu) saveStateHandle(monitor *qmp.Monitor, f *os.File) error {
 	}
 
 	return nil
+}
+
+// saveStateMultifd streams the VM state over several connections, QEMU connects to a unix socket once per channel.
+// The returned function releases the socket once the transfer is over.
+func (d *qemu) saveStateMultifd(monitor *qmp.Monitor, conns []io.ReadWriteCloser) (func(), error) {
+	pid, err := d.pid()
+	if err != nil {
+		return nil, err
+	}
+
+	qemuDir, cleanupDir, err := d.openSocketsDir(monitor, "migration")
+	if err != nil {
+		return nil, err
+	}
+
+	sockPath := filepath.Join(d.socketsPath(), "migration.sock")
+
+	err = os.Remove(sockPath)
+	if err != nil && !errors.Is(err, fs.ErrNotExist) {
+		cleanupDir()
+		return nil, fmt.Errorf("Failed to remove stale socket %q: %w", sockPath, err)
+	}
+
+	listener, err := net.ListenUnix("unix", &net.UnixAddr{Name: sockPath, Net: "unix"})
+	if err != nil {
+		cleanupDir()
+		return nil, fmt.Errorf("Failed listening on the migration socket: %w", err)
+	}
+
+	cleanup := func() {
+		_ = listener.Close()
+		cleanupDir()
+	}
+
+	// Let the unprivileged QEMU connect to the root owned socket.
+	if d.state.OS.UnprivUser != "" {
+		err = os.Chown(sockPath, int(d.state.OS.UnprivUID), -1)
+		if err != nil {
+			cleanup()
+			return nil, fmt.Errorf("Failed to chown migration socket: %w", err)
+		}
+	}
+
+	// Pair each QEMU connection with one of the websockets, the target tells them apart by their content.
+	go func() {
+		for i := 0; i < len(conns); {
+			qemuConn, err := listener.AcceptUnix()
+			if err != nil {
+				return
+			}
+
+			// Only our QEMU process may feed the state stream.
+			cred, err := linux.GetUcred(qemuConn)
+			if err != nil || int(cred.Pid) != pid {
+				d.logger.Warn("Rejected foreign connection on the migration socket", logger.Ctx{"err": err})
+				_ = qemuConn.Close()
+				continue
+			}
+
+			conn := conns[i]
+			i++
+
+			go func() {
+				_, _ = util.SafeCopy(conn, qemuConn)
+				_ = qemuConn.Close()
+				_ = conn.Close()
+			}()
+		}
+	}()
+
+	err = monitor.MigrateUnix(filepath.Join(qemuDir, "migration.sock"))
+	if err != nil {
+		cleanup()
+		return nil, err
+	}
+
+	return cleanup, nil
+}
+
+// qemuMigrationChannels returns how many parallel channels to use for the live state transfer.
+func qemuMigrationChannels() uint32 {
+	// Each channel keeps a thread busy on both ends, so keep small hosts at two.
+	if runtime.NumCPU() < 8 {
+		return 2
+	}
+
+	return 4
 }
 
 // saveState dumps the current VM state to the state file.
@@ -8953,6 +9160,10 @@ func (d *qemu) MigrateSend(args instance.MigrateSendArgs) error {
 	// fulfil the "live" part of the request, albeit with longer pause of the instance during the process.
 	if args.Live {
 		offerHeader.Criu = migration.CRIUType_VM_QEMU.Enum()
+
+		// Offer parallel channels for the state transfer.
+		channels := qemuMigrationChannels()
+		offerHeader.MultifdChannels = &channels
 	}
 
 	reverter := revert.New()
@@ -9075,11 +9286,28 @@ func (d *qemu) MigrateSend(args instance.MigrateSendArgs) error {
 	// Detect whether the far side has chosen to use QEMU to QEMU live state transfer mode, and if so then
 	// wait for the connection to be established.
 	var stateConn io.ReadWriteCloser
+	var stateConnExtra []io.ReadWriteCloser
 	if args.Live && respHeader.Criu != nil && *respHeader.Criu == migration.CRIUType_VM_QEMU {
 		stateConn, err = args.StateConn(connectionsCtx)
 		if err != nil {
 			op.Done(err)
 			return err
+		}
+
+		// The target picks the number of parallel channels within what was offered.
+		channels := respHeader.GetMultifdChannels()
+		if channels > 1 {
+			if channels > qemuMigrationChannels() || args.StateConnExtra == nil {
+				err = fmt.Errorf("Unexpected request for %d migration channels", channels)
+				op.Done(err)
+				return err
+			}
+
+			stateConnExtra, err = args.StateConnExtra(connectionsCtx, int(channels))
+			if err != nil {
+				op.Done(err)
+				return err
+			}
 		}
 	}
 
@@ -9150,7 +9378,7 @@ func (d *qemu) MigrateSend(args instance.MigrateSendArgs) error {
 				defer instanceRefClear(d)
 			}
 
-			err = d.migrateSendLive(ctx, pool, args.ClusterMoveSourceName, args.StoragePool, blockSize, filesystemConn, stateConn, volSourceArgs, &committed)
+			err = d.migrateSendLive(ctx, pool, args.ClusterMoveSourceName, args.StoragePool, blockSize, filesystemConn, stateConn, stateConnExtra, volSourceArgs, &committed)
 			if err != nil {
 				return err
 			}
@@ -9588,7 +9816,7 @@ func (d *qemu) cancelMigrationSnapshot(monitor *qmp.Monitor, diskName string) {
 }
 
 // migrateSendLive performs live migration send process.
-func (d *qemu) migrateSendLive(ctx context.Context, pool storagePools.Pool, clusterMoveSourceName string, storagePool string, rootDiskSize int64, filesystemConn io.ReadWriteCloser, stateConn io.ReadWriteCloser, volSourceArgs *localMigration.VolumeSourceArgs, committed *bool) error {
+func (d *qemu) migrateSendLive(ctx context.Context, pool storagePools.Pool, clusterMoveSourceName string, storagePool string, rootDiskSize int64, filesystemConn io.ReadWriteCloser, stateConn io.ReadWriteCloser, stateConnExtra []io.ReadWriteCloser, volSourceArgs *localMigration.VolumeSourceArgs, committed *bool) error {
 	monitor, err := d.qmpConnect()
 	if err != nil {
 		return err
@@ -9619,6 +9847,12 @@ func (d *qemu) migrateSendLive(ctx context.Context, pool storagePools.Pool, clus
 		"throttle-trigger-threshold": 20,
 	}
 
+	// Spread the state transfer over several connections when the target opened them.
+	multifd := len(stateConnExtra) > 0
+	if multifd {
+		parameters["multifd-channels"] = len(stateConnExtra)
+	}
+
 	// Apply the global bandwidth limit to the memory and state transfer.
 	bwlimit := d.state.GlobalConfig.InstancesMigrationBwlimit()
 	if bwlimit != "" {
@@ -9646,6 +9880,9 @@ func (d *qemu) migrateSendLive(ctx context.Context, pool storagePools.Pool, clus
 			// Emit MIGRATION events on status changes so we notice pre-switchover
 			// immediately rather than on the next poll.
 			"events": true,
+
+			// Parallel state transfer, reset explicitly as a previous attempt may have left it on.
+			"multifd": multifd,
 		}
 
 		err = monitor.MigrateSetCapabilities(capabilities)
@@ -9700,6 +9937,9 @@ func (d *qemu) migrateSendLive(ctx context.Context, pool storagePools.Pool, clus
 			// Emit MIGRATION events on status changes so we notice pre-switchover
 			// immediately rather than on the next poll.
 			"events": true,
+
+			// Parallel state transfer, reset explicitly as a previous attempt may have left it on.
+			"multifd": multifd,
 		}
 
 		err = monitor.MigrateSetCapabilities(capabilities)
@@ -9788,21 +10028,30 @@ func (d *qemu) migrateSendLive(ctx context.Context, pool storagePools.Pool, clus
 	d.logger.Debug("Stateful migration checkpoint send starting")
 
 	// Send checkpoint to QEMU process on target. This will pause the guest OS (if not already paused).
-	pipeRead, pipeWrite, err := os.Pipe()
-	if err != nil {
-		return err
-	}
+	if len(stateConnExtra) > 0 {
+		cleanup, err := d.saveStateMultifd(monitor, append([]io.ReadWriteCloser{stateConn}, stateConnExtra...))
+		if err != nil {
+			return fmt.Errorf("Failed starting state transfer to target: %w", err)
+		}
 
-	defer func() {
-		_ = pipeRead.Close()
-		_ = pipeWrite.Close()
-	}()
+		defer cleanup()
+	} else {
+		pipeRead, pipeWrite, err := os.Pipe()
+		if err != nil {
+			return err
+		}
 
-	go func() { _, _ = util.SafeCopy(stateConn, pipeRead) }()
+		defer func() {
+			_ = pipeRead.Close()
+			_ = pipeWrite.Close()
+		}()
 
-	err = d.saveStateHandle(monitor, pipeWrite)
-	if err != nil {
-		return fmt.Errorf("Failed starting state transfer to target: %w", err)
+		go func() { _, _ = util.SafeCopy(stateConn, pipeRead) }()
+
+		err = d.saveStateHandle(monitor, pipeWrite)
+		if err != nil {
+			return fmt.Errorf("Failed starting state transfer to target: %w", err)
+		}
 	}
 
 	// On failure, cancel the migration and resume the guest.
@@ -10096,9 +10345,16 @@ func (d *qemu) MigrateReceive(args instance.MigrateReceiveArgs) error {
 	// fulfil the "live" part of the request, albeit with longer pause of the instance during the process.
 	poolInfo := pool.Driver().Info()
 	var useStateConn bool
+	var channels uint32
 	if args.Live && offerHeader.Criu != nil && *offerHeader.Criu == migration.CRIUType_VM_QEMU {
 		respHeader.Criu = migration.CRIUType_VM_QEMU.Enum()
 		useStateConn = true
+
+		// Use parallel channels when offered and we're the one opening the connections.
+		if args.StateConnExtra != nil && offerHeader.GetMultifdChannels() > 1 {
+			channels = min(offerHeader.GetMultifdChannels(), qemuMigrationChannels())
+			respHeader.MultifdChannels = &channels
+		}
 	}
 
 	// Send response to source.
@@ -10112,10 +10368,18 @@ func (d *qemu) MigrateReceive(args instance.MigrateReceiveArgs) error {
 
 	// Establish state transfer connection if needed.
 	var stateConn io.ReadWriteCloser
+	var stateConnExtra []io.ReadWriteCloser
 	if args.Live && useStateConn {
 		stateConn, err = args.StateConn(connectionsCtx)
 		if err != nil {
 			return err
+		}
+
+		if channels > 1 {
+			stateConnExtra, err = args.StateConnExtra(connectionsCtx, int(channels))
+			if err != nil {
+				return err
+			}
 		}
 	}
 
@@ -10378,6 +10642,7 @@ func (d *qemu) MigrateReceive(args instance.MigrateReceiveArgs) error {
 					api.SecretNameState: stateConn,
 				}
 
+				d.migrationReceiveStateExtra = stateConnExtra
 				d.migrationReceiveCtx = ctx
 
 				d.disksToMigrate = append(d.disksToMigrate, dependentVolumes...)
