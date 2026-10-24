@@ -4926,6 +4926,14 @@ func (d *lxc) Rename(newName string, applyTemplateTrigger bool) error {
 		return errors.New("Renaming of running instance not allowed")
 	}
 
+	// Setup a new operation so a rename can't race another operation on the instance.
+	op, err := operationlock.CreateWaitGet(d.Project().Name, d.Name(), d.op, operationlock.ActionRename, nil, false, false)
+	if err != nil {
+		return fmt.Errorf("Failed to create instance rename operation: %w", err)
+	}
+
+	defer op.Done(nil)
+
 	// Clean things up.
 	d.cleanup()
 
