@@ -2185,7 +2185,7 @@ func (d *Daemon) setupAuthorization(reload ...string) error {
 		}
 	}
 
-	return d.authorizer.Configure(d.globalConfig.AuthorizationClientRoutes(), optional)
+	return d.authorizer.Configure(d.globalConfig.AuthorizationClientRoutes(), optional, d.globalConfig.TrustCACertificates())
 }
 
 // setupAuthorizationScriptlet loads scriptlet driver.

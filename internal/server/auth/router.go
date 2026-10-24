@@ -9,8 +9,10 @@ import (
 
 	"github.com/lxc/incus/v7/internal/server/certificate"
 	"github.com/lxc/incus/v7/internal/server/request"
+	internalUtil "github.com/lxc/incus/v7/internal/util"
 	"github.com/lxc/incus/v7/shared/api"
 	"github.com/lxc/incus/v7/shared/logger"
+	"github.com/lxc/incus/v7/shared/util"
 )
 
 // clientClass identifies the authentication class of a request.
@@ -61,6 +63,9 @@ type routerState struct {
 
 	// routes maps each client class to the authorizer.
 	routes map[clientClass]Authorizer
+
+	// trustCACertificates reflects core.trust_ca_certificates.
+	trustCACertificates bool
 }
 
 // Router is an Authorizer that dispatches each request to other authorizers.
@@ -96,7 +101,7 @@ func NewRouter(ctx context.Context, l logger.Logger, certificateCache *certifica
 	}
 
 	// Install the built-in default routing over the base drivers.
-	err = rt.store(nil, drivers)
+	err = rt.store(nil, drivers, false)
 	if err != nil {
 		return nil, err
 	}
@@ -105,7 +110,7 @@ func NewRouter(ctx context.Context, l logger.Logger, certificateCache *certifica
 }
 
 // Configure installs the routing table (from the explicit authorization.client.* configuration).
-func (rt *Router) Configure(routes map[string]string, optional map[string]Authorizer) error {
+func (rt *Router) Configure(routes map[string]string, optional map[string]Authorizer, trustCACertificates bool) error {
 	previous := rt.state.Load().drivers
 
 	// Keep the base drivers loaded at construction and swap in the new optional
@@ -117,7 +122,7 @@ func (rt *Router) Configure(routes map[string]string, optional map[string]Author
 
 	maps.Copy(drivers, optional)
 
-	return rt.store(routes, drivers)
+	return rt.store(routes, drivers, trustCACertificates)
 }
 
 // LoadedDriver returns the loaded driver registered under name.
@@ -126,7 +131,7 @@ func (rt *Router) LoadedDriver(name string) Authorizer {
 }
 
 // store resolves the routing table from the explicit authorization.client.* configuration.
-func (rt *Router) store(routes map[string]string, drivers map[string]Authorizer) error {
+func (rt *Router) store(routes map[string]string, drivers map[string]Authorizer, trustCACertificates bool) error {
 	base := defaultRoutes()
 	defaultTarget := routes[string(clientClassDefault)]
 
@@ -151,7 +156,7 @@ func (rt *Router) store(routes map[string]string, drivers map[string]Authorizer)
 		resolved[class] = driver
 	}
 
-	rt.state.Store(&routerState{drivers: drivers, routes: resolved})
+	rt.state.Store(&routerState{drivers: drivers, routes: resolved, trustCACertificates: trustCACertificates})
 
 	return nil
 }
@@ -183,10 +188,18 @@ func (rt *Router) isRestrictedTLS(fingerprint string) bool {
 		return false
 	}
 
-	_, projects := rt.certificates.GetCertificatesAndProjects()
-	projectNames, ok := projects[fingerprint]
+	cert := rt.certificates.GetAPICertificate(fingerprint)
+	if cert != nil {
+		return cert.Restricted
+	}
 
-	return ok && projectNames != nil
+	// A CA-trusted certificate can be valid without a trust store entry; its validation and
+	// potential revocation are handled in CheckTrustState.
+	if rt.state.Load().trustCACertificates && util.PathExists(internalUtil.VarPath("server.ca")) {
+		return false
+	}
+
+	return true
 }
 
 // isRootUnixRequest reports whether the request was made by the root user over the local unix socket.
