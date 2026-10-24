@@ -703,7 +703,7 @@ func (d *Daemon) Authenticate(w http.ResponseWriter, r *http.Request) (bool, str
 	if r.URL.Path == "/1.0/metrics" && peerCert != nil {
 		trusted, username := localUtil.CheckTrustState(*peerCert, trustedCerts[certificate.TypeMetrics], d.endpoints.NetworkCert(), trustCACertificates)
 		if trusted {
-			return true, username, api.AuthenticationMethodTLS, nil, nil
+			return true, d.trustStoreFingerprint(peerCert, username), api.AuthenticationMethodTLS, nil, nil
 		}
 
 		trusted, username = localUtil.CheckTrustStateIssuer(r.TLS.PeerCertificates, trustedCerts[certificate.TypeMetrics], d.endpoints.NetworkCert())
@@ -715,9 +715,12 @@ func (d *Daemon) Authenticate(w http.ResponseWriter, r *http.Request) (bool, str
 	// Validate regular TLS certificates.
 	if peerCert != nil {
 		trusted, username := localUtil.CheckTrustState(*peerCert, trustedCerts[certificate.TypeClient], d.endpoints.NetworkCert(), trustCACertificates)
-		_, isMetrics := trustedCerts[certificate.TypeMetrics][username]
-		if trusted && !isMetrics {
-			return true, username, api.AuthenticationMethodTLS, nil, nil
+		if trusted {
+			username = d.trustStoreFingerprint(peerCert, username)
+			_, isMetrics := trustedCerts[certificate.TypeMetrics][username]
+			if !isMetrics {
+				return true, username, api.AuthenticationMethodTLS, nil, nil
+			}
 		}
 	}
 
@@ -730,6 +733,31 @@ func (d *Daemon) Authenticate(w http.ResponseWriter, r *http.Request) (bool, str
 
 	// Reject unauthorized.
 	return false, "", "", nil, nil
+}
+
+// trustStoreFingerprint maps a CA-issued certificate to its trust store entry by what the CA signed,
+// so a re-encoded signature can't shed the entry's restrictions. Returns the presented fingerprint
+// when there is no matching entry.
+func (d *Daemon) trustStoreFingerprint(cert *x509.Certificate, fingerprint string) string {
+	certs := d.clientCerts.GetCertificates()
+	certTypes := []certificate.Type{certificate.TypeClient, certificate.TypeMetrics}
+
+	for _, certType := range certTypes {
+		_, ok := certs[certType][fingerprint]
+		if ok {
+			return fingerprint
+		}
+	}
+
+	for _, certType := range certTypes {
+		for fp, entry := range certs[certType] {
+			if bytes.Equal(entry.RawTBSCertificate, cert.RawTBSCertificate) {
+				return fp
+			}
+		}
+	}
+
+	return fingerprint
 }
 
 // State creates a new State instance linked to our internal db and os.
