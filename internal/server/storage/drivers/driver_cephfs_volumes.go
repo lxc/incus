@@ -204,7 +204,7 @@ func (d *cephfs) CreateVolumeFromMigration(vol Volume, conn io.ReadWriteCloser, 
 				wrapper = localMigration.ProgressTracker(op, "fs_progress", snapshot.GetName())
 			}
 
-			err = rsync.Recv(path, conn, wrapper, volTargetArgs.MigrationType.Features)
+			err = rsync.Recv(path, conn, wrapper, volTargetArgs.MigrationType.Features, false)
 			if err != nil {
 				return err
 			}
@@ -236,7 +236,7 @@ func (d *cephfs) CreateVolumeFromMigration(vol Volume, conn io.ReadWriteCloser, 
 			wrapper = localMigration.ProgressTracker(op, "fs_progress", vol.name)
 		}
 
-		return rsync.Recv(path, conn, wrapper, volTargetArgs.MigrationType.Features)
+		return rsync.Recv(path, conn, wrapper, volTargetArgs.MigrationType.Features, false)
 	}, op)
 	if err != nil {
 		return err

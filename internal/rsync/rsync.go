@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"golang.org/x/sys/unix"
 
 	"github.com/lxc/incus/v7/internal/linux"
 	internalUtil "github.com/lxc/incus/v7/internal/util"
@@ -316,7 +317,7 @@ func Send(name string, path string, conn io.ReadWriteCloser, tracker *ioprogress
 // Recv sets up the receiving half of the websocket to rsync (the other
 // half set up by rsync.Send), putting the contents in the directory specified
 // by path.
-func Recv(path string, conn io.ReadWriteCloser, tracker *ioprogress.ProgressTracker, features []string) error {
+func Recv(path string, conn io.ReadWriteCloser, tracker *ioprogress.ProgressTracker, features []string, keepTarget bool) error {
 	args := []string{
 		"--server",
 		"-vlogDtpre.iLsfx",
@@ -334,6 +335,16 @@ func Recv(path string, conn io.ReadWriteCloser, tracker *ioprogress.ProgressTrac
 	}
 
 	args = append(args, []string{".", path}...)
+
+	// The target is the root of the transfer, so rsync applies the sender's owner and mode to it.
+	// Record them to restore afterwards, so the sender can't take ownership of the directory.
+	var target unix.Stat_t
+	if keepTarget {
+		err := unix.Stat(path, &target)
+		if err != nil {
+			return fmt.Errorf("Failed to stat %q: %w", path, err)
+		}
+	}
 
 	// Never follow symlinks under the target so the sender can't redirect writes outside of it.
 	unmount, err := linux.MountNoSymlinkFollow(path)
@@ -421,6 +432,19 @@ func Recv(path string, conn io.ReadWriteCloser, tracker *ioprogress.ProgressTrac
 
 		if chCopySourceErr != nil {
 			errs = append(errs, chCopySourceErr)
+		}
+	}
+
+	// Restore the target's owner and mode before the mount goes away.
+	if keepTarget {
+		err = unix.Chown(path, int(target.Uid), int(target.Gid))
+		if err != nil {
+			errs = append(errs, fmt.Errorf("Failed to restore owner of %q: %w", path, err))
+		}
+
+		err = unix.Chmod(path, target.Mode&0o7777)
+		if err != nil {
+			errs = append(errs, fmt.Errorf("Failed to restore mode of %q: %w", path, err))
 		}
 	}
 
