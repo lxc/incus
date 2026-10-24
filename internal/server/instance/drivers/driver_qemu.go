@@ -1808,6 +1808,11 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 		if err != nil {
 			return err
 		}
+
+		err = d.checkBootStateLimits(bs)
+		if err != nil {
+			return err
+		}
 	}
 
 	// Ensure the correct vhost_vsock kernel module is loaded before establishing the vsock.
