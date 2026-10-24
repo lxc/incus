@@ -1066,6 +1066,14 @@ func doCertificateUpdate(d *Daemon, dbInfo api.Certificate, req api.CertificateP
 			}
 
 			certProjects = dbInfo.Projects
+
+			if req.Certificate != "" && dbInfo.Certificate != req.Certificate {
+				// A certificate trusted through the CA would stay trusted and only lose its restrictions.
+				trustedByCA, _ := localUtil.CheckTrustState(*oldCert, nil, s.Endpoints.NetworkCert(), s.GlobalConfig.TrustCACertificates())
+				if trustedByCA {
+					return response.Forbidden(errors.New("Certificate cannot be changed"))
+				}
+			}
 		}
 
 		if req.Certificate != "" && dbInfo.Certificate != req.Certificate {
@@ -1180,6 +1188,12 @@ func certificateDelete(d *Daemon, r *http.Request) response.Response {
 			if err != nil {
 				// This should not happen
 				return response.InternalError(err)
+			}
+
+			// A certificate trusted through the CA would stay trusted and only lose its restrictions.
+			trustedByCA, _ := localUtil.CheckTrustState(*cert, nil, s.Endpoints.NetworkCert(), s.GlobalConfig.TrustCACertificates())
+			if trustedByCA {
+				return response.Forbidden(errors.New("Certificate cannot be deleted"))
 			}
 
 			trustedCerts := map[string]x509.Certificate{
