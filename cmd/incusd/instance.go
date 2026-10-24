@@ -204,7 +204,7 @@ func instanceCreateFromImage(ctx context.Context, s *state.State, img *api.Image
 	return nil
 }
 
-func instanceRebuildFromImage(ctx context.Context, s *state.State, r *http.Request, inst instance.Instance, img *api.Image, op *operations.Operation) error {
+func instanceRebuildFromImage(ctx context.Context, s *state.State, r *http.Request, inst instance.Instance, img *api.Image, instOp *operationlock.InstanceOperation, op *operations.Operation) error {
 	// Validate the type of the image matches the type of the instance.
 	imgType, err := instancetype.New(img.Type)
 	if err != nil {
