@@ -261,6 +261,15 @@ static inline int bpf(int cmd, union bpf_attr *attr, size_t size)
 	return syscall(__NR_bpf, cmd, attr, size);
 }
 
+// seccomp_notify_id_valid reports whether the notification is still pending.
+static int seccomp_notify_id_valid(int notify_fd, __u64 id)
+{
+	if (ioctl(notify_fd, SECCOMP_IOCTL_NOTIF_ID_VALID, &id) < 0)
+		return -errno;
+
+	return 0;
+}
+
 static int handle_bpf_syscall(pid_t pid_target, int notify_fd, int mem_fd,
 			      int tgid, struct seccomp_notify_proxy_msg *msg,
 			      struct seccomp_notif *req, struct seccomp_notif_resp *resp,
@@ -1282,7 +1291,20 @@ type MknodArgs struct {
 	path  string
 }
 
+// NotifIDValid reports whether the seccomp notification is still pending, meaning the caller is
+// still blocked in its syscall and its PID can't have been recycled.
+func (siov *Iovec) NotifIDValid() bool {
+	ret, err := C.seccomp_notify_id_valid(C.int(siov.notifyFd), siov.req.id)
+	return ret == 0 && err == nil
+}
+
 func (srv *Server) doDeviceSyscall(c Instance, args *MknodArgs, siov *Iovec) int {
+	// The path was read from the caller's memory, which the guest can stall; make sure the caller
+	// is still the one blocked in the syscall before acting on its PID.
+	if !siov.NotifIDValid() {
+		return int(-C.EPERM)
+	}
+
 	dev := deviceConfig.Device{}
 	dev["type"] = "unix-char"
 	dev["mode"] = fmt.Sprintf("%#o", args.cMode)
