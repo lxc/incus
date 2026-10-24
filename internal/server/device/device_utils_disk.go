@@ -316,7 +316,7 @@ func diskCephfsOptions(clusterName string, userName string, fsName string, fsPat
 // Returns UnsupportedError error if the host system or instance does not support virtiosfd, returns normal error
 // type if process cannot be started for other reasons.
 // Returns revert function and listener file handle on success.
-func DiskVMVirtiofsdStart(execPath string, inst instance.Instance, socketPath string, pidPath string, logPath string, sharePath string, idmaps []idmap.Entry, cacheOption string) (func(), net.Listener, error) {
+func DiskVMVirtiofsdStart(execPath string, inst instance.Instance, socketPath string, pidPath string, logPath string, sharePath string, idmaps []idmap.Entry, restricted bool, cacheOption string) (func(), net.Listener, error) {
 	reverter := revert.New()
 	defer reverter.Fail()
 
@@ -395,7 +395,8 @@ func DiskVMVirtiofsdStart(execPath string, inst instance.Instance, socketPath st
 	// Start the virtiofsd process in non-daemon mode.
 	args := []string{"--fd=3", fmt.Sprintf("--cache=%s", cacheOption), fmt.Sprintf("--shared-dir=%s", sharePath)}
 
-	if len(idmaps) > 0 {
+	// For a restricted source path, translate even with an empty map so guest root is forbidden on it.
+	if restricted || len(idmaps) > 0 {
 		idmapSet := &idmap.Set{Entries: idmaps}
 		sort.Sort(idmapSet)
 
