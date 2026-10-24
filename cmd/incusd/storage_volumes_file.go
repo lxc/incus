@@ -9,6 +9,7 @@ import (
 
 	"github.com/gorilla/mux"
 
+	"github.com/lxc/incus/v6/internal/server/db"
 	"github.com/lxc/incus/v6/internal/server/lifecycle"
 	"github.com/lxc/incus/v6/internal/server/project"
 	"github.com/lxc/incus/v6/internal/server/request"
@@ -76,6 +77,11 @@ func storagePoolVolumeTypeFileHandler(d *Daemon, r *http.Request) response.Respo
 	volumeDB, err := storagePools.VolumeDBGet(pool, volumeProjectName, volumeName, storageDrivers.VolumeTypeCustom)
 	if err != nil {
 		return response.SmartError(err)
+	}
+
+	// Only filesystem volumes have a file tree; the mount path of other content types holds the disk image.
+	if volumeDB.ContentType != db.StoragePoolVolumeContentTypeNameFS {
+		return response.BadRequest(errors.New("Only filesystem volumes support file access"))
 	}
 
 	diskVolName := project.StorageVolume(volumeProjectName, volumeName)

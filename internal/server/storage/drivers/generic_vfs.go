@@ -536,7 +536,19 @@ func genericVFSGetVolumeDiskPath(vol Volume) (string, error) {
 		return "", ErrNotSupported
 	}
 
-	return filepath.Join(vol.MountPath(), genericVolumeDiskFile), nil
+	diskPath := filepath.Join(vol.MountPath(), genericVolumeDiskFile)
+
+	// The disk file gets opened by path as root, so never hand out something that leads outside the volume.
+	fi, err := os.Lstat(diskPath)
+	if err != nil && !errors.Is(err, fs.ErrNotExist) {
+		return "", err
+	}
+
+	if err == nil && !fi.Mode().IsRegular() {
+		return "", fmt.Errorf("Block volume file %q isn't a regular file", diskPath)
+	}
+
+	return diskPath, nil
 }
 
 // genericVFSBackupVolume is a generic BackupVolume implementation for VFS-only drivers.
