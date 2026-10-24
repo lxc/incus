@@ -11199,6 +11199,11 @@ func (b *backend) GetCustomVolumeNBD(projectName string, volName string, writabl
 		return nil, nil, err
 	}
 
+	// Only block volumes have a disk image; on a filesystem volume the path would be under user control.
+	if dbVol.ContentType == db.StoragePoolVolumeContentTypeNameFS {
+		return nil, nil, api.StatusErrorf(http.StatusBadRequest, "Only block volumes support NBD access")
+	}
+
 	volStorageName := project.StorageVolume(projectName, volName)
 	vol := b.GetVolume(drivers.VolumeTypeCustom, drivers.ContentTypeBlock, volStorageName, nil)
 
