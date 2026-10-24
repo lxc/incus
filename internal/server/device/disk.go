@@ -1837,7 +1837,7 @@ func (d *disk) startVM() (*deviceConfig.RunConfig, error) {
 					logPath := filepath.Join(d.inst.LogPath(), fmt.Sprintf("disk.%s.log", d.name))
 					_ = os.Remove(logPath) // Remove old log if needed.
 
-					revertFunc, unixListener, err := DiskVMVirtiofsdStart(d.state.OS.ExecPath, d.inst, sockPath, pidPath, logPath, mount.DevPath, rawIDMaps.Entries, d.config["io.cache"])
+					revertFunc, unixListener, err := DiskVMVirtiofsdStart(d.state.OS.ExecPath, d.inst, sockPath, pidPath, logPath, mount.DevPath, rawIDMaps.Entries, d.restrictedParentSourcePath != "", d.config["io.cache"])
 					if err != nil {
 						var errUnsupported UnsupportedError
 						if d.bus != "virtiofs" && errors.As(err, &errUnsupported) {
