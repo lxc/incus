@@ -615,6 +615,13 @@ func imageDownload(ctx context.Context, r *http.Request, s *state.State, op *ope
 		return nil, false, fmt.Errorf("Unsupported protocol: %v", protocol)
 	}
 
+	// Validate the fingerprint before recording it, as it is used as a file name and may have been
+	// replaced by the remote server's response.
+	err = validate.IsSHA256(fp)
+	if err != nil || info.Fingerprint != fp {
+		return nil, false, errors.New("Invalid image fingerprint")
+	}
+
 	// Override visibility
 	info.Public = args.Public
 
@@ -647,13 +654,6 @@ func imageDownload(ctx context.Context, r *http.Request, s *state.State, op *ope
 
 	// Image is in the DB now, don't wipe on-disk files on failure
 	failure = false
-
-	// Re-validate the fingerprint as it may have been updated from the remote
-	// server's response, and it is used as a file name below.
-	err = validate.IsSHA256(fp)
-	if err != nil {
-		return nil, false, errors.New("Invalid image fingerprint")
-	}
 
 	// Reuse an existing on-disk copy if present, otherwise move ours into place.
 	newDestName := filepath.Join(destDir, fp)
