@@ -10,6 +10,7 @@ import (
 	"os"
 	"path/filepath"
 	"slices"
+	"strconv"
 	"strings"
 	"time"
 
@@ -505,7 +506,15 @@ func poolAndVolumeCommonRules(vol *drivers.Volume) map[string]func(string) error
 		rules["security.unmapped"] = validate.Optional(validate.IsBool)
 		rules["initial.uid"] = validate.Optional(validate.IsInt64)
 		rules["initial.gid"] = validate.Optional(validate.IsInt64)
-		rules["initial.mode"] = validate.Optional(validate.IsInt64)
+		rules["initial.mode"] = validate.Optional(func(value string) error {
+			// Parsed as octal when the mount path is created, so reject what that would reject.
+			_, err := strconv.ParseUint(value, 8, 12)
+			if err != nil {
+				return fmt.Errorf("Invalid initial.mode: %w", err)
+			}
+
+			return nil
+		})
 	}
 
 	// security.shared is only relevant for custom block volumes.
