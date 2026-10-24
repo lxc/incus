@@ -851,6 +851,12 @@ func storagePoolBucketBackupExportGet(d *Daemon, r *http.Request) response.Respo
 		return response.SmartError(err)
 	}
 
+	// Resolve the backup in the database so a traversal name can't build a path outside the backup directory.
+	_, err = storagePoolBucketBackupLoadByName(r.Context(), s, projectName, poolName, fullName)
+	if err != nil {
+		return response.SmartError(err)
+	}
+
 	ent := response.FileResponseEntry{
 		Path: internalUtil.VarPath("backups", "buckets", poolName, project.StorageBucket(projectName, fullName)),
 	}
