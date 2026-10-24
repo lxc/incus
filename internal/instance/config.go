@@ -1968,7 +1968,7 @@ func IsVMBootStateKey(configKey string) bool {
 
 // InstanceIncludeWhenCopying is used to decide whether to include a config item or not when copying an instance.
 // The remoteCopy argument indicates if the copy is remote (i.e between servers) as this affects the keys kept.
-func InstanceIncludeWhenCopying(configKey string, remoteCopy bool) bool {
+func InstanceIncludeWhenCopying(configKey string, remoteCopy bool, stateful bool) bool {
 	if configKey == "volatile.apply_nvram" {
 		return true // Include volatile.apply_nvram to also reset the NVRAM in copied instances.
 	}
@@ -1979,6 +1979,10 @@ func InstanceIncludeWhenCopying(configKey string, remoteCopy bool) bool {
 
 	if configKey == "volatile.last_state.idmap" && !remoteCopy {
 		return true // Include volatile.last_state.idmap when doing local copy to avoid needless remapping.
+	}
+
+	if stateful && IsVMBootStateKey(configKey) {
+		return true // The saved VM state can only be restored with the layout it was started with.
 	}
 
 	if strings.HasPrefix(configKey, ConfigVolatilePrefix) {

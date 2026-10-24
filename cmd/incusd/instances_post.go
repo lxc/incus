@@ -748,7 +748,7 @@ func createFromCopy(ctx context.Context, s *state.State, r *http.Request, projec
 	}
 
 	for key, value := range sourceConfig {
-		if !internalInstance.InstanceIncludeWhenCopying(key, false) {
+		if !internalInstance.InstanceIncludeWhenCopying(key, false, req.Stateful) {
 			logger.Debug("Skipping key from copy source", logger.Ctx{"key": key, "sourceProject": source.Project().Name, "sourceInstance": source.Name(), "project": targetProject, "instance": req.Name})
 			continue
 		}

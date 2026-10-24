@@ -256,7 +256,7 @@ func (c *cmdCopy) copyOrMove(cmd *cobra.Command, src *u.Parsed, dst *u.Parsed, k
 
 			if !keepVolatile {
 				for k := range entry.Config {
-					if !instance.InstanceIncludeWhenCopying(k, true) {
+					if !instance.InstanceIncludeWhenCopying(k, true, stateful) {
 						delete(entry.Config, k)
 					}
 				}
@@ -335,7 +335,7 @@ func (c *cmdCopy) copyOrMove(cmd *cobra.Command, src *u.Parsed, dst *u.Parsed, k
 		// Strip the volatile keys if requested
 		if !keepVolatile {
 			for k := range entry.Config {
-				if !instance.InstanceIncludeWhenCopying(k, true) {
+				if !instance.InstanceIncludeWhenCopying(k, true, stateful) {
 					delete(entry.Config, k)
 				}
 			}
