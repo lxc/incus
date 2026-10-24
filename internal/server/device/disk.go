@@ -520,7 +520,7 @@ func (d *disk) validateConfig(instConf instance.ConfigReader, partialValidation 
 		//  type: string
 		//  required: for file system disks
 		//  shortdesc: Path inside the instance where the disk will be mounted (only for file system disk devices)
-		"path": validate.IsAny,
+		"path": validateInstancePath,
 
 		// gendoc:generate(entity=devices, group=disk, key=io.cache)
 		// This controls the caching mode used for the disk device.
@@ -2928,6 +2928,14 @@ func (d *disk) postStop() error {
 
 		// Parse the volume name and path.
 		volName, _ := internalInstance.SplitVolumeSource(d.config["source"])
+
+		// The pool may not have been loaded if validation failed before start.
+		if d.pool == nil {
+			d.pool, err = storagePools.LoadByName(d.state, d.config["pool"])
+			if err != nil {
+				return fmt.Errorf("Failed to get storage pool %q: %w", d.config["pool"], err)
+			}
+		}
 
 		_, err = d.pool.UnmountCustomVolume(storageProjectName, volName, nil)
 		if err != nil && !errors.Is(err, storageDrivers.ErrInUse) {

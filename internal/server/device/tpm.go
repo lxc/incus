@@ -208,7 +208,14 @@ func (d *tpm) validateConfig(instConf instance.ConfigReader, partialValidation b
 		//  default: -
 		//  required: for containers
 		//  shortdesc: Only for containers: path inside the instance (for example, `/dev/tpm0`)
-		rules["path"] = validate.IsNotEmpty
+		rules["path"] = func(value string) error {
+			err := validate.IsNotEmpty(value)
+			if err != nil {
+				return err
+			}
+
+			return validateInstancePath(value)
+		}
 
 		// gendoc:generate(entity=devices, group=tpm, key=pathrm)
 		//
@@ -217,7 +224,14 @@ func (d *tpm) validateConfig(instConf instance.ConfigReader, partialValidation b
 		//  default: -
 		//  required: for containers
 		//  shortdesc: Only for containers: resource manager path inside the instance (for example, `/dev/tpmrm0`)
-		rules["pathrm"] = validate.IsNotEmpty
+		rules["pathrm"] = func(value string) error {
+			err := validate.IsNotEmpty(value)
+			if err != nil {
+				return err
+			}
+
+			return validateInstancePath(value)
+		}
 	} else {
 		rules["path"] = validate.Optional(validate.IsNotEmpty)
 		rules["pathrm"] = validate.Optional(validate.IsNotEmpty)
