@@ -41,3 +41,6 @@ const (
 	// HeaderForwardedProtocol is the forwarded protocol field in request header.
 	HeaderForwardedProtocol = "X-Incus-forwarded-protocol"
 )
+
+// ForwardedHeaders lists the headers carrying the requestor details between cluster members.
+var ForwardedHeaders = []string{HeaderForwardedAddress, HeaderForwardedUsername, HeaderForwardedProtocol}

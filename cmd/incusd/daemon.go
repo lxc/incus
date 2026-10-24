@@ -712,6 +712,13 @@ func (d *Daemon) createCmd(restAPI *mux.Router, version string, c APIEndpoint) {
 			}
 		}
 
+		// Drop client-supplied forwarded requestor headers; only a cluster member may set them.
+		if protocol != "cluster" {
+			for _, header := range request.ForwardedHeaders {
+				r.Header.Del(header)
+			}
+		}
+
 		// Restrict internal queries to remote, non-cluster, clients
 		if version == "internal" && !slices.Contains([]string{"unix", "cluster"}, protocol) {
 			internalAllowed := func() bool {

@@ -62,6 +62,13 @@ func Connect(address string, networkCert *localtls.CertInfo, serverCert *localtl
 		if r != nil {
 			ctx := r.Context()
 
+			// Only a cluster member may relay requestor details; drop any copied from a client request.
+			if ctx.Value(request.CtxProtocol) != "cluster" {
+				for _, header := range request.ForwardedHeaders {
+					req.Header.Del(header)
+				}
+			}
+
 			val, ok := ctx.Value(request.CtxUsername).(string)
 			if ok {
 				req.Header.Add(request.HeaderForwardedUsername, val)
