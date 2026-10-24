@@ -741,6 +741,13 @@ func (v Volume) Clone() Volume {
 	return NewVolume(v.driver, v.pool, v.volType, v.contentType, v.name, newConfig, newPoolConfig)
 }
 
+// OperationLockName returns the name of the lock held while a volume's content is being put in
+// place, so that access to the volume waits until it is ready. It omits the content type so the
+// filesystem and ISO/block forms of one custom volume share it.
+func (v Volume) OperationLockName() string {
+	return fmt.Sprintf("volume-operation_%s_%s_%s", v.Pool(), v.Type(), v.Name())
+}
+
 // forkfileLockName returns the forkfile lock name.
 func (v Volume) forkfileLockName() string {
 	return fmt.Sprintf("forkfile_%s_%s_%s", v.Pool(), v.Type(), v.Name())
@@ -786,6 +793,14 @@ func (v Volume) StopForkfile() {
 
 // FileSFTPConn returns a connection to the forkfile handler.
 func (v Volume) FileSFTPConn(s *state.State) (net.Conn, error) {
+	// Wait for any in-progress operation that is still putting this volume's content in place.
+	opUnlock, err := locking.Lock(context.TODO(), v.OperationLockName())
+	if err != nil {
+		return nil, err
+	}
+
+	opUnlock()
+
 	// Lock to avoid concurrent spawning.
 	spawnUnlock, err := locking.Lock(context.TODO(), v.forkfileLockName())
 	if err != nil {
