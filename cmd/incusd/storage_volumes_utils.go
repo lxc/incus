@@ -17,46 +17,27 @@ import (
 var supportedVolumeTypes = []int{db.StoragePoolVolumeTypeContainer, db.StoragePoolVolumeTypeVM, db.StoragePoolVolumeTypeCustom, db.StoragePoolVolumeTypeImage}
 
 func storagePoolVolumeUpdateUsers(ctx context.Context, s *state.State, projectName string, oldPoolName string, oldVol *api.StorageVolume, newPoolName string, newVol *api.StorageVolume) error {
-	// Update all instances that are using the volume with a local (non-expanded) device.
+	// Collect the instances using the volume inside the listing transaction, then update each one
+	// outside it, so no database query runs in the callback and each write holds the instance lock.
+	type instRef struct {
+		project string
+		name    string
+	}
+
+	var instRefs []instRef
 	err := storagePools.VolumeUsedByInstanceDevices(s, oldPoolName, projectName, oldVol, false, func(dbInst db.InstanceArgs, project api.Project, usedByDevices []string) error {
-		inst, err := instance.Load(s, dbInst, project)
-		if err != nil {
-			return err
-		}
-
-		localDevices := inst.LocalDevices()
-		for _, devName := range usedByDevices {
-			_, exists := localDevices[devName]
-			if exists {
-				localDevices[devName]["pool"] = newPoolName
-
-				volFields := strings.SplitN(localDevices[devName]["source"], "/", 2)
-				volFields[0] = newVol.Name
-				localDevices[devName]["source"] = strings.Join(volFields, "/")
-			}
-		}
-
-		args := db.InstanceArgs{
-			Architecture: inst.Architecture(),
-			Description:  inst.Description(),
-			Config:       inst.LocalConfig(),
-			Devices:      localDevices,
-			Ephemeral:    inst.IsEphemeral(),
-			Profiles:     inst.Profiles(),
-			Project:      inst.Project().Name,
-			Type:         inst.Type(),
-			Snapshot:     inst.IsSnapshot(),
-		}
-
-		err = inst.Update(args, false)
-		if err != nil {
-			return err
-		}
-
+		instRefs = append(instRefs, instRef{project: dbInst.Project, name: dbInst.Name})
 		return nil
 	})
 	if err != nil {
 		return err
+	}
+
+	for _, ref := range instRefs {
+		err := storagePoolVolumeUpdateInstance(s, ref.project, ref.name, oldPoolName, oldVol, newPoolName, newVol)
+		if err != nil {
+			return err
+		}
 	}
 
 	// Update all profiles that are using the volume with a device.
@@ -87,6 +68,53 @@ func storagePoolVolumeUpdateUsers(ctx context.Context, s *state.State, projectNa
 	}
 
 	return nil
+}
+
+// storagePoolVolumeUpdateInstance rewrites one instance's disk devices that point at a renamed or
+// moved custom volume, holding the instance operation lock and reloading the current record so a
+// concurrent instance update can't be reverted by writing back a stale copy.
+func storagePoolVolumeUpdateInstance(s *state.State, projectName string, instName string, oldPoolName string, oldVol *api.StorageVolume, newPoolName string, newVol *api.StorageVolume) error {
+	unlock, err := instanceOperationLock(s.ShutdownCtx, projectName, instName)
+	if err != nil {
+		return err
+	}
+
+	defer unlock()
+
+	inst, err := instance.LoadByProjectAndName(s, projectName, instName)
+	if err != nil {
+		return err
+	}
+
+	localDevices := inst.LocalDevices()
+	for _, dev := range localDevices {
+		if dev["type"] != "disk" || dev["pool"] != oldPoolName {
+			continue
+		}
+
+		volFields := strings.SplitN(dev["source"], "/", 2)
+		if volFields[0] != oldVol.Name {
+			continue
+		}
+
+		dev["pool"] = newPoolName
+		volFields[0] = newVol.Name
+		dev["source"] = strings.Join(volFields, "/")
+	}
+
+	args := db.InstanceArgs{
+		Architecture: inst.Architecture(),
+		Description:  inst.Description(),
+		Config:       inst.LocalConfig(),
+		Devices:      localDevices,
+		Ephemeral:    inst.IsEphemeral(),
+		Profiles:     inst.Profiles(),
+		Project:      inst.Project().Name,
+		Type:         inst.Type(),
+		Snapshot:     inst.IsSnapshot(),
+	}
+
+	return inst.Update(args, false)
 }
 
 // storagePoolVolumeUsedByGet returns a list of URL resources that use the volume.

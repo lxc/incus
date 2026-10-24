@@ -235,6 +235,24 @@ func doProfileUpdateInstance(ctx context.Context, s *state.State, args db.Instan
 		return err
 	}
 
+	// Serialise with instance PUT/PATCH and refresh the config and devices from the current record,
+	// so a concurrent instance update isn't reverted by writing back the copy listed earlier. The
+	// profile content stays as it was before the update, so Update still detects the change.
+	unlock, err := instanceOperationLock(s.ShutdownCtx, args.Project, args.Name)
+	if err != nil {
+		return err
+	}
+
+	defer unlock()
+
+	current, err := instance.LoadByProjectAndName(s, args.Project, args.Name)
+	if err != nil {
+		return err
+	}
+
+	args.Config = current.LocalConfig()
+	args.Devices = current.LocalDevices()
+
 	// Load the instance using the old profile config.
 	inst, err := instance.Load(s, args, p)
 	if err != nil {
