@@ -203,7 +203,7 @@ func instanceCreateFromImage(ctx context.Context, s *state.State, img *api.Image
 
 	// If dealing with an OCI image, parse the configuration and refresh the backup file.
 	if args.Type == instancetype.Container && inst.LocalConfig()["image.type"] == "oci" {
-		err = instanceApplyOCIConfig(inst, pool, nil)
+		err = instanceApplyOCIConfig(inst, pool, nil, instOp)
 		if err != nil {
 			return err
 		}
@@ -262,7 +262,7 @@ func instanceOCISpec(inst instance.Instance, pool storagePools.Pool) (*ociSpecs.
 
 // instanceApplyOCIConfig sets the config keys derived from the instance's OCI image that aren't set yet.
 // Keys still holding the values of the previous image are refreshed so only user overrides survive a rebuild.
-func instanceApplyOCIConfig(inst instance.Instance, pool storagePools.Pool, previous map[string]string) error {
+func instanceApplyOCIConfig(inst instance.Instance, pool storagePools.Pool, previous map[string]string, instOp *operationlock.InstanceOperation) error {
 	spec, err := instanceOCISpec(inst, pool)
 	if err != nil {
 		return err
@@ -301,10 +301,13 @@ func instanceApplyOCIConfig(inst instance.Instance, pool storagePools.Pool, prev
 		Snapshot:     inst.IsSnapshot(),
 	}
 
+	// Release the exclusive lock, as Update takes the instance operation lock itself.
+	instOp.Done(nil)
+
 	return inst.Update(args, false)
 }
 
-func instanceRebuildFromImage(ctx context.Context, s *state.State, r *http.Request, inst instance.Instance, img *api.Image, op *operations.Operation) error {
+func instanceRebuildFromImage(ctx context.Context, s *state.State, r *http.Request, inst instance.Instance, img *api.Image, instOp *operationlock.InstanceOperation, op *operations.Operation) error {
 	// Validate the type of the image matches the type of the instance.
 	imgType, err := instancetype.New(img.Type)
 	if err != nil {
@@ -348,7 +351,7 @@ func instanceRebuildFromImage(ctx context.Context, s *state.State, r *http.Reque
 			return err
 		}
 
-		err = instanceApplyOCIConfig(inst, pool, previous)
+		err = instanceApplyOCIConfig(inst, pool, previous, instOp)
 		if err != nil {
 			return err
 		}
