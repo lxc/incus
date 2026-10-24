@@ -112,7 +112,7 @@ func rsyncSendSetup(ctx context.Context, path string, rsyncArgs string, migratio
 		return nil, nil, nil, err
 	}
 
-	conn, err := l.Accept()
+	conn, err := linux.AcceptSameUser(l)
 	if err != nil {
 		_ = cmd.Process.Kill()
 		_ = cmd.Wait()

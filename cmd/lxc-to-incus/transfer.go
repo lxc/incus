@@ -102,7 +102,7 @@ func rsyncSendSetup(path string, rsyncArgs string) (*exec.Cmd, net.Conn, io.Read
 		return nil, nil, nil, err
 	}
 
-	conn, err := l.Accept()
+	conn, err := linux.AcceptSameUser(l)
 	if err != nil {
 		_ = cmd.Process.Kill()
 		_ = cmd.Wait()

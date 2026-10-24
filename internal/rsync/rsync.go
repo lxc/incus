@@ -217,7 +217,7 @@ func sendSetup(name string, path string, bwlimit string, execPath string, featur
 	chConn := make(chan *net.Conn, 1)
 
 	go func() {
-		conn, err := l.Accept()
+		conn, err := linux.AcceptSameUser(l)
 		if err != nil {
 			chConn <- nil
 			return
