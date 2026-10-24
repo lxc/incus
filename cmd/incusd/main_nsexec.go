@@ -315,6 +315,10 @@ __attribute__((constructor)) void init(void) {
 	__do_free char *cmdline = NULL;
 	int ret;
 
+	// Pin the C locale; Go's i18n init runs after entering the instance and glibc would otherwise load locale data from it.
+	if (setenv("LC_ALL", "C", 1) < 0)
+		_exit(232);
+
 	cmdline_buf = file_to_buf("/proc/self/cmdline", &cmdline_size);
 	if (!cmdline_buf)
 		_exit(232);
