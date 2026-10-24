@@ -2518,6 +2518,13 @@ func (d *disk) createDevice(srcPath string) (func(), string, bool, error) {
 		return nil, "", false, err
 	}
 
+	// Prevent running a setuid file from the staging mount, which sits under a traversable directory.
+	err = DiskMountSetNoSuid(devPath, isRecursive)
+	if err != nil {
+		_ = DiskMountClear(devPath)
+		return nil, "", false, err
+	}
+
 	reverter.Add(func() { _ = DiskMountClear(devPath) })
 
 	cleanup := reverter.Clone().Fail // Clone before calling revert.Success() so we can return the Fail func.
