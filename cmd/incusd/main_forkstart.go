@@ -6,11 +6,11 @@ import (
 	"os"
 	"path/filepath"
 
-	liblxc "github.com/lxc/go-lxc"
 	"github.com/spf13/cobra"
 	"golang.org/x/sys/unix"
 
 	"github.com/lxc/incus/v6/internal/linux"
+	"github.com/lxc/incus/v6/internal/server/instance"
 	"github.com/lxc/incus/v6/shared/util"
 )
 
@@ -62,7 +62,7 @@ func (c *cmdForkstart) run(cmd *cobra.Command, args []string) error {
 		return errors.New("Aborting attach to prevent leaking file descriptors into container")
 	}
 
-	d, err := liblxc.NewContainer(name, lxcpath)
+	d, err := instance.NewLXCContainer(name, lxcpath)
 	if err != nil {
 		return fmt.Errorf("Error initializing container for start: %q", err)
 	}

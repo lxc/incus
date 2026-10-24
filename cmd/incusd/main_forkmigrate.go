@@ -8,6 +8,8 @@ import (
 
 	liblxc "github.com/lxc/go-lxc"
 	"github.com/spf13/cobra"
+
+	"github.com/lxc/incus/v6/internal/server/instance"
 )
 
 type cmdForkmigrate struct {
@@ -58,7 +60,7 @@ func (c *cmdForkmigrate) run(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	d, err := liblxc.NewContainer(name, lxcpath)
+	d, err := instance.NewLXCContainer(name, lxcpath)
 	if err != nil {
 		return err
 	}

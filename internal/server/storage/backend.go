@@ -749,6 +749,18 @@ func stripMetadata(instPath string) ([]string, error) {
 			return filepath.SkipDir
 		}
 
+		// Remove a top-level "config" or "partial" regular file, which liblxc would load as the
+		// container's configuration. VMs legitimately keep a "config" directory, which is kept below.
+		if d.Type().IsRegular() && (path == filepath.Join(instPath, "config") || path == filepath.Join(instPath, "partial")) {
+			err = os.Remove(path)
+			if err != nil {
+				return err
+			}
+
+			removed = append(removed, path)
+			return nil
+		}
+
 		// Keep directories and regular files.
 		if d.IsDir() || d.Type().IsRegular() {
 			return nil

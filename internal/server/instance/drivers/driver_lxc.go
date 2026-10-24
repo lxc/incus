@@ -677,7 +677,7 @@ func (d *lxc) initLXC(config bool) (*liblxc.Container, error) {
 
 	// Load the go-lxc struct
 	cname := project.Instance(d.Project().Name, d.Name())
-	cc, err := liblxc.NewContainer(cname, d.state.OS.LxcPath)
+	cc, err := instance.NewLXCContainer(cname, d.state.OS.LxcPath)
 	if err != nil {
 		return nil, err
 	}
@@ -1677,7 +1677,7 @@ func (d *lxc) deviceDetachNIC(configCopy map[string]string, netIF []deviceConfig
 	if instanceRunning {
 		// For some reason, having network config confuses detach, so get our own go-lxc struct.
 		cname := project.Instance(d.Project().Name, d.Name())
-		cc, err := liblxc.NewContainer(cname, d.state.OS.LxcPath)
+		cc, err := instance.NewLXCContainer(cname, d.state.OS.LxcPath)
 		if err != nil {
 			return err
 		}
@@ -4726,7 +4726,7 @@ func (d *lxc) Update(args db.InstanceArgs, userRequested bool) error {
 	// If raw.lxc changed, re-validate the config.
 	if slices.Contains(changedConfig, "raw.lxc") && d.expandedConfig["raw.lxc"] != "" {
 		// Get a new liblxc instance.
-		cc, err := liblxc.NewContainer(d.name, d.state.OS.LxcPath)
+		cc, err := instance.NewLXCContainer(d.name, d.state.OS.LxcPath)
 		if err != nil {
 			return err
 		}
@@ -8513,7 +8513,7 @@ func (d *lxc) FillNetworkDevice(name string, m deviceConfig.Device) (deviceConfi
 
 		// Attempt to include all existing interfaces
 		cname := project.Instance(d.Project().Name, d.Name())
-		cc, err := liblxc.NewContainer(cname, d.state.OS.LxcPath)
+		cc, err := instance.NewLXCContainer(cname, d.state.OS.LxcPath)
 		if err == nil {
 			defer func() { _ = cc.Release() }()
 

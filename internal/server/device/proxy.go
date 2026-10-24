@@ -13,8 +13,6 @@ import (
 	"strings"
 	"time"
 
-	liblxc "github.com/lxc/go-lxc"
-
 	"github.com/lxc/incus/v6/internal/linux"
 	"github.com/lxc/incus/v6/internal/server/apparmor"
 	"github.com/lxc/incus/v6/internal/server/db"
@@ -603,7 +601,7 @@ func (d *proxy) setupNAT() error {
 
 func (d *proxy) setupProxyProcInfo() (*proxyProcInfo, error) {
 	cname := project.Instance(d.inst.Project().Name, d.inst.Name())
-	cc, err := liblxc.NewContainer(cname, d.state.OS.LxcPath)
+	cc, err := instance.NewLXCContainer(cname, d.state.OS.LxcPath)
 	if err != nil {
 		return nil, err
 	}
