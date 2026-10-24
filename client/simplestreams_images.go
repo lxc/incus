@@ -218,6 +218,11 @@ func (r *ProtocolSimpleStreams) GetImageFile(fingerprint string, req ImageFileRe
 					continue
 				}
 
+				// The delta base comes from the server and is used to locate a local file.
+				if len(srcFingerprint) != 64 || strings.TrimLeft(srcFingerprint, "0123456789abcdef") != "" {
+					continue
+				}
+
 				// Check if we have the source file for the delta
 				srcPath := req.DeltaSourceRetriever(srcFingerprint, "rootfs")
 				if srcPath == "" {
