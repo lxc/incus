@@ -195,12 +195,14 @@ func (d *disk) CanMigrate() bool {
 
 // sourceIsCephFs returns true if the disks source config setting is a CephFS share.
 func (d *disk) sourceIsCephFs() bool {
-	return strings.HasPrefix(d.config["source"], "cephfs:")
+	// The source of a disk with a pool is always a volume name, whatever it looks like.
+	return d.config["pool"] == "" && strings.HasPrefix(d.config["source"], "cephfs:")
 }
 
 // sourceIsCeph returns true if the disks source config setting is a Ceph RBD.
 func (d *disk) sourceIsCeph() bool {
-	return strings.HasPrefix(d.config["source"], "ceph:")
+	// The source of a disk with a pool is always a volume name, whatever it looks like.
+	return d.config["pool"] == "" && strings.HasPrefix(d.config["source"], "ceph:")
 }
 
 // CanHotPlug returns whether the device can be managed whilst the instance is running.
@@ -650,7 +652,7 @@ func (d *disk) validateConfig(instConf instance.ConfigReader, partialValidation 
 		return errors.New(`Root disk entry must have a "pool" property set`)
 	}
 
-	if d.config["pool"] != "" && slices.Contains([]string{diskSourceCloudInit, diskSourceAgent}, d.config["source"]) {
+	if d.config["pool"] != "" && IsSpecialDisk(d.config["source"]) {
 		return fmt.Errorf(`Disk entry with source %q cannot have a "pool" property set`, d.config["source"])
 	}
 
@@ -678,6 +680,14 @@ func (d *disk) validateConfig(instConf instance.ConfigReader, partialValidation 
 	// A VM disk path ends up in a quoted qemu.conf value, which has no escaping.
 	if d.inst != nil && d.inst.Type() == instancetype.VM && strings.ContainsAny(d.config["path"], "\"\r\n") {
 		return errors.New(`Disk "path" may not contain quotes or line breaks`)
+	}
+
+	// An external ceph or cephfs source must name a <pool>/<volume> or <fs>/<path>, so a start can't index past a missing slash.
+	if d.sourceIsCeph() || d.sourceIsCephFs() {
+		_, cephSource, _ := strings.Cut(d.config["source"], ":")
+		if !strings.Contains(cephSource, "/") {
+			return fmt.Errorf("Invalid ceph or cephfs source %q, expected <name>/<path>", d.config["source"])
+		}
 	}
 
 	if (d.config["source"] == diskSourceTmpfs || d.config["source"] == diskSourceTmpfsOverlay) && d.config["path"] == "" {
