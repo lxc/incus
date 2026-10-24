@@ -10,25 +10,42 @@ import (
 	"github.com/lxc/incus/v7/shared/osarch"
 )
 
-func writeHeader(sb *strings.Builder, comment string, name string) {
+func writeHeader(sb *strings.Builder, comment string, name string) error {
+	// The config format has no escaping, so a line break would let a value inject arbitrary entries.
+	if strings.ContainsAny(comment, "\r\n") || strings.ContainsAny(name, "\r\n") {
+		return fmt.Errorf("Invalid QEMU config section %q: Line breaks aren't allowed", name)
+	}
+
 	if comment != "" {
 		fmt.Fprintf(sb, "# %s\n", comment)
 	}
 
 	fmt.Fprintf(sb, "[%s]\n", name)
+
+	return nil
 }
 
-func writeEntry(sb *strings.Builder, key string, value string) {
+func writeEntry(sb *strings.Builder, key string, value string) error {
+	// Quoted values have no escaping, so a quote or line break would let a value inject arbitrary entries.
+	if strings.ContainsAny(key, "\r\n") || strings.ContainsAny(value, "\"\r\n") {
+		return fmt.Errorf("Invalid QEMU config value for %q: Quotes and line breaks aren't allowed", key)
+	}
+
 	if value != "" {
 		fmt.Fprintf(sb, "%s = \"%s\"\n", key, value)
 	}
+
+	return nil
 }
 
-func qemuStringifyCfg(conf ...cfg.Section) *strings.Builder {
+func qemuStringifyCfg(conf ...cfg.Section) (*strings.Builder, error) {
 	sb := &strings.Builder{}
 
 	for _, section := range conf {
-		writeHeader(sb, section.Comment, section.Name)
+		err := writeHeader(sb, section.Comment, section.Name)
+		if err != nil {
+			return nil, err
+		}
 
 		keys := make([]string, 0, len(section.Entries))
 		for key := range section.Entries {
@@ -37,13 +54,16 @@ func qemuStringifyCfg(conf ...cfg.Section) *strings.Builder {
 
 		sort.Strings(keys)
 		for _, key := range keys {
-			writeEntry(sb, key, section.Entries[key])
+			err := writeEntry(sb, key, section.Entries[key])
+			if err != nil {
+				return nil, fmt.Errorf("Failed writing QEMU config section %q: %w", section.Name, err)
+			}
 		}
 
 		sb.WriteString("\n")
 	}
 
-	return sb
+	return sb, nil
 }
 
 func qemuMachineType(architecture int) string {
