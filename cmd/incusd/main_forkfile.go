@@ -6,6 +6,8 @@ package main
 #include <dirent.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <grp.h>
+#include <pwd.h>
 #include <sched.h>
 #include <stdbool.h>
 #include <stdio.h>
@@ -15,6 +17,9 @@ package main
 #include <sys/stat.h>
 #include <unistd.h>
 #include <limits.h>
+#ifdef __GLIBC__
+#include <nss.h>
+#endif
 
 #include "incus.h"
 #include "memory_utils.h"
@@ -55,6 +60,17 @@ void forkfile(void)
 			_exit(1);
 		}
 	}
+
+	// Configure and prime NSS before entering the instance so glibc doesn't load nsswitch.conf or NSS modules from it.
+#ifdef __GLIBC__
+	if (__nss_configure_lookup("passwd", "files") < 0 || __nss_configure_lookup("group", "files") < 0) {
+		error("error: nss_configure_lookup");
+		_exit(1);
+	}
+#endif
+
+	(void)getpwuid(0);
+	(void)getgrgid(0);
 
 	// Attach to the container.
 	if (ns_fd >= 0) {
