@@ -2908,6 +2908,13 @@ test_clustering_image_refresh() {
     echo 'select images.fingerprint from images join projects on images.project_id=projects.id where projects.name="bar"' | INCUS_DIR="${INCUS_ONE_DIR}" incus admin sql global - | grep "${new_fingerprint}"
     [ "$(INCUS_DIR="${INCUS_ONE_DIR}" incus admin sql global 'select images.fingerprint from images' | grep -c "${new_fingerprint}")" -eq 2 ] || false
 
+    # Project foo still uses the old image so its files must stay next to the new ones.
+    ls "${INCUS_ONE_DIR}/images/${old_fingerprint}"* > /dev/null
+    ls "${INCUS_ONE_DIR}/images/${new_fingerprint}"* > /dev/null
+    for incus_dir in "${INCUS_TWO_DIR}" "${INCUS_THREE_DIR}"; do
+        ! ls "${incus_dir}/images/${new_fingerprint}"* > /dev/null 2>&1 || ls "${incus_dir}/images/${old_fingerprint}"* > /dev/null
+    done
+
     pids=""
 
     # Trigger image refresh on all nodes. This shouldn't do anything as the image
@@ -2931,6 +2938,7 @@ test_clustering_image_refresh() {
     [ "$(INCUS_DIR="${INCUS_ONE_DIR}" incus admin sql global 'select images.fingerprint from images' | grep -c "${new_fingerprint}")" -eq 2 ] || false
 
     # Modify public testimage
+    mid_fingerprint="${new_fingerprint}"
     dd if=/dev/urandom count=32 | INCUS_DIR="${INCUS_REMOTE_DIR}" incus file push - c1/foo
     INCUS_DIR="${INCUS_REMOTE_DIR}" incus publish c1 --alias testimage --reuse --public
     new_fingerprint="$(INCUS_DIR="${INCUS_REMOTE_DIR}" incus image ls testimage -c f --format csv)"
@@ -2957,6 +2965,13 @@ test_clustering_image_refresh() {
     echo 'select images.fingerprint from images join projects on images.project_id=projects.id where projects.name="default"' | INCUS_DIR="${INCUS_ONE_DIR}" incus admin sql global - | grep "${new_fingerprint}"
     echo 'select images.fingerprint from images join projects on images.project_id=projects.id where projects.name="bar"' | INCUS_DIR="${INCUS_ONE_DIR}" incus admin sql global - | grep "${new_fingerprint}"
     [ "$(INCUS_DIR="${INCUS_ONE_DIR}" incus admin sql global 'select images.fingerprint from images' | grep -c "${new_fingerprint}")" -eq 2 ] || false
+
+    # Nothing uses the intermediate image anymore so its files must be gone from every member.
+    for incus_dir in "${INCUS_ONE_DIR}" "${INCUS_TWO_DIR}" "${INCUS_THREE_DIR}"; do
+        ! ls "${incus_dir}/images/${mid_fingerprint}"* > /dev/null 2>&1 || false
+    done
+    ls "${INCUS_ONE_DIR}/images/${old_fingerprint}"* > /dev/null
+    ls "${INCUS_ONE_DIR}/images/${new_fingerprint}"* > /dev/null
 
     # Clean up everything
     for project in default foo bar; do
