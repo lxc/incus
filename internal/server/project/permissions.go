@@ -138,14 +138,18 @@ func AllowInstanceCreation(tx *db.ClusterTx, projectName string, req api.Instanc
 
 	// Special case restriction checks on volatile.* keys.
 	strip := false // nolint:staticcheck
+	keepVMState := false
 
 	if slices.Contains([]string{"copy", "migration", "backup"}, req.Source.Type) {
 		// Allow stripping volatile keys if dealing with a copy, migration or backup.
 		strip = true
+
+		// A transferred VM state can only be restored with the QEMU layout it was started with.
+		keepVMState = req.Stateful || req.Source.Live
 	}
 
 	err = checkRestrictionsOnVolatileConfig(
-		info.Project, instanceType, req.Name, req.Config, map[string]string{}, strip,
+		info.Project, instanceType, req.Name, req.Config, map[string]string{}, strip, keepVMState,
 	)
 	if err != nil {
 		return err
@@ -347,7 +351,7 @@ func isSafeVolatileKey(key string) bool {
 }
 
 // Check restrictions on setting volatile.* keys.
-func checkRestrictionsOnVolatileConfig(project api.Project, instanceType instancetype.Type, instanceName string, config, currentConfig map[string]string, strip bool) error {
+func checkRestrictionsOnVolatileConfig(project api.Project, instanceType instancetype.Type, instanceName string, config, currentConfig map[string]string, strip bool, keepVMState bool) error {
 	if !isVolatileConfigRestricted(project, instanceType) {
 		return nil
 	}
@@ -363,6 +367,11 @@ func checkRestrictionsOnVolatileConfig(project api.Project, instanceType instanc
 		}
 
 		if strip {
+			// The recorded QEMU layout is server generated, not a user override.
+			if keepVMState && instance.IsVMBootStateKey(key) {
+				continue
+			}
+
 			delete(config, key)
 			continue
 		}
@@ -394,7 +403,7 @@ func StripRestrictedVolatileConfig(tx *db.ClusterTx, projectName string, instanc
 	lastIdmap, ok := config["volatile.last_state.idmap"]
 
 	// Never fails when stripping.
-	_ = checkRestrictionsOnVolatileConfig(info.Project, instanceType, "", config, nil, true)
+	_ = checkRestrictionsOnVolatileConfig(info.Project, instanceType, "", config, nil, true, false)
 
 	if ok {
 		config["volatile.last_state.idmap"] = lastIdmap
@@ -1280,7 +1289,7 @@ func allowInstanceUpdate(tx *db.ClusterTx, projectName, instanceName string, req
 	// Special case restriction checks on volatile.* keys, since we want to
 	// detect if they were changed or added.
 	err = checkRestrictionsOnVolatileConfig(
-		info.Project, instType, updatedInstance.Name, req.Config, currentConfig, false,
+		info.Project, instType, updatedInstance.Name, req.Config, currentConfig, false, false,
 	)
 	if err != nil {
 		return err
