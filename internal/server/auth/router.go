@@ -190,6 +190,11 @@ func (rt *Router) isRestrictedTLS(fingerprint string) bool {
 
 	cert := rt.certificates.GetAPICertificate(fingerprint)
 	if cert != nil {
+		// Metrics certificates only ever get metrics access, so route them to the TLS driver.
+		if cert.Type == api.CertificateTypeMetrics {
+			return true
+		}
+
 		return cert.Restricted
 	}
 

@@ -715,14 +715,16 @@ func (d *Daemon) Authenticate(w http.ResponseWriter, r *http.Request) (bool, str
 	// Validate regular TLS certificates.
 	if peerCert != nil {
 		trusted, username := localUtil.CheckTrustState(*peerCert, trustedCerts[certificate.TypeClient], d.endpoints.NetworkCert(), trustCACertificates)
-		if trusted {
+		_, isMetrics := trustedCerts[certificate.TypeMetrics][username]
+		if trusted && !isMetrics {
 			return true, username, api.AuthenticationMethodTLS, nil, nil
 		}
 	}
 
 	// Validate TLS certificates issued by a trusted CA certificate.
 	trusted, username := localUtil.CheckTrustStateIssuer(r.TLS.PeerCertificates, trustedCerts[certificate.TypeClient], d.endpoints.NetworkCert())
-	if trusted {
+	_, isMetrics := trustedCerts[certificate.TypeMetrics][username]
+	if trusted && !isMetrics {
 		return true, username, api.AuthenticationMethodTLS, nil, nil
 	}
 

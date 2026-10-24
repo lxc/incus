@@ -28,8 +28,10 @@ func testCache(certs ...*api.Certificate) *certificate.Cache {
 // TestClassify checks that classify maps a request's details to the expected client class.
 func TestClassify(t *testing.T) {
 	cache := testCache(
-		&api.Certificate{CertificatePut: api.CertificatePut{Type: "client"}, Fingerprint: "unrestricted"},
-		&api.Certificate{CertificatePut: api.CertificatePut{Type: "client", Restricted: true, Projects: []string{"p1"}}, Fingerprint: "restricted"},
+		&api.Certificate{CertificatePut: api.CertificatePut{Type: api.CertificateTypeClient}, Fingerprint: "unrestricted"},
+		&api.Certificate{CertificatePut: api.CertificatePut{Type: api.CertificateTypeClient, Restricted: true, Projects: []string{"p1"}}, Fingerprint: "restricted"},
+		&api.Certificate{CertificatePut: api.CertificatePut{Type: api.CertificateTypeMetrics}, Fingerprint: "metrics"},
+		&api.Certificate{CertificatePut: api.CertificatePut{Type: api.CertificateTypeMetrics, Restricted: true, Projects: []string{"p1"}}, Fingerprint: "metrics-restricted"},
 	)
 
 	rt, err := NewRouter(context.Background(), logger.Log, cache)
@@ -44,6 +46,8 @@ func TestClassify(t *testing.T) {
 		{"unix", "unix", "", clientClassUnix},
 		{"tls-unrestricted", api.AuthenticationMethodTLS, "unrestricted", clientClassTLS},
 		{"tls-restricted", api.AuthenticationMethodTLS, "restricted", clientClassTLSRestricted},
+		{"tls-metrics", api.AuthenticationMethodTLS, "metrics", clientClassTLSRestricted},
+		{"tls-metrics-restricted", api.AuthenticationMethodTLS, "metrics-restricted", clientClassTLSRestricted},
 		{"tls-unknown", api.AuthenticationMethodTLS, "ghost", clientClassTLSRestricted},
 		{"oidc", api.AuthenticationMethodOIDC, "", clientClassOIDC},
 		{"unknown", "other", "", clientClassDefault},
