@@ -1018,8 +1018,9 @@ func certificatePatch(d *Daemon, r *http.Request) response.Response {
 		return response.PreconditionFailed(err)
 	}
 
-	// Apply the changes.
+	// Apply the changes (on a copy, as the JSON decoder reuses existing slices).
 	req := *apiEntry
+	req.Projects = slices.Clone(apiEntry.Projects)
 	err = json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
 		return response.BadRequest(err)
@@ -1247,7 +1248,7 @@ func certificateDelete(d *Daemon, r *http.Request) response.Response {
 		// Non-admins are able to delete only their own certificate.
 		if !userCanEditCertificate {
 			if r.TLS == nil {
-				response.Forbidden(errors.New("Cannot delete certificate"))
+				return response.Forbidden(errors.New("Cannot delete certificate"))
 			}
 
 			certBlock, _ := pem.Decode([]byte(certInfo.Certificate))
