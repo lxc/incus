@@ -5914,11 +5914,27 @@ func (b *backend) bucketServerCert() (*x509.Certificate, error) {
 	return b.state.Endpoints.NetworkCert().PublicKeyX509()
 }
 
+// lockCustomVolume takes the operation lock held while a custom volume's content is put in place,
+// so that access to the volume waits until it is ready.
+func (b *backend) lockCustomVolume(projectName string, volName string) (locking.UnlockFunc, error) {
+	volStorageName := project.StorageVolume(projectName, volName)
+	vol := b.GetVolume(drivers.VolumeTypeCustom, drivers.ContentTypeFS, volStorageName, nil)
+	return locking.Lock(context.TODO(), vol.OperationLockName())
+}
+
 // CreateCustomVolume creates an empty custom volume.
 func (b *backend) CreateCustomVolume(projectName string, volName string, desc string, config map[string]string, contentType drivers.ContentType, op *operations.Operation) error {
 	l := b.logger.AddContext(logger.Ctx{"project": projectName, "volName": volName, "desc": desc, "config": config, "contentType": contentType})
 	l.Debug("CreateCustomVolume started")
 	defer l.Debug("CreateCustomVolume finished")
+
+	// Hold the operation lock while the volume's content is put in place.
+	volOpUnlock, volOpErr := b.lockCustomVolume(projectName, volName)
+	if volOpErr != nil {
+		return volOpErr
+	}
+
+	defer volOpUnlock()
 
 	err := b.isStatusReady()
 	if err != nil {
@@ -6413,6 +6429,14 @@ func (b *backend) CreateCustomVolumeFromMigration(projectName string, conn io.Re
 		return errors.New("Storage pool does not support custom volume type")
 	}
 
+	// Hold the operation lock while the volume's content is put in place.
+	volOpUnlock, volOpErr := b.lockCustomVolume(projectName, args.Name)
+	if volOpErr != nil {
+		return volOpErr
+	}
+
+	defer volOpUnlock()
+
 	var volumeConfig map[string]string
 
 	// Check if the volume exists in database.
@@ -6567,6 +6591,14 @@ func (b *backend) RenameCustomVolume(projectName string, volName string, newVolN
 	l := b.logger.AddContext(logger.Ctx{"project": projectName, "volName": volName, "newVolName": newVolName})
 	l.Debug("RenameCustomVolume started")
 	defer l.Debug("RenameCustomVolume finished")
+
+	// Wait for any in-progress operation still putting this volume's content in place.
+	volOpUnlock, volOpErr := b.lockCustomVolume(projectName, volName)
+	if volOpErr != nil {
+		return volOpErr
+	}
+
+	volOpUnlock()
 
 	if internalInstance.IsSnapshot(volName) {
 		return errors.New("Volume name cannot be a snapshot")
@@ -6998,6 +7030,14 @@ func (b *backend) DeleteCustomVolume(projectName string, volName string, op *ope
 	l.Debug("DeleteCustomVolume started")
 	defer l.Debug("DeleteCustomVolume finished")
 
+	// Wait for any in-progress operation still putting this volume's content in place.
+	volOpUnlock, volOpErr := b.lockCustomVolume(projectName, volName)
+	if volOpErr != nil {
+		return volOpErr
+	}
+
+	volOpUnlock()
+
 	_, _, isSnap := api.GetParentAndSnapshotName(volName)
 	if isSnap {
 		return errors.New("Volume name cannot be a snapshot")
@@ -7093,6 +7133,14 @@ func (b *backend) RebuildCustomVolume(projectName string, volName string, op *op
 	l := b.logger.AddContext(logger.Ctx{"project": projectName, "volName": volName})
 	l.Debug("RebuildCustomVolume started")
 	defer l.Debug("RebuildCustomVolume finished")
+
+	// Hold the operation lock while the volume's content is put in place.
+	volOpUnlock, volOpErr := b.lockCustomVolume(projectName, volName)
+	if volOpErr != nil {
+		return volOpErr
+	}
+
+	defer volOpUnlock()
 
 	err := b.isStatusReady()
 	if err != nil {
@@ -7248,6 +7296,14 @@ func (b *backend) MountCustomVolume(projectName, volName string, op *operations.
 	l := b.logger.AddContext(logger.Ctx{"project": projectName, "volName": volName})
 	l.Debug("MountCustomVolume started")
 	defer l.Debug("MountCustomVolume finished")
+
+	// Wait for any in-progress operation still putting this volume's content in place.
+	volOpUnlock, volOpErr := b.lockCustomVolume(projectName, volName)
+	if volOpErr != nil {
+		return nil, volOpErr
+	}
+
+	volOpUnlock()
 
 	err := b.isStatusReady()
 	if err != nil {
@@ -7733,6 +7789,14 @@ func (b *backend) RestoreCustomVolume(projectName, volName string, snapshotName 
 	l := b.logger.AddContext(logger.Ctx{"project": projectName, "volName": volName, "snapshotName": snapshotName})
 	l.Debug("RestoreCustomVolume started")
 	defer l.Debug("RestoreCustomVolume finished")
+
+	// Hold the operation lock while the volume's content is put in place.
+	volOpUnlock, volOpErr := b.lockCustomVolume(projectName, volName)
+	if volOpErr != nil {
+		return volOpErr
+	}
+
+	defer volOpUnlock()
 
 	// Quick checks.
 	if internalInstance.IsSnapshot(volName) {
@@ -8835,6 +8899,14 @@ func (b *backend) CreateCustomVolumeFromISO(projectName string, volName string, 
 	l.Debug("CreateCustomVolumeFromISO started")
 	defer l.Debug("CreateCustomVolumeFromISO finished")
 
+	// Hold the operation lock while the volume's content is put in place.
+	volOpUnlock, volOpErr := b.lockCustomVolume(projectName, volName)
+	if volOpErr != nil {
+		return volOpErr
+	}
+
+	defer volOpUnlock()
+
 	// Check whether we are allowed to create volumes.
 	req := api.StorageVolumesPost{
 		Name: volName,
@@ -8919,6 +8991,14 @@ func (b *backend) CreateCustomVolumeFromBackup(srcBackup backup.Info, srcData io
 	l := b.logger.AddContext(logger.Ctx{"project": srcBackup.Project, "volume": srcBackup.Name, "snapshots": srcBackup.Snapshots, "optimizedStorage": *srcBackup.OptimizedStorage})
 	l.Debug("CreateCustomVolumeFromBackup started")
 	defer l.Debug("CreateCustomVolumeFromBackup finished")
+
+	// Hold the operation lock while the volume's content is put in place.
+	volOpUnlock, volOpErr := b.lockCustomVolume(srcBackup.Project, srcBackup.Name)
+	if volOpErr != nil {
+		return volOpErr
+	}
+
+	defer volOpUnlock()
 
 	if srcBackup.Config == nil || srcBackup.Config.Volume == nil {
 		return errors.New("Valid volume config not found in index")
