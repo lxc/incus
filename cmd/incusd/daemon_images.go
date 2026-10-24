@@ -447,6 +447,21 @@ func ImageDownload(ctx context.Context, r *http.Request, s *state.State, op *ope
 			ProgressHandler: progress,
 			Canceler:        canceler,
 			DeltaSourceRetriever: func(fingerprint string, file string) string {
+				// The base name comes from the remote server; only offer an image the project already holds.
+				if validate.IsSHA256(fingerprint) != nil {
+					return ""
+				}
+
+				var exists bool
+				err := s.DB.Cluster.Transaction(ctx, func(ctx context.Context, tx *db.ClusterTx) error {
+					var err error
+					exists, err = tx.ImageExists(ctx, args.ProjectName, fingerprint)
+					return err
+				})
+				if err != nil || !exists {
+					return ""
+				}
+
 				path := internalUtil.VarPath("images", fmt.Sprintf("%s.%s", fingerprint, file))
 				if util.PathExists(path) {
 					return path
