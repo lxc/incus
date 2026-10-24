@@ -94,6 +94,7 @@ var patches = []patch{
 	{name: "pool_fix_default_permissions", stage: patchPostDaemonStorage, run: patchDefaultStoragePermissions},
 	{name: "network_ovn_directional_port_groups", stage: patchPostDaemonStorage, run: patchGenericNetwork(patchNetworkOVNPortGroups)},
 	{name: "auth_openfga_volume_files", stage: patchPostNetworks, run: patchGenericAuthorization},
+	{name: "clustering_server_cert_name", stage: patchPostDaemonStorage, run: patchClusteringServerCertName},
 }
 
 type patchRun func(name string, d *Daemon) error
@@ -712,6 +713,24 @@ func patchGenericNetwork(f func(name string, d *Daemon) error) func(name string,
 
 		return f(name, d)
 	}
+}
+
+// patchClusteringServerCertName repairs the member's own server certificate name, which an
+// earlier rename left stale, so that removing a renamed member deletes its certificate.
+func patchClusteringServerCertName(_ string, d *Daemon) error {
+	s := d.State()
+	if !s.ServerClustered {
+		return nil
+	}
+
+	fingerprint := s.ServerCert().Fingerprint()
+	serverName := s.ServerName
+
+	return s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		stmt := `UPDATE certificates SET name=? WHERE fingerprint=? AND type=?`
+		_, err := tx.Tx().ExecContext(ctx, stmt, serverName, fingerprint, certificate.TypeServer)
+		return err
+	})
 }
 
 func patchClusteringDropDatabaseRole(_ string, d *Daemon) error {

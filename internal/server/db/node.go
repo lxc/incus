@@ -14,6 +14,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/lxc/incus/v6/internal/server/certificate"
 	"github.com/lxc/incus/v6/internal/server/db/cluster"
 	"github.com/lxc/incus/v6/internal/server/db/query"
 	localUtil "github.com/lxc/incus/v6/internal/server/util"
@@ -435,6 +436,13 @@ func (c *ClusterTx) RenameNode(ctx context.Context, old string, new string) erro
 
 	if n != 1 {
 		return fmt.Errorf("expected to update one row, not %d", n)
+	}
+
+	// Keep the server certificate in sync as it's tied to the node through its name.
+	stmt = `UPDATE certificates SET name=? WHERE name=? AND type=?`
+	_, err = c.tx.Exec(stmt, new, old, certificate.TypeServer)
+	if err != nil {
+		return fmt.Errorf("failed to update server certificate name: %w", err)
 	}
 
 	return nil
