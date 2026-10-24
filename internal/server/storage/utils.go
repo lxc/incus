@@ -620,6 +620,16 @@ func ImageUnpack(imageFile string, vol drivers.Volume, destBlockFile string, sys
 
 		// Check for separate root file.
 		if util.PathExists(imageRootfsFile) {
+			// Reject rootfs content from the metadata tarball, which could redirect the rootfs unpack.
+			entries, err := os.ReadDir(rootfsPath)
+			if err != nil && !errors.Is(err, fs.ErrNotExist) {
+				return -1, err
+			}
+
+			if len(entries) > 0 {
+				return -1, fmt.Errorf("Image metadata tarball contains rootfs content: %s", imageFile)
+			}
+
 			err = os.MkdirAll(rootfsPath, 0o755)
 			if err != nil {
 				return -1, errors.New("Error creating rootfs directory")
