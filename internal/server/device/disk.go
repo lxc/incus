@@ -525,6 +525,11 @@ func (d *disk) validateConfig(instConf instance.ConfigReader) error {
 		return fmt.Errorf("Invalid options ceph.cluster_name/ceph.user_name for source %q", d.config["source"])
 	}
 
+	// A VM disk path ends up in a quoted qemu.conf value, which has no escaping.
+	if d.inst != nil && d.inst.Type() == instancetype.VM && strings.ContainsAny(d.config["path"], "\"\r\n") {
+		return errors.New(`Disk "path" may not contain quotes or line breaks`)
+	}
+
 	if (d.config["source"] == diskSourceTmpfs || d.config["source"] == diskSourceTmpfsOverlay) && d.config["path"] == "" {
 		return errors.New(`Missing mount "path" setting`)
 	}

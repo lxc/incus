@@ -4224,7 +4224,11 @@ func (d *qemu) generateQemuConfig(machineDefinition string, cpuType string, cpuI
 // It writes the config file inside the VM's log path.
 func (d *qemu) writeQemuConfigFile(configPath string) error {
 	// Write the config file to disk.
-	sb := qemuStringifyCfg(d.conf...)
+	sb, err := qemuStringifyCfg(d.conf...)
+	if err != nil {
+		return err
+	}
+
 	return os.WriteFile(configPath, []byte(sb.String()), 0o640)
 }
 
