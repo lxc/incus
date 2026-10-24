@@ -932,3 +932,35 @@ func parseMode(m string, mode fs.FileMode, umask fs.FileMode, isDir bool) (fs.Fi
 func parsePristineMode(m string) (fs.FileMode, error) {
 	return parseMode(m, fs.FileMode(0), fs.FileMode(0), false)
 }
+
+// parseFileOwner parses UID, UID:GID or :GID, using -1 for an unchanged ID.
+func parseFileOwner(owner string) (int, int, error) {
+	uidStr, gidStr, _ := strings.Cut(owner, ":")
+
+	uid := -1
+	gid := -1
+
+	if uidStr != "" {
+		id, err := strconv.ParseUint(uidStr, 10, 31)
+		if err != nil {
+			return -1, -1, fmt.Errorf(i18n.G("Invalid UID %q"), uidStr)
+		}
+
+		uid = int(id)
+	}
+
+	if gidStr != "" {
+		id, err := strconv.ParseUint(gidStr, 10, 31)
+		if err != nil {
+			return -1, -1, fmt.Errorf(i18n.G("Invalid GID %q"), gidStr)
+		}
+
+		gid = int(id)
+	}
+
+	if uid == -1 && gid == -1 {
+		return -1, -1, fmt.Errorf(i18n.G("Invalid owner %q"), owner)
+	}
+
+	return uid, gid, nil
+}
