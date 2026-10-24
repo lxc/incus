@@ -719,6 +719,16 @@ func (d *Daemon) createCmd(restAPI *mux.Router, version string, c APIEndpoint) {
 			}
 		}
 
+		// Block remote clients on startup, before the trust store and authorization config are loaded.
+		if !slices.Contains([]string{"unix", "cluster"}, protocol) {
+			select {
+			case <-d.setupChan:
+			default:
+				_ = response.Unavailable(errors.New("Daemon is starting up")).Render(w)
+				return
+			}
+		}
+
 		// Restrict internal queries to remote, non-cluster, clients
 		if version == "internal" && !slices.Contains([]string{"unix", "cluster"}, protocol) {
 			internalAllowed := func() bool {
