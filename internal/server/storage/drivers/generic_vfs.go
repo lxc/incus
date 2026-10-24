@@ -326,7 +326,8 @@ func genericVFSCreateVolumeFromMigration(d Driver, initVolume func(vol Volume) (
 		d.Logger().Debug("Receiving filesystem volume started", logger.Ctx{"volName": volName, "path": path, "features": volTargetArgs.MigrationType.Features})
 		defer d.Logger().Debug("Receiving filesystem volume stopped", logger.Ctx{"volName": volName, "path": path})
 
-		return rsync.Recv(path, conn, wrapper, volTargetArgs.MigrationType.Features)
+		// Keep the target directory's owner and mode for instance volumes, as the source controls them otherwise.
+		return rsync.Recv(path, conn, wrapper, volTargetArgs.MigrationType.Features, vol.Type() != VolumeTypeCustom)
 	}
 
 	recvBlockVol := func(volName string, conn io.ReadWriteCloser, path string) error {
@@ -829,6 +830,15 @@ func genericVFSBackupUnpack(d Driver, sysOS *sys.OS, vol Volume, snapshots []str
 			err = archive.ExtractWithFds("tar", args, allowedCmds, io.NopCloser(r), f)
 			if err != nil {
 				return fmt.Errorf("Error starting unpack: %w", err)
+			}
+
+			// The backup's top-level entry can set the owner of the volume's top directory; for instance
+			// volumes put it back to root so the directory and its setuid files aren't reachable by its owner.
+			if vol.Type() != VolumeTypeCustom {
+				err = os.Chown(mountPath, 0, 0)
+				if err != nil {
+					return err
+				}
 			}
 		}
 

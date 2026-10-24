@@ -647,6 +647,13 @@ func ImageUnpack(imageFile string, vol drivers.Volume, destBlockFile string, sys
 			return -1, fmt.Errorf("Image is missing a rootfs: %s", imageFile)
 		}
 
+		// The image's "./" entry can change the owner of the volume's top directory; put it back so
+		// the instance directory stays root-owned and its setuid files aren't reachable by its owner.
+		err = os.Chown(destPath, 0, 0)
+		if err != nil {
+			return -1, err
+		}
+
 		// Done with this.
 		return 0, nil
 	}

@@ -8950,7 +8950,8 @@ func (b *backend) qcow2CreateVolumeFromMigration(vol drivers.Volume, projectName
 		b.logger.Debug("Receiving filesystem volume started", logger.Ctx{"volName": volName, "path": path, "features": volTargetArgs.MigrationType.Features})
 		defer b.logger.Debug("Receiving filesystem volume stopped", logger.Ctx{"volName": volName, "path": path})
 
-		return rsync.Recv(path, conn, wrapper, volTargetArgs.MigrationType.Features)
+		// Keep the target directory's owner and mode for instance volumes, as the source controls them otherwise.
+		return rsync.Recv(path, conn, wrapper, volTargetArgs.MigrationType.Features, vol.Type() != drivers.VolumeTypeCustom)
 	}
 
 	recvBlockVol := func(volName string, conn io.ReadWriteCloser, path string) error {

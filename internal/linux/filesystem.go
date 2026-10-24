@@ -354,7 +354,7 @@ func MountNoSymlinkFollow(path string) (func() error, error) {
 
 	defer func() { _ = unix.Close(fd) }()
 
-	err = unix.MountSetattr(fd, "", unix.AT_EMPTY_PATH, &unix.MountAttr{Attr_set: unix.MOUNT_ATTR_NOSYMFOLLOW})
+	err = unix.MountSetattr(fd, "", unix.AT_EMPTY_PATH, &unix.MountAttr{Attr_set: unix.MOUNT_ATTR_NOSYMFOLLOW | unix.MOUNT_ATTR_NOSUID | unix.MOUNT_ATTR_NODEV})
 	if err != nil {
 		_ = unmount()
 		return nil, fmt.Errorf("Failed to set nosymfollow on %q: %w", path, err)
