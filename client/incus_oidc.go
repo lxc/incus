@@ -380,7 +380,12 @@ func (o *oidcClient) authenticate(issuer string, clientID string, audience strin
 		return err
 	}
 
-	u, _ := url.Parse(resp.VerificationURIComplete)
+	verificationURI := resp.VerificationURIComplete
+	if verificationURI == "" {
+		verificationURI = resp.VerificationURI
+	}
+
+	u, _ := url.Parse(verificationURI)
 
 	fmt.Printf("URL: %s\n", u.String())
 	fmt.Printf("Code: %s\n\n", resp.UserCode)
