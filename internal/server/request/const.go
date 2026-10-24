@@ -53,3 +53,6 @@ const (
 	// HeaderForwardedClaims is the forwarded OIDC claims field (JSON) in request header.
 	HeaderForwardedClaims = "X-Incus-forwarded-claims"
 )
+
+// ForwardedHeaders lists the headers carrying the requestor details between cluster members.
+var ForwardedHeaders = []string{HeaderForwardedAddress, HeaderForwardedUsername, HeaderForwardedProtocol, HeaderForwardedClaims}
