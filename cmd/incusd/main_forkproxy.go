@@ -470,6 +470,16 @@ func (c *cmdForkproxy) run(cmd *cobra.Command, args []string) error {
 			if err != nil && !errors.Is(err, fs.ErrNotExist) {
 				return err
 			}
+
+			// Bind the socket with its final mode, so it's never briefly world-accessible and needs no chmod by path.
+			if args[8] != "" {
+				mode, err := strconv.ParseUint(args[8], 8, 0)
+				if err != nil {
+					return err
+				}
+
+				unix.Umask(int(^mode & 0o777))
+			}
 		}
 
 		var listenAddresses []string
@@ -524,24 +534,28 @@ func (c *cmdForkproxy) run(cmd *cobra.Command, args []string) error {
 			}
 
 			if listenAddrGID != -1 || listenAddrUID != -1 {
-				err = os.Chown(lAddr.Address, listenAddrUID, listenAddrGID)
-				if err != nil {
-					return err
-				}
-			}
-
-			var listenAddrMode os.FileMode
-			if args[8] != "" {
-				tmp, err := strconv.ParseUint(args[8], 8, 0)
+				// Chown the socket itself, never a path a local user may have swapped for a symlink.
+				fd, err := unix.Open(lAddr.Address, unix.O_PATH|unix.O_NOFOLLOW|unix.O_CLOEXEC, 0)
 				if err != nil {
 					return err
 				}
 
-				listenAddrMode = os.FileMode(tmp)
-				err = os.Chmod(lAddr.Address, listenAddrMode)
+				var st unix.Stat_t
+				err = unix.Fstat(fd, &st)
 				if err != nil {
+					_ = unix.Close(fd)
 					return err
 				}
+
+				if st.Mode&unix.S_IFMT == unix.S_IFSOCK {
+					err = unix.Fchownat(fd, "", listenAddrUID, listenAddrGID, unix.AT_EMPTY_PATH)
+					if err != nil {
+						_ = unix.Close(fd)
+						return err
+					}
+				}
+
+				_ = unix.Close(fd)
 			}
 		}
 
