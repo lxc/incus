@@ -839,6 +839,12 @@ func checkRestrictions(project api.Project, instances []api.Instance, profiles [
 					if !entry.HostIDsCoveredBy(allowedIDMapHostUIDs, allowedIDMapHostGIDs) {
 						return fmt.Errorf(`Use of low-level "raw.idmap" element %d on %s %q of project %q is forbidden`, i, entityTypeLabel, entityName, project.Name)
 					}
+
+					// Container root must keep coming from the daemon's own allocation, otherwise a host
+					// user mapped onto it would own the instance directory and its on-disk root files.
+					if entry.NSID == 0 {
+						return fmt.Errorf(`Use of low-level "raw.idmap" element %d on %s %q of project %q is forbidden`, i, entityTypeLabel, entityName, project.Name)
+					}
 				}
 
 				// Skip the other checks.
