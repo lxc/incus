@@ -33,6 +33,12 @@ type BackupTarget struct {
 	// SecretKey is the S3 API access key
 	// Example: secret123
 	SecretKey string `json:"secret_key" yaml:"secret_key"`
+
+	// Region is the S3 region, derived from the URL when empty
+	// Example: eu-west-1
+	//
+	// API extension: backup_s3_region
+	Region string `json:"region,omitempty" yaml:"region,omitempty"`
 }
 
 // InstanceBackupsPost represents the fields available for a new instance backup.
