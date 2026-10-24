@@ -840,6 +840,16 @@ func (d *Daemon) createCmd(restAPI *http.ServeMux, apiVersion string, c APIEndpo
 			}
 		}
 
+		// Block remote clients on startup, before the trust store and authorization config are loaded.
+		if !slices.Contains([]string{"unix", "cluster"}, protocol) {
+			select {
+			case <-d.setupChan:
+			default:
+				_ = response.Unavailable(errors.New("Daemon is starting up")).Render(w)
+				return
+			}
+		}
+
 		// Restrict internal queries to remote, non-cluster, clients
 		if apiVersion == "internal" && !slices.Contains([]string{"unix", "cluster"}, protocol) {
 			internalAllowed := func() bool {
