@@ -8,6 +8,7 @@ import (
 	"maps"
 	"net"
 	"net/http"
+	"os"
 	"runtime"
 	"slices"
 	"strconv"
@@ -1165,11 +1166,12 @@ func doNetworkGet(s *state.State, r *http.Request, allNodes bool, projectName st
 		return api.Network{}, api.StatusErrorf(http.StatusNotFound, "Network not found")
 	}
 
-	// Get OS network details.
-	osInfo, _ := net.InterfaceByName(networkName)
+	// Check for a host interface through sysfs rather than a netlink dump.
+	osExists := network.InterfaceExists(networkName)
+	linkType, _ := os.ReadFile(fmt.Sprintf("/sys/class/net/%s/type", networkName))
 
 	// Quick check.
-	if osInfo == nil && netInfo == nil {
+	if !osExists && netInfo == nil {
 		return api.Network{}, api.StatusErrorf(http.StatusNotFound, "Network not found")
 	}
 
@@ -1198,7 +1200,8 @@ func doNetworkGet(s *state.State, r *http.Request, allNodes bool, projectName st
 		if allNodes {
 			apiNet.Config = db.StripNodeSpecificNetworkConfig(netInfo.Type, apiNet.Config)
 		}
-	} else if osInfo != nil && int(osInfo.Flags&net.FlagLoopback) > 0 {
+	} else if strings.TrimSpace(string(linkType)) == "772" {
+		// ARPHRD_LOOPBACK.
 		apiNet.Type = "loopback"
 	} else if util.PathExists(fmt.Sprintf("/sys/class/net/%s/bridge", apiNet.Name)) {
 		apiNet.Type = "bridge"
