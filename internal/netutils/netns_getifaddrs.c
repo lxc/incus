@@ -452,10 +452,8 @@ static int __rtnl_enumerate(int link_af, int addr_af, __s32 netns_id,
 	close(fd);
 	errno = saved_errno;
 
-	if (getaddr_netnsid_aware && getlink_netnsid_aware)
-		*netnsid_aware = true;
-	else
-		*netnsid_aware = false;
+	// The address dump is empty for a namespace without addresses, so only the link dump is checked.
+	*netnsid_aware = getlink_netnsid_aware;
 
 	return r;
 }
