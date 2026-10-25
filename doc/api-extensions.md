@@ -3578,3 +3578,8 @@ which are attached to all prefixes advertised by the network.
 ## `instances_migration_bwlimit`
 This adds the `instances.migration.bwlimit` server configuration key which limits
 the bandwidth used by the memory and state transfer of each virtual machine live migration.
+
+## `backup_s3_region`
+This adds a `region` field to the S3 backup target used when uploading
+instance or volume backups, for S3 compatible stores whose region can't
+be derived from their URL.

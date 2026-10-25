@@ -60,6 +60,14 @@ definitions:
                 example: S3
                 type: string
                 x-go-name: Protocol
+            region:
+                description: |-
+                    Region is the S3 region, derived from the URL when empty
+
+                    API extension: backup_s3_region
+                example: eu-west-1
+                type: string
+                x-go-name: Region
             secret_key:
                 description: SecretKey is the S3 API access key
                 example: secret123

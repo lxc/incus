@@ -74,8 +74,14 @@ func Upload(reader *io.PipeReader, req *api.BackupTarget) error {
 		TLSClientConfig:    tlsConfig,
 	}
 
+	// Non-AWS stores can't have their region guessed from the URL.
+	region := req.Region
+	if region == "" {
+		region = s3util.RegionFromURL(uri)
+	}
+
 	cfg := aws.Config{
-		Region:      s3util.RegionFromURL(uri),
+		Region:      region,
 		Credentials: credentials.NewStaticCredentialsProvider(req.AccessKey, req.SecretKey, ""),
 		HTTPClient:  &http.Client{Transport: ts},
 	}

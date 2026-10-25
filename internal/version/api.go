@@ -593,6 +593,7 @@ var APIExtensions = []string{
 	"certificate_ca_trust",
 	"network_bgp_communities",
 	"instances_migration_bwlimit",
+	"backup_s3_region",
 }
 
 // APIExtensionsCount returns the number of available API extensions.
