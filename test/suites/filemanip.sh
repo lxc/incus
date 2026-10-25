@@ -540,6 +540,15 @@ test_filemanip() {
     [ "$(incus exec filemanip --project=test -- stat -c %a /tmp/perm/sub/file)" = "4755" ]
     incus file chmod -- -x filemanip/tmp/perm/sub/file --project=test
     [ "$(incus exec filemanip --project=test -- stat -c %a /tmp/perm/sub/file)" = "4644" ]
+    incus file chmod 444 filemanip/tmp/perm/sub/file --project=test
+    (umask 022; incus file chmod +w filemanip/tmp/perm/sub/file --project=test)
+    [ "$(incus exec filemanip --project=test -- stat -c %a /tmp/perm/sub/file)" = "644" ]
+    incus file chmod 444 filemanip/tmp/perm/sub/file --project=test
+    (umask 000; incus file chmod +w filemanip/tmp/perm/sub/file --project=test)
+    [ "$(incus exec filemanip --project=test -- stat -c %a /tmp/perm/sub/file)" = "666" ]
+    incus file chmod 444 filemanip/tmp/perm/sub/file --project=test
+    (umask 022; incus file chmod a+w filemanip/tmp/perm/sub/file --project=test)
+    [ "$(incus exec filemanip --project=test -- stat -c %a /tmp/perm/sub/file)" = "666" ]
     incus file chmod 640 filemanip/tmp/perm/link --project=test
     [ "$(incus exec filemanip --project=test -- stat -c %a /tmp/perm/sub/file)" = "640" ]
     incus file chmod 700 filemanip/tmp/perm/sub/file filemanip/tmp/perm/sub --project=test
