@@ -1093,7 +1093,7 @@ func (c *cmdFileChown) run(cmd *cobra.Command, args []string) error {
 			if !ok {
 				sftpConn, err = d.GetInstanceFileSFTP(instanceName)
 				if err != nil {
-					return err
+					return fmt.Errorf(i18n.G("Failed connecting to instance SFTP: %w"), err)
 				}
 
 				sftpClients[instanceID] = sftpConn
@@ -1203,7 +1203,7 @@ func (c *cmdFileChmod) run(cmd *cobra.Command, args []string) error {
 			if !ok {
 				sftpConn, err = d.GetInstanceFileSFTP(instanceName)
 				if err != nil {
-					return err
+					return fmt.Errorf(i18n.G("Failed connecting to instance SFTP: %w"), err)
 				}
 
 				sftpClients[instanceID] = sftpConn
