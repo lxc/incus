@@ -91,14 +91,16 @@ func (e *listenerCommon) Wait(ctx context.Context) {
 // Close Disconnects the listener.
 func (e *listenerCommon) Close() {
 	e.lock.Lock()
-	defer e.lock.Unlock()
 
 	if e.IsClosed() {
+		e.lock.Unlock()
 		return
 	}
 
-	logger.Debug("Event listener server handler stopped", logger.Ctx{"listener": e.ID(), "local": e.LocalAddr(), "remote": e.RemoteAddr()})
-
 	_ = e.EventListenerConnection.Close()
 	e.done.Cancel()
+	e.lock.Unlock()
+
+	// Log outside of the lock, log entries are broadcast as events and may close other listeners.
+	logger.Debug("Event listener server handler stopped", logger.Ctx{"listener": e.ID(), "local": e.LocalAddr(), "remote": e.RemoteAddr()})
 }
