@@ -1877,7 +1877,7 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 	}
 
 	// Get qemu configuration and check qemu is installed.
-	qemuPath, qemuBus, err := d.qemuArchConfig(d.architecture)
+	qemuPath, qemuBus, err := d.QemuArchConfig()
 	if err != nil {
 		op.Done(err)
 		return err
@@ -3016,6 +3016,11 @@ func (d *qemu) qemuArchConfig(arch int) (string, string, error) {
 	return qemuPath, bus, nil
 }
 
+// QemuArchConfig returns the QEMU binary name and bus type for the instance architecture.
+func (d *qemu) QemuArchConfig() (string, string, error) {
+	return d.qemuArchConfig(d.architecture)
+}
+
 // RegisterDevices calls the Register() function on all of the instance's devices.
 func (d *qemu) RegisterDevices() {
 	d.devicesRegister(d)
@@ -3320,7 +3325,7 @@ func (d *qemu) deviceAttachNIC(deviceName string, configCopy map[string]string, 
 		return errors.New("Device didn't provide a link property to use")
 	}
 
-	_, qemuBus, err := d.qemuArchConfig(d.architecture)
+	_, qemuBus, err := d.QemuArchConfig()
 	if err != nil {
 		return err
 	}
@@ -3416,7 +3421,7 @@ func (d *qemu) deviceAttachPCI(deviceName string, configCopy map[string]string, 
 	}
 
 	// PCIe and PCI require a port device name to hotplug the NIC into.
-	_, qemuBus, err := d.qemuArchConfig(d.architecture)
+	_, qemuBus, err := d.QemuArchConfig()
 	if err != nil {
 		return err
 	}
@@ -3566,7 +3571,7 @@ func (d *qemu) deviceDetachNIC(deviceName string) error {
 		return err
 	}
 
-	_, qemuBus, err := d.qemuArchConfig(d.architecture)
+	_, qemuBus, err := d.QemuArchConfig()
 	if err != nil {
 		return err
 	}
@@ -3614,7 +3619,7 @@ func (d *qemu) deviceDetachPCI(deviceName string) error {
 		return fmt.Errorf("Failed removing PCI device: %w", err)
 	}
 
-	_, qemuBus, err := d.qemuArchConfig(d.architecture)
+	_, qemuBus, err := d.QemuArchConfig()
 	if err != nil {
 		return err
 	}
@@ -7712,7 +7717,7 @@ func (d *qemu) Update(args db.InstanceArgs, userRequested bool) error {
 
 	// If apparmor changed, re-validate the apparmor profile (even if not running).
 	if slices.Contains(changedConfig, "raw.apparmor") {
-		qemuPath, _, err := d.qemuArchConfig(d.architecture)
+		qemuPath, _, err := d.QemuArchConfig()
 		if err != nil {
 			return err
 		}
@@ -13023,7 +13028,7 @@ func (d *qemu) needsFullRestart() bool {
 		return true
 	}
 
-	exePath, _, err := d.qemuArchConfig(d.architecture)
+	exePath, _, err := d.QemuArchConfig()
 	if err != nil {
 		return true
 	}
