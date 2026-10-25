@@ -230,6 +230,7 @@ type VM interface {
 	GetNVRAM() (*uefi.Store, error)
 	SetNVRAM(store *uefi.Store) error
 	ResetNVRAM() error
+	QemuArchConfig() (string, string, error)
 }
 
 // CriuMigrationArgs arguments for CRIU migration.
