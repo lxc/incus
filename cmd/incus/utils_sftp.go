@@ -728,7 +728,7 @@ func sftpRecursiveChmod(client *sftp.Client, filePath string, info fs.FileInfo, 
 		var err error
 		entries, err = client.ReadDir(filePath)
 		if err != nil {
-			return fmt.Errorf(i18n.G("Failed to walk path fo %s: %s"), filePath, err)
+			return fmt.Errorf(i18n.G("Failed to walk path for %s: %s"), filePath, err)
 		}
 	}
 
