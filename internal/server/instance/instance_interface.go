@@ -142,8 +142,8 @@ type Instance interface {
 	// Status
 	Render() (any, any, error)
 	RenderWithUsage() (any, any, error)
-	RenderFull(hostInterfaces []net.Interface) (*api.InstanceFull, any, error)
-	RenderState(hostInterfaces []net.Interface) (*api.InstanceState, error)
+	RenderFull() (*api.InstanceFull, any, error)
+	RenderState() (*api.InstanceState, error)
 	IsRunning() bool
 	IsFrozen() bool
 	IsEphemeral() bool
@@ -198,7 +198,7 @@ type Instance interface {
 
 	DeferTemplateApply(trigger TemplateTrigger) error
 
-	Metrics(hostInterfaces []net.Interface) (*metrics.MetricSet, error)
+	Metrics() (*metrics.MetricSet, error)
 
 	// Bitmaps.
 	CreateBitmap(deviceNames []string, data api.StorageVolumeBitmapsPost) error

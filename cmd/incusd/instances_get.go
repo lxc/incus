@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"net"
 	"net/http"
 	"net/url"
 	"runtime"
@@ -400,8 +399,6 @@ func instancesGet(d *Daemon, r *http.Request) response.Response {
 		} else {
 			threads := min(len(instances), max(runtime.NumCPU()/2, 1))
 
-			hostInterfaces, _ := net.Interfaces()
-
 			// Get the local instances.
 			localInstancesByID := make(map[int64]instance.Instance)
 			if allProjects {
@@ -450,7 +447,7 @@ func instancesGet(d *Daemon, r *http.Request) response.Response {
 							continue
 						}
 
-						c, _, err := inst.RenderFull(hostInterfaces)
+						c, _, err := inst.RenderFull()
 						if err != nil {
 							resultErrListAppend(dbInst, err)
 						} else {

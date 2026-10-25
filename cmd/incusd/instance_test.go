@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"net"
 	"testing"
 	"time"
 
@@ -203,12 +202,10 @@ func (s *containerTestSuite) TestContainer_LoadFromDB() {
 	c2.IsRunning()
 	s.Req.Nil(err)
 
-	hostInterfaces, _ := net.Interfaces()
-
-	apiC1, etagC1, err := c.RenderFull(hostInterfaces)
+	apiC1, etagC1, err := c.RenderFull()
 	s.Req.Nil(err)
 
-	apiC2, etagC2, err := c2.RenderFull(hostInterfaces)
+	apiC2, etagC2, err := c2.RenderFull()
 	s.Req.Nil(err)
 
 	s.Equal(etagC1, etagC2)

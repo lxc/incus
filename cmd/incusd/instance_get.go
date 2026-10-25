@@ -2,7 +2,6 @@ package main
 
 import (
 	"errors"
-	"net"
 	"net/http"
 	"strconv"
 
@@ -158,8 +157,7 @@ func instanceGet(d *Daemon, r *http.Request) response.Response {
 	if recursion == 0 {
 		state, etag, err = c.Render()
 	} else {
-		hostInterfaces, _ := net.Interfaces()
-		state, etag, err = c.RenderFull(hostInterfaces)
+		state, etag, err = c.RenderFull()
 	}
 
 	if err != nil {
