@@ -985,7 +985,7 @@ func (c *cmdStorageVolumeFileChown) run(cmd *cobra.Command, args []string) error
 	// Connect to SFTP.
 	sftpConn, err := d.GetStoragePoolVolumeFileSFTP(poolName, "custom", volName)
 	if err != nil {
-		return err
+		return fmt.Errorf(i18n.G("Failed connecting to instance SFTP: %w"), err)
 	}
 
 	defer logger.WarnOnError(sftpConn.Close, "Failed to close SFTP connection")
@@ -1072,7 +1072,7 @@ func (c *cmdStorageVolumeFileChmod) run(cmd *cobra.Command, args []string) error
 	// Connect to SFTP.
 	sftpConn, err := d.GetStoragePoolVolumeFileSFTP(poolName, "custom", volName)
 	if err != nil {
-		return err
+		return fmt.Errorf(i18n.G("Failed connecting to instance SFTP: %w"), err)
 	}
 
 	defer logger.WarnOnError(sftpConn.Close, "Failed to close SFTP connection")
