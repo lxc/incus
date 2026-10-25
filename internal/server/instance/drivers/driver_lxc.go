@@ -4250,7 +4250,7 @@ func (d *lxc) renderState(statusCode api.StatusCode, hostInterfaces []net.Interf
 
 		status.CPU = d.cpuState()
 		status.Memory = d.memoryState()
-		status.Network = d.networkState(hostInterfaces)
+		status.Network = d.networkState()
 		status.Pid = int64(pid)
 		status.Processes = processesState
 
@@ -8648,7 +8648,7 @@ func (d *lxc) memoryState() api.InstanceStateMemory {
 	return memory
 }
 
-func (d *lxc) networkState(hostInterfaces []net.Interface) map[string]api.InstanceStateNetwork {
+func (d *lxc) networkState() map[string]api.InstanceStateNetwork {
 	result := map[string]api.InstanceStateNetwork{}
 
 	pid := d.InitPID()
@@ -8656,7 +8656,7 @@ func (d *lxc) networkState(hostInterfaces []net.Interface) map[string]api.Instan
 		return result
 	}
 
-	nw, err := netutils.NetnsGetifaddrs(int32(pid), hostInterfaces)
+	nw, err := netutils.NetnsGetifaddrs(int32(pid))
 	if err != nil {
 		d.logger.Error("Failed to retrieve network information via netlink", logger.Ctx{"err": err, "pid": pid})
 		return result
@@ -9651,7 +9651,7 @@ func (d *lxc) Metrics(hostInterfaces []net.Interface) (*metrics.MetricSet, error
 	}
 
 	// Get network stats
-	networkState := d.networkState(hostInterfaces)
+	networkState := d.networkState()
 
 	for name, netState := range networkState {
 		labels := map[string]string{"device": name}
