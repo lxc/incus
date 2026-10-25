@@ -275,6 +275,15 @@ test_storage_volume_filemanip() {
     [ "$(incus exec filemanip --project=test -- stat -c %a /v1/tmp/perm/sub/file)" = "4755" ]
     incus storage volume file chmod -- -x "${pool}" vol1/tmp/perm/sub/file
     [ "$(incus exec filemanip --project=test -- stat -c %a /v1/tmp/perm/sub/file)" = "4644" ]
+    incus storage volume file chmod 444 "${pool}" vol1/tmp/perm/sub/file
+    (umask 022; incus storage volume file chmod +w "${pool}" vol1/tmp/perm/sub/file)
+    [ "$(incus exec filemanip --project=test -- stat -c %a /v1/tmp/perm/sub/file)" = "644" ]
+    incus storage volume file chmod 444 "${pool}" vol1/tmp/perm/sub/file
+    (umask 000; incus storage volume file chmod +w "${pool}" vol1/tmp/perm/sub/file)
+    [ "$(incus exec filemanip --project=test -- stat -c %a /v1/tmp/perm/sub/file)" = "666" ]
+    incus storage volume file chmod 444 "${pool}" vol1/tmp/perm/sub/file
+    (umask 022; incus storage volume file chmod a+w "${pool}" vol1/tmp/perm/sub/file)
+    [ "$(incus exec filemanip --project=test -- stat -c %a /v1/tmp/perm/sub/file)" = "666" ]
     incus storage volume file chmod -R 755 "${pool}" vol1/tmp/perm
     [ "$(incus exec filemanip --project=test -- stat -c %a /v1/tmp/perm)" = "755" ]
     [ "$(incus exec filemanip --project=test -- stat -c %a /v1/tmp/perm/sub)" = "755" ]
