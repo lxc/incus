@@ -583,62 +583,62 @@ func sftpRecursiveMkdir(sftpConn *sftp.Client, p string, mode *os.FileMode, uid 
 }
 
 // sftpChown changes the ownership of a path, optionally recursing into directories.
-func sftpChown(client *sftp.Client, filePath string, uid int, gid int, recursive bool, followRoot bool, followAll bool) error {
+func sftpChown(sftpConn *sftp.Client, p string, uid int, gid int, recursive bool, followRoot bool, followAll bool) error {
 	if recursive {
-		info, err := client.Lstat(filePath)
+		info, err := sftpConn.Lstat(p)
 		if err != nil {
-			return fmt.Errorf(i18n.G("Failed to get information about %s: %s"), filePath, err)
+			return fmt.Errorf(i18n.G("Failed to get information about %s: %s"), p, err)
 		}
 
 		if info.Mode()&fs.ModeSymlink == 0 {
-			return sftpRecursiveChown(client, filePath, info, uid, gid, followAll)
+			return sftpRecursiveChown(sftpConn, p, info, uid, gid, followAll)
 		}
 
 		// A symlink given as the root only has its target changed, unless asked to traverse it.
 		if followRoot || followAll {
-			target, err := client.Stat(filePath)
+			target, err := sftpConn.Stat(p)
 			if err != nil {
-				return fmt.Errorf(i18n.G("Failed to get information about %s: %s"), filePath, err)
+				return fmt.Errorf(i18n.G("Failed to get information about %s: %s"), p, err)
 			}
 
 			if target.IsDir() {
-				return sftpRecursiveChown(client, filePath, target, uid, gid, followAll)
+				return sftpRecursiveChown(sftpConn, p, target, uid, gid, followAll)
 			}
 		}
 	}
 
-	logger.Debugf("Changing ownership of %q to %d:%d", filePath, uid, gid)
+	logger.Debugf("Changing ownership of %q to %d:%d", p, uid, gid)
 
-	err := client.Chown(filePath, uid, gid)
+	err := sftpConn.Chown(p, uid, gid)
 	if err != nil {
-		return fmt.Errorf(i18n.G("Failed to change ownership of %s: %s"), filePath, err)
+		return fmt.Errorf(i18n.G("Failed to change ownership of %s: %s"), p, err)
 	}
 
 	return nil
 }
 
 // sftpRecursiveChown changes the ownership of a path and everything below it.
-func sftpRecursiveChown(client *sftp.Client, filePath string, info fs.FileInfo, uid int, gid int, followAll bool) error {
+func sftpRecursiveChown(sftpConn *sftp.Client, p string, info fs.FileInfo, uid int, gid int, followAll bool) error {
 	var entries []fs.FileInfo
 	if info.IsDir() {
 		var err error
-		entries, err = client.ReadDir(filePath)
+		entries, err = sftpConn.ReadDir(p)
 		if err != nil {
-			return fmt.Errorf(i18n.G("Failed to walk path for %s: %s"), filePath, err)
+			return fmt.Errorf(i18n.G("Failed to walk path for %s: %s"), p, err)
 		}
 	}
 
-	logger.Debugf("Changing ownership of %q to %d:%d", filePath, uid, gid)
+	logger.Debugf("Changing ownership of %q to %d:%d", p, uid, gid)
 
-	err := client.Chown(filePath, uid, gid)
+	err := sftpConn.Chown(p, uid, gid)
 	if err != nil {
-		return fmt.Errorf(i18n.G("Failed to change ownership of %s: %s"), filePath, err)
+		return fmt.Errorf(i18n.G("Failed to change ownership of %s: %s"), p, err)
 	}
 
 	var errs []error
 
 	for _, entry := range entries {
-		entryPath := path.Join(filePath, entry.Name())
+		entryPath := path.Join(p, entry.Name())
 
 		if entry.Mode()&fs.ModeSymlink != 0 {
 			if !followAll {
@@ -648,7 +648,7 @@ func sftpRecursiveChown(client *sftp.Client, filePath string, info fs.FileInfo, 
 			}
 
 			// shortcut: no cycle detection, the server's symlink depth limit ends it with an error like GNU chown does.
-			target, err := client.Stat(entryPath)
+			target, err := sftpConn.Stat(entryPath)
 			if err != nil {
 				errs = append(errs, fmt.Errorf(i18n.G("Failed to get information about %s: %s"), entryPath, err))
 
@@ -658,7 +658,7 @@ func sftpRecursiveChown(client *sftp.Client, filePath string, info fs.FileInfo, 
 			entry = target
 		}
 
-		err = sftpRecursiveChown(client, entryPath, entry, uid, gid, followAll)
+		err = sftpRecursiveChown(sftpConn, entryPath, entry, uid, gid, followAll)
 		if err != nil {
 			errs = append(errs, err)
 		}
@@ -668,68 +668,68 @@ func sftpRecursiveChown(client *sftp.Client, filePath string, info fs.FileInfo, 
 }
 
 // sftpChmodPath applies a numeric or symbolic mode to a path, based on its current mode.
-func sftpChmodPath(client *sftp.Client, filePath string, spec string, info fs.FileInfo) error {
+func sftpChmodPath(sftpConn *sftp.Client, p string, spec string, info fs.FileInfo) error {
 	mode, err := parseMode(spec, info.Mode(), internalIO.GetUmask(), info.IsDir())
 	if err != nil {
-		return fmt.Errorf(i18n.G("Failed to parse mode for %s: %s"), filePath, err)
+		return fmt.Errorf(i18n.G("Failed to parse mode for %s: %s"), p, err)
 	}
 
-	logger.Debugf("Changing mode of %q to %s", filePath, mode)
+	logger.Debugf("Changing mode of %q to %s", p, mode)
 
-	err = client.Chmod(filePath, mode)
+	err = sftpConn.Chmod(p, mode)
 	if err != nil {
-		return fmt.Errorf(i18n.G("Failed to change mode of %s: %s"), filePath, err)
+		return fmt.Errorf(i18n.G("Failed to change mode of %s: %s"), p, err)
 	}
 
 	return nil
 }
 
 // sftpChmod applies a numeric or symbolic mode to a path, optionally recursing into directories.
-func sftpChmod(client *sftp.Client, filePath string, spec string, recursive bool, followRoot bool, followAll bool) error {
+func sftpChmod(sftpConn *sftp.Client, p string, spec string, recursive bool, followRoot bool, followAll bool) error {
 	if recursive {
-		info, err := client.Lstat(filePath)
+		info, err := sftpConn.Lstat(p)
 		if err != nil {
-			return fmt.Errorf(i18n.G("Failed to get information about %s: %s"), filePath, err)
+			return fmt.Errorf(i18n.G("Failed to get information about %s: %s"), p, err)
 		}
 
 		if info.Mode()&fs.ModeSymlink == 0 {
-			return sftpRecursiveChmod(client, filePath, info, spec, followAll)
+			return sftpRecursiveChmod(sftpConn, p, info, spec, followAll)
 		}
 
 		// A symlink given as the root only has its target changed, unless asked to traverse it.
 		if followRoot || followAll {
-			target, err := client.Stat(filePath)
+			target, err := sftpConn.Stat(p)
 			if err != nil {
-				return fmt.Errorf(i18n.G("Failed to get information about %s: %s"), filePath, err)
+				return fmt.Errorf(i18n.G("Failed to get information about %s: %s"), p, err)
 			}
 
 			if target.IsDir() {
-				return sftpRecursiveChmod(client, filePath, target, spec, followAll)
+				return sftpRecursiveChmod(sftpConn, p, target, spec, followAll)
 			}
 		}
 	}
 
-	info, err := client.Stat(filePath)
+	info, err := sftpConn.Stat(p)
 	if err != nil {
-		return fmt.Errorf(i18n.G("Failed to get information about %s: %s"), filePath, err)
+		return fmt.Errorf(i18n.G("Failed to get information about %s: %s"), p, err)
 	}
 
-	return sftpChmodPath(client, filePath, spec, info)
+	return sftpChmodPath(sftpConn, p, spec, info)
 }
 
 // sftpRecursiveChmod applies a mode to a path and everything below it.
-func sftpRecursiveChmod(client *sftp.Client, filePath string, info fs.FileInfo, spec string, followAll bool) error {
+func sftpRecursiveChmod(sftpConn *sftp.Client, p string, info fs.FileInfo, spec string, followAll bool) error {
 	// List the content first so a mode removing access doesn't prevent it.
 	var entries []fs.FileInfo
 	if info.IsDir() {
 		var err error
-		entries, err = client.ReadDir(filePath)
+		entries, err = sftpConn.ReadDir(p)
 		if err != nil {
-			return fmt.Errorf(i18n.G("Failed to walk path for %s: %s"), filePath, err)
+			return fmt.Errorf(i18n.G("Failed to walk path for %s: %s"), p, err)
 		}
 	}
 
-	err := sftpChmodPath(client, filePath, spec, info)
+	err := sftpChmodPath(sftpConn, p, spec, info)
 	if err != nil {
 		return err
 	}
@@ -737,7 +737,7 @@ func sftpRecursiveChmod(client *sftp.Client, filePath string, info fs.FileInfo, 
 	var errs []error
 
 	for _, entry := range entries {
-		entryPath := path.Join(filePath, entry.Name())
+		entryPath := path.Join(p, entry.Name())
 
 		if entry.Mode()&fs.ModeSymlink != 0 {
 			if !followAll {
@@ -747,7 +747,7 @@ func sftpRecursiveChmod(client *sftp.Client, filePath string, info fs.FileInfo, 
 			}
 
 			// shortcut: no cycle detection, the server's symlink depth limit ends it with an error like GNU chmod does.
-			target, err := client.Stat(entryPath)
+			target, err := sftpConn.Stat(entryPath)
 			if err != nil {
 				errs = append(errs, fmt.Errorf(i18n.G("Failed to get information about %s: %s"), entryPath, err))
 
@@ -757,7 +757,7 @@ func sftpRecursiveChmod(client *sftp.Client, filePath string, info fs.FileInfo, 
 			entry = target
 		}
 
-		err = sftpRecursiveChmod(client, entryPath, entry, spec, followAll)
+		err = sftpRecursiveChmod(sftpConn, entryPath, entry, spec, followAll)
 		if err != nil {
 			errs = append(errs, err)
 		}
