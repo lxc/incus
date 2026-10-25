@@ -241,9 +241,6 @@ func metricsGet(d *Daemon, r *http.Request) response.Response {
 		return getFilteredMetrics(s, r, compress, metricSet)
 	}
 
-	// Gather information about host interfaces once.
-	hostInterfaces, _ := net.Interfaces()
-
 	var instances []instance.Instance
 	err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
 		return tx.InstanceList(ctx, func(dbInst db.InstanceArgs, p api.Project) error {
@@ -279,7 +276,7 @@ func metricsGet(d *Daemon, r *http.Request) response.Response {
 		go func(instMetricsCh <-chan instance.Instance) {
 			for inst := range instMetricsCh {
 				projectName := inst.Project().Name
-				instanceMetrics, err := inst.Metrics(hostInterfaces)
+				instanceMetrics, err := inst.Metrics()
 				if err != nil {
 					// Ignore stopped instances.
 					if !errors.Is(err, instanceDrivers.ErrInstanceIsStopped) {
