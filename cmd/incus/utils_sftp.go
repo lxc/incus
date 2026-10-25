@@ -672,7 +672,7 @@ const sftpChmodMask = fs.ModePerm | fs.ModeSetuid | fs.ModeSetgid | fs.ModeStick
 
 // sftpChmodPath applies a numeric or symbolic mode to a path, based on its current mode.
 func sftpChmodPath(client *sftp.Client, filePath string, spec string, info fs.FileInfo) error {
-	mode, err := parseMode(spec, info.Mode()&sftpChmodMask, 0, info.IsDir())
+	mode, err := parseMode(spec, info.Mode()&sftpChmodMask, internalIO.GetUmask(), info.IsDir())
 	if err != nil {
 		return fmt.Errorf("%s: %w", filePath, err)
 	}
