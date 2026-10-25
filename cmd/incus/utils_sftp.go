@@ -667,19 +667,16 @@ func sftpRecursiveChown(client *sftp.Client, filePath string, info fs.FileInfo, 
 	return errors.Join(errs...)
 }
 
-// sftpChmodMask is the set of mode bits that can be changed over SFTP.
-const sftpChmodMask = fs.ModePerm | fs.ModeSetuid | fs.ModeSetgid | fs.ModeSticky
-
 // sftpChmodPath applies a numeric or symbolic mode to a path, based on its current mode.
 func sftpChmodPath(client *sftp.Client, filePath string, spec string, info fs.FileInfo) error {
-	mode, err := parseMode(spec, info.Mode()&sftpChmodMask, internalIO.GetUmask(), info.IsDir())
+	mode, err := parseMode(spec, info.Mode(), internalIO.GetUmask(), info.IsDir())
 	if err != nil {
 		return fmt.Errorf(i18n.G("Failed to parse mode for %s: %s"), filePath, err)
 	}
 
-	logger.Debugf("Changing mode of %q to %s", filePath, mode&sftpChmodMask)
+	logger.Debugf("Changing mode of %q to %s", filePath, mode)
 
-	err = client.Chmod(filePath, mode&sftpChmodMask)
+	err = client.Chmod(filePath, mode)
 	if err != nil {
 		return fmt.Errorf(i18n.G("Failed to change mode of %s: %s"), filePath, err)
 	}
