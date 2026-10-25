@@ -457,7 +457,7 @@ func certificateTokenValid(s *state.State, r *http.Request, addToken *api.Certif
 //  Add a trusted certificate
 //
 //  Adds a certificate to the trust store as an untrusted user.
-//  In this mode, the `token` property must be set to the correct value.
+//  In this mode, the `trust_token` property must be set to the correct value.
 //
 //  The `certificate` field can be omitted in which case the TLS client
 //  certificate in use for the connection will be retrieved and added to the
@@ -574,6 +574,7 @@ func certificatesPost(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
+	var tokenCertificate bool
 	if !trusted || !userCanCreateCertificates {
 		// Non-admin cannot issue tokens.
 		if req.Token {
@@ -614,8 +615,9 @@ func certificatesPost(d *Daemon, r *http.Request) response.Response {
 				return response.Forbidden(errors.New("No matching certificate add operation found"))
 			}
 
-			// Create a new request from the token data as the user isn't allowed to override anything.
-			req = api.CertificatesPost{}
+			// Create a new request from the token data as the user isn't allowed to override anything but the certificate.
+			tokenCertificate = req.Certificate != ""
+			req = api.CertificatesPost{CertificatePut: api.CertificatePut{Certificate: req.Certificate}}
 			switch tokenReq := joinOp.Metadata["request"].(type) {
 			case api.CertificatesPost:
 				req.Name = tokenReq.Name
@@ -759,6 +761,18 @@ func certificatesPost(d *Daemon, r *http.Request) response.Response {
 	err = certificateValidate(cert)
 	if err != nil {
 		return response.BadRequest(err)
+	}
+
+	// In CA mode, a certificate sent along with a token must be CA-signed like one presented over TLS would be.
+	ca := s.Endpoints.NetworkCert().CA()
+	if tokenCertificate && ca != nil {
+		pool := x509.NewCertPool()
+		pool.AddCert(ca)
+
+		_, err = cert.Verify(x509.VerifyOptions{Roots: pool, KeyUsages: []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth}})
+		if err != nil {
+			return response.Forbidden(errors.New("Certificate isn't signed by the CA"))
+		}
 	}
 
 	// Calculate the fingerprint.
