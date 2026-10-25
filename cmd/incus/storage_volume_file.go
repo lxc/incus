@@ -1014,7 +1014,8 @@ func (c *cmdStorageVolumeFileChmod) command() *cobra.Command {
 	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
 		`Change the mode of files in custom volumes
 
-The mode is either octal or symbolic like in GNU chmod. No umask is applied.
+The mode is either octal or symbolic like in GNU chmod.
+Symbolic clauses without u, g, o or a respect the umask of the client.
 Modes starting with a dash need to follow "--".
 A symbolic link given on the command line is traversed (-H), unless -P is used.
 Symbolic links found during a recursive change are skipped, unless -L is used.`,
