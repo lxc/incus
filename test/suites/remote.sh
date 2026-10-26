@@ -234,6 +234,26 @@ test_remote_url_with_token() {
         incus config trust remove "${line}"
     done
 
+    # Generate new token
+    incus config trust add -q foo
+
+    # Extract token
+    token="$(incus config trust list-tokens -f csv -c t)"
+
+    # Enroll a certificate sent in the request body over a connection without a client certificate
+    gen_cert_and_key "${TEST_DIR}/token-client2.key" "${TEST_DIR}/token-client2.crt" "incus.local"
+    cert="$(sed ':a;N;$!ba;s/\n/\\n/g' "${TEST_DIR}/token-client2.crt")"
+    [ "$(curl -k -s -X POST -d "{\"trust_token\":\"${token}\",\"certificate\":\"${cert}\"}" "https://${INCUS_ADDR}/1.0/certificates" | jq '.status_code')" -eq 200 ]
+    incus config trust show "$(cert_fingerprint "${TEST_DIR}/token-client2.crt")" | grep -xF "name: foo"
+
+    # The enrolled certificate can authenticate and the token is gone
+    [ "$(curl -k -s --key "${TEST_DIR}/token-client2.key" --cert "${TEST_DIR}/token-client2.crt" "https://${INCUS_ADDR}/1.0/instances" | jq '.status_code')" -eq 200 ]
+    [ "$(curl -k -s -X POST -d "{\"trust_token\":\"${token}\",\"certificate\":\"${cert}\"}" "https://${INCUS_ADDR}/1.0/certificates" | jq '.error_code')" -eq 403 ]
+
+    incus config trust list -cf -fcsv | while read -r line; do
+        incus config trust remove "${line}"
+    done
+
     # Set token expiry to 5 seconds
     incus config set core.remote_token_expiry 5S
 
