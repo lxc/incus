@@ -334,6 +334,11 @@ func (c *Config) OIDCServer() (string, string, string, string, string) {
 	return c.m.GetString("oidc.issuer"), c.m.GetString("oidc.client.id"), c.m.GetString("oidc.scopes"), c.m.GetString("oidc.audience"), c.m.GetString("oidc.claim")
 }
 
+// ClusterHealingDelay returns how long to wait between detecting an offline member and evacuating it.
+func (c *Config) ClusterHealingDelay() time.Duration {
+	return time.Duration(c.m.GetInt64("cluster.healing_delay")) * time.Second
+}
+
 // ClusterHealingThreshold returns the configured healing threshold, i.e. the
 // number of seconds after which an offline node will be evacuated automatically. If the config key
 // is set but its value is lower than cluster.offline_threshold it returns
@@ -712,6 +717,16 @@ var ConfigSchema = config.Schema{
 	//  defaultdesc: `0`
 	//  shortdesc: Threshold when to evacuate an offline cluster member
 	"cluster.healing_threshold": {Type: config.Int64, Default: "0"},
+
+	// gendoc:generate(entity=server, group=cluster, key=cluster.healing_delay)
+	// Specify the number of seconds to wait between an offline cluster member being detected and its evacuation.
+	// The `cluster-member-offline` event is sent at the start of that delay, giving external tooling time to power off the member.
+	// ---
+	//  type: integer
+	//  scope: global
+	//  defaultdesc: `0`
+	//  shortdesc: Delay between detecting an offline cluster member and evacuating it
+	"cluster.healing_delay": {Type: config.Int64, Default: "0"},
 
 	// gendoc:generate(entity=server, group=cluster, key=cluster.join_token_expiry)
 	//
