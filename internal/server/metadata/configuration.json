@@ -6322,6 +6322,15 @@
 			"cluster": {
 				"keys": [
 					{
+						"cluster.healing_delay": {
+							"defaultdesc": "`0`",
+							"longdesc": "Specify the number of seconds to wait between an offline cluster member being detected and its evacuation.\nThe `cluster-member-offline` event is sent at the start of that delay, giving external tooling time to power off the member.",
+							"scope": "global",
+							"shortdesc": "Delay between detecting an offline cluster member and evacuating it",
+							"type": "integer"
+						}
+					},
+					{
 						"cluster.healing_threshold": {
 							"defaultdesc": "`0`",
 							"longdesc": "Specify the number of seconds after which an offline cluster member is to be evacuated.\nTo disable evacuating offline members, set this option to `0`.",

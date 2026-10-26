@@ -5649,6 +5649,15 @@ When using scriptlet-based authorization, this option stores the scriptlet.
 
 <!-- config group server-authorization end -->
 <!-- config group server-cluster start -->
+```{config:option} cluster.healing_delay server-cluster
+:defaultdesc: "`0`"
+:scope: "global"
+:shortdesc: "Delay between detecting an offline cluster member and evacuating it"
+:type: "integer"
+Specify the number of seconds to wait between an offline cluster member being detected and its evacuation.
+The `cluster-member-offline` event is sent at the start of that delay, giving external tooling time to power off the member.
+```
+
 ```{config:option} cluster.healing_threshold server-cluster
 :defaultdesc: "`0`"
 :scope: "global"
