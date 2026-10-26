@@ -9,6 +9,8 @@ import (
 	"path/filepath"
 	"strconv"
 
+	"github.com/google/uuid"
+
 	"github.com/lxc/incus/v7/internal/instancewriter"
 	"github.com/lxc/incus/v7/internal/linux"
 	"github.com/lxc/incus/v7/internal/migration"
@@ -572,7 +574,41 @@ func (d *cephfs) MigrateVolume(vol Volume, conn io.ReadWriteCloser, volSrcArgs *
 
 // BackupVolume creates an exported version of a volume.
 func (d *cephfs) BackupVolume(vol Volume, writer instancewriter.InstanceWriter, basePrefix string, optimized bool, snapshots []string, op *operations.Operation) error {
+	// Read from a temporary snapshot so the export is consistent while the volume is in use.
+	snapshotPath, cleanup, err := d.readonlySnapshot(vol)
+	if err != nil {
+		// Snapshots can be disabled on the Ceph side, export the live volume then.
+		d.logger.Warn("Failed creating a read-only snapshot, exporting the live volume", logger.Ctx{"volName": vol.name, "err": err})
+	} else {
+		defer cleanup()
+
+		vol.mountCustomPath = snapshotPath
+	}
+
 	return genericVFSBackupVolume(d, vol, writer, basePrefix, snapshots, op)
+}
+
+// readonlySnapshot creates a temporary snapshot of the volume, returning its path and a cleanup function.
+func (d *cephfs) readonlySnapshot(vol Volume) (string, revert.Hook, error) {
+	sourcePath := vol.MountPath()
+	cephSnapPath := filepath.Join(sourcePath, ".snap", fmt.Sprintf("temp_ro-%s", uuid.New().String()))
+
+	// Flush dirty data to the MDS as mksnap doesn't wait for client writeback.
+	_ = linux.SyncFS(sourcePath)
+
+	err := os.Mkdir(cephSnapPath, 0o711)
+	if err != nil {
+		return "", nil, fmt.Errorf("Failed to create directory %q: %w", cephSnapPath, err)
+	}
+
+	cleanup := func() {
+		err := os.Remove(cephSnapPath)
+		if err != nil {
+			d.logger.Warn("Failed deleting read-only snapshot", logger.Ctx{"snapshot": cephSnapPath, "err": err})
+		}
+	}
+
+	return cephSnapPath, cleanup, nil
 }
 
 // CreateVolumeSnapshot creates a new snapshot.
