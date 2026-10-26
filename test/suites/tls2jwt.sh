@@ -32,6 +32,23 @@ test_tls_jwt() {
     [ "$(curl -k -s -H "Authorization: Bearer ${JWT}" "https://${INCUS_ADDR}/1.0/networks" | jq '.error_code')" -eq 403 ]
     [ "$(curl -k -s "https://${INCUS_ADDR}/1.0/networks?access_token=${JWT}" | jq '.error_code')" -eq 403 ]
 
+    # Ensure the login endpoint rejects invalid tokens without setting a cookie
+    rm -f "${TEST_DIR}/jwt-cookies"
+    [ "$(curl -k -s -X POST -H "Authorization: Bearer 1234567" -c "${TEST_DIR}/jwt-cookies" "https://${INCUS_ADDR}/tls/login" | jq '.error_code')" -eq 403 ]
+    ! grep -q "tls_jwt" "${TEST_DIR}/jwt-cookies" || false
+    [ "$(curl -k -s -X POST -c "${TEST_DIR}/jwt-cookies" "https://${INCUS_ADDR}/tls/login" | jq '.error_code')" -eq 400 ]
+    ! grep -q "tls_jwt" "${TEST_DIR}/jwt-cookies" || false
+
+    # Ensure a valid token gets stored in a cookie which then authenticates requests
+    JWT="$(./tls2jwt/tls2jwt "${INCUS_CONF}/jwt-client.crt" "${INCUS_CONF}/jwt-client.key" now 60)"
+    [ "$(curl -k -s -X POST -H "Authorization: Bearer ${JWT}" -c "${TEST_DIR}/jwt-cookies" "https://${INCUS_ADDR}/tls/login" | jq '.status_code')" -eq 200 ]
+    grep -q "tls_jwt" "${TEST_DIR}/jwt-cookies"
+    [ "$(curl -k -s -b "${TEST_DIR}/jwt-cookies" "https://${INCUS_ADDR}/1.0/networks" | jq '.status_code')" -eq 200 ]
+
+    # Ensure logout clears the cookie
+    [ "$(curl -k -s -b "${TEST_DIR}/jwt-cookies" -c "${TEST_DIR}/jwt-cookies" "https://${INCUS_ADDR}/tls/logout" | jq '.status_code')" -eq 200 ]
+    [ "$(curl -k -s -b "${TEST_DIR}/jwt-cookies" "https://${INCUS_ADDR}/1.0/networks" | jq '.error_code')" -eq 403 ]
+
     # Cleanup
     incus config trust remove "${FINGERPRINT}"
 }
