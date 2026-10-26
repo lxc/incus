@@ -203,7 +203,7 @@ func instanceCreateFromImage(ctx context.Context, s *state.State, img *api.Image
 
 	// If dealing with an OCI image, parse the configuration.
 	if args.Type == instancetype.Container && inst.LocalConfig()["image.type"] == "oci" {
-		err = instanceApplyOCIConfig(inst, pool)
+		err = instanceApplyOCIConfig(inst, pool, nil)
 		if err != nil {
 			return err
 		}
@@ -239,21 +239,31 @@ func ociDefaults(spec *ociSpecs.Spec) map[string]string {
 	return defaults
 }
 
-// instanceApplyOCIConfig sets the config keys derived from the instance's OCI image that aren't set yet.
-func instanceApplyOCIConfig(inst instance.Instance, pool storagePools.Pool) error {
-	// Parse the OCI config.
+// instanceOCISpec returns the OCI config of the instance's image, nil for a non-OCI instance.
+func instanceOCISpec(inst instance.Instance, pool storagePools.Pool) (*ociSpecs.Spec, error) {
 	_, err := pool.MountInstance(inst, nil)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	spec, err := instance.OCISpec(inst.Path())
 	if err != nil {
 		_ = pool.UnmountInstance(inst, nil)
-		return err
+		return nil, err
 	}
 
 	err = pool.UnmountInstance(inst, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return spec, nil
+}
+
+// instanceApplyOCIConfig sets the config keys derived from the instance's OCI image that aren't set yet.
+// Keys still holding the values of the previous image are refreshed so only user overrides survive a rebuild.
+func instanceApplyOCIConfig(inst instance.Instance, pool storagePools.Pool, previous map[string]string) error {
+	spec, err := instanceOCISpec(inst, pool)
 	if err != nil {
 		return err
 	}
@@ -263,6 +273,13 @@ func instanceApplyOCIConfig(inst instance.Instance, pool storagePools.Pool) erro
 
 	if spec != nil {
 		config["volatile.container.oci"] = "true"
+	}
+
+	// Drop the keys copied from the previous image, they get set again from the new one below.
+	for key, value := range previous {
+		if config[key] == value {
+			delete(config, key)
+		}
 	}
 
 	// Set the missing keys from the image.
@@ -303,6 +320,22 @@ func instanceRebuildFromImage(ctx context.Context, s *state.State, r *http.Reque
 		return err
 	}
 
+	// Record the config keys derived from the current OCI image so they can be refreshed.
+	var previous map[string]string
+	if inst.Type() == instancetype.Container && inst.LocalConfig()["image.type"] == "oci" {
+		pool, err := storagePools.LoadByInstance(s, inst)
+		if err != nil {
+			return err
+		}
+
+		spec, err := instanceOCISpec(inst, pool)
+		if err != nil {
+			logger.Warn("Failed reading the OCI config of the instance being rebuilt", logger.Ctx{"instance": inst.Name(), "project": inst.Project().Name, "err": err})
+		} else {
+			previous = ociDefaults(spec)
+		}
+	}
+
 	err = inst.Rebuild(img, op)
 	if err != nil {
 		return fmt.Errorf("Failed rebuilding instance from image: %w", err)
@@ -315,7 +348,7 @@ func instanceRebuildFromImage(ctx context.Context, s *state.State, r *http.Reque
 			return err
 		}
 
-		err = instanceApplyOCIConfig(inst, pool)
+		err = instanceApplyOCIConfig(inst, pool, previous)
 		if err != nil {
 			return err
 		}
