@@ -411,9 +411,13 @@ func (c *cmdConsole) vga(d incus.InstanceServer, name string) error {
 
 		if preferredSpiceCmd != "" {
 			// preferredSpiceCmd takes a string where the SOCKET keyword is replaced with the path to the SPICE socket.
-			cmdSlice, err := shellquote.Split(strings.ReplaceAll(preferredSpiceCmd, "SOCKET", socket))
+			cmdSlice, err := shellquote.Split(preferredSpiceCmd)
 			if err != nil {
 				return err
+			}
+
+			for i, s := range cmdSlice {
+				cmdSlice[i] = strings.ReplaceAll(s, "SOCKET", socket)
 			}
 
 			cmd = exec.Command(cmdSlice[0], cmdSlice[1:]...)
