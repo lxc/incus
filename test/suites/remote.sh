@@ -147,14 +147,19 @@ test_remote_url_with_token() {
     invalid_token="eyJjbGllbnRfbmFtZSI6IiIsImZpbmdlcnByaW50IjoiMWM0MmMzOTgxOWIyNGJiYjQxNGFhYTY2NDUwNzlmZGY2NDQ4MTUzMDcxNjA0YTFjODJjMjVhN2JhNjBkZmViMCIsImFkZHJlc3NlcyI6WyIxOTIuMTY4LjE3OC4yNDo4NDQzIiwiWzIwMDM6Zjc6MzcxMToyMzAwOmQ5ZmY6NWRiMDo3ZTA2OmQ1ODldOjg0NDMiLCIxMC41OC4yLjE6ODQ0MyIsIjEwLjAuMy4xOjg0NDMiLCIxOTIuMTY4LjE3OC43MDo4NDQzIiwiWzIwMDM6Zjc6MzcxMToyMzAwOjQwMTY6ODVkNDo2M2FlOjNhYWVdOjg0NDMiLCIxMC4xMjQuODYuMTo4NDQzIiwiW2ZkNDI6ZTY5Zjo3OTczOjIyMjU6OjFdOjg0NDMiXSwic2VjcmV0IjoiODVlMGU5YmViODk0ZTFhMTU3YmYxODI4YTk0Y2IwYTdjY2YxMzQ4NzMyN2ZjMTY3MDcyY2JlNjQ3NmVmOGJkMiJ9"
     ! incus_remote remote add test "${invalid_token}" || false
 
+    # Revoke the pending tokens left behind by other tests
+    incus config trust list-tokens -f json | jq -r '.[].client_name' | while read -r name; do
+        incus config trust revoke-token "${name}"
+    done
+
     # Generate token for client foo
     incus config trust add foo -q
 
     # Listing all tokens should show only a single one
-    [ "$(incus config trust list-tokens -f json | jq '[.[] | select(.ClientName == "foo")] |  length')" -eq 1 ]
+    [ "$(incus config trust list-tokens -f json | jq '[.[] | select(.client_name == "foo")] |  length')" -eq 1 ]
 
     # Extract token
-    token="$(incus config trust list-tokens -f json | jq '.[].Token')"
+    token="$(incus config trust list-tokens -f csv -c t)"
 
     # Invalidate token so that it cannot be used again
     incus config trust revoke-token foo
@@ -170,7 +175,7 @@ test_remote_url_with_token() {
     incus config trust add -q --projects foo --restricted foo
 
     # Extract the token
-    token="$(incus config trust list-tokens -f json | jq -r '.[].Token')"
+    token="$(incus config trust list-tokens -f csv -c t)"
 
     # Add the valid token
     incus_remote remote add test "${token}"
@@ -183,15 +188,15 @@ test_remote_url_with_token() {
 
     # Clean up
     incus_remote remote remove test
-    incus incus config trust list -cf -fcsv | while read -r line; do
-        incus config trust remove "\"${line}\""
+    incus config trust list -cf -fcsv | while read -r line; do
+        incus config trust remove "${line}"
     done
 
     # Generate new token
     incus config trust add -q foo
 
     # Extract token
-    token="$(incus config trust list-tokens -f json | jq '.[].Token')"
+    token="$(incus config trust list-tokens -f csv -c t)"
 
     # create new certificate
     gen_cert_and_key "${TEST_DIR}/token-client.key" "${TEST_DIR}/token-client.crt" "incus.local"
@@ -200,32 +205,33 @@ test_remote_url_with_token() {
     [ "$(curl -k -s --key "${TEST_DIR}/token-client.key" --cert "${TEST_DIR}/token-client.crt" "https://${INCUS_ADDR}/1.0/instances" | jq '.error_code')" -eq 403 ]
 
     # Add valid token
-    curl -k -s --key "${TEST_DIR}/token-client.key" --cert "${TEST_DIR}/token-client.crt" -X POST -d "{\"token\": ${token}}" "https://${INCUS_ADDR}/1.0/certificates"
+    curl -k -s --key "${TEST_DIR}/token-client.key" --cert "${TEST_DIR}/token-client.crt" -X POST -d "{\"trust_token\": \"${token}\"}" "https://${INCUS_ADDR}/1.0/certificates"
 
     # Check if we can see instances
     [ "$(curl -k -s --key "${TEST_DIR}/token-client.key" --cert "${TEST_DIR}/token-client.crt" "https://${INCUS_ADDR}/1.0/instances" | jq '.status_code')" -eq 200 ]
 
-    incus incus config trust list -cf -fcsv | while read -r line; do
-        incus config trust remove "\"${line}\""
+    incus config trust list -cf -fcsv | while read -r line; do
+        incus config trust remove "${line}"
     done
 
     # Generate new token
     incus config trust add -q --projects foo --restricted foo
 
     # Extract token
-    token="$(incus config trust list-tokens -f json | jq '.[].Token')"
+    token="$(incus config trust list-tokens -f csv -c t)"
 
     # Add valid token but override projects
-    curl -k -s --key "${TEST_DIR}/token-client.key" --cert "${TEST_DIR}/token-client.crt" -X POST -d "{\"token\":${token},\"projects\":[\"default\",\"foo\"],\"restricted\":false}" "https://${INCUS_ADDR}/1.0/certificates"
+    curl -k -s --key "${TEST_DIR}/token-client.key" --cert "${TEST_DIR}/token-client.crt" -X POST -d "{\"trust_token\":\"${token}\",\"projects\":[\"default\",\"foo\"],\"restricted\":false}" "https://${INCUS_ADDR}/1.0/certificates"
 
     # Check if we can see instances in the foo project
     [ "$(curl -k -s --key "${TEST_DIR}/token-client.key" --cert "${TEST_DIR}/token-client.crt" "https://${INCUS_ADDR}/1.0/instances?project=foo" | jq '.status_code')" -eq 200 ]
 
-    # Check if we can see instances in the default project (this should fail)
-    [ "$(curl -k -s --key "${TEST_DIR}/token-client.key" --cert "${TEST_DIR}/token-client.crt" "https://${INCUS_ADDR}/1.0/instances" | jq '.error_code')" -eq 403 ]
+    # The restrictions come from the token, not from the request
+    incus config trust show "$(cert_fingerprint "${TEST_DIR}/token-client.crt")" | grep -xF "restricted: true"
+    [ "$(curl -k -s --key "${TEST_DIR}/token-client.key" --cert "${TEST_DIR}/token-client.crt" "https://${INCUS_ADDR}/1.0/projects/default" | jq '.error_code')" -eq 403 ]
 
-    incus incus config trust list -cf -fcsv | while read -r line; do
-        incus config trust remove "\"${line}\""
+    incus config trust list -cf -fcsv | while read -r line; do
+        incus config trust remove "${line}"
     done
 
     # Set token expiry to 5 seconds
@@ -238,8 +244,8 @@ test_remote_url_with_token() {
     incus_remote remote add test "${token}"
 
     # Remove all trusted clients
-    incus incus config trust list -cf -fcsv | while read -r line; do
-        incus config trust remove "\"${line}\""
+    incus config trust list -cf -fcsv | while read -r line; do
+        incus config trust remove "${line}"
     done
 
     # Remove remote
