@@ -12,10 +12,11 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"net"
 	"os"
 	"strings"
 	"unsafe"
+
+	"github.com/vishvananda/netlink"
 
 	"github.com/lxc/incus/v7/shared/api"
 	"github.com/lxc/incus/v7/shared/logger"
@@ -64,7 +65,7 @@ const UnixFdsReceivedMore uint = C.UNIX_FDS_RECEIVED_MORE
 const UnixFdsReceivedNone uint = C.UNIX_FDS_RECEIVED_NONE
 
 // NetnsGetifaddrs returns a map of InstanceStateNetwork for a particular process.
-func NetnsGetifaddrs(initPID int32, hostInterfaces []net.Interface) (map[string]api.InstanceStateNetwork, error) {
+func NetnsGetifaddrs(initPID int32) (map[string]api.InstanceStateNetwork, error) {
 	var netnsidAware C.bool
 	var ifaddrs *C.struct_netns_ifaddrs
 	var netnsID C.__s32
@@ -134,12 +135,11 @@ func NetnsGetifaddrs(initPID int32, hostInterfaces []net.Interface) (map[string]
 		addNetwork.Type = netType
 		addNetwork.Mtu = int(addr.ifa_mtu)
 
+		// Resolve the host side of a veth pair with a single link request rather than a full dump.
 		if initPID != 0 && int(addr.ifa_ifindex_peer) > 0 {
-			for _, hostInterface := range hostInterfaces {
-				if hostInterface.Index == int(addr.ifa_ifindex_peer) {
-					addNetwork.HostName = hostInterface.Name
-					break
-				}
+			peer, err := netlink.LinkByIndex(int(addr.ifa_ifindex_peer))
+			if err == nil {
+				addNetwork.HostName = peer.Attrs().Name
 			}
 		}
 
