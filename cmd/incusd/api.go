@@ -123,6 +123,10 @@ func restServer(d *Daemon) *http.Server {
 		d.oidcVerifier.Logout(w, r)
 	})
 
+	// TLS JWT browser login (cookie based).
+	router.HandleFunc("/tls/login", d.tlsJWTLogin)
+	router.HandleFunc("/tls/logout", d.tlsJWTLogout)
+
 	router.HandleFunc("/{$}", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 
