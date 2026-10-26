@@ -13,6 +13,7 @@ const (
 	ClusterMemberAdded     = ClusterMemberAction(api.EventLifecycleClusterMemberAdded)
 	ClusterMemberEvacuated = ClusterMemberAction(api.EventLifecycleClusterMemberEvacuated)
 	ClusterMemberHealed    = ClusterMemberAction(api.EventLifecycleClusterMemberHealed)
+	ClusterMemberOffline   = ClusterMemberAction(api.EventLifecycleClusterMemberOffline)
 	ClusterMemberRemoved   = ClusterMemberAction(api.EventLifecycleClusterMemberRemoved)
 	ClusterMemberRenamed   = ClusterMemberAction(api.EventLifecycleClusterMemberRenamed)
 	ClusterMemberRestored  = ClusterMemberAction(api.EventLifecycleClusterMemberRestored)
