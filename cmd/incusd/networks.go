@@ -1203,7 +1203,7 @@ func doNetworkGet(s *state.State, r *http.Request, allNodes bool, projectName st
 	} else if strings.TrimSpace(string(linkType)) == "772" {
 		// ARPHRD_LOOPBACK.
 		apiNet.Type = "loopback"
-	} else if util.PathExists(fmt.Sprintf("/sys/class/net/%s/bridge", apiNet.Name)) {
+	} else if network.IsNativeBridge(apiNet.Name) {
 		apiNet.Type = "bridge"
 	} else if util.PathExists(fmt.Sprintf("/proc/net/vlan/%s", apiNet.Name)) {
 		apiNet.Type = "vlan"
