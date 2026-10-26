@@ -595,6 +595,7 @@ var APIExtensions = []string{
 	"instances_migration_bwlimit",
 	"backup_s3_region",
 	"nic_sriov_migration",
+	"auth_tls_jwt_cookie",
 }
 
 // APIExtensionsCount returns the number of available API extensions.

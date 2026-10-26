@@ -70,6 +70,16 @@ To do this, the user must generate a signed `JWT` which has its
 it must have valid `NotBefore` and `NotAfter` fields and be signed by
 the client certificate's private key.
 
+Such a token can be generated from the current client certificate with
+[`incus remote get-client-token`](incus_remote_get-client-token.md).
+
+Browser based clients which cannot set HTTP headers on WebSocket
+connections can instead send the token once through a `POST` request to
+`/tls/login` with the token in the `Authorization` header. On success,
+Incus stores the token in a `Secure`, `HttpOnly` cookie named `tls_jwt`
+which is then accepted for all subsequent requests until the token
+expires. A request to `/tls/logout` clears the cookie.
+
 (authentication-add-certs)=
 #### Adding trusted certificates to the server
 
