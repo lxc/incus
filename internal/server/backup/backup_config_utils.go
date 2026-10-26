@@ -191,6 +191,10 @@ func UpdateInstanceConfig(c *db.Cluster, b Info, mountPath string) error {
 	}
 
 	for _, snapshot := range backup.Snapshots {
+		if snapshot == nil {
+			return errors.New("Bad snapshot definition found in index")
+		}
+
 		updateRootDevicePool(snapshot.Devices, pool.Name)
 		updateRootDevicePool(snapshot.ExpandedDevices, pool.Name)
 	}
