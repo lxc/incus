@@ -358,6 +358,7 @@ run_standalone_network() {
     run_test test_remote_admin "remote administration"
     run_test test_remote_generate_certificate "remote certificate generation"
     run_test test_remote_url "remote url handling"
+    run_test test_remote_url_with_token "remote url handling with tokens"
     run_test test_remote_usage "remote usage"
     run_test test_remote_keepalive "remote keepalive proxy"
     run_test test_list_all_remotes "list all remotes"

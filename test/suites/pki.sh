@@ -119,5 +119,14 @@ test_pki() {
     token="$(INCUS_DIR=${INCUS5_DIR} incus config trust add foo -q)"
     ! incus_remote remote add pki-incus "${INCUS5_ADDR}" --accept-certificate --token "${token}" || false
 
+    # The same applies to a certificate sent in the request body, only a CA-signed one gets through.
+    gen_cert_and_key "${TEST_DIR}/pki-body.key" "${TEST_DIR}/pki-body.crt" "incus.local"
+    cert="$(sed ':a;N;$!ba;s/\n/\\n/g' "${TEST_DIR}/pki-body.crt")"
+    [ "$(curl -k -s -X POST -d "{\"trust_token\":\"${token}\",\"certificate\":\"${cert}\"}" "https://${INCUS5_ADDR}/1.0/certificates" | jq '.error_code')" -eq 403 ]
+    token="$(INCUS_DIR=${INCUS5_DIR} incus config trust add foo -q)"
+    cert="$(sed ':a;N;$!ba;s/\n/\\n/g' "${TEST_DIR}/pki/keys/incus-client.crt")"
+    [ "$(curl -k -s -X POST -d "{\"trust_token\":\"${token}\",\"certificate\":\"${cert}\"}" "https://${INCUS5_ADDR}/1.0/certificates" | jq '.status_code')" -eq 200 ]
+    INCUS_DIR="${INCUS5_DIR}" incus config trust show "$(cert_fingerprint "${TEST_DIR}/pki/keys/incus-client.crt")" | grep -xF "name: foo"
+
     kill_incus "${INCUS5_DIR}"
 }

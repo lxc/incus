@@ -9575,7 +9575,7 @@ paths:
                 - application/json
             description: |-
                 Adds a certificate to the trust store as an untrusted user.
-                In this mode, the `token` property must be set to the correct value.
+                In this mode, the `trust_token` property must be set to the correct value.
 
                 The `certificate` field can be omitted in which case the TLS client
                 certificate in use for the connection will be retrieved and added to the
