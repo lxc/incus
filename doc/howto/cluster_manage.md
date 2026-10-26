@@ -93,8 +93,14 @@ Enabling this feature can come at the risk of data corruption should a server be
 Incus considers a server to be offline when it fails to respond to heartbeat packets and when it also fails to respond to ICMP packets.
 
 It's critical to ensure that a server which is considered offline is in fact offline and isn't still running its instances.
-One way to automatically achieve this is to have a piece of software monitor Incus for a `cluster-member-healed` event and promptly cut the
-power to the server in question by interacting with its BMC or PDU.
+This is particularly important with shared storage that doesn't go through the network, such as Fibre Channel, where a server
+which has lost network connectivity can still be running its instances and writing to the shared disks.
+
+To protect against this, have a piece of software monitor Incus for the `cluster-member-offline` event and promptly cut the
+power to the server in question by interacting with its BMC or PDU, and set {config:option}`server-cluster:cluster.healing_delay` to a
+number of seconds long enough for that power off to complete.
+Incus sends the event as soon as it detects the offline server and only starts evacuating its instances once the delay has elapsed,
+after checking that the server is still offline.
 ```
 
 (cluster-automatic-balancing)=

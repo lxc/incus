@@ -889,6 +889,46 @@ func evacuateClusterSelectTarget(ctx context.Context, s *state.State, inst insta
 	return sourceMemberInfo, targetMemberInfo, nil
 }
 
+// findMembersToHeal returns the members offline for longer than the healing threshold which also fail a ping.
+func findMembersToHeal(ctx context.Context, s *state.State, healingThreshold time.Duration) ([]db.NodeInfo, error) {
+	var members []db.NodeInfo
+	err := s.DB.Cluster.Transaction(ctx, func(ctx context.Context, tx *db.ClusterTx) error {
+		var err error
+		members, err = tx.GetNodes(ctx)
+		if err != nil {
+			return fmt.Errorf("Failed getting cluster members: %w", err)
+		}
+
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	var offlineMembers []db.NodeInfo
+	for _, member := range members {
+		// Ignore members which have been evacuated, and those which haven't exceeded the
+		// healing offline trigger threshold.
+		if member.State == db.ClusterMemberStateEvacuated || !member.IsOffline(healingThreshold) {
+			continue
+		}
+
+		// As an extra safety net, make sure the dead system doesn't still respond on the network.
+		hostAddress, _, err := net.SplitHostPort(member.Address)
+		if err == nil {
+			_, err := subprocess.RunCommand("ping", "-w1", "-c1", "-n", "-q", hostAddress)
+			if err == nil {
+				// Server isn't fully dead, not risking auto-healing.
+				continue
+			}
+		}
+
+		offlineMembers = append(offlineMembers, member)
+	}
+
+	return offlineMembers, nil
+}
+
 func autoHealClusterTask(d *Daemon) (task.Func, task.Schedule) {
 	f := func(ctx context.Context) {
 		s := d.State()
@@ -911,45 +951,44 @@ func autoHealClusterTask(d *Daemon) (task.Func, task.Schedule) {
 			return // Skip healing if not cluster leader.
 		}
 
-		var offlineMembers []db.NodeInfo
-		{
-			var members []db.NodeInfo
-			err = s.DB.Cluster.Transaction(ctx, func(ctx context.Context, tx *db.ClusterTx) error {
-				members, err = tx.GetNodes(ctx)
-				if err != nil {
-					return fmt.Errorf("Failed getting cluster members: %w", err)
-				}
+		offlineMembers, err := findMembersToHeal(ctx, s, healingThreshold)
+		if err != nil {
+			logger.Error("Failed healing cluster instances", logger.Ctx{"err": err})
+			return
+		}
 
-				return nil
-			})
+		if len(offlineMembers) == 0 {
+			return // Skip healing if there are no cluster members to evacuate.
+		}
+
+		// Announce the offline members so external tooling can power them off before the evacuation.
+		healingDelay := s.GlobalConfig.ClusterHealingDelay()
+		for _, member := range offlineMembers {
+			logger.Warn("Cluster member detected as offline, scheduling healing", logger.Ctx{"server": member.Name, "delay": healingDelay})
+			s.Events.SendLifecycle(api.ProjectDefaultName, lifecycle.ClusterMemberOffline.Event(member.Name, nil, map[string]any{"healing_delay": int64(healingDelay.Seconds())}))
+		}
+
+		if healingDelay > 0 {
+			select {
+			case <-ctx.Done():
+				return
+			case <-time.After(healingDelay):
+			}
+
+			// Only heal the members which are still offline after the delay.
+			stillOffline, err := findMembersToHeal(ctx, s, healingThreshold)
 			if err != nil {
 				logger.Error("Failed healing cluster instances", logger.Ctx{"err": err})
 				return
 			}
 
-			for _, member := range members {
-				// Ignore members which have been evacuated, and those which haven't exceeded the
-				// healing offline trigger threshold.
-				if member.State == db.ClusterMemberStateEvacuated || !member.IsOffline(healingThreshold) {
-					continue
-				}
+			offlineMembers = slices.DeleteFunc(offlineMembers, func(member db.NodeInfo) bool {
+				return !slices.ContainsFunc(stillOffline, func(m db.NodeInfo) bool { return m.Name == member.Name })
+			})
 
-				// As an extra safety net, make sure the dead system doesn't still respond on the network.
-				hostAddress, _, err := net.SplitHostPort(member.Address)
-				if err == nil {
-					_, err := subprocess.RunCommand("ping", "-w1", "-c1", "-n", "-q", hostAddress)
-					if err == nil {
-						// Server isn't fully dead, not risking auto-healing.
-						continue
-					}
-				}
-
-				offlineMembers = append(offlineMembers, member)
+			if len(offlineMembers) == 0 {
+				return
 			}
-		}
-
-		if len(offlineMembers) == 0 {
-			return // Skip healing if there are no cluster members to evacuate.
 		}
 
 		opRun := func(op *operations.Operation) error {

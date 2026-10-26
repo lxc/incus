@@ -424,6 +424,7 @@ run_cluster() {
     run_test test_clustering_failure_domains "clustering failure domains"
     run_test test_clustering_image_refresh "clustering image refresh"
     run_test test_clustering_evacuation "clustering evacuation"
+    run_test test_clustering_healing "clustering healing"
     run_test test_clustering_instance_placement_scriptlet "clustering instance placement scriptlet"
     run_test test_clustering_move "clustering move"
     run_test test_clustering_edit_configuration "clustering config edit"

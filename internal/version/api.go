@@ -596,6 +596,7 @@ var APIExtensions = []string{
 	"backup_s3_region",
 	"nic_sriov_migration",
 	"auth_tls_jwt_cookie",
+	"cluster_healing_delay",
 }
 
 // APIExtensionsCount returns the number of available API extensions.

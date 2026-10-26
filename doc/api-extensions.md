@@ -3596,3 +3596,9 @@ A `POST` to `/tls/login` with a valid TLS `JWT` in the `Authorization` header
 stores that token in a `tls_jwt` cookie which is then accepted by all API
 endpoints and WebSocket connections. The cookie is `Secure`, `HttpOnly` and
 `SameSite=Strict` and expires with the token. `/tls/logout` clears the cookie.
+
+## `cluster_healing_delay`
+
+This adds the `cluster.healing_delay` server configuration key and the `cluster-member-offline` event.
+
+When cluster healing detects an offline member, the event is sent immediately and the evacuation only starts once the delay has elapsed, giving external tooling time to power the member off.
