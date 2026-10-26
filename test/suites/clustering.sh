@@ -4059,3 +4059,85 @@ test_clustering_openfga() {
     kill_incus "${INCUS_TWO_DIR}"
     kill_incus "${INCUS_THREE_DIR}"
 }
+
+test_clustering_healing() {
+    # shellcheck disable=2039,3043
+    local INCUS_DIR
+
+    setup_clustering_bridge
+    prefix="inc$$"
+    bridge="${prefix}"
+
+    setup_clustering_netns 1
+    INCUS_ONE_DIR=$(mktemp -d -p "${TEST_DIR}" XXX)
+    chmod +x "${INCUS_ONE_DIR}"
+    ns1="${prefix}1"
+    spawn_incus_and_bootstrap_cluster "${ns1}" "${bridge}" "${INCUS_ONE_DIR}"
+
+    cert=$(sed ':a;N;$!ba;s/\n/\n\n/g' "${INCUS_ONE_DIR}/cluster.crt")
+
+    setup_clustering_netns 2
+    INCUS_TWO_DIR=$(mktemp -d -p "${TEST_DIR}" XXX)
+    chmod +x "${INCUS_TWO_DIR}"
+    ns2="${prefix}2"
+    spawn_incus_and_join_cluster "${ns2}" "${bridge}" "${cert}" 2 1 "${INCUS_TWO_DIR}" "${INCUS_ONE_DIR}"
+
+    setup_clustering_netns 3
+    INCUS_THREE_DIR=$(mktemp -d -p "${TEST_DIR}" XXX)
+    chmod +x "${INCUS_THREE_DIR}"
+    ns3="${prefix}3"
+    spawn_incus_and_join_cluster "${ns3}" "${bridge}" "${cert}" 3 1 "${INCUS_THREE_DIR}" "${INCUS_ONE_DIR}"
+
+    INCUS_DIR="${INCUS_ONE_DIR}" incus cluster list
+    INCUS_DIR="${INCUS_ONE_DIR}" incus config set cluster.offline_threshold=11 cluster.healing_threshold=11 cluster.healing_delay=30
+
+    # Watch the lifecycle events from the leader, the default CLI timeout is shorter than this test.
+    (INCUS_CLI_TIMEOUT=600 INCUS_DIR="${INCUS_ONE_DIR}" stdbuf -oL incus monitor --type=lifecycle --format=json > "${TEST_DIR}/events.log" 2>&1) &
+    MONITOR=$!
+    sleep 2
+
+    # Cut the network of the third member while its daemon keeps running.
+    ip link set "v${ns3}1" down
+    echo "==> Network cut at $(date +%T)"
+
+    for _ in $(seq 240); do
+        grep -q cluster-member-offline "${TEST_DIR}/events.log" && break
+        sleep 1
+    done
+    grep cluster-member-offline "${TEST_DIR}/events.log"
+    OFFLINE=$(date +%s)
+    echo "==> Offline event at $(date +%T)"
+    grep cluster-member-offline "${TEST_DIR}/events.log" | grep -q '"healing_delay": *30'
+    grep cluster-member-offline "${TEST_DIR}/events.log" | grep -q 'members/node3'
+    ! grep -q cluster-member-healed "${TEST_DIR}/events.log" || false
+    INCUS_DIR="${INCUS_ONE_DIR}" incus cluster list -f csv | grep node3 | grep -q OFFLINE
+
+    # The evacuation only starts once the delay has elapsed.
+    for _ in $(seq 240); do
+        grep -q cluster-member-healed "${TEST_DIR}/events.log" && break
+        sleep 1
+    done
+    grep cluster-member-healed "${TEST_DIR}/events.log"
+    HEALED=$(date +%s)
+    echo "==> Healed event at $(date +%T), $((HEALED - OFFLINE))s after the offline event"
+    [ "$((HEALED - OFFLINE))" -ge 25 ]
+    INCUS_DIR="${INCUS_ONE_DIR}" incus cluster list -f csv | grep node3 | grep -q EVACUATED
+
+    kill "${MONITOR}" || true
+    ip link set "v${ns3}1" up
+
+    INCUS_DIR="${INCUS_THREE_DIR}" incus admin shutdown || true
+    INCUS_DIR="${INCUS_TWO_DIR}" incus admin shutdown
+    INCUS_DIR="${INCUS_ONE_DIR}" incus admin shutdown
+    sleep 0.5
+    rm -f "${INCUS_THREE_DIR}/unix.socket"
+    rm -f "${INCUS_TWO_DIR}/unix.socket"
+    rm -f "${INCUS_ONE_DIR}/unix.socket"
+
+    teardown_clustering_netns
+    teardown_clustering_bridge
+
+    kill_incus "${INCUS_ONE_DIR}"
+    kill_incus "${INCUS_TWO_DIR}"
+    kill_incus "${INCUS_THREE_DIR}"
+}
