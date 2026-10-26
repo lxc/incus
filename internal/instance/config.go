@@ -3,6 +3,7 @@ package instance
 import (
 	"errors"
 	"fmt"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -1960,9 +1961,14 @@ func ConfigKeyChecker(key string, instanceType api.InstanceType) (func(value str
 	return nil, fmt.Errorf("Unknown configuration key: %s", key)
 }
 
+// IsVMBootStateKey returns whether the key records the QEMU layout a VM was started with.
+func IsVMBootStateKey(configKey string) bool {
+	return slices.Contains([]string{"volatile.vm.boot_state", "volatile.vm.definition", "volatile.vm.hotplug.memory"}, configKey)
+}
+
 // InstanceIncludeWhenCopying is used to decide whether to include a config item or not when copying an instance.
 // The remoteCopy argument indicates if the copy is remote (i.e between servers) as this affects the keys kept.
-func InstanceIncludeWhenCopying(configKey string, remoteCopy bool) bool {
+func InstanceIncludeWhenCopying(configKey string, remoteCopy bool, stateful bool) bool {
 	if configKey == "volatile.apply_nvram" {
 		return true // Include volatile.apply_nvram to also reset the NVRAM in copied instances.
 	}
@@ -1973,6 +1979,10 @@ func InstanceIncludeWhenCopying(configKey string, remoteCopy bool) bool {
 
 	if configKey == "volatile.last_state.idmap" && !remoteCopy {
 		return true // Include volatile.last_state.idmap when doing local copy to avoid needless remapping.
+	}
+
+	if stateful && IsVMBootStateKey(configKey) {
+		return true // The saved VM state can only be restored with the layout it was started with.
 	}
 
 	if strings.HasPrefix(configKey, ConfigVolatilePrefix) {
