@@ -54,6 +54,16 @@ test_storage_driver_cephfs() {
         incus storage volume delete "${fs}" vol2
         incus storage volume delete "${fs}" vol3
 
+        # Export and import, the export reads from a temporary snapshot.
+        incus storage volume create "${fs}" vol1
+        incus storage volume snapshot create "${fs}" vol1 snap0
+        incus storage volume export "${fs}" vol1 "${INCUS_DIR}/vol1.tar.gz"
+        incus storage volume import "${fs}" "${INCUS_DIR}/vol1.tar.gz" vol2
+        incus storage volume snapshot list "${fs}" vol2 -f csv -c n | grep -xF snap0
+        incus storage volume delete "${fs}" vol1
+        incus storage volume delete "${fs}" vol2
+        rm "${INCUS_DIR}/vol1.tar.gz"
+
         # Cleanup
         incus storage delete "${fs}"
 
