@@ -90,6 +90,7 @@ type: lifecycle
 | `cluster-group-renamed`                | A cluster group has been renamed.                                     |                                                                                                      |
 | `cluster-group-updated`                | A cluster group has been updated.                                     |                                                                                                      |
 | `cluster-member-added`                 | A new machine has joined the cluster.                                 |                                                                                                      |
+| `cluster-member-offline`               | The cluster member has been detected as offline by cluster healing.   | `healing_delay`: seconds before the evacuation starts.                                               |
 | `cluster-member-removed`               | The cluster member has been removed from the cluster.                 |                                                                                                      |
 | `cluster-member-renamed`               | The cluster member has been renamed.                                  | `old_name`: the previous name.                                                                       |
 | `cluster-member-updated`               | The cluster member's configuration been edited.                       |                                                                                                      |
