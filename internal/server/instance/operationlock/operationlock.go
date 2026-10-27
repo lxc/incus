@@ -79,7 +79,7 @@ func Create(projectName string, instanceName string, apiOp *operations.Operation
 
 	op := instanceOperations[opKey]
 	if op != nil {
-		if op.reusable && reuseExisting {
+		if op.reusable && reuseExisting && !op.instanceInitiated {
 			logger.Debug("Instance operation lock reused", logger.Ctx{"project": op.projectName, "instance": op.instanceName, "action": op.action, "reusable": op.reusable})
 
 			return op, nil
@@ -139,7 +139,8 @@ func CreateWaitGet(projectName string, instanceName string, apiOp *operations.Op
 	}
 
 	// Operation action matches one the inheritable actions, return the operation.
-	if op.ActionMatch(inheritableActions...) {
+	// Locks taken by the instance itself (stop hook) are never shared with other requests.
+	if op.ActionMatch(inheritableActions...) && !op.GetInstanceInitiated() {
 		logger.Debug("Instance operation lock inherited", logger.Ctx{"project": op.projectName, "instance": op.instanceName, "action": op.action, "reusable": op.reusable, "inheritedByAction": action})
 
 		return op, nil
