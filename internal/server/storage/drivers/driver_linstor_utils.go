@@ -453,12 +453,9 @@ func (d *linstor) getLinstorDevPath(vol Volume) (string, error) {
 	}
 
 	// When retrieving the device path, always make sure that the resource is available on the current node.
-	err = linstor.Client.Resources.MakeAvailable(context.TODO(), resourceDefinition.Name, d.getSatelliteName(), linstorClient.ResourceMakeAvailable{
-		Diskful: false,
-	})
+	err = d.makeResourceAvailable(resourceDefinition.Name)
 	if err != nil {
-		l.Debug("Could not make resource available on node", logger.Ctx{"resourceDefinitionName": resourceDefinition.Name, "nodeName": d.getSatelliteName(), "error": err})
-		return "", fmt.Errorf("Could not make resource available on node: %w", err)
+		return "", err
 	}
 
 	volumes, err := linstor.Client.Resources.GetVolumes(context.TODO(), resourceDefinition.Name, d.getSatelliteName())
@@ -593,22 +590,56 @@ func (d *linstor) getSatelliteName() string {
 func (d *linstor) makeVolumeAvailable(vol Volume) error {
 	l := d.logger.AddContext(logger.Ctx{"volume": vol.Name()})
 	l.Debug("Making volume available on node")
-	linstor, err := d.state.Linstor()
-	if err != nil {
-		return err
-	}
 
 	resourceDefinition, err := d.getResourceDefinition(vol, false)
 	if err != nil {
 		return err
 	}
 
-	err = linstor.Client.Resources.MakeAvailable(context.TODO(), resourceDefinition.Name, d.getSatelliteName(), linstorClient.ResourceMakeAvailable{
+	return d.makeResourceAvailable(resourceDefinition.Name)
+}
+
+// makeResourceAvailable deploys the resource on the current node if it isn't already.
+// The auto-placer skips nodes with AutoplaceTarget=false, in which case a diskless replica is attached directly.
+func (d *linstor) makeResourceAvailable(resourceDefinitionName string) error {
+	l := d.logger.AddContext(logger.Ctx{"resourceDefinitionName": resourceDefinitionName, "nodeName": d.getSatelliteName()})
+
+	linstor, err := d.state.Linstor()
+	if err != nil {
+		return err
+	}
+
+	nodeName := d.getSatelliteName()
+
+	err = linstor.Client.Resources.MakeAvailable(context.TODO(), resourceDefinitionName, nodeName, linstorClient.ResourceMakeAvailable{
 		Diskful: false,
 	})
+	if err == nil {
+		return nil
+	}
+
+	if !errors.Is(err, linstorClient.NotFoundError) {
+		l.Debug("Could not make resource available on node", logger.Ctx{"error": err})
+		return fmt.Errorf("Could not make resource %q available on node %q: %w", resourceDefinitionName, nodeName, err)
+	}
+
+	// Nothing to do if the resource is already deployed on the node.
+	_, err = linstor.Client.Resources.Get(context.TODO(), resourceDefinitionName, nodeName)
+	if err == nil {
+		return nil
+	}
+
+	l.Debug("Resource can't be auto-placed on node, attaching a diskless replica")
+
+	err = linstor.Client.Resources.Create(context.TODO(), linstorClient.ResourceCreate{
+		Resource: linstorClient.Resource{
+			Name:     resourceDefinitionName,
+			NodeName: nodeName,
+			Flags:    []string{linstorapi.FlagDrbdDiskless},
+		},
+	})
 	if err != nil {
-		l.Debug("Could not make resource available on node", logger.Ctx{"resourceDefinitionName": resourceDefinition.Name, "nodeName": d.getSatelliteName(), "error": err})
-		return fmt.Errorf("Could not make resource available on node: %w", err)
+		return fmt.Errorf("Could not attach diskless resource %q on node %q: %w", resourceDefinitionName, nodeName, err)
 	}
 
 	return nil
