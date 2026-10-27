@@ -783,6 +783,13 @@ test_clustering_storage() {
         # The container can't be moved if it's running
         ! INCUS_DIR="${INCUS_TWO_DIR}" incus move foo --target node1 || false
 
+        # Copying the running container to node1 goes through node2 rather than mounting its volume twice
+        INCUS_DIR="${INCUS_ONE_DIR}" incus copy foo bar --target node1 --stateless
+        INCUS_DIR="${INCUS_TWO_DIR}" incus info bar | grep -q "Location: node1"
+        INCUS_DIR="${INCUS_TWO_DIR}" incus start bar
+        INCUS_DIR="${INCUS_ONE_DIR}" incus exec bar -- ls / | grep -qxF proc
+        INCUS_DIR="${INCUS_ONE_DIR}" incus delete -f bar
+
         # Stop the container and create a snapshot
         INCUS_DIR="${INCUS_ONE_DIR}" incus stop foo --force
         INCUS_DIR="${INCUS_ONE_DIR}" incus snapshot create foo snap-test

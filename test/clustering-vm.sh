@@ -354,7 +354,7 @@ check_marker v3 snap3
 incus delete -f "${REMOTE}:v3"
 
 log "Copy the running VM with its snapshots"
-incus copy "${REMOTE}:v2" "${REMOTE}:v4" --target "$(member "${MEMBERS}")"
+incus copy "${REMOTE}:v2" "${REMOTE}:v4" --target "$(member "${MEMBERS}")" --stateless
 incus config device remove "${REMOTE}:v4" vol1 vol2
 [ "$(snapshots v4)" = "snap1 snap3" ]
 incus start "${REMOTE}:v4"
