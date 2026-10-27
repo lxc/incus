@@ -75,6 +75,7 @@ type migrationConn struct {
 	// Additional connections sharing the secret, used by the multifd state transfer.
 	extra      chan *websocket.Conn
 	extraConns []*websocket.Conn
+	extraDone  bool
 }
 
 // AllowExtra lets the secret be used for more than one connection, the additional ones are handed out by ExtraWebsocketIO.
@@ -116,7 +117,7 @@ func (c *migrationConn) AcceptIncoming(r *http.Request, w http.ResponseWriter) e
 	}
 
 	if c.conn != nil {
-		if c.extra == nil {
+		if c.extra == nil || c.extraDone {
 			return api.StatusErrorf(http.StatusConflict, "Connection already established")
 		}
 
@@ -202,8 +203,17 @@ func (c *migrationConn) dial(ctx context.Context) (*websocket.Conn, error) {
 // ExtraWebsocketIO returns the requested number of additional connections sharing the secret.
 // Outbound connections are dialed, otherwise it waits for the remote side to connect them.
 func (c *migrationConn) ExtraWebsocketIO(ctx context.Context, count int) ([]io.ReadWriteCloser, error) {
-	if c.extra == nil {
+	c.mu.Lock()
+	extra := c.extra
+	disconnected := c.disconnected
+	c.mu.Unlock()
+
+	if extra == nil {
 		return nil, errors.New("Extra connections aren't allowed on this channel")
+	}
+
+	if disconnected {
+		return nil, errors.New("Connection already disconnected")
 	}
 
 	conns := make([]io.ReadWriteCloser, 0, count)
@@ -217,21 +227,49 @@ func (c *migrationConn) ExtraWebsocketIO(ctx context.Context, count int) ([]io.R
 				return nil, err
 			}
 		} else {
+			var ok bool
+
 			select {
-			case conn = <-c.extra:
+			case conn, ok = <-extra:
+				if !ok {
+					return nil, errors.New("Connection already disconnected")
+				}
+
 			case <-ctx.Done():
 				return nil, ctx.Err()
 			}
 		}
 
 		c.mu.Lock()
+		if c.disconnected {
+			c.mu.Unlock()
+			_ = conn.Close()
+			return nil, errors.New("Connection already disconnected")
+		}
+
 		c.extraConns = append(c.extraConns, conn)
 		c.mu.Unlock()
 
 		conns = append(conns, ws.NewWrapper(conn))
 	}
 
-	return conns, nil
+	// Refuse further connections on the secret and drop any that were queued beyond the expected count.
+	c.mu.Lock()
+	c.extraDone = true
+	c.mu.Unlock()
+
+	for {
+		select {
+		case conn, ok := <-extra:
+			if !ok {
+				return conns, nil
+			}
+
+			_ = conn.Close()
+		default:
+			return conns, nil
+		}
+	}
 }
 
 // WebsocketIO calls WebSocket and returns it wrapped for io.ReadWriteCloser compatibility.
@@ -249,6 +287,10 @@ func (c *migrationConn) Close() {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
+	if c.disconnected {
+		return
+	}
+
 	c.disconnected = true
 
 	if c.conn != nil {
@@ -262,13 +304,13 @@ func (c *migrationConn) Close() {
 
 	c.extraConns = nil
 
-	// Drop any extra connection that was never picked up.
-	for c.extra != nil {
-		select {
-		case conn := <-c.extra:
+	// Wake up any pending receiver and drop the extra connections that were never picked up.
+	// AcceptIncoming only sends while holding the lock, so nothing can race the close.
+	if c.extra != nil {
+		close(c.extra)
+
+		for conn := range c.extra {
 			_ = conn.Close()
-		default:
-			c.extra = nil
 		}
 	}
 }
