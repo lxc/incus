@@ -985,6 +985,9 @@ func (d *linstor) copyVolume(vol Volume, srcVol Volume) error {
 		return err
 	}
 
+	// The controller may have created the target even when the request fails, so clean up on any error from here.
+	rev.Add(func() { _ = linstor.Client.ResourceDefinitions.Delete(context.TODO(), targetResourceDefinitionName) })
+
 	_, err = linstor.Client.ResourceDefinitions.Clone(context.TODO(), srcResourceDefinition.Name, linstorClient.ResourceDefinitionCloneRequest{
 		Name:               targetResourceDefinitionName,
 		ResourceGroup:      d.config[LinstorResourceGroupNameConfigKey],
@@ -1017,8 +1020,6 @@ loop:
 			return errors.New("Clone operation failed")
 		}
 	}
-
-	rev.Add(func() { _ = linstor.Client.ResourceDefinitions.Delete(context.TODO(), targetResourceDefinitionName) })
 
 	// Re-apply the aux properties in case the controller ignored the ones in the clone request.
 	err = d.setResourceDefinitionProperties(vol, targetResourceDefinitionName)
