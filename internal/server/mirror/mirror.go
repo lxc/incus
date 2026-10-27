@@ -260,7 +260,13 @@ func (m *Mirror) syncPending() {
 	}()
 
 	for name := range pending {
-		err := syncFile(local, persistent, name)
+		// Deletions only replicate on the final sync, a vanished copy must not take the persistent file with it.
+		_, err := local.Lstat(name)
+		if errors.Is(err, fs.ErrNotExist) {
+			continue
+		}
+
+		err = syncFile(local, persistent, name)
 		if err != nil {
 			m.logger.Warn("Failed mirroring file", logger.Ctx{"name": name, "err": err})
 		}
