@@ -156,18 +156,6 @@ type BlockDirtyInfo struct {
 	Inconsistent bool   `json:"inconsistent"`
 }
 
-// BlockDeviceInfo contains information about the backing device for a block device.
-type BlockDeviceInfo struct {
-	NodeName     string           `json:"node-name"`
-	DirtyBitmaps []BlockDirtyInfo `json:"dirty-bitmaps"`
-}
-
-// BlockInfo contains information about a virtual block device.
-type BlockInfo struct {
-	Device   string          `json:"device"`
-	Inserted BlockDeviceInfo `json:"inserted"`
-}
-
 // QueryCPUs returns a list of CPUs.
 func (m *Monitor) QueryCPUs() ([]CPU, error) {
 	// Prepare the response.
@@ -1317,20 +1305,6 @@ func (m *Monitor) NBDBlockExportAdd(deviceNodeName string, exportName string, wr
 	}
 
 	return nil
-}
-
-// QueryBlock returns a list of all virtual block devices.
-func (m *Monitor) QueryBlock() ([]BlockInfo, error) {
-	var resp struct {
-		Return []BlockInfo `json:"return"`
-	}
-
-	err := m.Run("query-block", nil, &resp)
-	if err != nil {
-		return nil, err
-	}
-
-	return resp.Return, nil
 }
 
 // QueryBlockExports returns exported blocks.
