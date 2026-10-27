@@ -32,6 +32,7 @@ type cmdAdd struct {
 	flagAliases        []string
 	flagNoDefaultAlias bool
 	flagProductName    string
+	flagImageVersion   string
 }
 
 func (c *cmdAdd) command() *cobra.Command {
@@ -58,6 +59,11 @@ Unless "--no-default-alias" is specified, it generates a default "{os}/{release}
 
 Unless "--product-name" is specified, the product name is generated as "{os}:{release}:{variant}:{architecture}".
 
+Unless "--image-version" is specified, the version name is derived from
+creation_date in metadata.yaml.  Pass the same --image-version when adding
+the container and the VM of one image so both land in one product
+version, sharing its aliases.
+
 If one argument is specified, it is assumed to be a unified image,
 with both the metadata and rootfs in a single tarball.
 
@@ -68,6 +74,7 @@ Otherwise, it is a split image (separate files for metadata and rootfs/disk).
 	cmd.Flags().StringArrayVar(&c.flagAliases, "alias", nil, "Add alias")
 	cmd.Flags().BoolVar(&c.flagNoDefaultAlias, "no-default-alias", false, "Do not add the default alias")
 	cmd.Flags().StringVar(&c.flagProductName, "product-name", "", "Set the product name")
+	cmd.Flags().StringVar(&c.flagImageVersion, "image-version", "", "Set the image version (default: metadata creation date)")
 
 	return cmd
 }
@@ -414,7 +421,11 @@ func (c *cmdAdd) run(cmd *cobra.Command, args []string) error {
 	}
 
 	// Check if a version already exists.
-	versionName := time.Unix(metadata.CreationDate, 0).Format("200601021504")
+	versionName := c.flagImageVersion
+	if versionName == "" {
+		versionName = time.Unix(metadata.CreationDate, 0).Format("200601021504")
+	}
+
 	version, ok := product.Versions[versionName]
 	if !ok {
 		// Create a new version.
