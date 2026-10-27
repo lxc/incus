@@ -604,6 +604,11 @@ func (m *Monitor) MigrateIncomingUnix(path string) error {
 
 // MigrateIncomingWait waits for the incoming migration to complete or fail.
 func (m *Monitor) MigrateIncomingWait(ctx context.Context) error {
+	// Listen for status change events (sent when the "events" migration capability is set),
+	// falling back to polling when they're not available.
+	chEvent, cancel := m.listenForEvent(EventMigration)
+	defer cancel()
+
 	for {
 		// Prepare the response.
 		var resp struct {
@@ -634,7 +639,23 @@ func (m *Monitor) MigrateIncomingWait(ctx context.Context) error {
 			return err
 		}
 
-		time.Sleep(1 * time.Second)
+		select {
+		case <-ctx.Done():
+			// Query the job one last time before giving up.
+			continue
+		case data := <-chEvent:
+			status, ok := data["status"].(string)
+			if ok {
+				if status == "failed" {
+					return errors.New("Migrate incoming call failed")
+				}
+
+				if status == "completed" {
+					return nil
+				}
+			}
+		case <-time.After(1 * time.Second):
+		}
 	}
 }
 
