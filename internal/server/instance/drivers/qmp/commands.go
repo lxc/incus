@@ -1488,6 +1488,29 @@ func (m *Monitor) BlockNodeSize(nodeName string) (int64, error) {
 	return 0, fmt.Errorf("Block node %q not found", nodeName)
 }
 
+// BlockNodeDirtyBitmaps returns the dirty bitmaps of the given block node.
+func (m *Monitor) BlockNodeDirtyBitmaps(nodeName string) ([]BlockDirtyInfo, error) {
+	var resp struct {
+		Return []struct {
+			NodeName     string           `json:"node-name"`
+			DirtyBitmaps []BlockDirtyInfo `json:"dirty-bitmaps"`
+		} `json:"return"`
+	}
+
+	err := m.Run("query-named-block-nodes", nil, &resp)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, node := range resp.Return {
+		if node.NodeName == nodeName {
+			return node.DirtyBitmaps, nil
+		}
+	}
+
+	return nil, fmt.Errorf("Block node %q not found", nodeName)
+}
+
 // BlockNodeProtocol represents the protocol node holding the data of a block node.
 type BlockNodeProtocol struct {
 	NodeName string
