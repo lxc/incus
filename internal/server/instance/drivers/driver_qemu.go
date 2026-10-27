@@ -1111,7 +1111,13 @@ func (d *qemu) killQemuProcess(pid int) error {
 
 // restoreState restores the VM state from a file handle.
 func (d *qemu) restoreStateHandle(ctx context.Context, monitor *qmp.Monitor, f *os.File) error {
-	err := monitor.SendFile("migration", f)
+	// Emit MIGRATION events so the VM resumes as soon as the transfer completes rather than on the next poll.
+	err := monitor.MigrateSetCapabilities(map[string]bool{"events": true})
+	if err != nil {
+		return fmt.Errorf("Failed setting migration capabilities: %w", err)
+	}
+
+	err = monitor.SendFile("migration", f)
 	if err != nil {
 		return err
 	}
@@ -1255,7 +1261,8 @@ func (d *qemu) restoreStateMultifd(ctx context.Context, monitor *qmp.Monitor, co
 	ctx, cancel := context.WithCancelCause(ctx)
 	defer cancel(nil)
 
-	err = monitor.MigrateSetCapabilities(map[string]bool{"multifd": true})
+	// Emit MIGRATION events so the VM resumes as soon as the transfer completes rather than on the next poll.
+	err = monitor.MigrateSetCapabilities(map[string]bool{"multifd": true, "events": true})
 	if err != nil {
 		return fmt.Errorf("Failed setting migration capabilities: %w", err)
 	}
