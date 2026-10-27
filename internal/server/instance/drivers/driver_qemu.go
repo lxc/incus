@@ -12408,10 +12408,13 @@ func (d *qemu) Metrics() (*metrics.MetricSet, error) {
 	if d.agentMetricsEnabled() {
 		agentMetrics, err := d.getAgentMetrics()
 		if err != nil {
-			d.logger.WarnOnErrorExcept(err, append([]error{errQemuAgentOffline}, monitorGoneErrors...), "Could not get VM metrics from agent")
+			// Only fall back to host side data when the agent isn't running, mixing sources for the same
+			// VM would make the guest counters jump around and read as resets.
+			if errors.Is(err, errQemuAgentOffline) || isMonitorGoneError(err) {
+				return d.getQemuMetricsOrStopped()
+			}
 
-			// Fallback data if agent is not reachable.
-			return d.getQemuMetricsOrStopped()
+			return nil, fmt.Errorf("Could not get VM metrics from agent: %w", err)
 		}
 
 		return agentMetrics, nil
