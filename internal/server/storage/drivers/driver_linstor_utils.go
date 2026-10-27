@@ -947,6 +947,12 @@ func (d *linstor) resizeVolume(vol Volume, sizeBytes int64) error {
 		return fmt.Errorf("Unable to remove the exact size property: %w", err)
 	}
 
+	// LINSTOR refuses to resize while a replica is still syncing, which is the case right after a clone.
+	err = d.waitResourceDefinitionSynced(resourceDefinition.Name)
+	if err != nil {
+		return err
+	}
+
 	// Resize the volume definition.
 	err = linstor.Client.ResourceDefinitions.ModifyVolumeDefinition(context.TODO(), resourceDefinition.Name, volumeIndex, linstorClient.VolumeDefinitionModify{
 		SizeKib: uint64(sizeBytes) / 1024,
@@ -956,6 +962,34 @@ func (d *linstor) resizeVolume(vol Volume, sizeBytes int64) error {
 	}
 
 	return nil
+}
+
+// waitResourceDefinitionSynced waits for every replica of the resource definition to be in sync.
+func (d *linstor) waitResourceDefinitionSynced(resourceDefinitionName string) error {
+	linstor, err := d.state.Linstor()
+	if err != nil {
+		return err
+	}
+
+	ctx, cancel := context.WithTimeout(context.TODO(), 5*time.Minute)
+	defer cancel()
+
+	for {
+		status, err := linstor.Client.ResourceDefinitions.SyncStatus(ctx, resourceDefinitionName)
+		if err != nil {
+			return fmt.Errorf("Unable to get sync status of resource definition %q: %w", resourceDefinitionName, err)
+		}
+
+		if status.SyncedOnAll {
+			return nil
+		}
+
+		select {
+		case <-ctx.Done():
+			return fmt.Errorf("Timed out waiting for resource definition %q to sync", resourceDefinitionName)
+		case <-time.After(time.Second):
+		}
+	}
 }
 
 func (d *linstor) copyVolume(vol Volume, srcVol Volume) error {
