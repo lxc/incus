@@ -345,6 +345,12 @@ func profilesPost(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
+	// Authorize against the project the profile is actually created in.
+	err = s.Authorizer.CheckPermission(r.Context(), r, auth.ObjectProject(p.Name), auth.EntitlementCanCreateProfiles)
+	if err != nil {
+		return response.SmartError(err)
+	}
+
 	req := api.ProfilesPost{}
 	err = json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {

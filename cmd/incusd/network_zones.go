@@ -307,6 +307,12 @@ func networkZonesPost(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
+	// Authorize against the project the zone is actually created in.
+	err = s.Authorizer.CheckPermission(r.Context(), r, auth.ObjectProject(projectName), auth.EntitlementCanCreateNetworkZones)
+	if err != nil {
+		return response.SmartError(err)
+	}
+
 	req := api.NetworkZonesPost{}
 
 	// Parse the request into a record.

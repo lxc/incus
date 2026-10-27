@@ -653,6 +653,12 @@ func storagePoolBucketsPost(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
+	// Authorize against the project the bucket is actually created in.
+	err = s.Authorizer.CheckPermission(r.Context(), r, auth.ObjectProject(bucketProjectName), auth.EntitlementCanCreateStorageBuckets)
+	if err != nil {
+		return response.SmartError(err)
+	}
+
 	poolName, err := url.PathUnescape(mux.Vars(r)["poolName"])
 	if err != nil {
 		return response.SmartError(err)
