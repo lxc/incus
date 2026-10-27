@@ -898,7 +898,7 @@ func (d *qemu) onStop(target string, reason string) error {
 	cleanShutdown := reason == qmp.EventVMShutdownReasonGuestShutdown || reason == qmp.EventVMShutdownReasonQuit
 
 	var autoRestart bool
-	if target != "reboot" && !cleanShutdown && d.shouldAutoRestart() {
+	if target != "reboot" && !cleanShutdown && op.GetInstanceInitiated() && d.shouldAutoRestart() {
 		autoRestart = true
 
 		// Mark current shutdown as complete.
@@ -907,6 +907,7 @@ func (d *qemu) onStop(target string, reason string) error {
 		// Create a new restart operation.
 		op, err = operationlock.CreateWaitGet(d.Project().Name, d.Name(), d.op, operationlock.ActionRestart, nil, true, false)
 		if err == nil {
+			op.SetInstanceInitiated(true)
 			defer op.Done(nil)
 		} else {
 			d.logger.Error("Failed to setup new restart operation", logger.Ctx{"err": err})
@@ -932,9 +933,9 @@ func (d *qemu) onStop(target string, reason string) error {
 		}
 	}
 
-	// Reboot the instance.
+	// Reboot the instance on our own lock, other requests must not join it.
 	if target == "reboot" || autoRestart {
-		err = d.Start(false)
+		err = d.start(false, op)
 		if err != nil {
 			op.Done(err)
 			return err
