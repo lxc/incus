@@ -47,7 +47,7 @@ var EventVMShutdownReasonDisconnect = "disconnect"
 var EventVMShutdownReasonGuestShutdown = "guest-shutdown"
 
 // EventVMShutdownReasonQuit is set when QEMU exits as a result of the host issuing a QMP quit command.
-var EventVMShutdownReasonQuit = "quit"
+var EventVMShutdownReasonQuit = "host-qmp-quit"
 
 // EventDiskEjected is used to indicate that a disk device was ejected by the guest.
 var EventDiskEjected = "DEVICE_TRAY_MOVED"
