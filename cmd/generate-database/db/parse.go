@@ -497,7 +497,7 @@ func parseField(f *types.Var, structTag string, kind string, pkgName string) (*F
 
 	typeObj.Code = TypeColumn
 	if config.Get("marshal") == "" {
-		if strings.HasPrefix(typeName, "[]") {
+		if strings.HasPrefix(typeName, "[]") && typeName != "[]uint8" {
 			typeObj.Code = TypeSlice
 		} else if strings.HasPrefix(typeName, "map[") {
 			typeObj.Code = TypeMap
@@ -564,6 +564,8 @@ func parseType(x types.Type, pkgName string) string {
 		return t.Obj().Pkg().Name() + "." + t.Obj().Name()
 	case nil:
 		return ""
+	case *types.Alias:
+		return parseType(t.Underlying(), pkgName)
 	default:
 		return ""
 	}
