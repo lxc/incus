@@ -13791,33 +13791,26 @@ func (d *qemu) GetBitmaps(deviceName string) ([]api.StorageVolumeBitmap, error) 
 		return nil, fmt.Errorf("Failed fetching disk chain: %w", err)
 	}
 
-	blockName := blockDevs[len(blockDevs)-1]
-
-	blocks, err := monitor.QueryBlock()
+	// Look the node up directly, the device may sit behind a filter during an NBD export.
+	bitmaps, err := monitor.BlockNodeDirtyBitmaps(blockDevs[len(blockDevs)-1])
 	if err != nil {
 		return nil, err
 	}
 
-	result := []api.StorageVolumeBitmap{}
-	for _, block := range blocks {
-		if block.Inserted.NodeName == blockName {
-			for _, bitmap := range block.Inserted.DirtyBitmaps {
-				result = append(result, api.StorageVolumeBitmap{
-					Name:         bitmap.Name,
-					Count:        bitmap.Count,
-					Granularity:  bitmap.Granularity,
-					Recording:    bitmap.Recording,
-					Busy:         bitmap.Busy,
-					Persistent:   bitmap.Persistent,
-					Inconsistent: bitmap.Inconsistent,
-				})
-			}
-
-			return result, nil
-		}
+	result := make([]api.StorageVolumeBitmap, 0, len(bitmaps))
+	for _, bitmap := range bitmaps {
+		result = append(result, api.StorageVolumeBitmap{
+			Name:         bitmap.Name,
+			Count:        bitmap.Count,
+			Granularity:  bitmap.Granularity,
+			Recording:    bitmap.Recording,
+			Busy:         bitmap.Busy,
+			Persistent:   bitmap.Persistent,
+			Inconsistent: bitmap.Inconsistent,
+		})
 	}
 
-	return nil, fmt.Errorf("Requested device not found")
+	return result, nil
 }
 
 // selinuxEnsureContext generates and persists the SELinux context for this instance.
