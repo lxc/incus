@@ -210,7 +210,7 @@ incus storage show "${REMOTE}:shared" | grep -q "status: Created"
 
 log "Launch a VM on local storage and one on shared storage"
 incus init "${IMAGE}" "${REMOTE}:v1" --vm -s local --target "$(member 1)" -c migration.stateful=true
-incus init "${IMAGE}" "${REMOTE}:v2" --vm -s shared -d root,size=4GiB --target "$(member 1)" -c migration.stateful=true
+incus init "${IMAGE}" "${REMOTE}:v2" --vm -s shared -d root,size=4GiB -d root,size.state=1GiB --target "$(member 1)" -c migration.stateful=true
 
 log "Attach custom block and ISO volumes to the shared storage VM"
 incus storage volume create "${REMOTE}:shared" vol1 --type=block size=64MiB
@@ -275,6 +275,9 @@ snapshots() {
 }
 
 log "Snapshot the running shared storage VM across the members"
+incus exec "${REMOTE}:v2" -- sh -c "echo snap0 > /root/marker && sync"
+incus snapshot create "${REMOTE}:v2" snap0
+
 for i in 1 2 3; do
     incus exec "${REMOTE}:v2" -- sh -c "echo snap${i} > /root/marker && sync"
     incus snapshot create "${REMOTE}:v2" "snap${i}"
@@ -289,8 +292,25 @@ incus exec "${REMOTE}:v2" -- sh -c "echo current > /root/marker && sync"
 
 log "Delete a snapshot in the middle of the chain of the running VM"
 incus snapshot delete "${REMOTE}:v2" snap2
+[ "$(snapshots v2)" = "snap0 snap1 snap3" ]
+check_vm v2 "${next}"
+
+log "Delete the oldest snapshot of the running VM"
+incus snapshot delete "${REMOTE}:v2" snap0
 [ "$(snapshots v2)" = "snap1 snap3" ]
 check_vm v2 "${next}"
+
+log "Delete the newest snapshot of the running VM"
+incus exec "${REMOTE}:v2" -- sh -c "echo snap4 > /root/marker && sync"
+incus snapshot create "${REMOTE}:v2" snap4
+incus exec "${REMOTE}:v2" -- sh -c "echo current > /root/marker && sync"
+incus snapshot delete "${REMOTE}:v2" snap4
+[ "$(snapshots v2)" = "snap1 snap3" ]
+
+next="$(member "$((4 % MEMBERS + 1))")"
+incus move "${REMOTE}:v2" "${REMOTE}:v2" --target "${next}"
+check_vm v2 "${next}"
+check_volumes
 
 log "Copy a snapshot to a new VM on another member"
 incus copy "${REMOTE}:v2/snap1" "${REMOTE}:v3" --target "$(member 2)"
@@ -330,6 +350,27 @@ check_marker v4 current
 incus snapshot restore "${REMOTE}:v4" snap3 --diskonly
 check_marker v4 snap3
 incus delete -f "${REMOTE}:v4"
+
+log "Take a stateful snapshot of the running VM"
+incus exec "${REMOTE}:v2" -- sh -c "echo stateful > /root/marker && sync && echo stateful > /dev/shm/marker"
+incus snapshot create "${REMOTE}:v2" snap5 --stateful
+incus exec "${REMOTE}:v2" -- sh -c "echo current > /root/marker && sync && echo live > /dev/shm/marker"
+
+next="$(member "$((5 % MEMBERS + 1))")"
+incus move "${REMOTE}:v2" "${REMOTE}:v2" --target "${next}"
+check_vm v2 "${next}"
+
+log "Restore the stateful snapshot"
+incus snapshot restore "${REMOTE}:v2" snap5 --stateful
+incus wait "${REMOTE}:v2" agent --timeout=120 --interval=2
+incus exec "${REMOTE}:v2" -- cat /dev/shm/marker | grep -Fx stateful
+incus restart -f "${REMOTE}:v2"
+check_marker v2 stateful
+
+log "Delete the stateful snapshot of the running VM"
+incus snapshot delete "${REMOTE}:v2" snap5
+[ "$(snapshots v2)" = "snap1" ]
+check_volumes
 
 incus exec "${REMOTE}:v2" -- sh -c "echo live > /dev/shm/marker"
 if [ "${next}" != "$(member 1)" ]; then
