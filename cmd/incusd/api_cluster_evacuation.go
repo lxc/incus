@@ -1080,18 +1080,27 @@ func healClusterMember(d *Daemon, op *operations.Operation, name string) error {
 			return nil
 		}
 
-		// Start it back up on target.
-		startOp, err := dest.UpdateInstanceState(inst.Name(), api.InstanceStatePut{Action: "start"}, "")
-		if err != nil {
-			return err
-		}
+		// Start it back up on target, retrying while the dead member's storage locks expire.
+		startCtx, cancel := context.WithTimeout(ctx, 5*time.Minute)
+		defer cancel()
 
-		err = startOp.Wait()
-		if err != nil {
-			return err
-		}
+		for {
+			startOp, err := dest.UpdateInstanceState(inst.Name(), api.InstanceStatePut{Action: "start"}, "")
+			if err == nil {
+				err = startOp.Wait()
+				if err == nil {
+					return nil
+				}
+			}
 
-		return nil
+			logger.Warn("Failed starting healed instance, retrying", logger.Ctx{"instance": inst.Name(), "err": err})
+
+			select {
+			case <-startCtx.Done():
+				return err
+			case <-time.After(10 * time.Second):
+			}
+		}
 	}
 
 	// Attempt up to 5 evacuations.
