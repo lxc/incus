@@ -9,6 +9,7 @@ import (
 	"net"
 	"net/http"
 	"net/url"
+	"time"
 
 	linstorClient "github.com/LINBIT/golinstor/client"
 
@@ -53,8 +54,11 @@ func (linstorLogger) Warnf(str string, args ...any) {
 func NewClient(controllerConnection, sslCACert, sslClientCert, sslClientKey string) (*Client, error) {
 	logger.Info("Creating new Linstor client", logger.Ctx{"controllerConnection": controllerConnection})
 
-	// Configure the client HTTP transport.
-	httpTransport := &http.Transport{}
+	// Configure the client HTTP transport, bounding the dial so a silent controller fails over to the next one.
+	httpTransport := &http.Transport{
+		DialContext:         (&net.Dialer{Timeout: 10 * time.Second}).DialContext,
+		TLSHandshakeTimeout: 10 * time.Second,
+	}
 
 	// If a CA cert is provided, use it to validate the server certificates.
 	if sslCACert != "" {
