@@ -1,0 +1,180 @@
+package acl
+
+import (
+	"context"
+	"fmt"
+
+	"github.com/lxc/incus/v7/internal/server/db"
+	dbCluster "github.com/lxc/incus/v7/internal/server/db/cluster"
+	firewallDrivers "github.com/lxc/incus/v7/internal/server/firewall/drivers"
+	"github.com/lxc/incus/v7/internal/server/state"
+	"github.com/lxc/incus/v7/shared/api"
+	"github.com/lxc/incus/v7/shared/logger"
+	"github.com/lxc/incus/v7/shared/util"
+)
+
+// FirewallApplyACLRules applies ACL rules to network firewall.
+func FirewallApplyACLRules(s *state.State, l logger.Logger, aclProjectName string, aclNet NetworkACLUsage) error {
+	rules, err := FirewallACLRules(s, aclNet.Name, aclProjectName, aclNet.Config)
+	if err != nil {
+		return err
+	}
+
+	return s.Firewall.NetworkApplyACLRules(aclNet.Name, rules)
+}
+
+// ValidateFirewallAction returns an error if the action can't be applied by the host firewall.
+func ValidateFirewallAction(action string) error {
+	if action == "allow-stateless" {
+		return fmt.Errorf("Action %q is only supported on OVN networks", action)
+	}
+
+	return nil
+}
+
+// ValidateFirewallACLs returns an error if any of the ACLs contain a rule that can't be applied by the host firewall.
+func ValidateFirewallACLs(s *state.State, projectName string, aclNames ...string) error {
+	return s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		for _, aclName := range aclNames {
+			_, aclInfo, err := dbCluster.GetNetworkACLAPI(ctx, tx.Tx(), projectName, aclName)
+			if err != nil {
+				return fmt.Errorf("Failed loading ACL %q: %w", aclName, err)
+			}
+
+			for _, rule := range append(aclInfo.Ingress, aclInfo.Egress...) {
+				if rule.State == "disabled" {
+					continue
+				}
+
+				err = ValidateFirewallAction(rule.Action)
+				if err != nil {
+					return fmt.Errorf("Invalid ACL %q: %w", aclName, err)
+				}
+			}
+		}
+
+		return nil
+	})
+}
+
+// FirewallACLRules returns ACL rules for network firewall.
+func FirewallACLRules(s *state.State, aclDeviceName string, aclProjectName string, config map[string]string) ([]firewallDrivers.ACLRule, error) {
+	var dropRules []firewallDrivers.ACLRule
+	var rejectRules []firewallDrivers.ACLRule
+	var allowRules []firewallDrivers.ACLRule
+	var allowStatelessRules []firewallDrivers.ACLRule
+
+	// convertACLRules converts the ACL rules to Firewall ACL rules.
+	convertACLRules := func(direction string, logPrefix string, rules ...api.NetworkACLRule) error {
+		for ruleIndex, rule := range rules {
+			if rule.State == "disabled" {
+				continue
+			}
+
+			firewallACLRule := firewallDrivers.ACLRule{
+				Direction:       direction,
+				Action:          rule.Action,
+				Source:          rule.Source,
+				Destination:     rule.Destination,
+				Protocol:        rule.Protocol,
+				SourcePort:      rule.SourcePort,
+				DestinationPort: rule.DestinationPort,
+				ICMPType:        rule.ICMPType,
+				ICMPCode:        rule.ICMPCode,
+			}
+
+			if rule.State == "logged" {
+				firewallACLRule.Log = true
+				// Max 29 chars.
+				firewallACLRule.LogName = fmt.Sprintf("%s-%s-%d", logPrefix, direction, ruleIndex)
+			}
+
+			switch rule.Action {
+			case "drop":
+				dropRules = append(dropRules, firewallACLRule)
+			case "reject":
+				rejectRules = append(rejectRules, firewallACLRule)
+			case "allow":
+				allowRules = append(allowRules, firewallACLRule)
+			case "allow-stateless": // TODO: add NOTRACK support
+				allowStatelessRules = append(allowStatelessRules, firewallACLRule)
+			default:
+				return fmt.Errorf("Unrecognised action %q", rule.Action)
+			}
+		}
+
+		return nil
+	}
+
+	logPrefix := aclDeviceName
+
+	// Load ACLs specified by network.
+	for _, aclName := range util.SplitNTrimSpace(config["security.acls"], ",", -1, true) {
+		var aclInfo *api.NetworkACL
+
+		err := s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+			var err error
+
+			_, aclInfo, err = dbCluster.GetNetworkACLAPI(ctx, tx.Tx(), aclProjectName, aclName)
+
+			return err
+		})
+		if err != nil {
+			return nil, fmt.Errorf("Failed loading ACL %q for network %q: %w", aclName, aclDeviceName, err)
+		}
+
+		err = convertACLRules("ingress", logPrefix, aclInfo.Ingress...)
+		if err != nil {
+			return nil, fmt.Errorf("Failed converting ACL %q ingress rules for network %q: %w", aclInfo.Name, aclDeviceName, err)
+		}
+
+		err = convertACLRules("egress", logPrefix, aclInfo.Egress...)
+		if err != nil {
+			return nil, fmt.Errorf("Failed converting ACL %q egress rules for network %q: %w", aclInfo.Name, aclDeviceName, err)
+		}
+	}
+
+	var rules []firewallDrivers.ACLRule
+	rules = append(rules, dropRules...)
+	rules = append(rules, rejectRules...)
+	rules = append(rules, allowRules...)
+	rules = append(rules, allowStatelessRules...)
+
+	// Add the automatic default ACL rule for the network.
+	egressAction, egressLogged := firewallACLDefaults(config, "egress")
+	ingressAction, ingressLogged := firewallACLDefaults(config, "ingress")
+
+	rules = append(rules, firewallDrivers.ACLRule{
+		Direction: "egress",
+		Action:    egressAction,
+		Log:       egressLogged,
+		LogName:   fmt.Sprintf("%s-egress", logPrefix),
+	})
+
+	rules = append(rules, firewallDrivers.ACLRule{
+		Direction: "ingress",
+		Action:    ingressAction,
+		Log:       ingressLogged,
+		LogName:   fmt.Sprintf("%s-ingress", logPrefix),
+	})
+
+	return rules, nil
+}
+
+// firewallACLDefaults returns the action and logging mode to use for the specified direction's default rule.
+// If the security.acls.default.{in,e}gress.action or security.acls.default.{in,e}gress.logged settings are not
+// specified in the network config, then it returns "reject" and false respectively.
+func firewallACLDefaults(netConfig map[string]string, direction string) (string, bool) {
+	defaults := map[string]string{
+		fmt.Sprintf("security.acls.default.%s.action", direction): "reject",
+		fmt.Sprintf("security.acls.default.%s.logged", direction): "false",
+	}
+
+	for k := range defaults {
+		if netConfig[k] != "" {
+			defaults[k] = netConfig[k]
+		}
+	}
+
+	return defaults[fmt.Sprintf("security.acls.default.%s.action", direction)], util.IsTrue(defaults[fmt.Sprintf("security.acls.default.%s.logged", direction)])
+}

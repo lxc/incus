@@ -1,0 +1,13 @@
+//go:build windows
+
+package cliconfig
+
+import (
+	"errors"
+
+	incus "github.com/lxc/incus/v7/client"
+)
+
+func (c *Config) handleKeepAlive(remote Remote, name string) (incus.InstanceServer, error) {
+	return nil, errors.New("Keepalive isn't supported on Windows")
+}

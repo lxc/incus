@@ -1,0 +1,57 @@
+//go:debug httpmuxgo121=0
+
+package main
+
+import (
+	"fmt"
+	"os"
+	"runtime"
+
+	"github.com/spf13/cobra"
+
+	"github.com/lxc/incus/v7/internal/version"
+)
+
+type cmdGlobal struct {
+	flagVersion         bool
+	flagHelp            bool
+	flagService         bool
+	flagSecretsLocation string
+
+	flagLogVerbose bool
+	flagLogDebug   bool
+}
+
+func main() {
+	// agent command (main)
+	agentCmd := cmdAgent{}
+	app := agentCmd.command()
+	app.SilenceUsage = true
+	app.CompletionOptions = cobra.CompletionOptions{DisableDefaultCmd: true}
+
+	// Workaround for main command
+	app.Args = cobra.ArbitraryArgs
+
+	// Global flags
+	globalCmd := cmdGlobal{}
+	agentCmd.global = &globalCmd
+	app.PersistentFlags().BoolVar(&globalCmd.flagVersion, "version", false, "Print version number")
+	app.PersistentFlags().BoolVarP(&globalCmd.flagHelp, "help", "h", false, "Print help")
+	app.PersistentFlags().BoolVarP(&globalCmd.flagLogVerbose, "verbose", "v", false, "Show all information messages")
+	app.PersistentFlags().BoolVarP(&globalCmd.flagLogDebug, "debug", "d", false, "Show all debug messages")
+	app.PersistentFlags().StringVarP(&globalCmd.flagSecretsLocation, "secrets-location", "s", "", "Secrets location of the certificate and private key")
+	if runtime.GOOS == "windows" {
+		app.PersistentFlags().BoolVar(&globalCmd.flagService, "service", false, "Start as a system service")
+	}
+
+	// Version handling
+	app.SetVersionTemplate("{{.Version}}\n")
+	app.Version = version.Version
+
+	// Run the main command and handle errors
+	err := app.Execute()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+		os.Exit(1)
+	}
+}

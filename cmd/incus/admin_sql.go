@@ -1,0 +1,163 @@
+package main
+
+import (
+	"bytes"
+	"encoding/json"
+	"fmt"
+	"io"
+	"os"
+
+	"github.com/spf13/cobra"
+
+	"github.com/lxc/incus/v7/cmd/incus/color"
+	u "github.com/lxc/incus/v7/cmd/incus/usage"
+	"github.com/lxc/incus/v7/internal/i18n"
+	internalSQL "github.com/lxc/incus/v7/internal/sql"
+	cli "github.com/lxc/incus/v7/shared/cmd"
+)
+
+type cmdAdminSQL struct {
+	global *cmdGlobal
+
+	flagFormat string
+}
+
+var cmdAdminSQLUsage = u.Usage{u.EitherVerbatim("local", "global").Remote(), u.Query}
+
+func (c *cmdAdminSQL) command() *cobra.Command {
+	cmd := &cobra.Command{}
+	cmd.Use = cli.U("sql", cmdAdminSQLUsage...)
+	cmd.Short = i18n.G("Execute a SQL query against the local or global database")
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Execute a SQL query against the local or global database
+
+  The local database is specific to the cluster member you target the
+  command to, and contains member-specific data (such as the member network
+  address).
+
+  The global database is common to all members in the cluster, and contains
+  cluster-specific data (such as profiles, containers, etc).
+
+  Non-clustered servers still have both local and global databases.
+
+  If <query> is the special value "-", then the query is read from
+  standard input.
+
+  If <query> is the special value ".dump", the command returns a SQL text
+  dump of the given database.
+
+  If <query> is the special value ".schema", the command returns the SQL
+  text schema of the given database.
+
+  If <query> is the special value ".tables", the command returns the SQL
+  text tables of the given database.
+
+  This internal command is mostly useful for debugging and disaster
+  recovery. The development team will occasionally provide hotfixes to users as a
+  set of database queries to fix some data inconsistency.`))
+	cmd.RunE = c.run
+	cli.AddStringFlag(cmd.Flags(), &c.flagFormat, "format|f", c.global.defaultListFormat(), "", i18n.G(`Format (csv|json|table|yaml|compact|markdown), use suffix ",noheader" to disable headers and ",header" to enable it if missing, e.g. csv,header`))
+
+	cmd.PreRunE = func(cmd *cobra.Command, _ []string) error {
+		return cli.ValidateFlagFormatForListOutput(cmd.Flag("format").Value.String())
+	}
+
+	return cmd
+}
+
+func (c *cmdAdminSQL) run(cmd *cobra.Command, args []string) error {
+	parsed, err := c.global.Parse(cmdAdminSQLUsage, cmd, args)
+	if err != nil {
+		return err
+	}
+
+	d := parsed[0].RemoteServer
+	database := parsed[0].RemoteObject.String
+	query := parsed[1].String
+
+	if query == "-" {
+		// Read from stdin
+		content, err := io.ReadAll(os.Stdin)
+		if err != nil {
+			return fmt.Errorf(i18n.G("Failed to read from stdin: %w"), err)
+		}
+
+		query = string(content)
+	}
+
+	if query == ".dump" || query == ".schema" || query == ".tables" {
+		url := fmt.Sprintf("/internal/sql?database=%s", database)
+		switch query {
+		case ".schema":
+			url += "&dump=1"
+		case ".tables":
+			url += "&dump=2"
+		}
+
+		response, _, err := d.RawQuery("GET", url, nil, "")
+		if err != nil {
+			return fmt.Errorf(i18n.G("Failed to request dump: %w"), err)
+		}
+
+		dump := internalSQL.SQLDump{}
+		err = json.Unmarshal(response.Metadata, &dump)
+		if err != nil {
+			return fmt.Errorf(i18n.G("Failed to parse dump response: %w"), err)
+		}
+
+		fmt.Print(dump.Text)
+		return nil
+	}
+
+	data := internalSQL.SQLQuery{
+		Database: database,
+		Query:    query,
+	}
+
+	response, _, err := d.RawQuery("POST", "/internal/sql", data, "")
+	if err != nil {
+		return err
+	}
+
+	// Use json.Number so integers (e.g. database IDs) render as-is rather than as floats.
+	batch := internalSQL.SQLBatch{}
+	decoder := json.NewDecoder(bytes.NewReader(response.Metadata))
+	decoder.UseNumber()
+	err = decoder.Decode(&batch)
+	if err != nil {
+		return err
+	}
+
+	for i, result := range batch.Results {
+		if len(batch.Results) > 1 {
+			fmt.Printf(i18n.G("=> Query %d:")+"\n\n", i)
+		}
+
+		if result.Type == "select" {
+			err := c.sqlPrintSelectResult(result)
+			if err != nil {
+				return err
+			}
+		} else {
+			fmt.Printf(i18n.G("Rows affected: %d")+"\n", result.RowsAffected)
+		}
+
+		if len(batch.Results) > 1 {
+			fmt.Println("")
+		}
+	}
+	return nil
+}
+
+func (c *cmdAdminSQL) sqlPrintSelectResult(result internalSQL.SQLResult) error {
+	data := [][]string{}
+	for _, row := range result.Rows {
+		rowData := []string{}
+		for _, col := range row {
+			rowData = append(rowData, fmt.Sprintf("%v", col))
+		}
+
+		data = append(data, rowData)
+	}
+
+	return cli.RenderTable(os.Stdout, c.flagFormat, result.Columns, data, result)
+}

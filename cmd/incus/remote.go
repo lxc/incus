@@ -1,0 +1,1806 @@
+package main
+
+import (
+	"bufio"
+	"crypto/sha256"
+	"crypto/tls"
+	"crypto/x509"
+	"encoding/pem"
+	"errors"
+	"fmt"
+	"io/fs"
+	"net"
+	"net/http"
+	"net/url"
+	"os"
+	"path/filepath"
+	"runtime"
+	"slices"
+	"sort"
+	"strconv"
+	"strings"
+	"time"
+
+	"github.com/golang-jwt/jwt/v5"
+	"github.com/spf13/cobra"
+	"golang.org/x/crypto/ssh"
+	"software.sslmate.com/src/go-pkcs12"
+
+	incus "github.com/lxc/incus/v7/client"
+	"github.com/lxc/incus/v7/cmd/incus/color"
+	u "github.com/lxc/incus/v7/cmd/incus/usage"
+	"github.com/lxc/incus/v7/internal/i18n"
+	"github.com/lxc/incus/v7/internal/ports"
+	internalUtil "github.com/lxc/incus/v7/internal/util"
+	"github.com/lxc/incus/v7/shared/api"
+	config "github.com/lxc/incus/v7/shared/cliconfig"
+	cli "github.com/lxc/incus/v7/shared/cmd"
+	"github.com/lxc/incus/v7/shared/logger"
+	localtls "github.com/lxc/incus/v7/shared/tls"
+	"github.com/lxc/incus/v7/shared/util"
+)
+
+type cmdRemote struct {
+	global *cmdGlobal
+}
+
+type remoteColumn struct {
+	Name string
+	Data func(string, config.Remote) string
+}
+
+func (c *cmdRemote) command() *cobra.Command {
+	cmd := &cobra.Command{}
+	cmd.Use = cli.U("remote")
+	cmd.Short = i18n.G("Manage the list of remote servers")
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Manage the list of remote servers`))
+
+	// Add
+	remoteAddCmd := cmdRemoteAdd{global: c.global, remote: c}
+	cmd.AddCommand(remoteAddCmd.command())
+
+	// Generate certificate
+	remoteGenerateCertificateCmd := cmdRemoteGenerateCertificate{global: c.global, remote: c}
+	cmd.AddCommand(remoteGenerateCertificateCmd.command())
+
+	// Get default
+	remoteGetDefaultCmd := cmdRemoteGetDefault{global: c.global, remote: c}
+	cmd.AddCommand(remoteGetDefaultCmd.command())
+
+	// List
+	remoteListCmd := cmdRemoteList{global: c.global, remote: c}
+	cmd.AddCommand(remoteListCmd.command())
+
+	if runtime.GOOS != "windows" {
+		// Proxy
+		remoteProxyCmd := cmdRemoteProxy{global: c.global, remote: c}
+		cmd.AddCommand(remoteProxyCmd.command())
+	}
+
+	// Rename
+	remoteRenameCmd := cmdRemoteRename{global: c.global, remote: c}
+	cmd.AddCommand(remoteRenameCmd.command())
+
+	// Remove
+	remoteRemoveCmd := cmdRemoteRemove{global: c.global, remote: c}
+	cmd.AddCommand(remoteRemoveCmd.command())
+
+	// Set default
+	remoteSwitchCmd := cmdRemoteSwitch{global: c.global, remote: c}
+	cmd.AddCommand(remoteSwitchCmd.command())
+
+	// Set URL
+	remoteSetURLCmd := cmdRemoteSetURL{global: c.global, remote: c}
+	cmd.AddCommand(remoteSetURLCmd.command())
+
+	// Get client certificate
+	remoteGetClientCertificateCmd := cmdRemoteGetClientCertificate{global: c.global, remote: c}
+	cmd.AddCommand(remoteGetClientCertificateCmd.command())
+
+	// Get client token
+	remoteGetClientTokenCmd := cmdRemoteGetClientToken{global: c.global, remote: c}
+	cmd.AddCommand(remoteGetClientTokenCmd.command())
+
+	// Set keepalive timeout
+	remoteSetKeepalive := cmdRemoteSetKeepalive{global: c.global, remote: c}
+	cmd.AddCommand(remoteSetKeepalive.command())
+
+	// Workaround for subcommand usage errors. See: https://github.com/spf13/cobra/issues/706
+	cmd.Args = cobra.NoArgs
+	cmd.Run = func(cmd *cobra.Command, _ []string) { _ = cmd.Usage() }
+	return cmd
+}
+
+// Add.
+type cmdRemoteAdd struct {
+	global *cmdGlobal
+	remote *cmdRemote
+
+	flagAcceptCert bool
+	flagToken      string
+	flagPublic     bool
+	flagProtocol   string
+	flagAuthType   string
+	flagProject    string
+	flagKeepAlive  int
+	flagCredHelper string
+	flagTLSCert    string
+	flagTLSKey     string
+	flagTLSP12     string
+}
+
+var cmdRemoteAddUsage = u.Usage{u.NewName(u.Remote).Optional(), u.Either(u.Placeholder(i18n.G("IP/FQDN/URL")).List(1), u.Placeholder(i18n.G("token")))}
+
+func (c *cmdRemoteAdd) command() *cobra.Command {
+	cmd := &cobra.Command{}
+	cmd.Use = cli.U("add", cmdRemoteAddUsage...)
+	cmd.Short = i18n.G("Add new remote servers")
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
+		`Add new remote servers
+
+URL for remote resources must be HTTPS (https://).
+
+Basic authentication can be used when combined with the "simplestreams" protocol:
+  incus remote add some-name https://LOGIN:PASSWORD@example.com/some/path --protocol=simplestreams
+
+Several remote targets can be provided, to handle switching to other servers if one is down:
+  incus remote add some-name server1.example.com server2.example.com
+
+The remote name can be ignored if a single target is provided.
+`,
+	))
+
+	cmd.RunE = c.run
+	cli.AddBoolFlag(cmd.Flags(), &c.flagAcceptCert, "accept-certificate", i18n.G("Accept certificate"))
+	cli.AddStringFlag(cmd.Flags(), &c.flagToken, "token", "", "", i18n.G("Remote trust token"))
+	cli.AddStringFlag(cmd.Flags(), &c.flagProtocol, "protocol", "incus", "", i18n.G("Server protocol (incus, oci or simplestreams)"))
+	cli.AddStringFlag(cmd.Flags(), &c.flagAuthType, "auth-type", "", "", i18n.G("Server authentication type (tls or oidc)"))
+	cli.AddBoolFlag(cmd.Flags(), &c.flagPublic, "public", i18n.G("Public image server"))
+	cli.AddStringFlag(cmd.Flags(), &c.flagProject, "project", "", "", i18n.G("Project to use for the remote"))
+	cli.AddIntFlag(cmd.Flags(), &c.flagKeepAlive, "keepalive", i18n.G("Maintain remote connection for faster commands"), 0)
+	cli.AddStringFlag(cmd.Flags(), &c.flagCredHelper, "credentials-helper", "", "", i18n.G("Binary helper for retrieving credentials"))
+	cli.AddStringFlag(cmd.Flags(), &c.flagTLSCert, "tls-cert", "", "", i18n.G("Remote-specific TLS client certificate (PEM)"))
+	cli.AddStringFlag(cmd.Flags(), &c.flagTLSKey, "tls-key", "", "", i18n.G("Remote-specific TLS client key (PEM or encrypted OpenSSH)"))
+	cli.AddStringFlag(cmd.Flags(), &c.flagTLSP12, "tls-p12", "", "", i18n.G("Remote-specific TLS client keypair (PKCS#12)"))
+
+	return cmd
+}
+
+func (c *cmdRemoteAdd) findProject(d incus.InstanceServer, project string) (string, error) {
+	if project == "" {
+		// Check if we can pull a list of projects.
+		if d.HasExtension("projects") {
+			// Retrieve the allowed projects.
+			names, err := d.GetProjectNames()
+			if err != nil {
+				return "", err
+			}
+
+			if len(names) == 0 {
+				// If no allowed projects, just keep it to the default.
+				return "", nil
+			} else if len(names) == 1 {
+				// If only a single project, use that.
+				return names[0], nil
+			}
+
+			// Deal with multiple projects.
+			if slices.Contains(names, api.ProjectDefaultName) {
+				// If we have access to the default project, use it.
+				return "", nil
+			}
+
+			// Let's ask the user.
+			fmt.Println(i18n.G("Available projects:"))
+			for _, name := range names {
+				fmt.Println(" - " + name)
+			}
+
+			return c.global.asker.AskChoice(i18n.G("Name of the project to use for this remote:")+" ", names, "")
+		}
+
+		return "", nil
+	}
+
+	_, _, err := d.GetProject(project)
+	if err != nil {
+		return "", err
+	}
+
+	return project, nil
+}
+
+// setupClientCertificate records a remote-specific TLS client certificate and key.
+func (c *cmdRemoteAdd) setupClientCertificate(server string) error {
+	conf := c.global.conf
+
+	var certPEM []byte
+	var keyPEM []byte
+
+	if c.flagTLSP12 != "" {
+		data, err := os.ReadFile(c.flagTLSP12)
+		if err != nil {
+			return err
+		}
+
+		key, cert, caCerts, err := pkcs12.DecodeChain(data, "")
+		if err != nil {
+			if !errors.Is(err, pkcs12.ErrIncorrectPassword) {
+				return err
+			}
+
+			password, askErr := c.global.asker.AskPasswordOnce(fmt.Sprintf(i18n.G("Password for %s: "), c.flagTLSP12))
+			if askErr != nil {
+				return askErr
+			}
+
+			key, cert, caCerts, err = pkcs12.DecodeChain(data, password)
+			if err != nil {
+				return err
+			}
+		}
+
+		keyDER, err := x509.MarshalPKCS8PrivateKey(key)
+		if err != nil {
+			return err
+		}
+
+		keyPEM = pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: keyDER})
+		certPEM = pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: cert.Raw})
+		for _, caCert := range caCerts {
+			certPEM = append(certPEM, pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: caCert.Raw})...)
+		}
+	} else {
+		var err error
+
+		certPEM, err = os.ReadFile(c.flagTLSCert)
+		if err != nil {
+			return err
+		}
+
+		keyPEM, err = os.ReadFile(c.flagTLSKey)
+		if err != nil {
+			return err
+		}
+	}
+
+	// Validate the keypair.
+	tlsKeyPEM, err := conf.DecryptClientKey(keyPEM, c.flagTLSKey)
+	if err != nil {
+		return err
+	}
+
+	_, err = tls.X509KeyPair(certPEM, tlsKeyPEM)
+	if err != nil {
+		return fmt.Errorf(i18n.G("Invalid TLS client keypair: %w"), err)
+	}
+
+	var caPEM []byte
+	caPath := conf.ConfigPath("clientcerts", server+".ca")
+	if util.PathExists(caPath) {
+		caPEM, err = os.ReadFile(caPath)
+		if err != nil {
+			return err
+		}
+	}
+
+	// Record the keypair.
+	dnam := conf.ConfigPath("clientcerts")
+	err = os.MkdirAll(dnam, 0o750)
+	if err != nil {
+		return errors.New(i18n.G("Could not create client cert dir"))
+	}
+
+	err = os.WriteFile(conf.ConfigPath("clientcerts", fmt.Sprintf("%s.crt", server)), certPEM, 0o644)
+	if err != nil {
+		return err
+	}
+
+	err = os.WriteFile(conf.ConfigPath("clientcerts", fmt.Sprintf("%s.key", server)), keyPEM, 0o600)
+	if err != nil {
+		return err
+	}
+
+	remote := conf.Remotes[server]
+	remote.TLS = &config.RemoteTLS{
+		Certificate: string(certPEM),
+		Key:         string(tlsKeyPEM),
+		CA:          string(caPEM),
+	}
+
+	conf.Remotes[server] = remote
+
+	return nil
+}
+
+func (c *cmdRemoteAdd) runToken(server string, token string, rawToken *api.CertificateAddToken) error {
+	conf := c.global.conf
+
+	if !conf.HasRemoteClientCertificate(server) && !conf.HasClientCertificate() {
+		fmt.Fprint(os.Stderr, i18n.G("Generating a client certificate. This may take a minute...")+"\n")
+		err := conf.GenerateClientCertificate()
+		if err != nil {
+			return err
+		}
+	}
+
+	addrs := make([]string, len(rawToken.Addresses))
+	for i, addr := range rawToken.Addresses {
+		addrs[i] = fmt.Sprintf("https://%s", addr)
+	}
+
+	err := c.addRemoteFromToken(addrs, server, token, rawToken.Fingerprint)
+	if err == nil {
+		return nil
+	}
+
+	if !api.StatusErrorCheck(err, http.StatusServiceUnavailable) {
+		return err
+	}
+
+	fmt.Println(i18n.G("All server addresses are unavailable"))
+	fmt.Print(i18n.G("Please provide alternate server addresses separated with commas (empty to abort):") + " ")
+
+	buf := bufio.NewReader(os.Stdin)
+	line, _, err := buf.ReadLine()
+	if err != nil {
+		return err
+	}
+
+	if len(line) == 0 {
+		return errors.New(i18n.G("Failed to add remote"))
+	}
+
+	err = c.addRemoteFromToken(util.SplitNTrimSpace(string(line), ",", -1, true), server, token, rawToken.Fingerprint)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (c *cmdRemoteAdd) addRemoteFromToken(addrs []string, server string, token string, fingerprint string) error {
+	conf := c.global.conf
+
+	var certificate *x509.Certificate
+	var err error
+
+	remote := conf.Remotes[server]
+	remote.Addrs = addrs
+	remote.Protocol = c.flagProtocol
+	remote.AuthType = c.flagAuthType
+	remote.KeepAlive = c.flagKeepAlive
+
+	conf.Remotes[server] = remote
+
+	_, err = conf.GetInstanceServer(server)
+	if err != nil {
+		var errs []error
+		var addr string
+		for _, addr = range addrs {
+			certificate, err = localtls.GetRemoteCertificate(addr, c.global.conf.UserAgent)
+			if err == nil {
+				break
+			}
+
+			errs = append(errs, err)
+		}
+
+		if len(errs) > 0 {
+			return api.StatusErrorf(http.StatusServiceUnavailable, i18n.G("Unavailable remote server")+": %v", errors.Join(errs...))
+		}
+
+		certDigest := localtls.CertFingerprint(certificate)
+		if fingerprint != certDigest {
+			return fmt.Errorf(i18n.G("Certificate fingerprint mismatch between certificate token and server %q"), addr)
+		}
+
+		dnam := conf.ConfigPath("servercerts")
+		err := os.MkdirAll(dnam, 0o750)
+		if err != nil {
+			return errors.New(i18n.G("Could not create server cert dir"))
+		}
+
+		certf := conf.ServerCertPath(server)
+
+		certOut, err := os.Create(certf)
+		if err != nil {
+			return fmt.Errorf(i18n.G("Failed to create %q: %w"), certf, err)
+		}
+
+		err = pem.Encode(certOut, &pem.Block{Type: "CERTIFICATE", Bytes: certificate.Raw})
+		if err != nil {
+			return fmt.Errorf(i18n.G("Failed to write server cert file %q: %w"), certf, err)
+		}
+
+		err = certOut.Close()
+		if err != nil {
+			return fmt.Errorf(i18n.G("Failed to close server cert file %q: %w"), certf, err)
+		}
+	}
+
+	d, err := conf.GetInstanceServer(server)
+	if err != nil {
+		return api.StatusErrorf(http.StatusServiceUnavailable, i18n.G("Unavailable remote server")+": %v", err)
+	}
+
+	req := api.CertificatesPost{
+		TrustToken: token,
+	}
+
+	err = d.CreateCertificate(req)
+	if err != nil {
+		return fmt.Errorf(i18n.G("Failed to create certificate: %w"), err)
+	}
+
+	// Handle project.
+	remote = conf.Remotes[server]
+	project, err := c.findProject(d, c.flagProject)
+	if err != nil {
+		return fmt.Errorf(i18n.G("Failed to find project: %w"), err)
+	}
+
+	remote.Project = project
+	conf.Remotes[server] = remote
+
+	return conf.SaveConfig(c.global.confPath)
+}
+
+func normalizeAddress(addr string) (string, string, error) {
+	if addr == "" {
+		return "", "", errors.New(i18n.G("Addresses cannot be empty"))
+	}
+
+	// Complex remote URL parsing
+	remoteURL, err := url.Parse(addr)
+	if err != nil {
+		remoteURL = &url.URL{Host: addr}
+	}
+
+	// Fix broken URL parser
+	if !strings.Contains(addr, "://") && remoteURL.Scheme != "" && remoteURL.Scheme != "unix" && remoteURL.Host == "" {
+		remoteURL.Host = addr
+		remoteURL.Scheme = ""
+	}
+
+	// Parse the URL
+	var rScheme string
+	var rHost string
+	var rPort string
+
+	if remoteURL.Scheme != "" {
+		if remoteURL.Scheme != "unix" && remoteURL.Scheme != "https" {
+			return "", "", fmt.Errorf(i18n.G("Invalid URL scheme \"%s\" in \"%s\""), remoteURL.Scheme, addr)
+		}
+
+		rScheme = remoteURL.Scheme
+	} else if addr[0] == '/' {
+		rScheme = "unix"
+	} else {
+		if !internalUtil.IsUnixSocket(addr) {
+			rScheme = "https"
+		} else {
+			rScheme = "unix"
+		}
+	}
+
+	if remoteURL.Host != "" {
+		rHost = remoteURL.Host
+	} else {
+		rHost = addr
+	}
+
+	host, port, err := net.SplitHostPort(rHost)
+	if err == nil {
+		rHost = host
+		rPort = port
+	} else {
+		rPort = fmt.Sprintf("%d", ports.HTTPSDefaultPort)
+	}
+
+	if rScheme == "unix" {
+		rHost = strings.TrimPrefix(strings.TrimPrefix(addr, "unix:"), "//")
+		rPort = ""
+	}
+
+	if strings.Contains(rHost, ":") && !strings.HasPrefix(rHost, "[") {
+		rHost = fmt.Sprintf("[%s]", rHost)
+	}
+
+	if rPort != "" {
+		addr = rScheme + "://" + rHost + ":" + rPort
+	} else {
+		addr = rScheme + "://" + rHost
+	}
+
+	return addr, rScheme, nil
+}
+
+func (c *cmdRemoteAdd) run(cmd *cobra.Command, args []string) (err error) {
+	conf := c.global.conf
+
+	// Do NOT blindly copy the following parsing line; it is a dirty hack to disambiguate the parser.
+	parsed, err := c.global.Parse(cmdRemoteAddUsage, cmd, args, len(args) == 1)
+	if err != nil {
+		return err
+	}
+
+	target := parsed[1].String
+	addrs := parsed[1].StringList
+	server := parsed[0].Get(target)
+
+	// Validate the server name.
+	if strings.Contains(server, ":") {
+		if parsed[0].Skipped {
+			return errors.New(i18n.G("Remote names may not contain colons; please provide an explicit one"))
+		}
+
+		return errors.New(i18n.G("Remote names may not contain colons"))
+	}
+
+	if strings.Contains(server, "=") {
+		return errors.New(i18n.G("Remote names may not contain equal signs"))
+	}
+
+	// Check for existing remote
+	remote, ok := conf.Remotes[server]
+	if ok {
+		return fmt.Errorf(i18n.G("Remote %s already exists"), server)
+	}
+
+	// Initialize the remotes list if needed
+	if conf.Remotes == nil {
+		conf.Remotes = map[string]config.Remote{}
+	}
+
+	// Handle remote-specific TLS client keypair.
+	if c.flagTLSP12 != "" && (c.flagTLSCert != "" || c.flagTLSKey != "") {
+		return errors.New(i18n.G("--tls-p12 can't be used with --tls-cert or --tls-key"))
+	}
+
+	if (c.flagTLSCert != "") != (c.flagTLSKey != "") {
+		return errors.New(i18n.G("--tls-cert and --tls-key must be used together"))
+	}
+
+	if c.flagTLSP12 != "" || c.flagTLSCert != "" {
+		if c.flagProtocol != "incus" {
+			return errors.New(i18n.G("TLS client certificates can only be used with the incus protocol"))
+		}
+
+		err = c.setupClientCertificate(server)
+		if err != nil {
+			return err
+		}
+
+		// Remove the recorded keypair if adding the remote fails.
+		defer func() {
+			if err != nil {
+				_ = os.Remove(conf.ConfigPath("clientcerts", fmt.Sprintf("%s.crt", server)))
+				_ = os.Remove(conf.ConfigPath("clientcerts", fmt.Sprintf("%s.key", server)))
+			}
+		}()
+	}
+
+	rawToken, err := localtls.CertificateTokenDecode(target)
+	if err == nil {
+		return c.runToken(server, target, rawToken)
+	}
+
+	// Fast track image servers.
+	if slices.Contains([]string{"oci", "simplestreams"}, c.flagProtocol) {
+		for _, addr := range addrs {
+			remoteURL, err := url.Parse(addr)
+			if err != nil || remoteURL.Scheme != "https" {
+				return errors.New(i18n.G("Only https URLs are supported for oci and simplestreams"))
+			}
+		}
+
+		conf.Remotes[server] = config.Remote{
+			Addrs:      addrs,
+			Public:     true,
+			Protocol:   c.flagProtocol,
+			KeepAlive:  c.flagKeepAlive,
+			CredHelper: c.flagCredHelper,
+		}
+
+		return conf.SaveConfig(c.global.confPath)
+	} else if c.flagProtocol != "incus" {
+		return fmt.Errorf(i18n.G("Invalid protocol: %s"), c.flagProtocol)
+	}
+
+	normalizedAddrs := make([]string, len(addrs))
+	allHTTPS := true
+	allUnix := true
+	for i, addr := range addrs {
+		var scheme string
+		normalizedAddrs[i], scheme, err = normalizeAddress(addr)
+		if err != nil {
+			return err
+		}
+
+		if scheme == "unix" {
+			allHTTPS = false
+		} else {
+			allUnix = false
+		}
+	}
+
+	if !allHTTPS && !allUnix {
+		return errors.New(i18n.G("Cannot mix HTTPS and Unix URLs"))
+	}
+
+	// If the remote is made of private HTTPS servers, then we need to ensure we have a client
+	// certificate before adding the remote server.
+	if allHTTPS && !c.flagPublic && (c.flagAuthType == api.AuthenticationMethodTLS || c.flagAuthType == "") {
+		if !conf.HasRemoteClientCertificate(server) && !conf.HasClientCertificate() {
+			fmt.Fprint(os.Stderr, i18n.G("Generating a client certificate. This may take a minute...")+"\n")
+			err = c.global.conf.GenerateClientCertificate()
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	remote = conf.Remotes[server]
+	remote.Addrs = normalizedAddrs
+	remote.Protocol = c.flagProtocol
+	remote.AuthType = c.flagAuthType
+	remote.KeepAlive = c.flagKeepAlive
+
+	conf.Remotes[server] = remote
+
+	// Attempt to connect
+	var d incus.ImageServer
+	if c.flagPublic {
+		d, err = conf.GetImageServer(server)
+	} else {
+		d, err = conf.GetInstanceServer(server)
+	}
+
+	// Handle Unix socket connections
+	if allUnix {
+		if err != nil {
+			return err
+		}
+
+		remote := conf.Remotes[server]
+		remote.AuthType = api.AuthenticationMethodTLS
+
+		// Handle project.
+		project, err := c.findProject(d.(incus.InstanceServer), c.flagProject)
+		if err != nil {
+			return err
+		}
+
+		remote.Project = project
+
+		conf.Remotes[server] = remote
+		return conf.SaveConfig(c.global.confPath)
+	}
+
+	// Check if the system CA worked for the TLS connection
+	var certificate *x509.Certificate
+	if err != nil {
+		// Failed to connect using the system CA, so retrieve the remote certificate
+		var errs []error
+		up := false
+		for _, addr := range normalizedAddrs {
+			certificate, err = localtls.GetRemoteCertificate(addr, c.global.conf.UserAgent)
+			if err == nil {
+				up = true
+				break
+			} else {
+				errs = append(errs, err)
+			}
+		}
+
+		if !up {
+			return errors.Join(errs...)
+		}
+	}
+
+	// Handle certificate prompt
+	if certificate != nil {
+		if !c.flagAcceptCert {
+			digest := localtls.CertFingerprint(certificate)
+
+			fmt.Printf(i18n.G("Certificate fingerprint: %s")+"\n", digest)
+			fmt.Print(i18n.G("ok (y/n/[fingerprint])?") + " ")
+			buf := bufio.NewReader(os.Stdin)
+			line, _, err := buf.ReadLine()
+			if err != nil {
+				return err
+			}
+
+			if string(line) != digest {
+				if len(line) < 1 || strings.ToLower(string(line[0])) == i18n.G("n") {
+					return errors.New(i18n.G("Server certificate NACKed by user"))
+				} else if strings.ToLower(string(line[0])) != i18n.G("y") {
+					return errors.New(i18n.G("Please type 'y', 'n' or the fingerprint:"))
+				}
+			}
+		}
+
+		dnam := conf.ConfigPath("servercerts")
+		err := os.MkdirAll(dnam, 0o750)
+		if err != nil {
+			return errors.New(i18n.G("Could not create server cert dir"))
+		}
+
+		certf := conf.ServerCertPath(server)
+		certOut, err := os.Create(certf)
+		if err != nil {
+			return err
+		}
+
+		err = pem.Encode(certOut, &pem.Block{Type: "CERTIFICATE", Bytes: certificate.Raw})
+		if err != nil {
+			return fmt.Errorf(i18n.G("Could not write server cert file %q: %w"), certf, err)
+		}
+
+		err = certOut.Close()
+		if err != nil {
+			return fmt.Errorf(i18n.G("Could not close server cert file %q: %w"), certf, err)
+		}
+
+		// Setup a new connection, this time with the remote certificate
+		if c.flagPublic {
+			d, err = conf.GetImageServer(server)
+		} else {
+			d, err = conf.GetInstanceServer(server)
+		}
+
+		if err != nil {
+			return err
+		}
+	}
+
+	// Handle public remotes
+	if c.flagPublic {
+		conf.Remotes[server] = config.Remote{
+			Addrs:     normalizedAddrs,
+			Public:    true,
+			KeepAlive: c.flagKeepAlive,
+		}
+
+		return conf.SaveConfig(c.global.confPath)
+	}
+
+	// Get server information
+	srv, _, err := d.(incus.InstanceServer).GetServer()
+	if err != nil {
+		return err
+	}
+
+	// If not specified, the preferred order of authentication is 1) OIDC 2) TLS.
+	if c.flagAuthType == "" {
+		if !srv.Public && slices.Contains(srv.AuthMethods, api.AuthenticationMethodOIDC) {
+			c.flagAuthType = api.AuthenticationMethodOIDC
+		} else {
+			c.flagAuthType = api.AuthenticationMethodTLS
+		}
+
+		if slices.Contains([]string{api.AuthenticationMethodOIDC}, c.flagAuthType) {
+			// Update the remote configuration
+			remote := conf.Remotes[server]
+			remote.AuthType = c.flagAuthType
+			conf.Remotes[server] = remote
+
+			// Re-setup the client
+			d, err = conf.GetInstanceServer(server)
+			if err != nil {
+				return err
+			}
+
+			d.(incus.InstanceServer).RequireAuthenticated(false)
+
+			srv, _, err = d.(incus.InstanceServer).GetServer()
+			if err != nil {
+				return err
+			}
+		} else {
+			// Update the remote configuration
+			remote := conf.Remotes[server]
+			remote.AuthType = c.flagAuthType
+			conf.Remotes[server] = remote
+		}
+	}
+
+	if !srv.Public && !slices.Contains(srv.AuthMethods, c.flagAuthType) {
+		return fmt.Errorf(i18n.G("Authentication type '%s' not supported by server"), c.flagAuthType)
+	}
+
+	// Detect public remotes
+	if srv.Public {
+		conf.Remotes[server] = config.Remote{Addrs: normalizedAddrs, Public: true, KeepAlive: c.flagKeepAlive}
+		return conf.SaveConfig(c.global.confPath)
+	}
+
+	// Check if additional authentication is required.
+	if srv.Auth != "trusted" {
+		if c.flagAuthType == api.AuthenticationMethodTLS {
+			// Explain why a trust token is needed when in verbose mode.
+			if c.global.flagLogVerbose {
+				tlsCert, _, _, certErr := conf.GetClientCertificate(server)
+				if certErr == nil && tlsCert != "" {
+					fingerprint, fpErr := localtls.CertFingerprintStr(tlsCert)
+					if fpErr == nil {
+						fmt.Fprintf(os.Stderr, i18n.G("The remote server doesn't trust our client certificate (fingerprint: %s)")+"\n", fingerprint)
+					}
+				}
+			}
+
+			// Prompt for trust token
+			if c.flagToken == "" {
+				c.flagToken, err = c.global.asker.AskString(fmt.Sprintf(i18n.G("Trust token for %s: "), server), "", nil)
+				if err != nil {
+					return err
+				}
+			}
+
+			// Add client certificate to trust store
+			req := api.CertificatesPost{
+				TrustToken: c.flagToken,
+			}
+
+			req.Type = api.CertificateTypeClient
+
+			err = d.(incus.InstanceServer).CreateCertificate(req)
+			if err != nil {
+				return err
+			}
+		} else {
+			d.(incus.InstanceServer).RequireAuthenticated(true)
+		}
+
+		// And check if trusted now
+		srv, _, err = d.(incus.InstanceServer).GetServer()
+		if err != nil {
+			return err
+		}
+
+		if srv.Auth != "trusted" {
+			return errors.New(i18n.G("Server doesn't trust us after authentication"))
+		}
+
+		if c.flagAuthType == api.AuthenticationMethodTLS {
+			fmt.Println(i18n.G("Client certificate now trusted by server:"), server)
+		}
+	}
+
+	// Handle project.
+	remote = conf.Remotes[server]
+	project, err := c.findProject(d.(incus.InstanceServer), c.flagProject)
+	if err != nil {
+		return err
+	}
+
+	remote.Project = project
+	conf.Remotes[server] = remote
+
+	return conf.SaveConfig(c.global.confPath)
+}
+
+// Generate certificate.
+type cmdRemoteGenerateCertificate struct {
+	global *cmdGlobal
+	remote *cmdRemote
+
+	flagEncrypt bool
+	flagTLSCert string
+	flagTLSKey  string
+}
+
+var cmdRemoteGenerateCertificateUsage = u.Usage{}
+
+func (c *cmdRemoteGenerateCertificate) command() *cobra.Command {
+	cmd := &cobra.Command{}
+	cmd.Use = cli.U("generate-certificate", cmdRemoteGenerateCertificateUsage...)
+	cmd.Short = i18n.G("Generate the client certificate")
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
+		`Manually trigger the generation of a client certificate
+
+Use --tls-cert and --tls-key together to choose output files instead of the shared client credentials.
+Generation fails if either output file already exists.`,
+	))
+
+	cli.AddBoolFlag(cmd.Flags(), &c.flagEncrypt, "encrypt", i18n.G("Encrypt the private key with a password"))
+	cli.AddStringFlag(cmd.Flags(), &c.flagTLSCert, "tls-cert", "", "", i18n.G("Path to the generated TLS client certificate"))
+	cli.AddStringFlag(cmd.Flags(), &c.flagTLSKey, "tls-key", "", "", i18n.G("Path to the generated TLS client key"))
+
+	cmd.RunE = c.run
+
+	return cmd
+}
+
+func (c *cmdRemoteGenerateCertificate) run(cmd *cobra.Command, args []string) error {
+	conf := c.global.conf
+	_, err := c.global.Parse(cmdRemoteGenerateCertificateUsage, cmd, args)
+	if err != nil {
+		return err
+	}
+
+	certPath := conf.ConfigPath("client.crt")
+	keyPath := conf.ConfigPath("client.key")
+	if (c.flagTLSCert != "") != (c.flagTLSKey != "") {
+		return errors.New(i18n.G("--tls-cert and --tls-key must be used together"))
+	}
+
+	if c.flagTLSCert != "" {
+		certPath = c.flagTLSCert
+		keyPath = c.flagTLSKey
+	}
+
+	// Refuse existing files, including incomplete keypairs and symbolic links.
+	for _, path := range []string{certPath, keyPath} {
+		_, err := os.Lstat(path)
+		if err == nil {
+			return errors.New(i18n.G("A client certificate is already present"))
+		}
+
+		if !errors.Is(err, fs.ErrNotExist) {
+			return err
+		}
+	}
+
+	password := ""
+	if c.flagEncrypt {
+		password, err = c.global.asker.AskPassword(fmt.Sprintf(i18n.G("Password for %s: "), keyPath))
+		if err != nil {
+			return err
+		}
+	}
+
+	// Generate the certificate.
+	if !c.global.flagQuiet {
+		fmt.Fprint(os.Stderr, i18n.G("Generating a client certificate. This may take a minute...")+"\n")
+	}
+
+	err = c.generateCertificate(certPath, keyPath, password)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (c *cmdRemoteGenerateCertificate) generateCertificate(certPath string, keyPath string, password string) error {
+	certPEM, keyPEM, err := localtls.GenerateMemCert(true, false)
+	if err != nil {
+		return err
+	}
+
+	if password != "" {
+		keypair, err := tls.X509KeyPair(certPEM, keyPEM)
+		if err != nil {
+			return err
+		}
+
+		key, err := ssh.MarshalPrivateKeyWithPassphrase(keypair.PrivateKey, "", []byte(password))
+		if err != nil {
+			return err
+		}
+
+		keyPEM = pem.EncodeToMemory(key)
+	}
+
+	for _, path := range []string{certPath, keyPath} {
+		err = os.MkdirAll(filepath.Dir(path), 0o750)
+		if err != nil {
+			return err
+		}
+	}
+
+	err = writeClientCertificateFile(keyPath, keyPEM, 0o600)
+	if err != nil {
+		return err
+	}
+
+	err = writeClientCertificateFile(certPath, certPEM, 0o644)
+	if err != nil {
+		_ = os.Remove(keyPath)
+		return err
+	}
+
+	return nil
+}
+
+func writeClientCertificateFile(path string, content []byte, mode os.FileMode) error {
+	file, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_EXCL, mode)
+	if err != nil {
+		return err
+	}
+
+	_, err = file.Write(content)
+	closeErr := file.Close()
+	if err == nil {
+		err = closeErr
+	}
+
+	if err != nil {
+		_ = os.Remove(path)
+	}
+
+	return err
+}
+
+// Get default.
+type cmdRemoteGetDefault struct {
+	global *cmdGlobal
+	remote *cmdRemote
+}
+
+var cmdRemoteGetDefaultUsage = u.Usage{}
+
+func (c *cmdRemoteGetDefault) command() *cobra.Command {
+	cmd := &cobra.Command{}
+	cmd.Use = cli.U("get-default", cmdRemoteGetDefaultUsage...)
+	cmd.Short = i18n.G("Show the default remote")
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Show the default remote`))
+
+	cmd.RunE = c.run
+
+	return cmd
+}
+
+func (c *cmdRemoteGetDefault) run(cmd *cobra.Command, args []string) error {
+	_, err := c.global.Parse(cmdRemoteGetDefaultUsage, cmd, args)
+	if err != nil {
+		return err
+	}
+
+	// Show the default remote
+	fmt.Println(c.global.conf.DefaultRemote)
+
+	return nil
+}
+
+// Get client certificate.
+type cmdRemoteGetClientCertificate struct {
+	global *cmdGlobal
+	remote *cmdRemote
+
+	flagFormat string
+}
+
+var cmdRemoteGetClientCertificateUsage = u.Usage{u.Target(u.File).Optional()}
+
+func (c *cmdRemoteGetClientCertificate) command() *cobra.Command {
+	cmd := &cobra.Command{}
+	cmd.Use = cli.U("get-client-certificate", cmdRemoteGetClientCertificateUsage...)
+	cmd.Short = i18n.G("Print or retrieve the client certificate used by this Incus client")
+	cmd.RunE = c.run
+
+	cli.AddStringFlag(cmd.Flags(), &c.flagFormat, "format|f", "pem", "", i18n.G("Format (pem|pfx)"))
+
+	return cmd
+}
+
+func (c *cmdRemoteGetClientCertificate) run(cmd *cobra.Command, args []string) error {
+	conf := c.global.conf
+	parsed, err := c.global.Parse(cmdRemoteGetClientCertificateUsage, cmd, args)
+	if err != nil {
+		return err
+	}
+
+	targetFile := parsed[0].String
+	hasTargetFile := !parsed[0].Skipped
+
+	if !slices.Contains([]string{"pem", "pfx"}, c.flagFormat) {
+		return fmt.Errorf(i18n.G("Invalid certificate format %q"), c.flagFormat)
+	}
+
+	if c.flagFormat == "pfx" && !hasTargetFile {
+		return errors.New("PFX export requires a filename")
+	}
+
+	// Check if we need to generate a new certificate.
+	if !conf.HasClientCertificate() {
+		if !c.global.flagQuiet {
+			fmt.Fprint(os.Stderr, i18n.G("Generating a client certificate. This may take a minute...")+"\n")
+		}
+
+		err = conf.GenerateClientCertificate()
+		if err != nil {
+			return err
+		}
+	}
+
+	// Read the certificate.
+	tlsClientCert, tlsClientKey, _, err := conf.GetClientCertificate(conf.DefaultRemote)
+	if err != nil {
+		return fmt.Errorf("Failed to get certificate: %w", err)
+	}
+
+	if hasTargetFile {
+		// Create the file.
+		w, err := os.Create(targetFile)
+		if err != nil {
+			return err
+		}
+
+		defer logger.WarnOnError(w.Close, "Failed to close file")
+
+		switch c.flagFormat {
+		case "pem":
+			_, err = fmt.Fprint(w, tlsClientCert)
+			if err != nil {
+				return err
+			}
+
+		case "pfx":
+			// Restrict the permission as it includes the key.
+			err = w.Chmod(0o600)
+			if err != nil {
+				return err
+			}
+
+			// Get a password.
+			password, err := c.global.asker.AskPasswordOnce(fmt.Sprintf(i18n.G("Password for %s: "), targetFile))
+			if err != nil {
+				return err
+			}
+
+			// Load the cert and key.
+			cert, err := tls.X509KeyPair([]byte(tlsClientCert), []byte(tlsClientKey))
+			if err != nil {
+				return err
+			}
+
+			// Get the PKCS12.
+			pfx, err := pkcs12.Modern2023.Encode(cert.PrivateKey, cert.Leaf, nil, password)
+			if err != nil {
+				return err
+			}
+
+			_, err = fmt.Fprint(w, string(pfx))
+			if err != nil {
+				return err
+			}
+		}
+
+		return nil
+	}
+
+	fmt.Print(tlsClientCert)
+
+	return nil
+}
+
+type cmdRemoteGetClientToken struct {
+	global *cmdGlobal
+	remote *cmdRemote
+}
+
+var cmdRemoteGetClientTokenUsage = u.Usage{u.Expiry}
+
+func (c *cmdRemoteGetClientToken) command() *cobra.Command {
+	cmd := &cobra.Command{}
+	cmd.Use = cli.U("get-client-token", cmdRemoteGetClientTokenUsage...)
+	cmd.Short = i18n.G("Generate a client token derived from the client certificate")
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
+		`Generate a client trust token derived from the existing client certificate and private key.
+
+This is useful for remote authentication workflows where a token is passed to another Incus server.`,
+	))
+	cmd.RunE = c.run
+	return cmd
+}
+
+func (c *cmdRemoteGetClientToken) run(cmd *cobra.Command, args []string) error {
+	conf := c.global.conf
+	parsed, err := c.global.Parse(cmdRemoteGetClientTokenUsage, cmd, args)
+	if err != nil {
+		return err
+	}
+
+	// Parse the expiry.
+	expiry, err := time.ParseDuration(parsed[0].String)
+	if err != nil {
+		return err
+	}
+
+	// Check if we need to generate a new certificate.
+	if !conf.HasClientCertificate() {
+		if !c.global.flagQuiet {
+			fmt.Fprint(os.Stderr, i18n.G("Generating a client certificate. This may take a minute...")+"\n")
+		}
+
+		err = conf.GenerateClientCertificate()
+		if err != nil {
+			return err
+		}
+	}
+
+	// Read the certificate.
+	tlsClientCert, tlsClientKey, _, err := conf.GetClientCertificate("")
+	if err != nil {
+		return fmt.Errorf("Failed to get certificate: %w", err)
+	}
+
+	keypair, err := tls.X509KeyPair([]byte(tlsClientCert), []byte(tlsClientKey))
+	if err != nil {
+		return err
+	}
+
+	// Use SHA-256 fingerprint of the first cert in the chain.
+	fingerprint := sha256.Sum256(keypair.Certificate[0])
+	subject := fmt.Sprintf("%x", fingerprint)
+
+	now := time.Now()
+	claims := jwt.RegisteredClaims{
+		Subject:   subject,
+		IssuedAt:  jwt.NewNumericDate(now),
+		NotBefore: jwt.NewNumericDate(now),
+		ExpiresAt: jwt.NewNumericDate(now.Add(expiry)),
+	}
+
+	// Trying signing with both ES384 and RS256.
+	for _, alg := range []jwt.SigningMethod{jwt.SigningMethodES384, jwt.SigningMethodRS256} {
+		token := jwt.NewWithClaims(alg, claims)
+		tokenStr, err := token.SignedString(keypair.PrivateKey)
+		if err == nil {
+			fmt.Println(tokenStr)
+
+			return nil
+		}
+	}
+
+	return errors.New("Unable to sign JWT with available key algorithms")
+}
+
+// List.
+type cmdRemoteList struct {
+	global *cmdGlobal
+	remote *cmdRemote
+
+	flagFormat  string
+	flagColumns string
+}
+
+var cmdRemoteListUsage = u.Usage{}
+
+func (c *cmdRemoteList) command() *cobra.Command {
+	cmd := &cobra.Command{}
+	cmd.Use = cli.U("list", cmdRemoteListUsage...)
+	cmd.Aliases = []string{"ls"}
+	cmd.Short = i18n.G("List the available remotes")
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
+		`List the available remotes
+
+Default column layout: nupaPsg
+
+== Columns ==
+The -c option takes a comma separated list of arguments that control
+which remote attributes to output when displaying in table or csv
+format.
+
+Column arguments are either pre-defined shorthand chars (see below),
+or (extended) config keys.
+
+Commas between consecutive shorthand chars are optional.
+
+Pre-defined column shorthand chars:
+  n - Name
+  u - URL
+  p - Protocol
+  a - Auth Type
+  P - Public
+  s - Static
+  g - Global`,
+	))
+
+	cmd.RunE = c.run
+	cli.AddStringFlag(cmd.Flags(), &c.flagFormat, "format|f", c.global.defaultListFormat(), "", i18n.G(`Format (csv|json|table|yaml|compact|markdown), use suffix ",noheader" to disable headers and ",header" to enable it if missing, e.g. csv,header`))
+	cli.AddStringFlag(cmd.Flags(), &c.flagColumns, "columns|c", defaultRemoteColumns, "", i18n.G("Columns"))
+
+	cmd.PreRunE = func(cmd *cobra.Command, _ []string) error {
+		return cli.ValidateFlagFormatForListOutput(cmd.Flag("format").Value.String())
+	}
+
+	return cmd
+}
+
+const defaultRemoteColumns = "nupaPsg"
+
+func (c *cmdRemoteList) parseColumns() ([]remoteColumn, error) {
+	columnsShorthandMap := map[rune]remoteColumn{
+		'n': {i18n.G("NAME"), c.remoteNameColumnData},
+		'u': {i18n.G("URL"), c.addrColumnData},
+		'p': {i18n.G("PROTOCOL"), c.protocolColumnData},
+		'a': {i18n.G("AUTH TYPE"), c.authTypeColumnData},
+		'P': {i18n.G("PUBLIC"), c.publicColumnData},
+		's': {i18n.G("STATIC"), c.staticColumnData},
+		'g': {i18n.G("GLOBAL"), c.globalColumnData},
+	}
+
+	columnList := strings.Split(c.flagColumns, ",")
+	columns := []remoteColumn{}
+
+	for _, columnEntry := range columnList {
+		if columnEntry == "" {
+			return nil, fmt.Errorf(i18n.G("Empty column entry (redundant, leading or trailing command) in '%s'"), c.flagColumns)
+		}
+
+		for _, columnRune := range columnEntry {
+			column, ok := columnsShorthandMap[columnRune]
+			if !ok {
+				return nil, fmt.Errorf(i18n.G("Unknown column shorthand char '%c' in '%s'"), columnRune, columnEntry)
+			}
+
+			columns = append(columns, column)
+		}
+	}
+
+	return columns, nil
+}
+
+func (c *cmdRemoteList) remoteNameColumnData(name string, _ config.Remote) string {
+	conf := c.global.conf
+
+	strName := name
+	if name == conf.DefaultRemote {
+		strName = fmt.Sprintf("%s (%s)", name, i18n.G("current"))
+	}
+
+	return strName
+}
+
+func (c *cmdRemoteList) addrColumnData(_ string, rc config.Remote) string {
+	lines := make([]string, len(rc.Addrs))
+	for i, addr := range rc.Addrs {
+		if len(rc.Addrs) > 1 && addr == rc.LastWorkingAddr {
+			lines[i] = fmt.Sprintf("%s (%s)", addr, i18n.G("last"))
+		} else {
+			lines[i] = addr
+		}
+	}
+
+	return strings.Join(lines, "\n")
+}
+
+func (c *cmdRemoteList) protocolColumnData(_ string, rc config.Remote) string {
+	return rc.Protocol
+}
+
+func (c *cmdRemoteList) authTypeColumnData(_ string, rc config.Remote) string {
+	if rc.AuthType == "" {
+		if strings.HasPrefix(rc.Addrs[0], "unix:") {
+			rc.AuthType = "file access"
+		} else if rc.Protocol != "incus" {
+			rc.AuthType = "none"
+		} else {
+			rc.AuthType = api.AuthenticationMethodTLS
+		}
+	}
+
+	return rc.AuthType
+}
+
+func (c *cmdRemoteList) publicColumnData(_ string, rc config.Remote) string {
+	strPublic := i18n.G("NO")
+	if rc.Public {
+		strPublic = i18n.G("YES")
+	}
+
+	return strPublic
+}
+
+func (c *cmdRemoteList) staticColumnData(_ string, rc config.Remote) string {
+	strStatic := i18n.G("NO")
+	if rc.Static {
+		strStatic = i18n.G("YES")
+	}
+
+	return strStatic
+}
+
+func (c *cmdRemoteList) globalColumnData(_ string, rc config.Remote) string {
+	strGlobal := i18n.G("NO")
+	if rc.Global {
+		strGlobal = i18n.G("YES")
+	}
+
+	return strGlobal
+}
+
+func (c *cmdRemoteList) run(cmd *cobra.Command, args []string) error {
+	conf := c.global.conf
+	_, err := c.global.Parse(cmdRemoteListUsage, cmd, args)
+	if err != nil {
+		return err
+	}
+
+	columns, err := c.parseColumns()
+	if err != nil {
+		return err
+	}
+
+	// List the remotes
+	data := [][]string{}
+	for name, rc := range conf.Remotes {
+		line := []string{}
+		for _, column := range columns {
+			line = append(line, column.Data(name, rc))
+		}
+
+		data = append(data, line)
+	}
+
+	sort.Sort(cli.SortColumnsNaturally(data))
+
+	header := []string{}
+	for _, column := range columns {
+		header = append(header, column.Name)
+	}
+
+	return cli.RenderTable(os.Stdout, c.flagFormat, header, data, conf.Remotes)
+}
+
+// Rename.
+type cmdRemoteRename struct {
+	global *cmdGlobal
+	remote *cmdRemote
+}
+
+var cmdRemoteRenameUsage = u.Usage{u.Remote, u.NewName(u.Remote)}
+
+func (c *cmdRemoteRename) command() *cobra.Command {
+	cmd := &cobra.Command{}
+	cmd.Use = cli.U("rename", cmdRemoteRenameUsage...)
+	cmd.Aliases = []string{"mv"}
+	cmd.Short = i18n.G("Rename remotes")
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Rename remotes`))
+
+	cmd.RunE = c.run
+
+	cmd.ValidArgsFunction = func(_ *cobra.Command, args []string, _ string) ([]string, cobra.ShellCompDirective) {
+		if len(args) == 0 {
+			return c.global.cmpRemoteNames()
+		}
+
+		return nil, cobra.ShellCompDirectiveNoFileComp
+	}
+
+	return cmd
+}
+
+func (c *cmdRemoteRename) run(cmd *cobra.Command, args []string) error {
+	conf := c.global.conf
+	parsed, err := c.global.Parse(cmdRemoteRenameUsage, cmd, args)
+	if err != nil {
+		return err
+	}
+
+	remoteName := parsed[0].String
+	newRemoteName := parsed[1].String
+
+	// Validate the new remote name.
+	if strings.Contains(newRemoteName, ":") || strings.Contains(newRemoteName, "=") {
+		return errors.New(i18n.G("Remote names may not contain colons or equal signs"))
+	}
+
+	// Rename the remote
+	rc, ok := conf.Remotes[remoteName]
+	if !ok {
+		return fmt.Errorf(i18n.G("Remote %s doesn't exist"), remoteName)
+	}
+
+	if rc.Static {
+		return fmt.Errorf(i18n.G("Remote %s is static and cannot be modified"), remoteName)
+	}
+
+	_, ok = conf.Remotes[newRemoteName]
+	if ok {
+		return fmt.Errorf(i18n.G("Remote %s already exists"), newRemoteName)
+	}
+
+	// Rename the certificate file
+	oldPath := conf.ServerCertPath(remoteName)
+	newPath := conf.ServerCertPath(newRemoteName)
+	if util.PathExists(oldPath) {
+		if conf.Remotes[remoteName].Global {
+			err := conf.CopyGlobalCert(remoteName, newRemoteName)
+			if err != nil {
+				return err
+			}
+		} else {
+			err := os.Rename(oldPath, newPath)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	// Rename the client certificate files.
+	if !conf.Remotes[remoteName].Global {
+		for _, ext := range []string{"crt", "key", "ca"} {
+			oldCertPath := conf.ConfigPath("clientcerts", fmt.Sprintf("%s.%s", remoteName, ext))
+			newCertPath := conf.ConfigPath("clientcerts", fmt.Sprintf("%s.%s", newRemoteName, ext))
+			if util.PathExists(oldCertPath) {
+				err := os.Rename(oldCertPath, newCertPath)
+				if err != nil {
+					return err
+				}
+			}
+		}
+	}
+
+	// Rename the OIDC token file.
+	oldOIDCPath := conf.OIDCTokenPath(remoteName)
+	newOIDCPath := conf.OIDCTokenPath(newRemoteName)
+	if util.PathExists(oldOIDCPath) {
+		err := os.Rename(oldOIDCPath, newOIDCPath)
+		if err != nil {
+			return err
+		}
+	}
+
+	// Rename the cookie jar.
+	oldCookiesPath := conf.CookiesPath(remoteName)
+	newCookiesPath := conf.CookiesPath(newRemoteName)
+	if util.PathExists(oldCookiesPath) {
+		err := os.Rename(oldCookiesPath, newCookiesPath)
+		if err != nil {
+			return err
+		}
+	}
+
+	rc.Global = false
+	conf.Remotes[newRemoteName] = rc
+	delete(conf.Remotes, remoteName)
+
+	if conf.DefaultRemote == remoteName {
+		conf.DefaultRemote = newRemoteName
+	}
+
+	return conf.SaveConfig(c.global.confPath)
+}
+
+// Remove.
+type cmdRemoteRemove struct {
+	global *cmdGlobal
+	remote *cmdRemote
+}
+
+var cmdRemoteRemoveUsage = u.Usage{u.Remote}
+
+func (c *cmdRemoteRemove) command() *cobra.Command {
+	cmd := &cobra.Command{}
+	cmd.Use = cli.U("remove", cmdRemoteRemoveUsage...)
+	cmd.Aliases = []string{"delete", "rm"}
+	cmd.Short = i18n.G("Remove remotes")
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Remove remotes`))
+
+	cmd.RunE = c.run
+
+	cmd.ValidArgsFunction = func(_ *cobra.Command, args []string, _ string) ([]string, cobra.ShellCompDirective) {
+		if len(args) == 0 {
+			return c.global.cmpRemoteNames()
+		}
+
+		return nil, cobra.ShellCompDirectiveNoFileComp
+	}
+
+	return cmd
+}
+
+func (c *cmdRemoteRemove) run(cmd *cobra.Command, args []string) error {
+	conf := c.global.conf
+	parsed, err := c.global.Parse(cmdRemoteRemoveUsage, cmd, args)
+	if err != nil {
+		return err
+	}
+
+	remoteName := parsed[0].String
+
+	// Remove the remote
+	rc, ok := conf.Remotes[remoteName]
+	if !ok {
+		return fmt.Errorf(i18n.G("Remote %s doesn't exist"), remoteName)
+	}
+
+	if rc.Static {
+		return fmt.Errorf(i18n.G("Remote %s is static and cannot be modified"), remoteName)
+	}
+
+	if rc.Global {
+		return fmt.Errorf(i18n.G("Remote %s is global and cannot be removed"), remoteName)
+	}
+
+	if conf.DefaultRemote == remoteName {
+		return errors.New(i18n.G("Can't remove the default remote"))
+	}
+
+	delete(conf.Remotes, remoteName)
+
+	_ = os.Remove(conf.ServerCertPath(remoteName))
+	_ = os.Remove(conf.CookiesPath(remoteName))
+	_ = os.Remove(conf.OIDCTokenPath(remoteName))
+
+	for _, ext := range []string{"crt", "key", "ca"} {
+		_ = os.Remove(conf.ConfigPath("clientcerts", fmt.Sprintf("%s.%s", remoteName, ext)))
+	}
+
+	return conf.SaveConfig(c.global.confPath)
+}
+
+// Set default.
+type cmdRemoteSwitch struct {
+	global *cmdGlobal
+	remote *cmdRemote
+}
+
+var cmdRemoteSwitchUsage = u.Usage{u.Remote}
+
+func (c *cmdRemoteSwitch) command() *cobra.Command {
+	cmd := &cobra.Command{}
+	cmd.Aliases = []string{"set-default"}
+	cmd.Use = cli.U("switch", cmdRemoteSwitchUsage...)
+	cmd.Short = i18n.G("Switch the default remote")
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Switch the default remote`))
+
+	cmd.RunE = c.run
+
+	cmd.ValidArgsFunction = func(_ *cobra.Command, args []string, _ string) ([]string, cobra.ShellCompDirective) {
+		if len(args) == 0 {
+			return c.global.cmpRemoteNames()
+		}
+
+		return nil, cobra.ShellCompDirectiveNoFileComp
+	}
+
+	return cmd
+}
+
+func (c *cmdRemoteSwitch) run(cmd *cobra.Command, args []string) error {
+	conf := c.global.conf
+	parsed, err := c.global.Parse(cmdRemoteSwitchUsage, cmd, args)
+	if err != nil {
+		return err
+	}
+
+	remoteName := parsed[0].String
+
+	// Set the default remote
+	_, ok := conf.Remotes[remoteName]
+	if !ok {
+		return fmt.Errorf(i18n.G("Remote %s doesn't exist"), remoteName)
+	}
+
+	conf.SetDefaultRemote(remoteName)
+
+	return conf.SaveConfig(c.global.confPath)
+}
+
+// Set URL.
+type cmdRemoteSetURL struct {
+	global *cmdGlobal
+	remote *cmdRemote
+}
+
+var cmdRemoteSetURLUsage = u.Usage{u.Remote, u.Placeholder(i18n.G("IP/FQDN/URL")).List(1)}
+
+func (c *cmdRemoteSetURL) command() *cobra.Command {
+	cmd := &cobra.Command{}
+	cmd.Use = cli.U("set-urls", cmdRemoteSetURLUsage...)
+	cmd.Aliases = []string{"set-url"}
+	cmd.Short = i18n.G("Set the URL(s) for the remote")
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Set the URL(s) for the remote`))
+
+	cmd.RunE = c.run
+
+	cmd.ValidArgsFunction = func(_ *cobra.Command, args []string, _ string) ([]string, cobra.ShellCompDirective) {
+		if len(args) == 0 {
+			return c.global.cmpRemoteNames()
+		}
+
+		return nil, cobra.ShellCompDirectiveNoFileComp
+	}
+
+	return cmd
+}
+
+func (c *cmdRemoteSetURL) run(cmd *cobra.Command, args []string) error {
+	conf := c.global.conf
+	parsed, err := c.global.Parse(cmdRemoteSetURLUsage, cmd, args)
+	if err != nil {
+		return err
+	}
+
+	remoteName := parsed[0].String
+	addrs := parsed[1].StringList
+
+	// Set the URL
+	rc, ok := conf.Remotes[remoteName]
+	if !ok {
+		return fmt.Errorf(i18n.G("Remote %s doesn't exist"), remoteName)
+	}
+
+	if rc.Static {
+		return fmt.Errorf(i18n.G("Remote %s is static and cannot be modified"), remoteName)
+	}
+
+	remote := conf.Remotes[remoteName]
+	if remote.Global {
+		err := conf.CopyGlobalCert(remoteName, remoteName)
+		if err != nil {
+			return err
+		}
+
+		remote.Global = false
+		conf.Remotes[remoteName] = remote
+	}
+
+	normalizedAddrs := make([]string, len(addrs))
+	for i, addr := range addrs {
+		normalizedAddrs[i], _, err = normalizeAddress(addr)
+		if err != nil {
+			return err
+		}
+	}
+
+	remote.Addrs = normalizedAddrs
+	conf.Remotes[remoteName] = remote
+
+	return conf.SaveConfig(c.global.confPath)
+}
+
+// Set keepalive timeout.
+type cmdRemoteSetKeepalive struct {
+	global *cmdGlobal
+	remote *cmdRemote
+}
+
+var cmdRemoteSetKeepaliveUsage = u.Usage{u.Remote, u.KeepaliveTimeout}
+
+func (c *cmdRemoteSetKeepalive) command() *cobra.Command {
+	cmd := &cobra.Command{}
+	cmd.Use = cli.U("set-keepalive", cmdRemoteSetKeepaliveUsage...)
+	cmd.Short = i18n.G("Set a keepalive timeout for a remote")
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Set a keepalive timeout for a remote`))
+	cmd.Example = cli.FormatSection("", i18n.G(
+		`incus remote set-keepalive my-remote 30
+    Set a keepalive with 30 seconds timeout for my-remote
+
+incus remote set-keepalive my-remote 0
+    Disable keeplive for my-remote`,
+	))
+	cmd.RunE = c.run
+
+	return cmd
+}
+
+func (c *cmdRemoteSetKeepalive) run(cmd *cobra.Command, args []string) error {
+	conf := c.global.conf
+
+	parsed, err := c.global.Parse(cmdRemoteSetKeepaliveUsage, cmd, args)
+	if err != nil {
+		return err
+	}
+
+	remoteName := parsed[0].String
+
+	// Validate keepalive
+	timeoutStr := parsed[1].String
+	timeout, err := strconv.Atoi(timeoutStr)
+	if err != nil {
+		return errors.New(i18n.G("Keepalive timeouts must be positive integers"))
+	}
+
+	if timeout < 0 {
+		return errors.New(i18n.G("Keepalive timeouts must be positive integers"))
+	}
+
+	// Look for the remote
+	rc, ok := conf.Remotes[remoteName]
+	if !ok {
+		return fmt.Errorf(i18n.G("Remote %s doesn't exist"), remoteName)
+	}
+
+	// Update timeout value
+	rc.KeepAlive = timeout
+	conf.Remotes[remoteName] = rc
+
+	return conf.SaveConfig(c.global.confPath)
+}

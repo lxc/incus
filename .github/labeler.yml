@@ -1,0 +1,10 @@
+API:
+- changed-files:
+  - any-glob-to-any-file:
+    - doc/api-extensions.md
+    - doc/rest-api.yaml
+    - shared/api/**/*
+Documentation:
+- changed-files:
+  - any-glob-to-any-file:
+    - doc/**/*

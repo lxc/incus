@@ -1,0 +1,152 @@
+//go:build linux && cgo && !agent
+
+package cluster
+
+import (
+	"context"
+	"database/sql"
+	"errors"
+	"fmt"
+	"net/http"
+
+	"github.com/lxc/incus/v7/internal/server/certificate"
+	"github.com/lxc/incus/v7/internal/server/db/query"
+	"github.com/lxc/incus/v7/shared/api"
+)
+
+// Code generation directives.
+//
+//generate-database:mapper target certificates.mapper.go
+//generate-database:mapper reset -i -b "//go:build linux && cgo && !agent"
+//
+//generate-database:mapper stmt -e certificate objects
+//generate-database:mapper stmt -e certificate objects-by-ID
+//generate-database:mapper stmt -e certificate objects-by-Fingerprint
+//generate-database:mapper stmt -e certificate objects-by-Name-and-Type
+//generate-database:mapper stmt -e certificate id
+//generate-database:mapper stmt -e certificate create struct=Certificate
+//generate-database:mapper stmt -e certificate delete-by-Fingerprint
+//generate-database:mapper stmt -e certificate delete-by-Name-and-Type
+//generate-database:mapper stmt -e certificate update struct=Certificate
+//
+//generate-database:mapper method -i -e certificate GetMany
+//generate-database:mapper method -i -e certificate GetOne
+//generate-database:mapper method -i -e certificate ID struct=Certificate
+//generate-database:mapper method -i -e certificate Exists struct=Certificate
+//generate-database:mapper method -i -e certificate Create struct=Certificate
+//generate-database:mapper method -i -e certificate DeleteOne-by-Fingerprint
+//generate-database:mapper method -i -e certificate DeleteMany-by-Name-and-Type
+//generate-database:mapper method -i -e certificate Update struct=Certificate
+
+// Certificate is here to pass the certificates content from the database around.
+type Certificate struct {
+	ID          int
+	Fingerprint string `db:"primary=yes"`
+	Type        certificate.Type
+	Name        string
+	Certificate string
+	Restricted  bool
+	Description string
+}
+
+// CertificateFilter specifies potential query parameter fields.
+type CertificateFilter struct {
+	ID          *int
+	Fingerprint *string
+	Name        *string
+	Type        *certificate.Type
+}
+
+// ToAPIType returns the API equivalent type.
+func (cert *Certificate) ToAPIType() string {
+	switch cert.Type {
+	case certificate.TypeClient:
+		return api.CertificateTypeClient
+	case certificate.TypeServer:
+		return api.CertificateTypeServer
+	case certificate.TypeMetrics:
+		return api.CertificateTypeMetrics
+	}
+
+	return api.CertificateTypeUnknown
+}
+
+// ToAPI converts the database Certificate struct to an api.Certificate
+// entry filling fields from the database as necessary.
+func (cert *Certificate) ToAPI(ctx context.Context, tx *sql.Tx) (*api.Certificate, error) {
+	resp := api.Certificate{}
+	resp.Fingerprint = cert.Fingerprint
+	resp.Certificate = cert.Certificate
+	resp.Name = cert.Name
+	resp.Restricted = cert.Restricted
+	resp.Type = cert.ToAPIType()
+	resp.Description = cert.Description
+
+	if tx != nil {
+		projects, err := GetCertificateProjects(ctx, tx, cert.ID)
+		if err != nil {
+			return nil, err
+		}
+
+		resp.Projects = make([]string, len(projects))
+		for i, p := range projects {
+			resp.Projects[i] = p.Name
+		}
+	}
+
+	return &resp, nil
+}
+
+// GetCertificateByFingerprintPrefix gets an CertBaseInfo object from the database.
+// The argument fingerprint will be queried with a LIKE query, means you can
+// pass a shortform and will get the full fingerprint.
+// There can never be more than one certificate with a given fingerprint, as it is
+// enforced by a UNIQUE constraint in the schema.
+func GetCertificateByFingerprintPrefix(ctx context.Context, tx *sql.Tx, fingerprintPrefix string) (*Certificate, error) {
+	var err error
+	var cert *Certificate
+	stmt := `
+SELECT certificates.fingerprint
+FROM certificates
+WHERE certificates.fingerprint LIKE ?
+ORDER BY certificates.fingerprint
+		`
+
+	fingerprints, err := query.SelectStrings(ctx, tx, stmt, fingerprintPrefix+"%")
+	if err != nil {
+		return nil, fmt.Errorf("Failed to fetch certificates fingerprints matching prefix %q: %w", fingerprintPrefix, err)
+	}
+
+	if len(fingerprints) > 1 {
+		return nil, errors.New("More than one certificate matches")
+	}
+
+	if len(fingerprints) == 0 {
+		return nil, api.StatusErrorf(http.StatusNotFound, "Certificate not found")
+	}
+
+	cert, err = GetCertificate(ctx, tx, fingerprints[0])
+	if err != nil {
+		return nil, err
+	}
+
+	return cert, nil
+}
+
+// CreateCertificateWithProjects stores a CertInfo object in the db, and associates it to a list of project names.
+// It will ignore the ID field from the CertInfo.
+func CreateCertificateWithProjects(ctx context.Context, tx *sql.Tx, cert Certificate, projectNames []string) (int64, error) {
+	var id int64
+	var err error
+	id, err = CreateCertificate(ctx, tx, cert)
+	if err != nil {
+		return -1, err
+	}
+
+	err = UpdateCertificateProjects(ctx, tx, int(id), projectNames)
+	if err != nil {
+		return -1, err
+	}
+
+	return id, err
+}

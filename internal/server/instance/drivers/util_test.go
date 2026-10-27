@@ -1,0 +1,81 @@
+package drivers
+
+import (
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
+	"github.com/lxc/incus/v7/internal/server/instance/drivers/cfg"
+)
+
+// Test roundUpToBlockSize.
+func TestRoundToBlockSize(t *testing.T) {
+	const blockSize int64 = 128 * 1024 * 1024 // 128MiB
+
+	// Already block-aligned values are returned unchanged.
+	value := roundUpToBlockSize(1073741824, blockSize)
+	require.Equal(t, int64(1073741824), value)
+
+	// Unaligned values round up to the next block.
+	value = roundUpToBlockSize(1000000000, blockSize)
+	require.Equal(t, int64(1073741824), value)
+
+	// Values smaller than a single block round up to one block rather than 0.
+	value = roundUpToBlockSize(1, blockSize)
+	require.Equal(t, blockSize, value)
+
+	// Values in the second block round up to two blocks rather than 0.
+	value = roundUpToBlockSize(blockSize+1, blockSize)
+	require.Equal(t, 2*blockSize, value)
+
+	// Zero stays zero.
+	value = roundUpToBlockSize(0, blockSize)
+	require.Equal(t, int64(0), value)
+}
+
+// Test memoryConfigSectionToMap.
+func TestMemoryConfigSectionToMap(t *testing.T) {
+	result := memoryConfigSectionToMap(
+		&cfg.Section{
+			Name: "object \"mem0\"",
+			Entries: map[string]string{
+				"size":         "1024M",
+				"host-nodes.0": "0",
+				"host-nodes.1": "1",
+				"policy":       "bind",
+				"share":        "on",
+			},
+		},
+	)
+
+	expected := map[string]any{
+		"size":       int64(1073741824),
+		"host-nodes": []int{0, 1},
+		"policy":     "bind",
+		"share":      true,
+	}
+
+	assert.Equal(t, expected["size"], result["size"])
+	assert.ElementsMatch(t, expected["host-nodes"], result["host-nodes"])
+	assert.Equal(t, expected["policy"], result["policy"])
+	assert.Equal(t, expected["share"], result["share"])
+}
+
+// Test extractTraiingNumber.
+func TestExtractTrailingNumber(t *testing.T) {
+	value, _ := extractTrailingNumber("mem0", "mem")
+	assert.Equal(t, 0, value)
+
+	value, _ = extractTrailingNumber("mem34", "mem")
+	assert.Equal(t, 34, value)
+
+	value, _ = extractTrailingNumber("dimm1", "dimm")
+	assert.Equal(t, 1, value)
+
+	expectedErr := "Prefix mem not found in dimm1"
+	_, err := extractTrailingNumber("dimm1", "mem")
+	if err.Error() != expectedErr {
+		t.Errorf("unexpected error message: got %q, want %q", err.Error(), expectedErr)
+	}
+}

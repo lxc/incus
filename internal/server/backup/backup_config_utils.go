@@ -1,0 +1,227 @@
+package backup
+
+import (
+	"context"
+	"errors"
+	"fmt"
+	"io/fs"
+	"os"
+	"path/filepath"
+
+	"go.yaml.in/yaml/v4"
+
+	"github.com/lxc/incus/v7/internal/instance"
+	"github.com/lxc/incus/v7/internal/server/backup/config"
+	"github.com/lxc/incus/v7/internal/server/db"
+	"github.com/lxc/incus/v7/internal/server/db/cluster"
+	deviceConfig "github.com/lxc/incus/v7/internal/server/device/config"
+	"github.com/lxc/incus/v7/internal/server/instance/instancetype"
+	"github.com/lxc/incus/v7/internal/server/state"
+	"github.com/lxc/incus/v7/shared/api"
+	"github.com/lxc/incus/v7/shared/logger"
+	"github.com/lxc/incus/v7/shared/osarch"
+	"github.com/lxc/incus/v7/shared/util"
+)
+
+// ConfigToInstanceDBArgs converts the instance config in the backup config to DB InstanceArgs.
+func ConfigToInstanceDBArgs(s *state.State, c *config.Config, projectName string, applyProfiles bool) (*db.InstanceArgs, error) {
+	if c.Container == nil {
+		return nil, nil
+	}
+
+	arch, _ := osarch.ArchitectureID(c.Container.Architecture)
+	instanceType, _ := instancetype.New(c.Container.Type)
+
+	inst := &db.InstanceArgs{
+		Project:      projectName,
+		Architecture: arch,
+		BaseImage:    c.Container.Config["volatile.base_image"],
+		Config:       c.Container.Config,
+		CreationDate: c.Container.CreatedAt,
+		Type:         instanceType,
+		Description:  c.Container.Description,
+		Devices:      deviceConfig.NewDevices(c.Container.Devices),
+		Ephemeral:    c.Container.Ephemeral,
+		LastUsedDate: c.Container.LastUsedAt,
+		Name:         c.Container.Name,
+		Stateful:     c.Container.Stateful,
+	}
+
+	if applyProfiles {
+		err := s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+			inst.Profiles = make([]api.Profile, 0, len(c.Container.Profiles))
+			profiles, err := cluster.GetProfilesIfEnabled(ctx, tx.Tx(), projectName, c.Container.Profiles)
+			if err != nil {
+				return err
+			}
+
+			// Get the profile configs.
+			profileConfigs, err := cluster.GetReferencedProfileConfigs(ctx, tx.Tx(), profiles)
+			if err != nil {
+				return err
+			}
+
+			// Get the profile devices.
+			profileDevices, err := cluster.GetReferencedProfileDevices(ctx, tx.Tx(), profiles)
+			if err != nil {
+				return err
+			}
+
+			for _, profile := range profiles {
+				apiProfile, err := profile.ToAPI(ctx, tx.Tx(), profileConfigs, profileDevices)
+				if err != nil {
+					return err
+				}
+
+				inst.Profiles = append(inst.Profiles, *apiProfile)
+			}
+
+			return nil
+		})
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return inst, nil
+}
+
+// ParseConfigYamlFile decodes the YAML file at path specified into a Config.
+func ParseConfigYamlFile(path string) (*config.Config, error) {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return nil, err
+	}
+
+	backupConf := config.Config{}
+	err = yaml.Load(data, &backupConf)
+	if err != nil {
+		return nil, err
+	}
+
+	// Default to container if type not specified in backup config.
+	if backupConf.Container != nil && backupConf.Container.Type == "" {
+		backupConf.Container.Type = string(api.InstanceTypeContainer)
+	}
+
+	return &backupConf, nil
+}
+
+// updateRootDevicePool updates the root disk device in the supplied list of devices to the pool
+// specified. Returns true if a root disk device has been found and updated otherwise false.
+func updateRootDevicePool(devices map[string]map[string]string, poolName string) bool {
+	if devices != nil {
+		devName, _, err := instance.GetRootDiskDevice(devices)
+		if err == nil {
+			devices[devName]["pool"] = poolName
+			return true
+		}
+	}
+
+	return false
+}
+
+// UpdateInstanceConfig updates the instance's backup.yaml configuration file.
+func UpdateInstanceConfig(c *db.Cluster, b Info, mountPath string) error {
+	backupFilePath := filepath.Join(mountPath, "backup.yaml")
+
+	// Read in the backup.yaml file, falling back to the config embedded in the index.
+	var backup *config.Config
+	fi, err := os.Lstat(backupFilePath)
+	if errors.Is(err, fs.ErrNotExist) && b.Config != nil {
+		backup = &config.Config{}
+
+		err = util.DeepCopy(b.Config, backup)
+		if err != nil {
+			return err
+		}
+	} else if err != nil {
+		return err
+	} else {
+		// The file comes from the backup, so refuse anything that could block or exhaust memory.
+		if !fi.Mode().IsRegular() {
+			return fmt.Errorf("Backup config %q isn't a regular file", backupFilePath)
+		}
+
+		if fi.Size() > 1024*1024 {
+			return fmt.Errorf("Backup config %q is too large", backupFilePath)
+		}
+
+		backup, err = ParseConfigYamlFile(backupFilePath)
+		if err != nil {
+			return err
+		}
+	}
+
+	// Update instance information in the backup.yaml.
+	if backup.Container != nil {
+		backup.Container.Name = b.Name
+		backup.Container.Project = b.Project
+	}
+
+	// Update volume information in the backup.yaml.
+	if backup.Volume != nil {
+		backup.Volume.Name = b.Name
+		backup.Volume.Project = b.Project
+	}
+
+	var pool *api.StoragePool
+
+	err = c.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		// Load the storage pool.
+		_, pool, _, err = tx.GetStoragePool(ctx, b.Pool)
+
+		return err
+	})
+	if err != nil {
+		return err
+	}
+
+	rootDiskDeviceFound := false
+
+	// Change the pool in the backup.yaml.
+	backup.Pool = pool
+
+	if backup.Container != nil && updateRootDevicePool(backup.Container.Devices, pool.Name) {
+		rootDiskDeviceFound = true
+	}
+
+	if backup.Container != nil && updateRootDevicePool(backup.Container.ExpandedDevices, pool.Name) {
+		rootDiskDeviceFound = true
+	}
+
+	for _, snapshot := range backup.Snapshots {
+		updateRootDevicePool(snapshot.Devices, pool.Name)
+		updateRootDevicePool(snapshot.ExpandedDevices, pool.Name)
+	}
+
+	if !rootDiskDeviceFound {
+		return errors.New("No root device could be found")
+	}
+
+	// Write updated backup.yaml file.
+
+	file, err := os.Create(backupFilePath)
+	if err != nil {
+		return err
+	}
+
+	defer logger.WarnOnErrorExcept(file.Close, []error{os.ErrClosed}, "Failed to close file")
+
+	data, err := yaml.Dump(&backup, yaml.WithV2Defaults())
+	if err != nil {
+		return err
+	}
+
+	_, err = file.Write(data)
+	if err != nil {
+		return err
+	}
+
+	err = file.Sync()
+	if err != nil {
+		return err
+	}
+
+	return file.Close()
+}

@@ -1,0 +1,2830 @@
+package main
+
+import (
+	"bytes"
+	"context"
+	"crypto/tls"
+	"crypto/x509"
+	"database/sql"
+	"encoding/json"
+	"encoding/pem"
+	"errors"
+	"fmt"
+	"io"
+	"log/slog"
+	"net"
+	"net/http"
+	"net/url"
+	"os"
+	"os/exec"
+	"os/user"
+	"path/filepath"
+	"runtime"
+	"slices"
+	"strings"
+	"sync"
+	"time"
+
+	cowsqlClient "github.com/cowsql/go-cowsql/client"
+	cowsqlcluster "github.com/cowsql/go-cowsql/cluster"
+	cowsqllogging "github.com/cowsql/go-cowsql/cluster/logging"
+	"github.com/cowsql/go-cowsql/cluster/membership"
+	"github.com/cowsql/go-cowsql/cluster/options"
+	"github.com/cowsql/go-cowsql/driver"
+	liblxc "github.com/lxc/go-lxc"
+	"golang.org/x/sys/unix"
+
+	internalIO "github.com/lxc/incus/v7/internal/io"
+	"github.com/lxc/incus/v7/internal/linux"
+	"github.com/lxc/incus/v7/internal/rsync"
+	"github.com/lxc/incus/v7/internal/server/apparmor"
+	"github.com/lxc/incus/v7/internal/server/auth"
+	"github.com/lxc/incus/v7/internal/server/auth/oidc"
+	"github.com/lxc/incus/v7/internal/server/bgp"
+	"github.com/lxc/incus/v7/internal/server/certificate"
+	"github.com/lxc/incus/v7/internal/server/cgroup"
+	"github.com/lxc/incus/v7/internal/server/cluster"
+	clusterConfig "github.com/lxc/incus/v7/internal/server/cluster/config"
+	"github.com/lxc/incus/v7/internal/server/daemon"
+	"github.com/lxc/incus/v7/internal/server/db"
+	dbCluster "github.com/lxc/incus/v7/internal/server/db/cluster"
+	"github.com/lxc/incus/v7/internal/server/db/query"
+	"github.com/lxc/incus/v7/internal/server/db/warningtype"
+	"github.com/lxc/incus/v7/internal/server/dns"
+	"github.com/lxc/incus/v7/internal/server/endpoints"
+	"github.com/lxc/incus/v7/internal/server/events"
+	"github.com/lxc/incus/v7/internal/server/firewall"
+	"github.com/lxc/incus/v7/internal/server/fsmonitor"
+	"github.com/lxc/incus/v7/internal/server/instance"
+	instanceDrivers "github.com/lxc/incus/v7/internal/server/instance/drivers"
+	"github.com/lxc/incus/v7/internal/server/instance/instancetype"
+	"github.com/lxc/incus/v7/internal/server/logging"
+	"github.com/lxc/incus/v7/internal/server/network/ovn"
+	"github.com/lxc/incus/v7/internal/server/network/ovs"
+	networkZone "github.com/lxc/incus/v7/internal/server/network/zone"
+	"github.com/lxc/incus/v7/internal/server/node"
+	"github.com/lxc/incus/v7/internal/server/project"
+	"github.com/lxc/incus/v7/internal/server/request"
+	"github.com/lxc/incus/v7/internal/server/response"
+	scriptletLoad "github.com/lxc/incus/v7/internal/server/scriptlet/load"
+	"github.com/lxc/incus/v7/internal/server/seccomp"
+	"github.com/lxc/incus/v7/internal/server/state"
+	storagePools "github.com/lxc/incus/v7/internal/server/storage"
+	storageDrivers "github.com/lxc/incus/v7/internal/server/storage/drivers"
+	"github.com/lxc/incus/v7/internal/server/storage/linstor"
+	"github.com/lxc/incus/v7/internal/server/sys"
+	"github.com/lxc/incus/v7/internal/server/syslog"
+	"github.com/lxc/incus/v7/internal/server/task"
+	"github.com/lxc/incus/v7/internal/server/ucred"
+	localUtil "github.com/lxc/incus/v7/internal/server/util"
+	"github.com/lxc/incus/v7/internal/server/warnings"
+	internalUtil "github.com/lxc/incus/v7/internal/util"
+	"github.com/lxc/incus/v7/internal/version"
+	"github.com/lxc/incus/v7/shared/api"
+	"github.com/lxc/incus/v7/shared/archive"
+	"github.com/lxc/incus/v7/shared/cancel"
+	"github.com/lxc/incus/v7/shared/logger"
+	"github.com/lxc/incus/v7/shared/proxy"
+	localtls "github.com/lxc/incus/v7/shared/tls"
+	"github.com/lxc/incus/v7/shared/util"
+	"github.com/lxc/incus/v7/shared/ws"
+)
+
+// A Daemon can respond to requests from a shared client.
+type Daemon struct {
+	clientCerts *certificate.Cache
+	os          *sys.OS
+	db          *db.DB
+	firewall    firewall.Firewall
+	bgp         *bgp.Server
+	dns         *dns.Server
+
+	// Event servers
+	devIncusEvents   *events.DevIncusServer
+	events           *events.Server
+	internalListener *events.InternalListener
+
+	// Tasks registry for long-running background tasks
+	// Keep clustering tasks separate as they cause a lot of CPU wakeups
+	tasks        task.Group
+	clusterTasks task.Group
+
+	// Indexes of tasks that need to be reset when their execution interval changes
+	taskPruneImages      *task.Task
+	taskClusterHeartbeat *task.Task
+
+	// Stores startup time of daemon
+	startTime time.Time
+
+	// Whether daemon was started by systemd socket activation.
+	systemdSocketActivated bool
+
+	config    *DaemonConfig
+	endpoints *endpoints.Endpoints
+	gateway   cowsqlcluster.Gateway
+	seccomp   *seccomp.Server
+
+	proxy func(req *http.Request) (*url.URL, error)
+
+	oidcVerifier *oidc.Verifier
+
+	// Stores last heartbeat node information to detect node changes.
+	lastNodeList *cluster.APIHeartbeat
+
+	// Serialize changes to cluster membership (joins, leaves, role
+	// changes).
+	clusterMembershipMutex sync.RWMutex
+
+	serverCert    func() *localtls.CertInfo
+	serverCertInt *localtls.CertInfo // Do not use this directly, use servertCert func.
+
+	// Status control.
+	setupChan      chan struct{}      // Closed when basic Daemon setup is completed
+	waitReady      *cancel.Canceller  // Cancelled when fully ready
+	shutdownCtx    context.Context    // Cancelled when shutdown starts.
+	shutdownCancel context.CancelFunc // Cancels the shutdownCtx to indicate shutdown starting.
+	shutdownDoneCh chan error         // Receives the result of the d.Stop() function and tells the daemon to end.
+
+	shutdownForceCtx    context.Context    // Cancelled when the shutdown should stop waiting on operations and instances.
+	shutdownForceCancel context.CancelFunc // Cancels the shutdownForceCtx to force the shutdown.
+
+	// Device monitor for watching filesystem events
+	devmonitor fsmonitor.FSMonitor
+
+	// Configuration.
+	globalConfig   *clusterConfig.Config
+	localConfig    *node.Config
+	globalConfigMu sync.Mutex
+
+	// Cluster.
+	serverName      string
+	serverClustered bool
+
+	loggingController *logging.Controller
+
+	// Authorization.
+	authorizer   *auth.Router
+	authorizerMu sync.Mutex
+
+	// Syslog listener cancel function.
+	syslogSocketCancel context.CancelFunc
+
+	// OVN clients.
+	ovnnb *ovn.NB
+	ovnsb *ovn.SB
+	ovnMu sync.Mutex
+
+	// OVS client.
+	ovs   *ovs.VSwitch
+	ovsMu sync.Mutex
+
+	// API info.
+	apiExtensions int
+
+	// Linstor client.
+	linstor   *linstor.Client
+	linstorMu sync.Mutex
+
+	// ACME challenge listener used by non-leader cluster members.
+	acmeListener   *http.Server
+	acmeListenerMu sync.Mutex
+}
+
+// DaemonConfig holds configuration values for Daemon.
+type DaemonConfig struct {
+	Group              string        // Group name the local unix socket should be chown'ed to
+	Trace              []string      // List of sub-systems to trace
+	CowsqlSetupTimeout time.Duration // How long to wait for the cluster database to be up
+}
+
+// newDaemon returns a new Daemon object with the given configuration.
+func newDaemon(config *DaemonConfig, osInfo *sys.OS) *Daemon {
+	incusEvents := events.NewServer(daemon.Debug, daemon.Verbose, cluster.EventHubPush)
+	devIncusEvents := events.NewDevIncusServer(daemon.Debug, daemon.Verbose)
+	shutdownCtx, shutdownCancel := context.WithCancel(context.Background())
+	shutdownForceCtx, shutdownForceCancel := context.WithCancel(context.Background())
+
+	d := &Daemon{
+		clientCerts:    &certificate.Cache{},
+		config:         config,
+		devIncusEvents: devIncusEvents,
+		events:         incusEvents,
+		db:             &db.DB{},
+		os:             osInfo,
+		setupChan:      make(chan struct{}),
+		waitReady:      cancel.New(context.Background()),
+		shutdownCtx:    shutdownCtx,
+		shutdownCancel: shutdownCancel,
+		shutdownDoneCh: make(chan error),
+
+		shutdownForceCtx:    shutdownForceCtx,
+		shutdownForceCancel: shutdownForceCancel,
+		apiExtensions:       len(version.APIExtensions),
+	}
+
+	d.serverCert = func() *localtls.CertInfo { return d.serverCertInt }
+
+	return d
+}
+
+// defaultDaemonConfig returns a DaemonConfig object with default values.
+func defaultDaemonConfig() *DaemonConfig {
+	return &DaemonConfig{
+		CowsqlSetupTimeout: 36 * time.Hour, // Account for snap refresh lag
+	}
+}
+
+// defaultDaemon returns a new, un-initialized Daemon object with default values.
+func defaultDaemon() *Daemon {
+	config := defaultDaemonConfig()
+	osInfo := sys.DefaultOS()
+	return newDaemon(config, osInfo)
+}
+
+// APIEndpoint represents a URL in our API.
+type APIEndpoint struct {
+	Name          string             // Name for this endpoint.
+	Path          string             // Path pattern for this endpoint.
+	Aliases       []APIEndpointAlias // Any aliases for this endpoint.
+	SuffixActions []APIEndpointSuffixAction
+	Get           APIEndpointAction
+	Head          APIEndpointAction
+	Put           APIEndpointAction
+	Post          APIEndpointAction
+	Delete        APIEndpointAction
+	Patch         APIEndpointAction
+}
+
+// APIEndpointSuffixAction represents actions handled on a sub-path of an
+// endpoint (for example "/1.0/images/{fingerprint}/export"). It is used when a
+// dedicated route would conflict with another multi-segment wildcard route
+// under http.ServeMux. The endpoint is registered as a subtree and the suffix
+// is matched against the request path at dispatch time.
+type APIEndpointSuffixAction struct {
+	Name   string // Path suffix this action applies to (e.g. "/export").
+	Get    APIEndpointAction
+	Head   APIEndpointAction
+	Put    APIEndpointAction
+	Post   APIEndpointAction
+	Delete APIEndpointAction
+	Patch  APIEndpointAction
+}
+
+// APIEndpointAlias represents an alias URL of and APIEndpoint in our API.
+type APIEndpointAlias struct {
+	Name string // Name for this alias.
+	Path string // Path pattern for this alias.
+}
+
+// APIEndpointAction represents an action on an API endpoint.
+type APIEndpointAction struct {
+	Handler        func(d *Daemon, r *http.Request) response.Response
+	AccessHandler  func(d *Daemon, r *http.Request) response.Response
+	AllowUntrusted bool
+	LargeRequest   bool // Whether the endpoint may be getting requests larger than 1MiB.
+}
+
+// allowAuthenticated is an AccessHandler which allows only authenticated requests. This should be used in conjunction
+// with further access control within the handler (e.g. to filter resources the user is able to view/edit).
+func allowAuthenticated(d *Daemon, r *http.Request) response.Response {
+	err := d.checkTrustedClient(r)
+	if err != nil {
+		return response.SmartError(err)
+	}
+
+	return response.EmptySyncResponse
+}
+
+// allowPermission is a wrapper to check access against a given object, an object being an image, instance, network, etc.
+// Mux vars should be passed in so that the object we are checking can be created. For example, a certificate object requires
+// a fingerprint, the mux var for certificate fingerprints is "fingerprint", so that string should be passed in.
+// Mux vars should always be passed in with the same order they appear in the API route.
+func allowPermission(objectType auth.ObjectType, entitlement auth.Entitlement, muxVars ...string) func(d *Daemon, r *http.Request) response.Response {
+	return func(d *Daemon, r *http.Request) response.Response {
+		// Expansion function to deal with partial fingerprints.
+		expandFingerprint := func(projectName string, fingerprint string) string {
+			switch objectType {
+			case auth.ObjectTypeImage:
+				var imgInfo *api.Image
+
+				err := d.db.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
+					var err error
+
+					_, imgInfo, err = tx.GetImage(ctx, fingerprint, dbCluster.ImageFilter{Project: &projectName})
+
+					return err
+				})
+				if err != nil {
+					return fingerprint
+				}
+
+				fingerprint = imgInfo.Fingerprint
+			case auth.ObjectTypeCertificate:
+				err := d.db.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
+					dbCertInfo, err := dbCluster.GetCertificateByFingerprintPrefix(ctx, tx.Tx(), fingerprint)
+					if err != nil {
+						return err
+					}
+
+					fingerprint = dbCertInfo.Fingerprint
+					return nil
+				})
+				if err != nil {
+					return fingerprint
+				}
+			}
+
+			// Fallback to no expansion.
+			return fingerprint
+		}
+
+		// Expansion function to deal with project inheritance.
+		var expandProjectErr error
+		expandProject := func(projectName string) string {
+			// Object types that aren't part of projects.
+			if slices.Contains([]auth.ObjectType{auth.ObjectTypeUser, auth.ObjectTypeServer, auth.ObjectTypeCertificate, auth.ObjectTypeStoragePool, auth.ObjectTypeNetworkIntegration}, objectType) {
+				return projectName
+			}
+
+			// Object types that are always addressed in the requested project.
+			if slices.Contains([]auth.ObjectType{auth.ObjectTypeProject, auth.ObjectTypeInstance}, objectType) {
+				return projectName
+			}
+
+			// Load the project.
+			var p *api.Project
+			err := d.db.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
+				dbProject, err := dbCluster.GetProject(ctx, tx.Tx(), projectName)
+				if err != nil {
+					return err
+				}
+
+				p, err = dbProject.ToAPI(ctx, tx.Tx())
+				if err != nil {
+					return err
+				}
+
+				return nil
+			})
+			if err != nil {
+				return projectName
+			}
+
+			if objectType == auth.ObjectTypeProfile {
+				return project.ProfileProjectFromRecord(p)
+			}
+
+			if objectType == auth.ObjectTypeStorageBucket {
+				return project.StorageBucketProjectFromRecord(p)
+			}
+
+			if objectType == auth.ObjectTypeStorageVolume {
+				dbVolType, err := storagePools.VolumeTypeNameToDBType(r.PathValue(muxVars[1]))
+				if err != nil {
+					return projectName
+				}
+
+				return project.StorageVolumeProjectFromRecord(p, dbVolType)
+			}
+
+			if objectType == auth.ObjectTypeNetworkZone {
+				return project.NetworkZoneProjectFromRecord(p)
+			}
+
+			if slices.Contains([]auth.ObjectType{auth.ObjectTypeImage, auth.ObjectTypeImageAlias}, objectType) {
+				return project.ImageProjectFromRecord(p)
+			}
+
+			if objectType == auth.ObjectTypeNetwork && len(muxVars) > 0 {
+				// Networks shared from the default project resolve to the default project.
+				return project.NetworkProjectForNameFromRecord(p, r.PathValue(muxVars[0]))
+			}
+
+			if slices.Contains([]auth.ObjectType{auth.ObjectTypeNetwork, auth.ObjectTypeNetworkACL, auth.ObjectTypeNetworkAddressSet}, objectType) {
+				return project.NetworkProjectFromRecord(p)
+			}
+
+			// Fail closed rather than defaulting to the requested project, which could bypass confinement.
+			expandProjectErr = fmt.Errorf("No project expansion defined for object type %q", objectType)
+			return projectName
+		}
+
+		// Expansion function for volume location.
+		expandVolumeLocation := func(projectName string, poolName string, volumeTypeName string, volumeName string) string {
+			// The location field is only relevant in clusters.
+			if !d.serverClustered {
+				return ""
+			}
+
+			var err error
+			var nodes []db.NodeInfo
+			var poolID int64
+
+			// Convert the volume type name to our internal integer representation.
+			volumeType, err := storagePools.VolumeTypeNameToDBType(volumeTypeName)
+			if err != nil {
+				return ""
+			}
+
+			// Get the server list for the volume.
+			err = d.db.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
+				poolID, err = tx.GetStoragePoolID(ctx, poolName)
+				if err != nil {
+					return err
+				}
+
+				nodes, err = tx.GetStorageVolumeNodes(ctx, poolID, projectName, volumeName, volumeType)
+				if err != nil {
+					return err
+				}
+
+				return nil
+			})
+			if err != nil {
+				return ""
+			}
+
+			if len(nodes) != 1 {
+				return ""
+			}
+
+			return nodes[0].Name
+		}
+
+		// Expansion function for bucket location.
+		expandBucketLocation := func(projectName string, poolName string, bucketName string) string {
+			// The location field is only relevant in clusters.
+			if !d.serverClustered {
+				return ""
+			}
+
+			var bucket *db.StorageBucket
+
+			// Get the bucket record.
+			err := d.db.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
+				poolID, err := tx.GetStoragePoolID(ctx, poolName)
+				if err != nil {
+					return err
+				}
+
+				bucket, err = tx.GetStoragePoolBucket(ctx, poolID, projectName, false, bucketName)
+				if err != nil {
+					return err
+				}
+
+				return nil
+			})
+			if err != nil {
+				return ""
+			}
+
+			return bucket.Location
+		}
+
+		objectName, err := auth.ObjectFromRequest(r, objectType, expandProject, expandFingerprint, expandVolumeLocation, expandBucketLocation, muxVars...)
+		if err != nil {
+			return response.InternalError(fmt.Errorf("Failed to create authentication object: %w", err))
+		}
+
+		if expandProjectErr != nil {
+			return response.InternalError(fmt.Errorf("Failed to expand project for authorization: %w", expandProjectErr))
+		}
+
+		s := d.State()
+
+		// Validate whether the user has the needed permission
+		err = s.Authorizer.CheckPermission(r.Context(), r, objectName, entitlement)
+		if err != nil {
+			return response.SmartError(err)
+		}
+
+		return response.EmptySyncResponse
+	}
+}
+
+// Convenience function around Authenticate.
+func (d *Daemon) checkTrustedClient(r *http.Request) error {
+	trusted, _, _, _, err := d.Authenticate(nil, r)
+	if !trusted || err != nil {
+		if err != nil {
+			return err
+		}
+
+		return errors.New("Not authorized")
+	}
+
+	return nil
+}
+
+func (d *Daemon) getTrustedServerCertificates() (map[string]x509.Certificate, error) {
+	c, err := d.getTrustedCertificates()
+	if err != nil {
+		return nil, err
+	}
+
+	return c[certificate.TypeServer], nil
+}
+
+// getTrustedCertificates returns trusted certificates key on DB type and fingerprint.
+//
+// When in PKI mode, this also filters out any non-server certificate which isn't issued by the PKI.
+func (d *Daemon) getTrustedCertificates() (map[certificate.Type]map[string]x509.Certificate, error) {
+	certs := d.clientCerts.GetCertificates()
+
+	// If not in PKI mode, return all certificates.
+	if !util.PathExists(internalUtil.VarPath("server.ca")) {
+		return certs, nil
+	}
+
+	// If in PKI mode, filter certificates that aren't trusted by the CA.
+	certPool, err := localtls.ReadCerts(internalUtil.VarPath("server.ca"))
+	if err != nil {
+		return nil, err
+	}
+
+	for certType, certEntries := range certs {
+		if certType == certificate.TypeServer {
+			continue
+		}
+
+		for name, entry := range certEntries {
+			_, err := entry.Verify(x509.VerifyOptions{
+				Roots:     certPool,
+				KeyUsages: []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth},
+			})
+			if err != nil {
+				// Skip certificates that aren't signed by the PKI.
+				delete(certs[certType], name)
+			}
+		}
+	}
+
+	return certs, nil
+}
+
+// Authenticate validates an incoming http Request
+// It will check over what protocol it came, what type of request it is and
+// will validate the TLS certificate.
+//
+// This does not perform authorization, only validates authentication.
+// Returns whether trusted or not, the username (or certificate fingerprint) of the trusted client, and the type of
+// client that has been authenticated (cluster, unix, or tls).
+func (d *Daemon) Authenticate(w http.ResponseWriter, r *http.Request) (bool, string, string, map[string]any, error) {
+	trustedCerts, err := d.getTrustedCertificates()
+	if err != nil {
+		return false, "", "", nil, err
+	}
+
+	// Allow internal cluster traffic by checking against the trusted certfificates.
+	if r.TLS != nil {
+		for _, i := range r.TLS.PeerCertificates {
+			trusted, fingerprint := localUtil.CheckTrustState(*i, trustedCerts[certificate.TypeServer], d.endpoints.NetworkCert(), false)
+			if trusted {
+				return true, fingerprint, "cluster", nil, nil
+			}
+		}
+	}
+
+	// Local unix socket queries.
+	if r.RemoteAddr == "@" && r.TLS == nil {
+		if w != nil {
+			cred, err := ucred.GetCredFromContext(r.Context())
+			if err != nil {
+				return false, "", "", nil, err
+			}
+
+			u, err := user.LookupId(fmt.Sprintf("%d", cred.Uid))
+			if err != nil {
+				return true, fmt.Sprintf("uid=%d", cred.Uid), "unix", nil, nil
+			}
+
+			return true, u.Username, "unix", nil, nil
+		}
+
+		return true, "", "unix", nil, nil
+	}
+
+	// DevIncus unix socket credentials on main API.
+	if r.RemoteAddr == "@dev_incus" {
+		return false, "", "", nil, errors.New("Main API query can't come from /dev/incus socket")
+	}
+
+	// Cluster notification with wrong certificate.
+	if isClusterNotification(r) {
+		return false, "", "", nil, errors.New("Cluster notification isn't using trusted server certificate")
+	}
+
+	// Cluster internal client with wrong certificate.
+	if isClusterInternal(r) {
+		return false, "", "", nil, errors.New("Cluster internal client isn't using trusted server certificate")
+	}
+
+	// Bad query, no TLS found.
+	if r.TLS == nil {
+		return false, "", "", nil, errors.New("Bad/missing TLS on network query")
+	}
+
+	// Load the certificates.
+	trustCACertificates := d.globalConfig.TrustCACertificates()
+
+	// Check for JWT token signed by a TLS certificate.
+	jwtOk, _, cert := localUtil.CheckJwtToken(r, trustedCerts[certificate.TypeClient])
+	if jwtOk {
+		trusted, username := localUtil.CheckTrustState(*cert, trustedCerts[certificate.TypeClient], d.endpoints.NetworkCert(), trustCACertificates)
+		if trusted {
+			return true, username, api.AuthenticationMethodTLS, nil, nil
+		}
+	}
+
+	// Check for JWT token signed by an OpenID Connect provider.
+	if d.oidcVerifier != nil && d.oidcVerifier.IsRequest(r) {
+		userName, claims, err := d.oidcVerifier.Auth(d.shutdownCtx, w, r)
+		if err != nil {
+			return false, "", "", nil, err
+		}
+
+		return true, userName, api.AuthenticationMethodOIDC, claims, nil
+	}
+
+	// Validate metrics TLS certificates.
+	if r.URL.Path == "/1.0/metrics" {
+		for _, i := range r.TLS.PeerCertificates {
+			trusted, username := localUtil.CheckTrustState(*i, trustedCerts[certificate.TypeMetrics], d.endpoints.NetworkCert(), trustCACertificates)
+			if trusted {
+				return true, username, api.AuthenticationMethodTLS, nil, nil
+			}
+		}
+
+		trusted, username := localUtil.CheckTrustStateIssuer(r.TLS.PeerCertificates, trustedCerts[certificate.TypeMetrics], d.endpoints.NetworkCert())
+		if trusted {
+			return true, username, api.AuthenticationMethodTLS, nil, nil
+		}
+	}
+
+	// Validate regular TLS certificates.
+	for _, i := range r.TLS.PeerCertificates {
+		trusted, username := localUtil.CheckTrustState(*i, trustedCerts[certificate.TypeClient], d.endpoints.NetworkCert(), trustCACertificates)
+		if trusted {
+			return true, username, api.AuthenticationMethodTLS, nil, nil
+		}
+	}
+
+	// Validate TLS certificates issued by a trusted CA certificate.
+	trusted, username := localUtil.CheckTrustStateIssuer(r.TLS.PeerCertificates, trustedCerts[certificate.TypeClient], d.endpoints.NetworkCert())
+	if trusted {
+		return true, username, api.AuthenticationMethodTLS, nil, nil
+	}
+
+	// Reject unauthorized.
+	return false, "", "", nil, nil
+}
+
+// State creates a new State instance linked to our internal db and os.
+func (d *Daemon) State() *state.State {
+	// If the daemon is shutting down, the context will be cancelled.
+	// This information will be available throughout the code, and can be used to prevent new
+	// operations from starting during shutdown.
+
+	// Build a list of instance types.
+	drivers := instanceDrivers.DriverStatuses()
+	instanceTypes := make(map[instancetype.Type]error, len(drivers))
+	for driverType, drv := range drivers {
+		instanceTypes[driverType] = drv.Info.Error
+	}
+
+	d.globalConfigMu.Lock()
+	globalConfig := d.globalConfig
+	localConfig := d.localConfig
+	d.globalConfigMu.Unlock()
+
+	return &state.State{
+		Authorizer:             d.authorizer,
+		BGP:                    d.bgp,
+		Cluster:                d.gateway,
+		DB:                     d.db,
+		DevIncusEvents:         d.devIncusEvents,
+		DevMonitor:             d.devmonitor,
+		DNS:                    d.dns,
+		Endpoints:              d.endpoints,
+		Events:                 d.events,
+		Firewall:               d.firewall,
+		GlobalConfig:           globalConfig,
+		InstanceTypes:          instanceTypes,
+		LocalConfig:            localConfig,
+		OS:                     d.os,
+		OVN:                    d.getOVN,
+		OVS:                    d.getOVS,
+		Linstor:                d.getLinstor,
+		Proxy:                  d.proxy,
+		ServerCert:             d.serverCert,
+		ServerClustered:        d.serverClustered,
+		ServerName:             d.serverName,
+		ShutdownCtx:            d.shutdownCtx,
+		StartTime:              d.startTime,
+		UpdateCertificateCache: func() { updateCertificateCache(d) },
+	}
+}
+
+func (d *Daemon) createCmd(restAPI *http.ServeMux, apiVersion string, c APIEndpoint) {
+	var uri string
+	if c.Path == "" {
+		uri = fmt.Sprintf("/%s", apiVersion)
+	} else if apiVersion != "" {
+		uri = fmt.Sprintf("/%s/%s", apiVersion, c.Path)
+	} else {
+		uri = fmt.Sprintf("/%s", c.Path)
+	}
+
+	handler := func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+
+		// Resolve the action set for this request. Suffix actions allow a
+		// single subtree route to serve sub-paths (e.g. "/export") that would
+		// otherwise conflict with another multi-segment wildcard route. A local
+		// copy is used so concurrent requests don't race on the shared endpoint.
+		ep := c
+		for _, suffix := range c.SuffixActions {
+			if strings.HasSuffix(r.URL.Path, suffix.Name) {
+				ep.Get = suffix.Get
+				ep.Head = suffix.Head
+				ep.Put = suffix.Put
+				ep.Post = suffix.Post
+				ep.Delete = suffix.Delete
+				ep.Patch = suffix.Patch
+				break
+			}
+		}
+
+		// Block on daemon startup except for the "internal" and "os" APIs.
+		if !slices.Contains([]string{"internal", "os"}, apiVersion) {
+			select {
+			case <-d.setupChan:
+			default:
+				_ = response.Unavailable(errors.New("Daemon is starting up")).Render(w)
+				return
+			}
+		}
+
+		// Authentication
+		trusted, username, protocol, claims, err := d.Authenticate(w, r)
+		if err != nil {
+			_, ok := errors.AsType[*oidc.AuthError](err)
+			if ok {
+				// Ensure the OIDC headers are set if needed.
+				if d.oidcVerifier != nil {
+					_ = d.oidcVerifier.WriteHeaders(w)
+				}
+
+				_ = response.Unauthorized(err).Render(w)
+				return
+			}
+		}
+
+		// Restrict internal queries to remote, non-cluster, clients
+		if apiVersion == "internal" && !slices.Contains([]string{"unix", "cluster"}, protocol) {
+			internalAllowed := func() bool {
+				// Reject any unauthenticated request.
+				if !trusted {
+					return false
+				}
+
+				// Allow select endpoints (unstable API but CLI supported).
+				if slices.Contains([]string{"debug/pprof/{name...}", "recover/import", "recover/validate", "server-certificate", "sql"}, c.Path) {
+					return true
+				}
+
+				if c.Path == "cluster/accept" && protocol == api.AuthenticationMethodTLS {
+					return true
+				}
+
+				// Default to rejecting access.
+				return false
+			}()
+
+			// Except for the initial cluster accept request (done over trusted TLS)
+			if !internalAllowed {
+				logger.Warn("Rejecting remote internal API request", logger.Ctx{"ip": r.RemoteAddr})
+				_ = response.Forbidden(nil).Render(w)
+				return
+			}
+		}
+
+		logCtx := logger.Ctx{"method": r.Method, "url": r.URL.RequestURI(), "ip": r.RemoteAddr, "protocol": protocol}
+		if protocol == "cluster" {
+			logCtx["fingerprint"] = username
+		} else {
+			logCtx["username"] = username
+		}
+
+		untrustedOk := (r.Method == "GET" && c.Get.AllowUntrusted) || (r.Method == "POST" && c.Post.AllowUntrusted)
+		if trusted {
+			logger.Debug("Handling API request", logCtx)
+
+			// Add authentication/authorization context data.
+			ctx := context.WithValue(r.Context(), request.CtxUsername, username)
+			ctx = context.WithValue(ctx, request.CtxProtocol, protocol)
+
+			if claims != nil {
+				ctx = context.WithValue(ctx, request.CtxClaims, claims)
+			}
+
+			// Flag requests made by the root user over the local unix socket.
+			if protocol == "unix" {
+				cred, err := ucred.GetCredFromContext(r.Context())
+				if err == nil && cred.Uid == uint32(0) {
+					ctx = context.WithValue(ctx, request.CtxUnixIsRoot, true)
+				}
+			}
+
+			// Add forwarded requestor data.
+			if protocol == "cluster" {
+				// Add authentication/authorization context data.
+				ctx = context.WithValue(ctx, request.CtxForwardedAddress, r.Header.Get(request.HeaderForwardedAddress))
+				ctx = context.WithValue(ctx, request.CtxForwardedUsername, r.Header.Get(request.HeaderForwardedUsername))
+				ctx = context.WithValue(ctx, request.CtxForwardedProtocol, r.Header.Get(request.HeaderForwardedProtocol))
+
+				forwardedClaims := r.Header.Get(request.HeaderForwardedClaims)
+				if forwardedClaims != "" {
+					forwarded := map[string]any{}
+					err := json.Unmarshal([]byte(forwardedClaims), &forwarded)
+					if err != nil {
+						logger.Warn("Ignoring invalid forwarded claims", logger.Ctx{"ip": r.RemoteAddr, "err": err})
+					} else {
+						ctx = context.WithValue(ctx, request.CtxForwardedClaims, forwarded)
+					}
+				}
+			}
+
+			r = r.WithContext(ctx)
+		} else if untrustedOk && r.Header.Get("X-Incus-authenticated") == "" {
+			logger.Debug(fmt.Sprintf("Allowing untrusted %s", r.Method), logger.Ctx{"url": r.URL.RequestURI(), "ip": r.RemoteAddr})
+		} else {
+			if d.oidcVerifier != nil {
+				_ = d.oidcVerifier.WriteHeaders(w)
+			}
+
+			logger.Warn("Rejecting request from untrusted client", logger.Ctx{"ip": r.RemoteAddr})
+			_ = response.Forbidden(nil).Render(w)
+			return
+		}
+
+		// Dump full request JSON when in debug mode
+		if daemon.Debug && r.Method != "GET" && localUtil.IsJSONRequest(r) {
+			newBody := &bytes.Buffer{}
+			captured := &bytes.Buffer{}
+			multiW := io.MultiWriter(newBody, captured)
+			_, err := util.SafeCopy(multiW, r.Body)
+			if err != nil {
+				_ = response.InternalError(err).Render(w)
+				return
+			}
+
+			r.Body = internalIO.BytesReadCloser{Buf: newBody}
+			localUtil.DebugJSON("API Request", captured, logger.AddContext(logCtx))
+		}
+
+		// Actually process the request
+		var resp response.Response
+
+		// Return Unavailable Error (503) if daemon is shutting down.
+		// There are some exceptions:
+		// - internal calls, e.g. shutdown
+		// - OS calls, so the host can still be rebooted
+		// - events endpoint as this is accessed when running `shutdown`
+		// - /1.0 endpoint
+		// - /1.0/operations endpoints
+		// - GET queries
+		allowedDuringShutdown := func() bool {
+			if slices.Contains([]string{"internal", "os"}, apiVersion) {
+				return true
+			}
+
+			if c.Path == "" || c.Path == "events" || c.Path == "operations" || strings.HasPrefix(c.Path, "operations/") {
+				return true
+			}
+
+			if r.Method == "GET" {
+				return true
+			}
+
+			return false
+		}
+
+		if errors.Is(d.shutdownCtx.Err(), context.Canceled) && !allowedDuringShutdown() {
+			_ = response.Unavailable(errors.New("Incus is shutting down")).Render(w)
+			return
+		}
+
+		handleRequest := func(action APIEndpointAction) response.Response {
+			if action.Handler == nil {
+				return response.NotImplemented(nil)
+			}
+
+			// All APIEndpointActions should have an access handler or should allow untrusted requests.
+			if action.AccessHandler == nil && !action.AllowUntrusted {
+				return response.InternalError(fmt.Errorf("Access handler not defined for %s %s", r.Method, r.URL.RequestURI()))
+			}
+
+			// If the request is not trusted, only call the handler if the action allows it.
+			if !trusted && !action.AllowUntrusted {
+				return response.Forbidden(errors.New("You must be authenticated"))
+			}
+
+			// Protect against CSRF when using UI with browser that supports Fetch metadata.
+			// Deny Sec-Fetch-Site when set to cross-origin or same-site.
+			if slices.Contains([]string{"cross-site", "same-site"}, r.Header.Get("Sec-Fetch-Site")) {
+				return response.ErrorResponse(http.StatusForbidden, "Forbidden Sec-Fetch-Site header value")
+			}
+
+			// Call the access handler if there is one.
+			if action.AccessHandler != nil {
+				resp := action.AccessHandler(d, r)
+				if resp != response.EmptySyncResponse {
+					return resp
+				}
+			}
+
+			// Limit request body size unless the endpoint requires a large body.
+			if !action.LargeRequest {
+				r.Body = http.MaxBytesReader(w, r.Body, 1024*1024)
+			}
+
+			return action.Handler(d, r)
+		}
+
+		switch r.Method {
+		case "GET":
+			resp = handleRequest(ep.Get)
+		case "HEAD":
+			resp = handleRequest(ep.Head)
+		case "PUT":
+			resp = handleRequest(ep.Put)
+		case "POST":
+			resp = handleRequest(ep.Post)
+		case "DELETE":
+			resp = handleRequest(ep.Delete)
+		case "PATCH":
+			resp = handleRequest(ep.Patch)
+		default:
+			resp = response.NotFound(fmt.Errorf("Method %q not found", r.Method))
+		}
+
+		// If sending out Forbidden, make sure we have OIDC headers.
+		if resp.Code() == http.StatusForbidden && d.oidcVerifier != nil {
+			_ = d.oidcVerifier.WriteHeaders(w)
+		}
+
+		// Handle errors
+		err = resp.Render(w)
+		if err != nil {
+			writeErr := response.SmartError(err).Render(w)
+			if writeErr != nil {
+				logger.Error("Failed writing error for HTTP response", logger.Ctx{"url": uri, "err": err, "writeErr": writeErr})
+			}
+		}
+	}
+
+	restAPI.HandleFunc(uri, handler)
+
+	// Endpoints with suffix actions are registered as a subtree so they can
+	// also serve their sub-paths (e.g. "/export"). The exact route above keeps
+	// the canonical (no trailing slash) URL from being redirected.
+	if len(c.SuffixActions) > 0 {
+		restAPI.HandleFunc(uri+"/", handler)
+	}
+}
+
+// pathVar returns the value of the named path variable from the request URL.
+//
+// The HTTP router (http.ServeMux) already URL-decodes path segments, so unlike
+// the previous gorilla/mux based implementation the value must not be unescaped
+// again. An error is returned to keep call sites uniform with the previous
+// url.PathUnescape based code.
+func pathVar(r *http.Request, name string) (string, error) {
+	return r.PathValue(name), nil
+}
+
+// have we setup shared mounts?
+var sharedMountsLock sync.Mutex
+
+// setupSharedMounts will mount any shared mounts needed, and set daemon.SharedMountsSetup to true.
+func setupSharedMounts() error {
+	// Check if we already went through this
+	if daemon.SharedMountsSetup {
+		return nil
+	}
+
+	// Get a lock to prevent races
+	sharedMountsLock.Lock()
+	defer sharedMountsLock.Unlock()
+
+	// Check if already setup
+	path := internalUtil.VarPath("shmounts")
+	if linux.IsMountPoint(path) {
+		daemon.SharedMountsSetup = true
+		return nil
+	}
+
+	// Mount a new tmpfs
+	err := unix.Mount("tmpfs", path, "tmpfs", 0, "size=100k,mode=0711")
+	if err != nil {
+		return err
+	}
+
+	// Mark as MS_SHARED and MS_REC
+	var flags uintptr = unix.MS_SHARED | unix.MS_REC
+	err = unix.Mount(path, path, "none", flags, "")
+	if err != nil {
+		return err
+	}
+
+	daemon.SharedMountsSetup = true
+	return nil
+}
+
+// Init starts daemon process.
+func (d *Daemon) Init() error {
+	d.startTime = time.Now()
+
+	err := d.init()
+	// If an error occurred synchronously while starting up, let's try to
+	// cleanup any state we produced so far. Errors happening here will be
+	// ignored.
+	if err != nil {
+		logger.Error("Failed to start the daemon", logger.Ctx{"err": err})
+		_ = d.Stop(context.Background(), unix.SIGINT)
+		return err
+	}
+
+	return nil
+}
+
+func (d *Daemon) init() error {
+	var err error
+
+	var dbWarnings []dbCluster.Warning
+
+	// Set up the authorization router.
+	d.authorizer, err = auth.NewRouter(d.shutdownCtx, logger.Log, d.clientCerts)
+	if err != nil {
+		return err
+	}
+
+	// Setup logger
+	events.LoggingServer = d.events
+
+	// Setup internal event listener
+	d.internalListener = events.NewInternalListener(d.shutdownCtx, d.events)
+
+	// Lets check if there's an existing daemon running
+	err = endpoints.CheckAlreadyRunning(d.os.GetUnixSocket())
+	if err != nil {
+		return err
+	}
+
+	/* Set the LVM environment */
+	err = os.Setenv("LVM_SUPPRESS_FD_WARNINGS", "1")
+	if err != nil {
+		return err
+	}
+
+	/* Print welcome message */
+	mode := "normal"
+	if d.os.MockMode {
+		mode = "mock"
+	}
+
+	logger.Info("Starting up", logger.Ctx{"version": version.Version, "mode": mode, "path": internalUtil.VarPath("")})
+
+	/* List of sub-systems to trace */
+	trace := d.config.Trace
+
+	/* Initialize the operating system facade */
+	dbWarnings, err = d.os.Init()
+	if err != nil {
+		return err
+	}
+
+	// Initialize apparmor.
+	if d.os.AppArmorAvailable {
+		err := apparmor.Init()
+		if err != nil {
+			return fmt.Errorf("Failed to initialize apparmor: %v", err)
+		}
+	}
+
+	// Setup AppArmor wrapper.
+	archive.RunWrapper = func(cmd *exec.Cmd, output string, allowedCmds []string) (func(), error) {
+		return apparmor.ArchiveWrapper(d.os, cmd, output, allowedCmds)
+	}
+
+	rsync.RunWrapper = func(cmd *exec.Cmd, source string, destination string) (func(), error) {
+		return apparmor.RsyncWrapper(d.os, cmd, source, destination)
+	}
+
+	// Bump some kernel limits to avoid issues
+	for _, limit := range []int{unix.RLIMIT_NOFILE} {
+		rLimit := unix.Rlimit{}
+		err := unix.Getrlimit(limit, &rLimit)
+		if err != nil {
+			return err
+		}
+
+		rLimit.Cur = rLimit.Max
+
+		err = unix.Setrlimit(limit, &rLimit)
+		if err != nil {
+			return err
+		}
+	}
+
+	// Detect LXC features
+	d.os.LXCFeatures = map[string]bool{}
+	lxcExtensions := []string{
+		"environment_runtime_hooks",
+	}
+
+	for _, extension := range lxcExtensions {
+		d.os.LXCFeatures[extension] = liblxc.HasAPIExtension(extension)
+	}
+
+	// Get cgroup warnings.
+	dbWarnings = append(dbWarnings, cgroup.Warnings()...)
+
+	// Detect and cached available instance types from operational drivers.
+	drivers := instanceDrivers.DriverStatuses()
+	for _, drv := range drivers {
+		if drv.Warning != nil {
+			dbWarnings = append(dbWarnings, *drv.Warning)
+		}
+	}
+
+	// Detect and setup missing temporary mounts.
+	if !d.os.MockMode {
+		devicesPath := filepath.Join(d.os.VarDir, "devices")
+		devIncusPath := filepath.Join(d.os.VarDir, "guestapi")
+
+		// Attempt to mount the devices tmpfs.
+		// NOTE: The check for devIncusPath is to handle initial rollout
+		// of the tmpfs on systems that have running instances. It can go away
+		// after a little while.
+		if !linux.IsMountPoint(devIncusPath) && !linux.IsMountPoint(devicesPath) {
+			err = unix.Mount("tmpfs", devicesPath, "tmpfs", 0, "size=250M,mode=0711")
+			if err != nil {
+				logger.Warn("Failed to set up devices tmpfs", logger.Ctx{"err": err})
+			}
+		}
+
+		// Attempt to mount the shmounts tmpfs.
+		err := setupSharedMounts()
+		if err != nil {
+			logger.Warn("Failed to set up shmounts tmpfs", logger.Ctx{"err": err})
+		}
+
+		// Attempt to mount the guestapi tmpfs
+		if !linux.IsMountPoint(devIncusPath) {
+			err = unix.Mount("tmpfs", devIncusPath, "tmpfs", 0, "size=100k,mode=0755")
+			if err != nil {
+				logger.Warn("Failed to set up guestapi tmpfs", logger.Ctx{"err": err})
+			}
+		}
+	}
+
+	// Show all persistent warnings.
+	for _, w := range dbWarnings {
+		logger.Warnf(" - %s, %s", warningtype.TypeNames[warningtype.Type(w.TypeCode)], w.LastMessage)
+	}
+
+	/* Initialize the database */
+	err = initializeDbObject(d)
+	if err != nil {
+		return err
+	}
+
+	/* Setup network endpoint certificate */
+	networkCert, err := internalUtil.LoadCert(d.os.VarDir)
+	if err != nil {
+		return err
+	}
+
+	/* Setup server certificate */
+	serverCert, err := internalUtil.LoadServerCert(d.os.VarDir)
+	if err != nil {
+		return err
+	}
+
+	// Load cached local trusted certificates before starting listener and cluster database.
+	err = updateCertificateCacheFromLocal(d)
+	if err != nil {
+		return err
+	}
+
+	d.serverClustered, err = cluster.Enabled(d.db.Node)
+	if err != nil {
+		return fmt.Errorf("Failed checking if clustered: %w", err)
+	}
+
+	// Detect if clustered, but not yet upgraded to per-server client certificates.
+	certificates := d.clientCerts.GetCertificates()
+	if d.serverClustered && len(certificates[certificate.TypeServer]) < 1 {
+		// If the cluster has not yet upgraded to per-server client certificates (by running patch
+		// patchClusteringServerCertTrust) then temporarily use the network (cluster) certificate as client
+		// certificate, and cause us to trust it for use as client certificate from the other members.
+		networkCertFingerPrint := networkCert.Fingerprint()
+		logger.Warn("No local trusted server certificates found, falling back to trusting network certificate", logger.Ctx{"fingerprint": networkCertFingerPrint})
+		logger.Info("Set client certificate to network certificate", logger.Ctx{"fingerprint": networkCertFingerPrint})
+		d.serverCertInt = networkCert
+	} else {
+		// If standalone or the local trusted certificates table is populated with server certificates then
+		// use our local server certificate as client certificate for intra-cluster communication.
+		logger.Info("Set client certificate to server certificate", logger.Ctx{"fingerprint": serverCert.Fingerprint()})
+		d.serverCertInt = serverCert
+	}
+
+	/* Setup cowsql */
+	d.gateway, err = cluster.NewGateway(d.shutdownCtx, d.db.Node, d.State, networkCert, d.serverCert,
+		options.Logger(slog.New(logger.NewSlogHandler(logger.DefaultSlogLogger("cowsql:")))),
+		options.Version(version.Version),
+		options.MaxStandby(func() int64 { return d.globalConfig.MaxStandBy() }),
+		options.MaxVoters(func() int64 { return d.globalConfig.MaxVoters() }),
+		options.PreUpdateCheck(func() (func() error, error) { return cluster.PreUpdateCheck(d.State()) }),
+		options.RestrictTLS(!util.IsFalseOrEmpty(os.Getenv("INCUS_INSECURE_TLS"))),
+	)
+	if err != nil {
+		return err
+	}
+
+	d.gateway.SetHeartbeatNodeHook(d.nodeRefreshTask)
+
+	logger.Info("Loading daemon configuration")
+	err = d.db.Node.Transaction(context.TODO(), func(ctx context.Context, tx *db.NodeTx) error {
+		d.localConfig, err = node.ConfigLoad(ctx, tx)
+		return err
+	})
+	if err != nil {
+		return err
+	}
+
+	localHTTPAddress := d.localConfig.HTTPSAddress()
+	localClusterAddress := d.localConfig.ClusterAddress()
+	debugAddress := d.localConfig.DebugAddress()
+
+	if os.Getenv("LISTEN_PID") != "" {
+		d.systemdSocketActivated = true
+	}
+
+	/* Setup the web server */
+	config := &endpoints.Config{
+		Dir:                  d.os.VarDir,
+		UnixSocket:           d.os.GetUnixSocket(),
+		Cert:                 networkCert,
+		RestServer:           restServer(d),
+		DevIncusServer:       devIncusServer(d),
+		LocalUnixSocketGroup: d.config.Group,
+		LocalUnixSocketLabel: "system_u:object_r:container_runtime_t:s0",
+		NetworkAddress:       localHTTPAddress,
+		ClusterAddress:       localClusterAddress,
+		DebugAddress:         debugAddress,
+		MetricsServer:        metricsServer(d),
+		StorageBucketsServer: storageBucketsServer(d),
+		VsockServer:          vSockServer(d),
+		VsockSupport:         false,
+	}
+
+	// Enable vsock server support if VM instances supported.
+	err, found := d.State().InstanceTypes[instancetype.VM]
+	if found && err == nil {
+		config.VsockSupport = true
+	}
+
+	d.endpoints, err = endpoints.Up(config)
+	if err != nil {
+		return err
+	}
+
+	// Have the db package determine remote storage drivers
+	db.StorageRemoteDriverNames = storageDrivers.RemoteDriverNames
+
+	/* Open the cluster database */
+	for {
+		logger.Info("Initializing global database")
+		dir := filepath.Join(d.os.VarDir, "database")
+
+		store := d.gateway.NodeStore()
+
+		contextTimeout := 30 * time.Second
+		if !d.serverClustered {
+			// FIXME: this is a workaround for #5234. We set a very
+			// high timeout when we're not clustered, since there's
+			// actually no networking involved.
+			contextTimeout = time.Minute
+		}
+
+		driverOptions := []driver.Option{
+			driver.WithDialFunc(d.gateway.DialFunc()),
+			driver.WithContext(d.gateway.Context()),        //nolint:staticcheck
+			driver.WithConnectionTimeout(10 * time.Second), //nolint:staticcheck
+			driver.WithContextTimeout(contextTimeout),      //nolint:staticcheck
+			driver.WithLogFunc(cowsqllogging.CowsqlLog),
+		}
+
+		if slices.Contains(trace, "database") {
+			driverOptions = append(driverOptions, driver.WithTracing(cowsqlClient.LogDebug))
+		}
+
+		d.db.Cluster, err = db.OpenCluster(context.Background(), "db.bin", store, localClusterAddress, dir, d.config.CowsqlSetupTimeout, driverOptions...)
+		if err == nil {
+			logger.Info("Initialized global database")
+			break
+		} else if errors.Is(err, db.ErrSomeNodesAreBehind) {
+			// If some other nodes have schema or API versions less recent
+			// than this node, we block until we receive a notification
+			// from the last node being upgraded that everything should be
+			// now fine, and then retry
+			logger.Warn("Wait for other cluster nodes to upgrade their versions, cluster not started yet")
+
+			// The only thing we want to still do on this node is
+			// to run the heartbeat task, in case we are the raft
+			// leader.
+			cluster.SetClusterDB(d.gateway, d.db.Cluster)
+			taskFunc, taskSchedule := cluster.HeartbeatTask(d.gateway)
+			hbGroup := task.Group{}
+			d.taskClusterHeartbeat = hbGroup.Add(taskFunc, taskSchedule)
+			hbGroup.Start(d.shutdownCtx)
+			d.gateway.WaitUpgradeNotification()
+			_ = hbGroup.Stop(time.Second)
+
+			cluster.SetClusterDB(d.gateway, nil)
+
+			_ = d.db.Cluster.Close()
+
+			continue
+		}
+
+		return fmt.Errorf("Failed to initialize global database: %w", err)
+	}
+
+	d.firewall = firewall.New()
+	logger.Info("Firewall loaded driver", logger.Ctx{"driver": d.firewall})
+
+	cluster.SetClusterDB(d.gateway, d.db.Cluster)
+	err = cluster.NotifyUpgradeCompleted(d.State(), networkCert, d.serverCert())
+	if err != nil {
+		// Ignore the error, since it's not fatal for this particular
+		// node. In most cases it just means that some nodes are
+		// offline.
+		logger.Warn("Could not notify all nodes of database upgrade", logger.Ctx{"err": err})
+	}
+
+	// Setup the user-agent.
+	if d.serverClustered {
+		version.UserAgentFeatures([]string{"cluster"})
+	}
+
+	// Load server name and config before patches run (so they can access them from d.State()).
+	err = d.db.Cluster.Transaction(d.shutdownCtx, func(ctx context.Context, tx *db.ClusterTx) error {
+		config, err := clusterConfig.Load(ctx, tx)
+		if err != nil {
+			return err
+		}
+
+		// Get the local node (will be used if clustered).
+		serverName, err := tx.GetLocalNodeName(ctx)
+		if err != nil {
+			return err
+		}
+
+		d.globalConfigMu.Lock()
+		d.serverName = serverName
+		d.globalConfig = config
+		d.globalConfigMu.Unlock()
+
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+
+	d.events.SetLocalLocation(d.serverName)
+
+	// Mount the storage pools.
+	logger.Infof("Initializing storage pools")
+	err = storageStartup(d.State())
+	if err != nil {
+		return err
+	}
+
+	// Apply all patches that need to be run before daemon storage is initialized.
+	err = patchesApply(d, patchPreDaemonStorage)
+	if err != nil {
+		return err
+	}
+
+	// Mount any daemon storage volumes.
+	logger.Infof("Initializing daemon storage mounts")
+	err = daemonStorageMount(d.State())
+	if err != nil {
+		return err
+	}
+
+	// Create directories on daemon storage mounts.
+	err = d.os.InitStorage()
+	if err != nil {
+		return err
+	}
+
+	// Apply all patches that need to be run after daemon storage is initialized.
+	err = patchesApply(d, patchPostDaemonStorage)
+	if err != nil {
+		return err
+	}
+
+	// Load server name and config after patches run (in case its been changed).
+	err = d.db.Cluster.Transaction(d.shutdownCtx, func(ctx context.Context, tx *db.ClusterTx) error {
+		config, err := clusterConfig.Load(ctx, tx)
+		if err != nil {
+			return err
+		}
+
+		// Get the local node (will be used if clustered).
+		serverName, err := tx.GetLocalNodeName(ctx)
+		if err != nil {
+			return err
+		}
+
+		d.globalConfigMu.Lock()
+		d.serverName = serverName
+		d.globalConfig = config
+		d.globalConfigMu.Unlock()
+
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+
+	d.events.SetLocalLocation(d.serverName)
+
+	// Get daemon configuration.
+	bgpAddress := d.localConfig.BGPAddress()
+	bgpRouterID := d.localConfig.BGPRouterID()
+	bgpASN := int64(0)
+	dnsAddress := d.localConfig.DNSAddress()
+
+	// Get specific config keys.
+	d.globalConfigMu.Lock()
+	bgpASN = d.globalConfig.BGPASN()
+
+	d.proxy = proxy.FromConfig(d.globalConfig.ProxyHTTPS(), d.globalConfig.ProxyHTTP(), d.globalConfig.ProxyIgnoreHosts())
+
+	d.gateway.SetHeartbeatOfflineThreshold(d.globalConfig.OfflineThreshold())
+	oidcIssuer, oidcClientID, oidcScope, oidcAudience, oidcClaim := d.globalConfig.OIDCServer()
+	syslogSocketEnabled := d.localConfig.SyslogSocket()
+	instancePlacementScriptlet := d.globalConfig.InstancesPlacementScriptlet()
+
+	d.endpoints.NetworkUpdateTrustedProxy(d.globalConfig.HTTPSTrustedProxy())
+	ws.SetTrustedOrigins(d.globalConfig.HTTPSAllowedWebsocketOrigin())
+	d.globalConfigMu.Unlock()
+
+	d.loggingController = logging.NewLoggingController(d.internalListener)
+	err = d.loggingController.Setup(d.State())
+	if err != nil {
+		return err
+	}
+
+	// Setup syslog listener.
+	if syslogSocketEnabled {
+		err = d.setupSyslogSocket(true)
+		if err != nil {
+			return err
+		}
+	}
+
+	// Setup OIDC authentication.
+	if oidcIssuer != "" && oidcClientID != "" {
+		d.oidcVerifier, err = oidc.NewVerifier(oidcIssuer, oidcClientID, oidcScope, oidcAudience, oidcClaim)
+		if err != nil {
+			return err
+		}
+	}
+
+	// Setup authorization, loading every optional driver.
+	err = d.setupAuthorization(auth.DriverOpenFGA, auth.DriverScriptlet)
+	if err != nil {
+		return fmt.Errorf("Failed to configure authorization: %w", err)
+	}
+
+	// Setup BGP listener.
+	d.bgp = bgp.NewServer()
+	if bgpAddress != "" && bgpASN != 0 && bgpRouterID != "" {
+		err := d.bgp.Configure(bgpAddress, uint32(bgpASN), net.ParseIP(bgpRouterID))
+		if err != nil {
+			return err
+		}
+
+		logger.Info("Started BGP server")
+	}
+
+	// Setup DNS listener.
+	d.dns = dns.NewServer(d.db.Cluster, func(name string, full bool) (*dns.Zone, error) {
+		// Fetch the zone.
+		zone, err := networkZone.LoadByName(d.State(), name)
+		if err != nil {
+			return nil, err
+		}
+
+		zoneInfo := zone.Info()
+
+		// Fill in the zone information.
+		resp := &dns.Zone{}
+		resp.Info = *zoneInfo
+
+		if full {
+			// Full content was requested.
+			zoneBuilder, err := zone.Content()
+			if err != nil {
+				logger.Errorf("Failed to render DNS zone %q: %v", name, err)
+				return nil, err
+			}
+
+			resp.Content = strings.TrimSpace(zoneBuilder.String())
+		} else {
+			// SOA only.
+			zoneBuilder, err := zone.SOA()
+			if err != nil {
+				logger.Errorf("Failed to render DNS zone %q: %v", name, err)
+				return nil, err
+			}
+
+			resp.Content = strings.TrimSpace(zoneBuilder.String())
+		}
+
+		return resp, nil
+	})
+	if dnsAddress != "" {
+		err := d.dns.Start(dnsAddress)
+		if err != nil {
+			return err
+		}
+
+		logger.Info("Started DNS server")
+	}
+
+	// Watch for DHCP lease and static host changes to send DNS NOTIFY messages.
+	err = networkZone.StartLeasesWatcher(d.shutdownCtx, d.State())
+	if err != nil {
+		logger.Warn("Failed to start network zones watcher", logger.Ctx{"err": err})
+	}
+
+	// Revert any evacuation state left by an interrupted operation, those only ever run on the member itself.
+	if d.serverClustered {
+		err = evacuateReconcileState(d.State(), d.serverName)
+		if err != nil {
+			logger.Warn("Failed reconciling cluster member evacuation state", logger.Ctx{"err": err})
+		}
+	}
+
+	// Setup the networks.
+	if !d.serverClustered || !d.db.Cluster.LocalNodeIsEvacuated() {
+		logger.Infof("Initializing networks")
+
+		err = networkStartup(d.State())
+		if err != nil {
+			return err
+		}
+	}
+
+	// Setup tertiary listeners that may use managed network addresses and must be started after networks.
+	metricsAddress := d.localConfig.MetricsAddress()
+	if metricsAddress != "" {
+		err = d.endpoints.UpMetrics(metricsAddress)
+		if err != nil {
+			return err
+		}
+	}
+
+	storageBucketsAddress := d.localConfig.StorageBucketsAddress()
+	if storageBucketsAddress != "" {
+		err = d.endpoints.UpStorageBuckets(storageBucketsAddress)
+		if err != nil {
+			return err
+		}
+	}
+
+	// Load instance placement scriptlet.
+	if instancePlacementScriptlet != "" {
+		err = scriptletLoad.InstancePlacementSet(instancePlacementScriptlet)
+		if err != nil {
+			logger.Warn("Failed loading instance placement scriptlet", logger.Ctx{"err": err})
+		}
+	}
+
+	// Apply all patches that need to be run after networks are initialized.
+	err = patchesApply(d, patchPostNetworks)
+	if err != nil {
+		return err
+	}
+
+	// Cleanup leftover images.
+	pruneLeftoverImages(d.State())
+
+	var instances []instance.Instance
+
+	if !d.os.MockMode {
+		// Start the scheduler
+		go deviceEventListener(d.State)
+
+		prefixPath := os.Getenv("INCUS_DEVMONITOR_DIR")
+		if prefixPath == "" {
+			prefixPath = "/dev"
+		}
+
+		logger.Info("Starting device monitor")
+
+		d.devmonitor, err = fsmonitor.New(d.State().ShutdownCtx, prefixPath)
+		if err != nil {
+			return err
+		}
+
+		// Must occur after d.devmonitor has been initialized.
+		instances, err = instance.LoadNodeAll(d.State(), instancetype.Any)
+		if err != nil {
+			return fmt.Errorf("Failed loading local instances: %w", err)
+		}
+
+		// Register devices on running instances to receive events and reconnect to VM monitor sockets.
+		// This should come after the event handler go routines have been started.
+		devicesRegister(instances)
+
+		// Reap any forkproxy helpers left behind by an out-of-cgroup kill of the previous daemon.
+		cleanupOrphanedProxyHelpers(instances)
+
+		// Setup seccomp handler
+		seccompServer, err := seccomp.NewSeccompServer(d.State(), internalUtil.RunPath("seccomp.socket"), func(pid int32, state *state.State) (seccomp.Instance, error) {
+			return findContainerForPid(pid, state)
+		})
+		if err != nil {
+			return err
+		}
+
+		d.seccomp = seccompServer
+		logger.Info("Started seccomp handler", logger.Ctx{"path": internalUtil.RunPath("seccomp.socket")})
+
+		// Read the trusted certificates
+		updateCertificateCache(d)
+	}
+
+	err = d.db.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		// Remove volatile.last_state.ready key as we don't know if the instances are ready.
+		return tx.DeleteReadyStateFromLocalInstances(ctx)
+	})
+	if err != nil {
+		return fmt.Errorf("Failed deleting volatile.last_state.ready: %w", err)
+	}
+
+	close(d.setupChan)
+
+	_ = d.db.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		// Create warnings that have been collected
+		for _, w := range dbWarnings {
+			err := tx.UpsertWarning(ctx, d.serverName, "", -1, -1, warningtype.Type(w.TypeCode), w.LastMessage)
+			if err != nil {
+				logger.Warn("Failed to create warning", logger.Ctx{"err": err})
+			}
+		}
+
+		return nil
+	})
+
+	// Resolve warnings older than the daemon start time
+	err = warnings.ResolveWarningsByNodeOlderThan(d.db.Cluster, d.serverName, d.startTime)
+	if err != nil {
+		logger.Warn("Failed to resolve warnings", logger.Ctx{"err": err})
+	}
+
+	// Start cluster tasks if needed.
+	if d.serverClustered {
+		d.startClusterTasks()
+	}
+
+	// FIXME: There's no hard reason for which we should not run these
+	//        tasks in mock mode. However it requires that we tweak them so
+	//        they exit gracefully without blocking (something we should do
+	//        anyways) and they don't hit the internet or similar. Support
+	//        for proper cancellation is something that has been started
+	//        but has not been fully completed.
+	if !d.os.MockMode {
+		// Log expiry (daily)
+		d.tasks.Add(expireLogsTask(d.State()))
+
+		// Remove expired images (daily)
+		d.taskPruneImages = d.tasks.Add(pruneExpiredImagesTask(d))
+
+		// Auto-update images (every 6 hours, configurable)
+		d.tasks.Add(autoUpdateImagesTask(d))
+
+		// Auto-update instance types (daily)
+		d.tasks.Add(instanceRefreshTypesTask(d))
+
+		// Remove expired backups (hourly)
+		d.tasks.Add(pruneExpiredBackupsTask(d))
+
+		// Prune expired instance snapshots and take snapshot of instances (minutely check of configurable cron expression)
+		d.tasks.Add(pruneExpiredAndAutoCreateInstanceSnapshotsTask(d))
+
+		// Prune expired custom volume snapshots and take snapshots of custom volumes (minutely check of configurable cron expression)
+		d.tasks.Add(pruneExpiredAndAutoCreateCustomVolumeSnapshotsTask(d))
+
+		// Remove resolved warnings (daily)
+		d.tasks.Add(pruneResolvedWarningsTask(d))
+
+		// Auto-renew server certificate (daily)
+		d.tasks.Add(autoRenewCertificateTask(d))
+
+		// Remove expired tokens (hourly)
+		d.tasks.Add(autoRemoveExpiredTokensTask(d))
+	}
+
+	// Start all background tasks
+	d.tasks.Start(d.shutdownCtx)
+
+	// Restore instances
+	instancesStart(d.State(), instances)
+
+	// Re-balance in case things changed while the daemon was down
+	deviceTaskBalance(d.State())
+
+	// Unblock incoming requests
+	d.waitReady.Cancel()
+
+	logger.Info("Daemon started")
+
+	return nil
+}
+
+func (d *Daemon) startClusterTasks() {
+	// Get an updated cluster certificate if needed.
+	err := d.clusterSyncCertificate()
+	if err != nil {
+		logger.Warn("Failed to sync cluster certificate", logger.Ctx{"err": err})
+	}
+
+	// Add initial event listeners from global database members.
+	// Run asynchronously so that connecting to remote members doesn't delay starting up other cluster tasks.
+	go cluster.EventsUpdateListeners(d.State(), nil, d.events.Inject)
+
+	// Heartbeats
+	d.taskClusterHeartbeat = d.clusterTasks.Add(cluster.HeartbeatTask(d.gateway))
+
+	// Auto-sync images across the cluster (hourly)
+	d.clusterTasks.Add(autoSyncImagesTask(d.State()))
+
+	// Remove orphaned operations
+	d.clusterTasks.Add(autoRemoveOrphanedOperationsTask(d.State()))
+
+	// Perform automatic evacuation for offline cluster members
+	d.clusterTasks.Add(autoHealClusterTask(d))
+
+	// Perform automatic live-migration to alance load on cluster
+	d.clusterTasks.Add(autoRebalanceClusterTask(d))
+
+	// Start all background tasks
+	d.clusterTasks.Start(d.shutdownCtx)
+}
+
+func (d *Daemon) stopClusterTasks() {
+	_ = d.clusterTasks.Stop(3 * time.Second)
+	d.clusterTasks = task.Group{}
+}
+
+// numRunningInstances returns the number of running instances.
+func (d *Daemon) numRunningInstances(instances []instance.Instance) int {
+	count := 0
+	for _, inst := range instances {
+		if inst.IsRunning() {
+			count = count + 1
+		}
+	}
+
+	return count
+}
+
+// closeGlobalDatabase closes the global database with a timeout as queries
+// stuck on an unreachable cluster can block it indefinitely.
+func closeGlobalDatabase(clusterDB *db.Cluster) {
+	done := make(chan struct{})
+	go func() {
+		err := clusterDB.Close()
+		if err != nil {
+			logger.Debug("Could not close global database cleanly", logger.Ctx{"err": err})
+		}
+
+		close(done)
+	}()
+
+	select {
+	case <-done:
+	case <-time.After(10 * time.Second):
+		buf := make([]byte, 1024*1024)
+		n := runtime.Stack(buf, true)
+		logger.Warn("Timed out closing the global database", logger.Ctx{"goroutines": string(buf[:n])})
+	}
+}
+
+// Stop stops the shared daemon.
+func (d *Daemon) Stop(ctx context.Context, sig os.Signal) error {
+	logger.Info("Starting shutdown sequence", logger.Ctx{"signal": sig})
+
+	s := d.State()
+
+	evacuated := false
+	if sig == unix.SIGPWR && d.serverClustered && s.GlobalConfig.ShutdownAction() == "evacuate" && !s.DB.Cluster.LocalNodeIsEvacuated() {
+		// Handle early evacuation before proceeding with shutdown.
+		logger.Info("Evacuating cluster member")
+		err := evacuateShutdown(ctx, s, d.serverName)
+		if err != nil {
+			logger.Error("Failed to evacuate cluster member, falling back to regular shutdown", logger.Ctx{"err": err})
+		} else {
+			evacuated = true
+		}
+	}
+
+	// Cancelling the context will make everyone aware that we're shutting down.
+	d.shutdownCancel()
+
+	if d.loggingController != nil {
+		d.loggingController.Shutdown()
+	}
+
+	if d.gateway != nil {
+		d.stopClusterTasks()
+
+		err := handoverMemberRole(d.State(), d.gateway)
+		if err != nil {
+			logger.Warn("Could not handover member's responsibilities", logger.Ctx{"err": err})
+			d.gateway.Cancel()
+
+			if d.db.Cluster != nil {
+				closeGlobalDatabase(d.db.Cluster)
+			}
+		}
+	}
+
+	var err error
+	var instances []instance.Instance
+	var instancesLoaded bool // If this is left as false this indicates an error loading instances.
+
+	if d.db.Cluster != nil {
+		instances, err = instance.LoadNodeAll(s, instancetype.Any)
+		if err != nil {
+			// List all instances on disk.
+			logger.Warn("Loading local instances from disk as database is not available", logger.Ctx{"err": err})
+			instances, err = instancesOnDisk(s)
+			if err != nil {
+				logger.Warn("Failed loading instances from disk", logger.Ctx{"err": err})
+			}
+
+			// Make all future queries fail fast as DB is not available.
+			d.gateway.Cancel()
+			closeGlobalDatabase(d.db.Cluster)
+		}
+
+		if err == nil {
+			instancesLoaded = true
+		}
+	}
+
+	// Handle shutdown (unix.SIGPWR) and reload (unix.SIGTERM) signals.
+	if sig == unix.SIGPWR || sig == unix.SIGTERM {
+		if d.db.Cluster != nil {
+			// waitForOperations will block until all operations are done, or it's forced to shut down.
+			// For the latter case, we reuse the shutdown channel which is filled when a shutdown is
+			// initiated using `shutdown`.
+			waitForOperations(ctx, d.db.Cluster, s.GlobalConfig.ShutdownTimeout())
+		}
+
+		// Unmount daemon image and backup volumes if set.
+		logger.Info("Stopping daemon storage volumes")
+		done := make(chan struct{})
+		go func() {
+			err := daemonStorageVolumesUnmount(s)
+			if err != nil {
+				logger.Error("Failed to unmount image and backup volumes", logger.Ctx{"err": err})
+			}
+
+			done <- struct{}{}
+		}()
+
+		// Only wait 60 seconds in case the storage backend is unreachable.
+		select {
+		case <-time.After(time.Minute):
+			logger.Error("Timed out waiting for image and backup volume")
+		case <-ctx.Done():
+			logger.Warn("Forced shutdown, no longer waiting for image and backup volume")
+		case <-done:
+		}
+
+		// Full shutdown requested.
+		if sig == unix.SIGPWR {
+			if !evacuated {
+				instancesShutdown(ctx, s, instances, s.GlobalConfig.ShutdownTimeout())
+
+				logger.Info("Stopping networks")
+				networkShutdown(s)
+			}
+
+			// Unmount storage pools after instances stopped.
+			logger.Info("Stopping storage pools")
+
+			var pools []string
+
+			err := s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+				var err error
+
+				pools, err = tx.GetStoragePoolNames(ctx)
+
+				return err
+			})
+			if err != nil && !response.IsNotFoundError(err) {
+				logger.Error("Failed to get storage pools", logger.Ctx{"err": err})
+			}
+
+			for _, poolName := range pools {
+				pool, err := storagePools.LoadByName(s, poolName)
+				if err != nil {
+					logger.Error("Failed to get storage pool", logger.Ctx{"pool": poolName, "err": err})
+					continue
+				}
+
+				_, err = pool.Unmount()
+				if err != nil {
+					logger.Error("Unable to unmount storage pool", logger.Ctx{"pool": poolName, "err": err})
+					continue
+				}
+			}
+		}
+	}
+
+	if d.gateway != nil {
+		d.gateway.Cancel()
+	}
+
+	errs := []error{}
+	trackError := func(err error, desc string) {
+		if err != nil {
+			errs = append(errs, fmt.Errorf(desc+": %w", err))
+		}
+	}
+
+	trackError(d.tasks.Stop(3*time.Second), "Stop tasks")                // Give tasks a bit of time to cleanup.
+	trackError(d.clusterTasks.Stop(3*time.Second), "Stop cluster tasks") // Give tasks a bit of time to cleanup.
+
+	n := d.numRunningInstances(instances)
+	shouldUnmount := instancesLoaded && n <= 0
+
+	if d.db.Cluster != nil {
+		logger.Info("Closing the database")
+		closeGlobalDatabase(d.db.Cluster)
+	}
+
+	if d.db != nil && d.db.Node != nil {
+		trackError(d.db.Node.Close(), "Close local database")
+	}
+
+	if d.gateway != nil {
+		// Shut down the gateway with a timeout as its raft cleanup can get stuck on unreachable cluster members.
+		gatewayErr := make(chan error, 1)
+		go func() {
+			gatewayErr <- d.gateway.ShutdownServer()
+		}()
+
+		select {
+		case err := <-gatewayErr:
+			trackError(err, "Shutdown cowsql")
+		case <-time.After(10 * time.Second):
+			buf := make([]byte, 1024*1024)
+			n := runtime.Stack(buf, true)
+			logger.Warn("Timed out shutting down cowsql", logger.Ctx{"goroutines": string(buf[:n])})
+		}
+	}
+
+	if d.endpoints != nil {
+		trackError(d.endpoints.Down(), "Shutdown endpoints")
+	}
+
+	if shouldUnmount {
+		logger.Info("Unmounting temporary filesystems")
+
+		_ = unix.Unmount(internalUtil.VarPath("devices"), unix.MNT_DETACH)
+		_ = unix.Unmount(internalUtil.VarPath("guestapi"), unix.MNT_DETACH)
+		_ = unix.Unmount(internalUtil.VarPath("shmounts"), unix.MNT_DETACH)
+
+		logger.Info("Done unmounting temporary filesystems")
+	} else {
+		logger.Info("Not unmounting temporary filesystems (instances are still running)")
+	}
+
+	if d.seccomp != nil {
+		trackError(d.seccomp.Stop(), "Stop seccomp")
+	}
+
+	n = len(errs)
+	if n > 0 {
+		format := "%v"
+		if n > 1 {
+			format += fmt.Sprintf(" (and %d more errors)", n)
+		}
+
+		err = fmt.Errorf(format, errs[0])
+	}
+
+	if err != nil {
+		logger.Error("Failed to cleanly shutdown daemon", logger.Ctx{"err": err})
+	}
+
+	return err
+}
+
+// setupAuthorization builds the authorization router from the current global configuration.
+func (d *Daemon) setupAuthorization(reload ...string) error {
+	d.authorizerMu.Lock()
+	defer d.authorizerMu.Unlock()
+
+	optional := map[string]auth.Authorizer{}
+
+	// Carry over the optional drivers we are not reloading from the running router.
+	for _, name := range []string{auth.DriverOpenFGA, auth.DriverScriptlet} {
+		if slices.Contains(reload, name) {
+			continue
+		}
+
+		authDriver := d.authorizer.LoadedDriver(name)
+		if authDriver != nil {
+			optional[name] = authDriver
+		}
+	}
+
+	if slices.Contains(reload, auth.DriverOpenFGA) {
+		openfgaAPIURL, openfgaAPIToken, openfgaStoreID, openfgaTLSIdentifier := d.globalConfig.OpenFGA()
+
+		// Stop the previously loaded OpenFGA driver if loaded.
+		previousOpenFGA := d.authorizer.LoadedDriver(auth.DriverOpenFGA)
+		if previousOpenFGA != nil {
+			err := previousOpenFGA.StopService(d.shutdownCtx)
+			if err != nil {
+				logger.Error("Failed to stop OpenFGA authorizer service", logger.Ctx{"error": err})
+			}
+		}
+
+		if openfgaAPIURL != "" && openfgaStoreID != "" && openfgaAPIToken != "" {
+			openfgaDriver, err := d.setupOpenFGA(openfgaAPIURL, openfgaAPIToken, openfgaStoreID, openfgaTLSIdentifier)
+			if err != nil {
+				return err
+			}
+
+			optional[auth.DriverOpenFGA] = openfgaDriver
+		}
+	}
+
+	if slices.Contains(reload, auth.DriverScriptlet) {
+		scriptletDriver, err := d.setupAuthorizationScriptlet(d.globalConfig.AuthorizationScriptlet())
+		if err != nil {
+			return err
+		}
+
+		if scriptletDriver != nil {
+			optional[auth.DriverScriptlet] = scriptletDriver
+		}
+	}
+
+	return d.authorizer.Configure(d.globalConfig.AuthorizationClientRoutes(), optional)
+}
+
+// setupAuthorizationScriptlet loads scriptlet driver.
+func (d *Daemon) setupAuthorizationScriptlet(scriptlet string) (auth.Authorizer, error) {
+	err := scriptletLoad.AuthorizationSet(scriptlet)
+	if err != nil {
+		return nil, fmt.Errorf("Failed saving authorization scriptlet: %w", err)
+	}
+
+	if scriptlet == "" {
+		return nil, nil
+	}
+
+	return auth.LoadAuthorizer(d.shutdownCtx, auth.DriverScriptlet, logger.Log, d.clientCerts)
+}
+
+// setupOpenFGA loads the OpenFGA authorization driver.
+func (d *Daemon) setupOpenFGA(apiURL string, apiToken string, storeID string, tlsIdentifier string) (auth.Authorizer, error) {
+	config := map[string]any{
+		"authorization.openfga.api.url":        apiURL,
+		"authorization.openfga.api.token":      apiToken,
+		"authorization.openfga.store.id":       storeID,
+		"authorization.openfga.tls.identifier": tlsIdentifier,
+	}
+
+	// Build the list of resources to update the model.
+	refreshResources := func() (*auth.Resources, error) {
+		isLeader := false
+
+		leaderAddress, err := d.gateway.LeaderAddress()
+		if err != nil {
+			if !errors.Is(err, membership.ErrNodeIsNotClustered) {
+				return nil, err
+			}
+
+			isLeader = true
+		} else if leaderAddress == d.localConfig.ClusterAddress() {
+			isLeader = true
+		}
+
+		// If clustered and not running on a leader, skip the resource update.
+		if !isLeader {
+			return nil, nil
+		}
+
+		var resources auth.Resources
+
+		err = d.db.Cluster.Transaction(d.shutdownCtx, func(ctx context.Context, tx *db.ClusterTx) error {
+			err := query.Scan(ctx, tx.Tx(), "SELECT certificates.fingerprint FROM certificates", func(scan func(dest ...any) error) error {
+				var fingerprint string
+				err := scan(&fingerprint)
+				if err != nil {
+					return err
+				}
+
+				resources.CertificateObjects = append(resources.CertificateObjects, auth.ObjectCertificate(fingerprint))
+				return nil
+			})
+			if err != nil {
+				return err
+			}
+
+			err = query.Scan(ctx, tx.Tx(), "SELECT name FROM storage_pools", func(scan func(dest ...any) error) error {
+				var storagePoolName string
+				err := scan(&storagePoolName)
+				if err != nil {
+					return err
+				}
+
+				resources.StoragePoolObjects = append(resources.StoragePoolObjects, auth.ObjectStoragePool(storagePoolName))
+				return nil
+			})
+			if err != nil {
+				return err
+			}
+
+			err = query.Scan(ctx, tx.Tx(), "SELECT name FROM projects", func(scan func(dest ...any) error) error {
+				var projectName string
+				err := scan(&projectName)
+				if err != nil {
+					return err
+				}
+
+				resources.ProjectObjects = append(resources.ProjectObjects, auth.ObjectProject(projectName))
+				return nil
+			})
+			if err != nil {
+				return err
+			}
+
+			err = query.Scan(ctx, tx.Tx(), "SELECT images.fingerprint, projects.name FROM images JOIN projects ON projects.id=images.project_id", func(scan func(dest ...any) error) error {
+				var imageFingerprint string
+				var projectName string
+				err := scan(&imageFingerprint, &projectName)
+				if err != nil {
+					return err
+				}
+
+				resources.ImageObjects = append(resources.ImageObjects, auth.ObjectImage(projectName, imageFingerprint))
+				return nil
+			})
+			if err != nil {
+				return err
+			}
+
+			err = query.Scan(ctx, tx.Tx(), "SELECT images_aliases.name, projects.name FROM images_aliases JOIN projects ON projects.id=images_aliases.project_id", func(scan func(dest ...any) error) error {
+				var imageAliasName string
+				var projectName string
+				err := scan(&imageAliasName, &projectName)
+				if err != nil {
+					return err
+				}
+
+				resources.ImageAliasObjects = append(resources.ImageAliasObjects, auth.ObjectImageAlias(projectName, imageAliasName))
+				return nil
+			})
+			if err != nil {
+				return err
+			}
+
+			resources.InstanceSecurityTags = map[auth.Object][]string{}
+			err = tx.InstanceList(ctx, func(dbInst db.InstanceArgs, p api.Project) error {
+				instanceObject := auth.ObjectInstance(dbInst.Project, dbInst.Name)
+				resources.InstanceObjects = append(resources.InstanceObjects, instanceObject)
+
+				tags := util.SplitNTrimSpace(db.ExpandInstanceConfig(dbInst.Config, dbInst.Profiles)["security.tags"], ",", -1, true)
+				if len(tags) > 0 {
+					resources.InstanceSecurityTags[instanceObject] = tags
+				}
+
+				return nil
+			})
+			if err != nil {
+				return err
+			}
+
+			defaultNetworks := []string{}
+			err = query.Scan(ctx, tx.Tx(), "SELECT networks.name, projects.name FROM networks JOIN projects ON projects.id=networks.project_id", func(scan func(dest ...any) error) error {
+				var networkName string
+				var projectName string
+				err := scan(&networkName, &projectName)
+				if err != nil {
+					return err
+				}
+
+				if projectName == api.ProjectDefaultName {
+					defaultNetworks = append(defaultNetworks, networkName)
+				}
+
+				resources.NetworkObjects = append(resources.NetworkObjects, auth.ObjectNetwork(projectName, networkName))
+				return nil
+			})
+			if err != nil {
+				return err
+			}
+
+			// Get the project config keys relevant to network sharing.
+			projectConfigs := map[string]map[string]string{}
+			err = query.Scan(ctx, tx.Tx(), "SELECT projects.name, projects_config.key, projects_config.value FROM projects_config JOIN projects ON projects.id=projects_config.project_id WHERE projects_config.key IN ('restricted', 'features.networks', 'restricted.networks.access')", func(scan func(dest ...any) error) error {
+				var projectName string
+				var key string
+				var value string
+				err := scan(&projectName, &key, &value)
+				if err != nil {
+					return err
+				}
+
+				if projectConfigs[projectName] == nil {
+					projectConfigs[projectName] = map[string]string{}
+				}
+
+				projectConfigs[projectName][key] = value
+				return nil
+			})
+			if err != nil {
+				return err
+			}
+
+			// Compute the networks shared from the default project into other projects.
+			resources.NetworkShareObjects = map[string][]auth.Object{}
+			for projectName, config := range projectConfigs {
+				p := api.Project{Name: projectName, ProjectPut: api.ProjectPut{Config: config}}
+
+				for _, networkName := range defaultNetworks {
+					if project.NetworkSharedFromDefault(&p, networkName) {
+						resources.NetworkShareObjects[projectName] = append(resources.NetworkShareObjects[projectName], auth.ObjectNetwork(api.ProjectDefaultName, networkName))
+					}
+				}
+			}
+
+			err = query.Scan(ctx, tx.Tx(), "SELECT networks_acls.name, projects.name FROM networks_acls JOIN projects ON projects.id=networks_acls.project_id", func(scan func(dest ...any) error) error {
+				var networkACLName string
+				var projectName string
+				err := scan(&networkACLName, &projectName)
+				if err != nil {
+					return err
+				}
+
+				resources.NetworkACLObjects = append(resources.NetworkACLObjects, auth.ObjectNetworkACL(projectName, networkACLName))
+				return nil
+			})
+			if err != nil {
+				return err
+			}
+
+			err = query.Scan(ctx, tx.Tx(), "SELECT networks_address_sets.name, projects.name FROM networks_address_sets JOIN projects ON projects.id=networks_address_sets.project_id", func(scan func(dest ...any) error) error {
+				var networkAddressSetName string
+				var projectName string
+				err := scan(&networkAddressSetName, &projectName)
+				if err != nil {
+					return err
+				}
+
+				resources.NetworkAddressSetObjects = append(resources.NetworkAddressSetObjects, auth.ObjectNetworkAddressSet(projectName, networkAddressSetName))
+				return nil
+			})
+			if err != nil {
+				return err
+			}
+
+			err = query.Scan(ctx, tx.Tx(), "SELECT networks_zones.name, projects.name FROM networks_zones JOIN projects ON projects.id=networks_zones.project_id", func(scan func(dest ...any) error) error {
+				var networkZoneName string
+				var projectName string
+				err := scan(&networkZoneName, &projectName)
+				if err != nil {
+					return err
+				}
+
+				resources.NetworkZoneObjects = append(resources.NetworkZoneObjects, auth.ObjectNetworkZone(projectName, networkZoneName))
+				return nil
+			})
+			if err != nil {
+				return err
+			}
+
+			err = query.Scan(ctx, tx.Tx(), "SELECT profiles.name, projects.name FROM profiles JOIN projects ON projects.id=profiles.project_id", func(scan func(dest ...any) error) error {
+				var profileName string
+				var projectName string
+				err := scan(&profileName, &projectName)
+				if err != nil {
+					return err
+				}
+
+				resources.ProfileObjects = append(resources.ProfileObjects, auth.ObjectProfile(projectName, profileName))
+				return nil
+			})
+			if err != nil {
+				return err
+			}
+
+			err = query.Scan(ctx, tx.Tx(), "SELECT storage_volumes.name, storage_volumes.type, storage_pools.name, projects.name, nodes.name FROM storage_volumes JOIN projects ON projects.id=storage_volumes.project_id JOIN storage_pools ON storage_pools.id=storage_volumes.storage_pool_id LEFT JOIN nodes ON storage_volumes.node_id=nodes.id", func(scan func(dest ...any) error) error {
+				var storageVolumeName string
+				var storageVolumeType int
+				var storageVolumeLocation sql.NullString
+				var storagePoolName string
+				var projectName string
+				err := scan(&storageVolumeName, &storageVolumeType, &storagePoolName, &projectName, &storageVolumeLocation)
+				if err != nil {
+					return err
+				}
+
+				storageVolumeTypeName, err := db.StoragePoolVolumeTypeToName(storageVolumeType)
+				if err != nil {
+					return err
+				}
+
+				var location string
+				if d.serverClustered && storageVolumeType != db.StoragePoolVolumeTypeContainer && storageVolumeType != db.StoragePoolVolumeTypeVM && storageVolumeLocation.Valid {
+					location = storageVolumeLocation.String
+				}
+
+				resources.StoragePoolVolumeObjects = append(resources.StoragePoolVolumeObjects, auth.ObjectStorageVolume(projectName, storagePoolName, storageVolumeTypeName, storageVolumeName, location))
+				return nil
+			})
+			if err != nil {
+				return err
+			}
+
+			err = query.Scan(ctx, tx.Tx(), "SELECT storage_buckets.name, storage_pools.name, projects.name, nodes.name FROM storage_buckets JOIN projects ON projects.id=storage_buckets.project_id JOIN storage_pools ON storage_pools.id=storage_buckets.storage_pool_id LEFT JOIN nodes ON storage_buckets.node_id=nodes.id", func(scan func(dest ...any) error) error {
+				var storageBucketName string
+				var storageBucketLocation sql.NullString
+				var storagePoolName string
+				var projectName string
+				err := scan(&storageBucketName, &storagePoolName, &projectName, &storageBucketLocation)
+				if err != nil {
+					return err
+				}
+
+				var location string
+				if d.serverClustered && storageBucketLocation.Valid {
+					location = storageBucketLocation.String
+				}
+
+				resources.StorageBucketObjects = append(resources.StorageBucketObjects, auth.ObjectStorageBucket(projectName, storagePoolName, storageBucketName, location))
+				return nil
+			})
+			if err != nil {
+				return err
+			}
+
+			return nil
+		})
+		if err != nil {
+			return nil, err
+		}
+
+		return &resources, nil
+	}
+
+	return auth.LoadAuthorizer(d.shutdownCtx, auth.DriverOpenFGA, logger.Log, d.clientCerts, auth.WithConfig(config), auth.WithResourcesFunc(refreshResources))
+}
+
+// Syslog listener.
+func (d *Daemon) setupSyslogSocket(enable bool) error {
+	// Always cancel the context to ensure that no goroutines leak.
+	if d.syslogSocketCancel != nil {
+		logger.Debug("Stopping syslog socket")
+		d.syslogSocketCancel()
+	}
+
+	if !enable {
+		return nil
+	}
+
+	var ctx context.Context
+
+	ctx, d.syslogSocketCancel = context.WithCancel(d.shutdownCtx)
+
+	logger.Debug("Starting syslog socket")
+
+	err := syslog.Listen(ctx, d.events)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// Create a database connection and perform any updates needed.
+func initializeDbObject(d *Daemon) error {
+	logger.Info("Initializing local database")
+
+	// Hook to run when the local database is created from scratch. It will
+	// create the default profile and mark all patches as applied.
+	freshHook := func(nodeDB *db.Node) error {
+		for _, patchName := range patchesGetNames() {
+			err := nodeDB.MarkPatchAsApplied(patchName)
+			if err != nil {
+				return err
+			}
+		}
+		return nil
+	}
+
+	var err error
+	d.db.Node, err = db.OpenNode(filepath.Join(d.os.VarDir, "database"), freshHook)
+	if err != nil {
+		return fmt.Errorf("Error creating database: %s", err)
+	}
+
+	return nil
+}
+
+// nodeRefreshTask is run when a full state heartbeat is sent (on the leader) or received (by a non-leader member).
+// Is is used to check for member state changes and trigger refreshes of the certificate cache.
+// It also triggers member role promotion when run on the isLeader is true.
+// When run on the leader, it accepts a list of unavailableMembers that have not responded to the current heartbeat
+// round (but may not be considered actually offline at this stage). These unavailable members will not be used for
+// role rebalancing.
+func (d *Daemon) nodeRefreshTask(heartbeatData *cluster.APIHeartbeat, isLeader bool, unavailableMembers []string) {
+	s := d.State()
+
+	// Don't process the heartbeat until we're fully online.
+	if d.db.Cluster == nil || d.db.Cluster.GetNodeID() == 0 {
+		return
+	}
+
+	localClusterAddress := s.LocalConfig.ClusterAddress()
+
+	if !heartbeatData.FullStateList || len(heartbeatData.Members) <= 0 {
+		logger.Error("Heartbeat member refresh task called with partial state list", logger.Ctx{"local": localClusterAddress})
+		return
+	}
+
+	if heartbeatData.Version.MinAPIExtensions > 0 && heartbeatData.Version.MinAPIExtensions != d.apiExtensions {
+		d.apiExtensions = heartbeatData.Version.MinAPIExtensions
+	}
+
+	// If the max version of the cluster has changed, check whether we need to upgrade.
+	if d.lastNodeList == nil || d.lastNodeList.Version.APIExtensions != heartbeatData.Version.APIExtensions || d.lastNodeList.Version.Schema != heartbeatData.Version.Schema {
+		err := membership.MaybeUpdate(d.gateway)
+		if err != nil {
+			logger.Error("Error updating", logger.Ctx{"err": err})
+			return
+		}
+	}
+
+	stateChangeTaskFailure := false // Records whether any of the state change tasks failed.
+
+	// Handle potential OVN chassis changes.
+	err := networkUpdateOVNChassis(s, heartbeatData, localClusterAddress)
+	if err != nil {
+		stateChangeTaskFailure = true
+		logger.Error("Error restarting OVN networks", logger.Ctx{"err": err})
+	}
+
+	// Refresh event listeners from heartbeat members (after certificates refreshed if needed).
+	// Run asynchronously so that connecting to remote members doesn't delay other heartbeat tasks.
+	wg := sync.WaitGroup{}
+
+	wg.Go(func() {
+		cluster.EventsUpdateListeners(d.State(), heartbeatData.Members, d.events.Inject)
+	})
+
+	// Only update the node list if there are no state change task failures.
+	// If there are failures, then we leave the old state so that we can re-try the tasks again next heartbeat.
+	if !stateChangeTaskFailure {
+		d.lastNodeList = heartbeatData
+	}
+
+	// If we are leader and called from the leader heartbeat send function (unavailbleMembers != nil) and there
+	// are other members in the cluster, then check if we need to update roles. We do not want to do this if
+	// we are called on the leader as part of a notification heartbeat being received from another member.
+	if isLeader && unavailableMembers != nil && len(heartbeatData.Members) > 1 {
+		isDegraded := false
+		hasNodesNotPartOfRaft := false
+		hasDbClientToProcess := false
+		onlineVoters := 0
+		onlineStandbys := 0
+
+		for _, member := range heartbeatData.Members {
+			role := db.RaftRole(member.RaftRole)
+			if member.Online {
+				// Count online members that have voter or stand-by raft role.
+				switch role {
+				case db.RaftVoter:
+					onlineVoters++
+				case db.RaftStandBy:
+					onlineStandbys++
+				}
+
+				if member.RaftID == 0 {
+					hasNodesNotPartOfRaft = true
+				}
+
+				// Check if a 'database-client' node currently has a raft role other than 'spare'.
+				if slices.Contains(member.Roles, string(db.ClusterRoleDatabaseClient)) && member.RaftRole != int(db.RaftSpare) {
+					hasDbClientToProcess = true
+				}
+			} else if role != db.RaftSpare {
+				isDegraded = true // Offline member that has voter or stand-by raft role.
+			}
+		}
+
+		maxVoters := s.GlobalConfig.MaxVoters()
+		maxStandBy := s.GlobalConfig.MaxStandBy()
+
+		// If there are offline members that have voter or stand-by database roles, let's see if we can
+		// replace them with spare ones. Also, if we don't have enough voters or standbys, let's see if we
+		// can upgrade some member.
+		if isDegraded || onlineVoters != int(maxVoters) || onlineStandbys != int(maxStandBy) || hasDbClientToProcess {
+			d.clusterMembershipMutex.Lock()
+			logger.Debug("Rebalancing member roles in heartbeat", logger.Ctx{"local": localClusterAddress})
+			err := rebalanceMemberRoles(d.State(), d.gateway, nil, unavailableMembers)
+			if err != nil && !errors.Is(err, membership.ErrNotLeader) {
+				logger.Warn("Could not rebalance cluster member roles", logger.Ctx{"err": err, "local": localClusterAddress})
+			}
+
+			d.clusterMembershipMutex.Unlock()
+		}
+
+		if hasNodesNotPartOfRaft {
+			d.clusterMembershipMutex.Lock()
+			logger.Debug("Upgrading members without raft role in heartbeat", logger.Ctx{"local": localClusterAddress})
+			err := upgradeNodesWithoutRaftRole(d.State(), d.gateway)
+			if err != nil && !errors.Is(err, membership.ErrNotLeader) {
+				logger.Warn("Failed upgrading raft roles:", logger.Ctx{"err": err, "local": localClusterAddress})
+			}
+
+			d.clusterMembershipMutex.Unlock()
+		}
+	}
+
+	wg.Wait()
+}
+
+func (d *Daemon) setupOVN() error {
+	d.ovnMu.Lock()
+	defer d.ovnMu.Unlock()
+
+	// Clear any existing clients.
+	d.ovnnb = nil
+	d.ovnsb = nil
+
+	// Connect to OpenVswitch.
+	vswitch, err := d.getOVS()
+	if err != nil {
+		return fmt.Errorf("Failed to connect to OVS: %w", err)
+	}
+
+	// Get the OVN southbound address.
+	ovnSBAddr, err := vswitch.GetOVNSouthboundDBRemoteAddress(d.shutdownCtx)
+	if err != nil {
+		return fmt.Errorf("Failed to get OVN southbound connection string: %w", err)
+	}
+
+	if ovnSBAddr == "" {
+		return errors.New("OVN southbound connection string isn't set in Open vSwitch (external_ids:ovn-remote)")
+	}
+
+	// Get the OVN northbound address.
+	ovnNBAddr := d.globalConfig.NetworkOVNNorthboundConnection()
+
+	// Get the SSL certificates if needed.
+	sslCACert, sslClientCert, sslClientKey := d.globalConfig.NetworkOVNSSL()
+
+	// Fallback to filesystem keys.
+	if sslCACert == "" {
+		content, err := os.ReadFile("/etc/ovn/ovn-central.crt")
+		if err == nil {
+			sslCACert = string(content)
+		}
+	}
+
+	if sslClientCert == "" {
+		content, err := os.ReadFile("/etc/ovn/cert_host")
+		if err == nil {
+			sslClientCert = string(content)
+		}
+	}
+
+	if sslClientKey == "" {
+		content, err := os.ReadFile("/etc/ovn/key_host")
+		if err == nil {
+			sslClientKey = string(content)
+		}
+	}
+
+	// Get OVN northbound client.
+	ovnnb, err := ovn.NewNB(ovnNBAddr, sslCACert, sslClientCert, sslClientKey)
+	if err != nil {
+		return err
+	}
+
+	// Get OVN southbound client.
+	ovnsb, err := ovn.NewSB(ovnSBAddr, sslCACert, sslClientCert, sslClientKey)
+	if err != nil {
+		return err
+	}
+
+	// Set the clients.
+	d.ovnnb = ovnnb
+	d.ovnsb = ovnsb
+
+	return nil
+}
+
+// hasOVNNetworks checks whether any project has an OVN network.
+func (d *Daemon) hasOVNNetworks() (bool, error) {
+	found := false
+
+	err := d.db.Cluster.Transaction(d.shutdownCtx, func(ctx context.Context, tx *db.ClusterTx) error {
+		networks, err := tx.GetCreatedNetworks(ctx)
+		if err != nil {
+			return err
+		}
+
+		for _, projectNetworks := range networks {
+			for _, network := range projectNetworks {
+				if network.Type == "ovn" {
+					found = true
+					return nil
+				}
+			}
+		}
+
+		return nil
+	})
+	if err != nil {
+		return false, err
+	}
+
+	return found, nil
+}
+
+func (d *Daemon) getOVN() (*ovn.NB, *ovn.SB, error) {
+	if d.ovnnb == nil || d.ovnsb == nil {
+		err := d.setupOVN()
+		if err != nil {
+			return nil, nil, fmt.Errorf("Failed to connect to OVN: %w", err)
+		}
+	}
+
+	return d.ovnnb, d.ovnsb, nil
+}
+
+func (d *Daemon) setupOVS() error {
+	d.ovsMu.Lock()
+	defer d.ovsMu.Unlock()
+
+	// Clear any existing client.
+	d.ovs = nil
+
+	// Connect to OpenVswitch.
+	vswitch, err := ovs.NewVSwitch(d.localConfig.NetworkOVSConnection())
+	if err != nil {
+		return fmt.Errorf("Failed to connect to OVS: %w", err)
+	}
+
+	// Set the client.
+	d.ovs = vswitch
+
+	return nil
+}
+
+func (d *Daemon) getOVS() (*ovs.VSwitch, error) {
+	if d.ovs == nil {
+		err := d.setupOVS()
+		if err != nil {
+			return nil, fmt.Errorf("Failed to connect to OVS: %w", err)
+		}
+	}
+
+	return d.ovs, nil
+}
+
+func (d *Daemon) setupLinstor() error {
+	d.linstorMu.Lock()
+	defer d.linstorMu.Unlock()
+
+	// Clear any existing client.
+	d.linstor = nil
+
+	// Get the Linstor controller connection string.
+	controllerConnection := d.globalConfig.LinstorControllerConnection()
+
+	// Get the SSL certificates if needed.
+	sslCACert, sslClientCert, sslClientKey := d.globalConfig.LinstorSSL()
+
+	// Get Linstor client.
+	client, err := linstor.NewClient(controllerConnection, sslCACert, sslClientCert, sslClientKey)
+	if err != nil {
+		return fmt.Errorf("Failed to connect to Linstor: %w", err)
+	}
+
+	// Set the client.
+	d.linstor = client
+
+	return nil
+}
+
+func (d *Daemon) getLinstor() (*linstor.Client, error) {
+	// Setup the client if it does not exist.
+	if d.linstor == nil {
+		err := d.setupLinstor()
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return d.linstor, nil
+}
+
+// clusterSyncCertificate retrieves the cluster certificate from the leader and applies it
+// locally if it's a newer certificate for our existing private key. This catches up members
+// which were offline during a cluster certificate renewal.
+func (d *Daemon) clusterSyncCertificate() error {
+	// Skip if we're the leader.
+	leaderAddress, err := d.gateway.LeaderAddress()
+	if err != nil {
+		return err
+	}
+
+	if leaderAddress == d.localConfig.ClusterAddress() {
+		return nil
+	}
+
+	// Retrieve the leader's certificate chain.
+	leaderCerts, err := localtls.GetRemoteCertificates(fmt.Sprintf("https://%s", leaderAddress), version.UserAgent)
+	if err != nil {
+		return fmt.Errorf("Failed to retrieve cluster certificate from leader: %w", err)
+	}
+
+	leaderCert := leaderCerts[0]
+
+	var leaderCertPEM []byte
+	for _, cert := range leaderCerts {
+		leaderCertPEM = append(leaderCertPEM, pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: cert.Raw})...)
+	}
+
+	// Skip if the leader certificate doesn't match our private key (full cluster renewal).
+	networkCert := d.endpoints.NetworkCert()
+
+	_, err = tls.X509KeyPair(leaderCertPEM, networkCert.PrivateKey())
+	if err != nil {
+		return nil
+	}
+
+	// Skip if the leader certificate isn't newer than ours.
+	localCert, err := networkCert.PublicKeyX509()
+	if err != nil {
+		return err
+	}
+
+	if !leaderCert.NotBefore.After(localCert.NotBefore) {
+		return nil
+	}
+
+	// Write the new certificate to disk.
+	err = internalUtil.WriteCert(d.os.VarDir, "cluster", leaderCertPEM, networkCert.PrivateKey(), nil)
+	if err != nil {
+		return err
+	}
+
+	// Apply the new certificate.
+	newCert, err := internalUtil.LoadClusterCert(d.os.VarDir)
+	if err != nil {
+		return err
+	}
+
+	d.endpoints.NetworkUpdateCert(newCert)
+	d.gateway.NetworkUpdateCert(newCert)
+
+	// Resolve warning of this type.
+	_ = warnings.ResolveWarningsByNodeAndType(d.db.Cluster, d.serverName, warningtype.UnableToUpdateClusterCertificate)
+
+	logger.Info("Updated cluster certificate from leader")
+
+	return nil
+}

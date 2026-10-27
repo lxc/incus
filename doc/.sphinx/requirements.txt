@@ -1,0 +1,17 @@
+docutils<0.22
+furo
+gitpython
+linkify-it-py
+canonical-sphinx-extensions @ git+https://github.com/canonical/canonical-sphinx-extensions@bc648473619f93fdfefb9ae8becbe7d00dad675a
+myst-parser
+pyspelling
+sphinx
+sphinx-autobuild
+sphinx-copybutton
+sphinx-design
+sphinx-notfound-page
+sphinx-remove-toctrees
+sphinx-reredirects
+sphinx-tabs
+sphinxcontrib-jquery
+sphinxext-opengraph

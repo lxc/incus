@@ -1,0 +1,934 @@
+package main
+
+import (
+	"context"
+	"errors"
+	"fmt"
+	"io"
+	"io/fs"
+	"math/rand"
+	"net"
+	"os"
+	"os/exec"
+	"os/signal"
+	"path"
+	"reflect"
+	"slices"
+	"sort"
+	"strconv"
+	"strings"
+	"sync"
+
+	"github.com/spf13/cobra"
+	"golang.org/x/crypto/ssh"
+
+	incus "github.com/lxc/incus/v7/client"
+	u "github.com/lxc/incus/v7/cmd/incus/usage"
+	"github.com/lxc/incus/v7/internal/i18n"
+	"github.com/lxc/incus/v7/shared/api"
+	config "github.com/lxc/incus/v7/shared/cliconfig"
+	"github.com/lxc/incus/v7/shared/logger"
+	"github.com/lxc/incus/v7/shared/termios"
+	localtls "github.com/lxc/incus/v7/shared/tls"
+	"github.com/lxc/incus/v7/shared/util"
+)
+
+// Date layout to be used throughout the client.
+const dateLayout = "2006/01/02 15:04 MST"
+
+// bufferedWriter accumulates writes until Flush is called, then becomes a
+// direct pass-through to the underlying writer.
+type bufferedWriter struct {
+	mu      sync.Mutex
+	buf     []byte
+	out     io.Writer
+	flushed bool
+}
+
+func (b *bufferedWriter) Write(p []byte) (int, error) {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+
+	if b.flushed {
+		return b.out.Write(p)
+	}
+
+	b.buf = append(b.buf, p...)
+	return len(p), nil
+}
+
+func (b *bufferedWriter) Flush() error {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+
+	if b.flushed {
+		return nil
+	}
+
+	b.flushed = true
+
+	_, err := b.out.Write(b.buf)
+	b.buf = nil
+	return err
+}
+
+func (b *bufferedWriter) Close() error {
+	return nil
+}
+
+// Add a device to an instance.
+func instanceDeviceAdd(client incus.InstanceServer, name string, devName string, dev map[string]string) error {
+	// Get the instance entry
+	inst, etag, err := client.GetInstance(name)
+	if err != nil {
+		return err
+	}
+
+	// Check if the device already exists
+	_, ok := inst.Devices[devName]
+	if ok {
+		return fmt.Errorf(i18n.G("Device already exists: %s"), devName)
+	}
+
+	inst.Devices[devName] = dev
+
+	op, err := client.UpdateInstance(name, inst.Writable(), etag)
+	if err != nil {
+		return err
+	}
+
+	return op.Wait()
+}
+
+// Add a device to a profile.
+func profileDeviceAdd(client incus.InstanceServer, name string, devName string, dev map[string]string) error {
+	// Get the profile entry
+	profile, profileEtag, err := client.GetProfile(name)
+	if err != nil {
+		return err
+	}
+
+	// Check if the device already exists
+	_, ok := profile.Devices[devName]
+	if ok {
+		return fmt.Errorf(i18n.G("Device already exists: %s"), devName)
+	}
+
+	// Add the device to the instance
+	profile.Devices[devName] = dev
+
+	err = client.UpdateProfile(name, profile.Writable(), profileEtag)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// parseDeviceOverrides parses device overrides of the form "<deviceName>,<key>=<value>" into a device map.
+// The resulting device map is unlikely to contain valid devices as these are simply values to be overridden.
+func parseDeviceOverrides(deviceOverrideArgs []string) (map[string]map[string]string, error) {
+	deviceMap := map[string]map[string]string{}
+	for _, entry := range deviceOverrideArgs {
+		if !strings.Contains(entry, "=") || !strings.Contains(entry, ",") {
+			return nil, fmt.Errorf(i18n.G("Bad device override syntax, expecting <device>,<key>=<value>: %s"), entry)
+		}
+
+		deviceFields := strings.SplitN(entry, ",", 2)
+		keyFields := strings.SplitN(deviceFields[1], "=", 2)
+
+		if deviceMap[deviceFields[0]] == nil {
+			deviceMap[deviceFields[0]] = map[string]string{}
+		}
+
+		deviceMap[deviceFields[0]][keyFields[0]] = keyFields[1]
+	}
+
+	return deviceMap, nil
+}
+
+// isAliasesSubset returns true if the first array is completely contained in the second array.
+func isAliasesSubset(a1 []api.ImageAlias, a2 []api.ImageAlias) bool {
+	set := make(map[string]any)
+	for _, alias := range a2 {
+		set[alias.Name] = nil
+	}
+
+	for _, alias := range a1 {
+		_, found := set[alias.Name]
+		if !found {
+			return false
+		}
+	}
+
+	return true
+}
+
+// getCommonAliases returns the common aliases between a list of aliases and all the existing ones.
+func getCommonAliases(client incus.InstanceServer, aliases ...api.ImageAlias) ([]api.ImageAliasesEntry, error) {
+	if len(aliases) == 0 {
+		return nil, nil
+	}
+
+	names := make([]string, len(aliases))
+	for i, alias := range aliases {
+		names[i] = alias.Name
+	}
+
+	// 'getExistingAliases' which is using 'sort.SearchStrings' requires sorted slice
+	sort.Strings(names)
+
+	resp, err := client.GetImageAliases()
+	if err != nil {
+		return nil, err
+	}
+
+	return getExistingAliases(names, resp), nil
+}
+
+// Create the specified image aliases, updating those that already exist.
+func ensureImageAliases(client incus.InstanceServer, aliases []api.ImageAlias, fingerprint string) error {
+	if len(aliases) == 0 {
+		return nil
+	}
+
+	names := make([]string, len(aliases))
+	for i, alias := range aliases {
+		names[i] = alias.Name
+	}
+
+	sort.Strings(names)
+
+	resp, err := client.GetImageAliases()
+	if err != nil {
+		return err
+	}
+
+	// Delete existing aliases that match provided ones
+	for _, alias := range getExistingAliases(names, resp) {
+		err := client.DeleteImageAlias(alias.Name)
+		if err != nil {
+			return fmt.Errorf(i18n.G("Failed to remove alias %s: %w"), alias.Name, err)
+		}
+	}
+
+	// Create new aliases.
+	for _, alias := range aliases {
+		aliasPost := api.ImageAliasesPost{}
+		aliasPost.Name = alias.Name
+		aliasPost.Target = fingerprint
+		err := client.CreateImageAlias(aliasPost)
+		if err != nil {
+			return fmt.Errorf(i18n.G("Failed to create alias %s: %w"), alias.Name, err)
+		}
+	}
+
+	return nil
+}
+
+// getExistingAliases returns the intersection between a list of aliases and all the existing ones.
+func getExistingAliases(aliases []string, allAliases []api.ImageAliasesEntry) []api.ImageAliasesEntry {
+	existing := []api.ImageAliasesEntry{}
+	for _, alias := range allAliases {
+		name := alias.Name
+		pos := sort.SearchStrings(aliases, name)
+		if pos < len(aliases) && aliases[pos] == name {
+			existing = append(existing, alias)
+		}
+	}
+	return existing
+}
+
+// deleteImagesByAliases deletes images based on provided aliases. E.g.
+// aliases=[a1], image aliases=[a1] - image will be deleted
+// aliases=[a1, a2], image aliases=[a1] - image will be deleted
+// aliases=[a1], image aliases=[a1, a2] - image will be preserved.
+func deleteImagesByAliases(client incus.InstanceServer, aliases []api.ImageAlias) error {
+	existingAliases, err := getCommonAliases(client, aliases...)
+	if err != nil {
+		return fmt.Errorf(i18n.G("Error retrieving aliases: %w"), err)
+	}
+
+	// Nothing to do. Just return.
+	if len(existingAliases) == 0 {
+		return nil
+	}
+
+	// Delete images if necessary
+	visitedImages := make(map[string]any)
+	for _, alias := range existingAliases {
+		image, _, _ := client.GetImage(alias.Target)
+
+		// If the image has already been visited then continue
+		if image != nil {
+			_, found := visitedImages[image.Fingerprint]
+			if found {
+				continue
+			}
+
+			visitedImages[image.Fingerprint] = nil
+		}
+
+		// An image can have multiple aliases. If an image being published
+		// reuses all the aliases from an existing image then that existing image is removed.
+		// In other case only specific aliases should be removed. E.g.
+		// 1. If image with 'foo' and 'bar' aliases already exists and new image is published
+		//    with aliases 'foo' and 'bar'. Old image should be removed.
+		// 2. If image with 'foo' and 'bar' aliases already exists and new image is published
+		//    with alias 'foo'. Old image should be kept with alias 'bar'
+		//    and new image will have 'foo' alias.
+		if image != nil && isAliasesSubset(image.Aliases, aliases) {
+			op, err := client.DeleteImage(alias.Target)
+			if err != nil {
+				return err
+			}
+
+			err = op.Wait()
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
+// kvToMap converts a parsed KV list to a KV map.
+func kvToMap(p *u.Parsed) (map[string]string, error) {
+	values := map[string]string{}
+
+	stdinRead := false
+	for _, kv := range p.List {
+		key := kv.StringList[0]
+		value := kv.StringList[1]
+		if value == "-" && !termios.IsTerminal(getStdinFd()) {
+			if stdinRead {
+				return nil, errors.New(i18n.G("Cannot read the stdin twice"))
+			}
+
+			buf, err := io.ReadAll(os.Stdin)
+			if err != nil {
+				return nil, fmt.Errorf(i18n.G("Can't read from stdin: %w"), err)
+			}
+
+			value = string(buf[:])
+		}
+
+		values[key] = value
+	}
+
+	return values, nil
+}
+
+// settable abstracts commands that set something.
+type settable interface {
+	set(cmd *cobra.Command, parsed []*u.Parsed) error
+}
+
+// unsetKey reparses the last argument passed to an `unset` command to make it suitable for `set`
+// commands.
+func unsetKey(s settable, cmd *cobra.Command, parsed []*u.Parsed) error {
+	last := len(parsed) - 1
+	args := make([]string, len(parsed[last].StringList))
+	for i, arg := range parsed[last].StringList {
+		args[i] = arg + "="
+	}
+
+	parsed[last], _ = u.KV.List(1).Parse(u.Config{}, nil, &args)
+	return s.set(cmd, parsed)
+}
+
+func readEnvironmentFile(p string) (map[string]string, error) {
+	content, err := os.ReadFile(p)
+	if err != nil {
+		return nil, fmt.Errorf(i18n.G("Can't read from environment file: %w"), err)
+	}
+
+	// Split the file into lines.
+	lines := strings.Split(string(content), "\n")
+
+	// Create a map to store the key value pairs.
+	envMap := make(map[string]string)
+
+	// Iterate over the lines.
+	for _, line := range lines {
+		// Strip surrounding whitespace and skip empty lines and comments.
+		line = strings.TrimSpace(line)
+		if line == "" || strings.HasPrefix(line, "#") {
+			continue
+		}
+
+		key, value, _ := strings.Cut(line, "=")
+		key = strings.TrimSpace(key)
+		if key == "" {
+			continue
+		}
+
+		// Strip a single pair of matching surrounding quotes from the value.
+		value = strings.TrimSpace(value)
+		if len(value) >= 2 {
+			first := value[0]
+			last := value[len(value)-1]
+			if (first == '"' || first == '\'') && first == last {
+				value = value[1 : len(value)-1]
+			}
+		}
+
+		envMap[key] = value
+	}
+
+	return envMap, nil
+}
+
+// structHasField checks if specified struct includes field with given name.
+func structHasField(typ reflect.Type, field string) bool {
+	var parent reflect.Type
+
+	for fieldType := range typ.Fields() {
+		yaml := fieldType.Tag.Get("yaml")
+
+		if yaml == ",inline" {
+			parent = fieldType.Type
+		}
+
+		if yaml == field {
+			return true
+		}
+	}
+
+	if parent != nil {
+		return structHasField(parent, field)
+	}
+
+	return false
+}
+
+// getServerSupportedFilters returns two lists: one with filters supported by server and second one with not supported.
+func getServerSupportedFilters(filters []string, clientFilters []string, singleValueServerSupport bool) ([]string, []string) {
+	supportedFilters := []string{}
+	unsupportedFilters := []string{}
+
+	for _, filter := range filters {
+		membs := strings.SplitN(filter, "=", 2)
+
+		if len(membs) == 1 && singleValueServerSupport {
+			supportedFilters = append(supportedFilters, filter)
+			continue
+		} else if len(membs) == 1 && !singleValueServerSupport {
+			unsupportedFilters = append(unsupportedFilters, filter)
+			continue
+		}
+
+		found := false
+		if slices.Contains(clientFilters, membs[0]) {
+			found = true
+			unsupportedFilters = append(unsupportedFilters, filter)
+		}
+
+		if found {
+			continue
+		}
+
+		supportedFilters = append(supportedFilters, filter)
+	}
+
+	return supportedFilters, unsupportedFilters
+}
+
+// getImgInfo returns an image server and image info for the given image name (given by a user)
+// an image remote and an instance remote.
+func getImgInfo(d incus.InstanceServer, conf *config.Config, imgRemote string, instRemote string, imageRef string, source *api.InstanceSource) (incus.ImageServer, *api.Image, error) {
+	var imgRemoteServer incus.ImageServer
+	var imgInfo *api.Image
+	var err error
+
+	// Connect to the image server
+	if imgRemote == instRemote {
+		imgRemoteServer = d
+	} else {
+		imgRemoteServer, err = conf.GetImageServer(imgRemote)
+		if err != nil {
+			return nil, nil, err
+		}
+	}
+
+	// Optimisation for public image servers.
+	if conf.Remotes[imgRemote].Protocol != "incus" {
+		imgInfo = &api.Image{}
+		imgInfo.Fingerprint = imageRef
+		imgInfo.Public = true
+		source.Alias = imageRef
+	} else {
+		// Attempt to resolve an image alias
+		alias, _, err := imgRemoteServer.GetImageAlias(imageRef)
+		if err == nil {
+			source.Alias = imageRef
+			imageRef = alias.Target
+		}
+
+		// Get the image info
+		imgInfo, _, err = imgRemoteServer.GetImage(imageRef)
+		if err != nil {
+			return nil, nil, err
+		}
+	}
+
+	return imgRemoteServer, imgInfo, nil
+}
+
+// removeElementsFromSlice returns a slice equivalent to removing the given elements from the given list.
+// Elements not present in the list are ignored.
+func removeElementsFromSlice[T comparable](list []T, elements ...T) []T {
+	for i, element := range slices.Backward(elements) {
+		match := false
+		for j, l := range slices.Backward(list) {
+			if element == l {
+				match = true
+				list = slices.Delete(list, j, j+1)
+				break
+			}
+		}
+
+		if match {
+			elements = slices.Delete(elements, i, i+1)
+		}
+	}
+
+	return list
+}
+
+// sshfsMount mounts the instance's filesystem using sshfs by piping the instance's SFTP connection to sshfs.
+func sshfsMount(ctx context.Context, sftpConn net.Conn, entity string, relPath string, targetPath string) error {
+	// Use the format "incus.<instance_name>" as the source "host" (although not used for communication)
+	// so that the mount can be seen to be associated with Incus and the instance in the local mount table.
+	sourceURL := fmt.Sprintf("incus.%s:%s", entity, relPath)
+
+	sshfsCmd := exec.Command("sshfs", "-o", "slave", sourceURL, targetPath)
+
+	// Setup pipes.
+	stdin, err := sshfsCmd.StdinPipe()
+	if err != nil {
+		return err
+	}
+
+	stdout, err := sshfsCmd.StdoutPipe()
+	if err != nil {
+		return err
+	}
+
+	sshfsCmd.Stderr = os.Stderr
+
+	err = sshfsCmd.Start()
+	if err != nil {
+		return fmt.Errorf(i18n.G("Failed starting sshfs: %w"), err)
+	}
+
+	fmt.Printf(i18n.G("sshfs mounting %q on %q")+"\n", fmt.Sprintf("%s%s", entity, relPath), targetPath)
+	fmt.Println(i18n.G("Press ctrl+c to finish"))
+
+	ctx, cancel := context.WithCancel(ctx)
+	chSignal := make(chan os.Signal, 1)
+	signal.Notify(chSignal, os.Interrupt)
+	go func() {
+		select {
+		case <-chSignal:
+		case <-ctx.Done():
+		}
+
+		cancel()                                  // Prevents error output when the util.SafeCopy functions finish.
+		_ = sshfsCmd.Process.Signal(os.Interrupt) // This will cause sshfs to unmount.
+		_ = stdin.Close()
+	}()
+
+	go func() {
+		_, err := util.SafeCopy(stdin, sftpConn)
+		if ctx.Err() == nil {
+			if err != nil {
+				fmt.Fprintf(os.Stderr, i18n.G("I/O copy from instance to sshfs failed: %v")+"\n", err)
+			} else {
+				fmt.Println(i18n.G("Instance disconnected"))
+			}
+		}
+		cancel() // Ask sshfs to end.
+	}()
+
+	_, err = util.SafeCopy(sftpConn, stdout)
+	if err != nil && ctx.Err() == nil {
+		fmt.Fprintf(os.Stderr, i18n.G("I/O copy from sshfs to instance failed: %v")+"\n", err)
+	}
+
+	cancel() // Ask sshfs to end.
+
+	err = sshfsCmd.Wait()
+	if err != nil {
+		return err
+	}
+
+	fmt.Println(i18n.G("sshfs has stopped"))
+
+	return sftpConn.Close()
+}
+
+// sshSFTPServer runs an SSH server listening on a random port of 127.0.0.1.
+// It provides an unauthenticated SFTP server connected to the instance's filesystem.
+func sshSFTPServer(ctx context.Context, sftpConn func() (net.Conn, error), authNone bool, authUser string, listenAddr string) error {
+	randString := func(length int) string {
+		chars := []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0987654321")
+		randStr := make([]rune, length)
+		for i := range randStr {
+			randStr[i] = chars[rand.Intn(len(chars))]
+		}
+
+		return string(randStr)
+	}
+
+	// Setup an SSH SFTP server.
+	sshConfig := &ssh.ServerConfig{}
+
+	var authPass string
+
+	if authNone {
+		sshConfig.NoClientAuth = true
+	} else {
+		if authUser == "" {
+			authUser = randString(8)
+		}
+
+		authPass = randString(8)
+		sshConfig.PasswordCallback = func(c ssh.ConnMetadata, pass []byte) (*ssh.Permissions, error) {
+			if c.User() == authUser && string(pass) == authPass {
+				return nil, nil
+			}
+
+			return nil, fmt.Errorf(i18n.G("Password rejected for %q"), c.User())
+		}
+	}
+
+	// Generate random host key.
+	_, privKey, err := localtls.GenerateMemCert(false, false)
+	if err != nil {
+		return fmt.Errorf(i18n.G("Failed generating SSH host key: %w"), err)
+	}
+
+	private, err := ssh.ParsePrivateKey(privKey)
+	if err != nil {
+		return fmt.Errorf(i18n.G("Failed parsing SSH host key: %w"), err)
+	}
+
+	sshConfig.AddHostKey(private)
+
+	if listenAddr == "" {
+		listenAddr = "127.0.0.1:0" // Listen on a random local port if not specified.
+	}
+
+	listener, err := net.Listen("tcp", listenAddr)
+	if err != nil {
+		return fmt.Errorf(i18n.G("Failed to listen for connection: %w"), err)
+	}
+
+	fmt.Printf(i18n.G("SSH SFTP listening on %v")+"\n", listener.Addr())
+
+	if sshConfig.PasswordCallback != nil {
+		fmt.Printf(i18n.G("Login with username %q and password %q")+"\n", authUser, authPass)
+	} else {
+		fmt.Println(i18n.G("Login without username and password"))
+	}
+
+	for {
+		// Wait for new SSH connections.
+		nConn, err := listener.Accept()
+		if err != nil {
+			return fmt.Errorf(i18n.G("Failed to accept incoming connection: %w"), err)
+		}
+
+		// Handle each SSH connection in its own go routine.
+		go func() {
+			fmt.Printf(i18n.G("SSH client connected %q")+"\n", nConn.RemoteAddr())
+			defer fmt.Printf(i18n.G("SSH client disconnected %q")+"\n", nConn.RemoteAddr())
+			defer logger.WarnOnError(nConn.Close, "Failed to close connection")
+
+			// Before use, a handshake must be performed on the incoming net.Conn.
+			_, chans, reqs, err := ssh.NewServerConn(nConn, sshConfig)
+			if err != nil {
+				fmt.Fprintf(os.Stderr, i18n.G("Failed SSH handshake with client %q: %v")+"\n", nConn.RemoteAddr(), err)
+				return
+			}
+
+			// The incoming Request channel must be serviced.
+			go ssh.DiscardRequests(reqs)
+
+			// Service the incoming Channel requests.
+			for newChannel := range chans {
+				localChannel := newChannel
+
+				// Channels have a type, depending on the application level protocol intended.
+				// In the case of an SFTP session, this is "subsystem" with a payload string of
+				// "<length=4>sftp"
+				if localChannel.ChannelType() != "session" {
+					_ = localChannel.Reject(ssh.UnknownChannelType, "unknown channel type")
+					fmt.Fprintf(os.Stderr, i18n.G("Unknown channel type for client %q: %s")+"\n", nConn.RemoteAddr(), localChannel.ChannelType())
+					continue
+				}
+
+				// Accept incoming channel request.
+				channel, requests, err := localChannel.Accept()
+				if err != nil {
+					fmt.Fprintf(os.Stderr, i18n.G("Failed accepting channel client %q: %v")+"\n", err)
+					return
+				}
+
+				// Sessions have out-of-band requests such as "shell", "pty-req" and "env".
+				// Here we handle only the "subsystem" request.
+				go func(in <-chan *ssh.Request) {
+					for req := range in {
+						ok := false
+						switch req.Type {
+						case "subsystem":
+							if string(req.Payload[4:]) == "sftp" {
+								ok = true
+							}
+						}
+
+						_ = req.Reply(ok, nil)
+					}
+				}(requests)
+
+				// Handle each channel in its own go routine.
+				go func() {
+					defer logger.WarnOnError(channel.Close, "Failed to close channel")
+
+					// Connect to the instance's SFTP server.
+					sftpConn, err := sftpConn()
+					if err != nil {
+						fmt.Fprintf(os.Stderr, i18n.G("Failed connecting to instance SFTP for client %q: %v")+"\n", nConn.RemoteAddr(), err)
+						return
+					}
+
+					defer logger.WarnOnError(sftpConn.Close, "Failed to close SFTP connection")
+
+					// Copy SFTP data between client and remote instance.
+					ctx, cancel := context.WithCancel(ctx)
+					go func() {
+						_, err := util.SafeCopy(channel, sftpConn)
+						if ctx.Err() == nil {
+							if err != nil {
+								fmt.Fprintf(os.Stderr, i18n.G("I/O copy from instance to SSH failed: %v")+"\n", err)
+							} else {
+								fmt.Printf(i18n.G("Instance disconnected for client %q")+"\n", nConn.RemoteAddr())
+							}
+						}
+						cancel() // Prevents error output when other util.SafeCopy finishes.
+						_ = channel.Close()
+					}()
+
+					_, err = util.SafeCopy(sftpConn, channel)
+					if err != nil && ctx.Err() == nil {
+						fmt.Fprintf(os.Stderr, i18n.G("I/O copy from SSH to instance failed: %v")+"\n", err)
+					}
+
+					cancel() // Prevents error output when other util.SafeCopy finishes.
+					_ = sftpConn.Close()
+				}()
+			}
+		}()
+	}
+}
+
+// formatRemote formats a remote object.
+func formatRemote(conf *config.Config, p *u.Parsed) string {
+	if p.RemoteName == conf.DefaultRemote {
+		return p.RemoteObject.String
+	}
+
+	return p.RemoteName + ":" + p.RemoteObject.String
+}
+
+// normalizePath normalizes a path and return whether it looks like a directory.
+func normalizePath(p string) (string, bool) {
+	// The SFTP server expects a `/` separated path starting with `/`, so use
+	// the slash-only "path" logic regardless of the client platform.
+	p = "/" + p
+	return path.Clean(p), strings.HasSuffix(p, "/")
+}
+
+// isStdin returns whether the provided path looks like stdin.
+func isStdin(p string) bool {
+	return slices.Contains([]string{"-", "/dev/stdin", "/dev/fd/0"}, p)
+}
+
+// isStdout returns whether the provided path looks like stdout.
+func isStdout(p string) bool {
+	return slices.Contains([]string{"-", "/dev/stdout", "/dev/fd/1"}, p)
+}
+
+// parseMode parses a mode supported by GNU `chmod` into an `fs.FileMode`. It takes a reference
+// mode, a umask, and whether the target is a directory as arguments to properly compute the
+// resulting mode in case a symbolic mode expression is given, to almost fully conform to `chmod`.
+// Where the function differs from `chmod` is in its handling of suid and sgid bits removal: `chmod`
+// explicitly requires adding a 0 in front of a 4-character octal permission to actually remove
+// those bits on directories only: `chmod 00755 dir` vs `chmod 0755 file`. We don’t.
+func parseMode(m string, mode fs.FileMode, umask fs.FileMode, isDir bool) (fs.FileMode, error) {
+	// If the mode can be parsed as an integer, reuse our shared parser.
+	_, err := strconv.ParseUint(m, 8, 12)
+	if err == nil {
+		return util.ParseMode(m)
+	}
+
+	for _, modeSpec := range strings.Split(m, ",") {
+		var user, group, others bool
+		base := fs.FileMode(0)
+		index := -1
+	out:
+		for i, r := range modeSpec {
+			switch r {
+			case 'u':
+				user = true
+			case 'g':
+				group = true
+			case 'o':
+				others = true
+			case 'a':
+				user = true
+				group = true
+				others = true
+			case '+':
+				base = mode
+				fallthrough
+			case '-', '=':
+				index = i
+				break out
+			default:
+				return fs.FileMode(0), fmt.Errorf(i18n.G("Unknown character %c in %s; expected one of “u”, “g”, “o”, “a”, “-”, “+” or “=”"), r, modeSpec)
+			}
+		}
+
+		if index == -1 {
+			return fs.FileMode(0), fmt.Errorf(i18n.G("Unexpected mode %s; expected a “-”, “+” or “=” modifier"), modeSpec)
+		}
+
+		modifier := modeSpec[index]
+		currentUmask := fs.FileMode(0)
+		userSpec := true
+		if !user && !group && !others {
+			user = true
+			group = true
+			others = true
+			currentUmask = umask
+			userSpec = false
+		}
+
+		rest := modeSpec[index+1:]
+
+		// If the rest of the current mode specifier can be parsed as an integer, and no user specifier
+		// was provided, reuse our shared parser. This also ignores the umask.
+		_, err := strconv.ParseUint(rest, 8, 12)
+		if err == nil && !userSpec {
+			base, _ = util.ParseMode(rest)
+			currentUmask = 0
+		} else if len(rest) == 1 && slices.Contains([]byte{'u', 'g', 'o'}, rest[0]) {
+			switch rest[0] {
+			case 'u':
+				base = (mode & 0o700) >> 6
+			case 'g':
+				base = (mode & 0o070) >> 3
+			case 'o':
+				base = mode & 0o007
+			}
+
+			base = base * 0o111
+		} else {
+			for _, r := range rest {
+				switch r {
+				case 'r':
+					base |= 0o444
+				case 'w':
+					base |= 0o222
+				case 'x':
+					base |= 0o111
+				case 'X':
+					if isDir || base&0o111 != 0 {
+						base |= 0o111
+					}
+
+				case 's':
+					if user {
+						base |= fs.ModeSetuid
+					}
+
+					if group {
+						base |= fs.ModeSetgid
+					}
+
+				case 't':
+					if others {
+						base |= fs.ModeSticky
+					}
+
+				default:
+					return fs.FileMode(0), fmt.Errorf(i18n.G("Unknown character %c in %s; expected one of “r”, “w”, “x”, “X”, “s” or “t”"), r, modeSpec)
+				}
+			}
+		}
+
+		base &^= currentUmask
+		if user {
+			switch modifier {
+			case '-':
+				mode &^= base & 0o700
+			case '=':
+				mode &^= 0o700
+				fallthrough
+			case '+':
+				mode |= base & 0o700
+			}
+		}
+
+		if group {
+			switch modifier {
+			case '-':
+				mode &^= base & 0o070
+			case '=':
+				mode &^= 0o070
+				fallthrough
+			case '+':
+				mode |= base & 0o070
+			}
+		}
+
+		if others {
+			switch modifier {
+			case '-':
+				mode &^= base & 0o007
+			case '=':
+				mode &^= 0o007
+				fallthrough
+			case '+':
+				mode |= base & 0o007
+			}
+		}
+
+		mask7000 := fs.ModeSetuid | fs.ModeSetgid | fs.ModeSticky
+
+		// This check is necessary to properly handle the `=` case.
+		if base&mask7000 != 0 {
+			switch modifier {
+			case '-':
+				mode &^= base & mask7000
+			case '=':
+				mode &^= mask7000
+				fallthrough
+			case '+':
+				mode |= base & mask7000
+			}
+		}
+	}
+
+	return mode, nil
+}
+
+// parsePristineMode parses a mode supported by GNU `chmod` into an `fs.FileMode` for a new file.
+// This DOES NOT take into account any umask, making file creation commands as predictable as
+// possible.
+func parsePristineMode(m string) (fs.FileMode, error) {
+	return parseMode(m, fs.FileMode(0), fs.FileMode(0), false)
+}

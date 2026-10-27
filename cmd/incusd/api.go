@@ -1,0 +1,521 @@
+package main
+
+import (
+	"context"
+	"errors"
+	"fmt"
+	"io/fs"
+	"net/http"
+	"net/url"
+	"os"
+	"strings"
+	"time"
+
+	"github.com/lxc/incus/v7/internal/server/cluster"
+	clusterConfig "github.com/lxc/incus/v7/internal/server/cluster/config"
+	clusterRequest "github.com/lxc/incus/v7/internal/server/cluster/request"
+	"github.com/lxc/incus/v7/internal/server/db"
+	"github.com/lxc/incus/v7/internal/server/instance"
+	"github.com/lxc/incus/v7/internal/server/request"
+	"github.com/lxc/incus/v7/internal/server/response"
+	storagePools "github.com/lxc/incus/v7/internal/server/storage"
+	"github.com/lxc/incus/v7/internal/server/storage/s3"
+	"github.com/lxc/incus/v7/internal/server/storage/s3/local"
+	"github.com/lxc/incus/v7/shared/api"
+	"github.com/lxc/incus/v7/shared/logger"
+	"github.com/lxc/incus/v7/shared/util"
+)
+
+// swagger:operation GET / server api_get
+//
+//	Get the supported API endpoints
+//
+//	Returns a list of supported API versions (URLs).
+//
+//	Internal API endpoints are not reported as those aren't versioned
+//	and should only be used by the daemon itself.
+//
+//	---
+//	produces:
+//	  - application/json
+//	responses:
+//	  "200":
+//	    description: API endpoints
+//	    schema:
+//	      type: object
+//	      description: Sync response
+//	      properties:
+//	        type:
+//	          type: string
+//	          description: Response type
+//	          example: sync
+//	        status:
+//	          type: string
+//	          description: Status description
+//	          example: Success
+//	        status_code:
+//	          type: integer
+//	          description: Status code
+//	          example: 200
+//	        metadata:
+//	          type: array
+//	          description: List of endpoints
+//	          items:
+//	            type: string
+//	          example: ["/1.0"]
+func restServer(d *Daemon) *http.Server {
+	/* Setup the web server */
+	router := http.NewServeMux()
+
+	// Serving the UI.
+	uiPath := os.Getenv("INCUS_UI")
+	uiEnabled := uiPath != "" && util.PathExists(fmt.Sprintf("%s/index.html", uiPath))
+	if uiEnabled {
+		uiDir := uiHTTPDir{http.Dir(uiPath)}
+		router.Handle("/ui/", http.StripPrefix("/ui/", http.FileServer(uiDir)))
+		router.HandleFunc("/ui", func(w http.ResponseWriter, r *http.Request) {
+			http.Redirect(w, r, "/ui/", http.StatusMovedPermanently)
+		})
+	}
+
+	// Serving the documentation.
+	documentationPath := os.Getenv("INCUS_DOCUMENTATION")
+	docEnabled := documentationPath != "" && util.PathExists(documentationPath)
+	if docEnabled {
+		documentationDir := documentationHTTPDir{http.Dir(documentationPath)}
+		router.Handle("/documentation/", http.StripPrefix("/documentation/", http.FileServer(documentationDir)))
+		router.HandleFunc("/documentation", func(w http.ResponseWriter, r *http.Request) {
+			http.Redirect(w, r, "/documentation/", http.StatusMovedPermanently)
+		})
+	}
+
+	// Serving the OS API.
+	d.createCmd(router, "os", apiOS)
+	router.HandleFunc("/os", func(w http.ResponseWriter, r *http.Request) {
+		http.Redirect(w, r, "/os/", http.StatusMovedPermanently)
+	})
+
+	// OIDC browser login (code flow).
+	router.HandleFunc("/oidc/login", func(w http.ResponseWriter, r *http.Request) {
+		if d.oidcVerifier == nil {
+			w.WriteHeader(http.StatusNotFound)
+			return
+		}
+
+		d.oidcVerifier.Login(w, r)
+	})
+
+	router.HandleFunc("/oidc/callback", func(w http.ResponseWriter, r *http.Request) {
+		if d.oidcVerifier == nil {
+			w.WriteHeader(http.StatusNotFound)
+			return
+		}
+
+		d.oidcVerifier.Callback(w, r)
+	})
+
+	router.HandleFunc("/oidc/logout", func(w http.ResponseWriter, r *http.Request) {
+		if d.oidcVerifier == nil {
+			w.WriteHeader(http.StatusNotFound)
+			return
+		}
+
+		d.oidcVerifier.Logout(w, r)
+	})
+
+	// TLS JWT browser login (cookie based).
+	router.HandleFunc("/tls/login", d.tlsJWTLogin)
+	router.HandleFunc("/tls/logout", d.tlsJWTLogout)
+
+	router.HandleFunc("/{$}", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+
+		ua := r.Header.Get("User-Agent")
+		if uiEnabled && strings.Contains(ua, "Gecko") {
+			// Web browser handling.
+			http.Redirect(w, r, "/ui/", http.StatusMovedPermanently)
+		} else {
+			// Normal client handling.
+			_ = response.SyncResponse(true, []string{"/1.0"}).Render(w)
+		}
+	})
+
+	for endpoint, f := range d.gateway.HandlerFuncs(d.gatewayAccess) {
+		router.HandleFunc(endpoint, f)
+	}
+
+	for _, c := range api10 {
+		d.createCmd(router, "1.0", c)
+
+		// Create any alias endpoints using the same handlers as the parent endpoint but
+		// with a different path and name (so the handler can differentiate being called via
+		// a different endpoint) if it wants to.
+		for _, alias := range c.Aliases {
+			ac := c
+			ac.Name = alias.Name
+			ac.Path = alias.Path
+			d.createCmd(router, "1.0", ac)
+		}
+	}
+
+	for _, c := range apiInternal {
+		d.createCmd(router, "internal", c)
+	}
+
+	for _, c := range apiACME {
+		d.createCmd(router, "", c)
+	}
+
+	notFoundHandler := func(w http.ResponseWriter, r *http.Request) {
+		logger.Info("Sending top level 404", logger.Ctx{"url": r.URL, "method": r.Method, "remote": r.RemoteAddr})
+		w.Header().Set("Content-Type", "application/json")
+		_ = response.NotFound(nil).Render(w)
+	}
+
+	return &http.Server{
+		Handler:           &httpServer{r: router, d: d, n: notFoundHandler},
+		ConnContext:       request.SaveConnectionInContext,
+		IdleTimeout:       30 * time.Second,
+		ReadHeaderTimeout: 3 * time.Second,
+	}
+}
+
+func hoistReqVM(f func(*Daemon, instance.Instance, http.ResponseWriter, *http.Request) response.Response, d *Daemon) func(http.ResponseWriter, *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		trusted, inst, err := authenticateAgentCert(d.State(), r)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		if !trusted {
+			http.Error(w, "", http.StatusUnauthorized)
+			return
+		}
+
+		resp := f(d, inst, w, r)
+		_ = resp.Render(w)
+	}
+}
+
+func vSockServer(d *Daemon) *http.Server {
+	return &http.Server{
+		Handler:           devIncusAPI(d, hoistReqVM),
+		IdleTimeout:       30 * time.Second,
+		ReadHeaderTimeout: 3 * time.Second,
+		ReadTimeout:       3 * time.Second,
+	}
+}
+
+func metricsServer(d *Daemon) *http.Server {
+	/* Setup the web server */
+	router := http.NewServeMux()
+
+	router.HandleFunc("/{$}", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		_ = response.SyncResponse(true, []string{"/1.0"}).Render(w)
+	})
+
+	for endpoint, f := range d.gateway.HandlerFuncs(d.gatewayAccess) {
+		router.HandleFunc(endpoint, f)
+	}
+
+	d.createCmd(router, "1.0", api10Cmd)
+	d.createCmd(router, "1.0", metricsCmd)
+
+	notFoundHandler := func(w http.ResponseWriter, r *http.Request) {
+		logger.Info("Sending top level 404", logger.Ctx{"url": r.URL, "method": r.Method, "remote": r.RemoteAddr})
+		w.Header().Set("Content-Type", "application/json")
+		_ = response.NotFound(nil).Render(w)
+	}
+
+	return &http.Server{
+		Handler:           &httpServer{r: router, d: d, n: notFoundHandler},
+		IdleTimeout:       30 * time.Second,
+		ReadHeaderTimeout: 3 * time.Second,
+		ReadTimeout:       3 * time.Second,
+		WriteTimeout:      30 * time.Second,
+	}
+}
+
+func storageBucketsServer(d *Daemon) *http.Server {
+	/* Setup the web server */
+	router := http.NewServeMux()
+
+	router.HandleFunc("/{$}", func(w http.ResponseWriter, r *http.Request) {
+		// Wait until daemon is fully started.
+		<-d.waitReady.Done()
+
+		s := d.State()
+
+		// Check if request contains an access key, and if so try and route it to the associated bucket.
+		accessKey := s3.AuthorizationHeaderAccessKey(r.Header.Get("Authorization"))
+		if accessKey != "" {
+			// Lookup access key to ascertain if it maps to a bucket.
+			var err error
+			var bucket *db.StorageBucket
+			err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
+				bucket, err = tx.GetStoragePoolLocalBucketByAccessKey(ctx, accessKey)
+				return err
+			})
+			if err != nil {
+				if api.StatusErrorCheck(err, http.StatusNotFound) {
+					errResult := s3.Error{Code: s3.ErrorCodeInvalidAccessKeyID}
+					errResult.Response(w)
+
+					return
+				}
+
+				errResult := s3.Error{Code: s3.ErrorCodeInternalError, Message: err.Error()}
+				errResult.Response(w)
+
+				return
+			}
+
+			serveLocalBucket(d, w, r, bucket)
+			return
+		}
+
+		// Otherwise treat request as anonymous.
+		listResult := s3.ListAllMyBucketsResult{Owner: s3.Owner{ID: "anonymous"}}
+		listResult.Response(w)
+	})
+
+	// We use the NotFound handler to dispatch requests to local buckets by path.
+	notFoundHandler := func(w http.ResponseWriter, r *http.Request) {
+		// Wait until daemon is fully started.
+		<-d.waitReady.Done()
+
+		s := d.State()
+
+		reqURL, err := url.Parse(r.RequestURI)
+		if err != nil {
+			errResult := s3.Error{Code: s3.ErrorInvalidRequest, Message: err.Error()}
+			errResult.Response(w)
+
+			return
+		}
+
+		pathParts := strings.Split(reqURL.Path, "/")
+		if len(pathParts) < 2 {
+			errResult := s3.Error{Code: s3.ErrorInvalidRequest, Message: "Bucket name not specified"}
+			errResult.Response(w)
+
+			return
+		}
+
+		bucketName, err := url.PathUnescape(pathParts[1])
+		if err != nil {
+			errResult := s3.Error{Code: s3.ErrorCodeNoSuchBucket, BucketName: pathParts[1]}
+			errResult.Response(w)
+
+			return
+		}
+
+		// Lookup bucket.
+		var bucket *db.StorageBucket
+		err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
+			bucket, err = tx.GetStoragePoolLocalBucket(ctx, bucketName)
+			return err
+		})
+		if err != nil {
+			if api.StatusErrorCheck(err, http.StatusNotFound) {
+				errResult := s3.Error{Code: s3.ErrorCodeNoSuchBucket, BucketName: bucketName}
+				errResult.Response(w)
+
+				return
+			}
+
+			errResult := s3.Error{Code: s3.ErrorCodeInternalError, Message: err.Error(), BucketName: bucketName}
+			errResult.Response(w)
+
+			return
+		}
+
+		serveLocalBucket(d, w, r, bucket)
+	}
+
+	return &http.Server{
+		Handler:           &httpServer{r: router, d: d, n: notFoundHandler},
+		IdleTimeout:       30 * time.Second,
+		ReadHeaderTimeout: 3 * time.Second,
+	}
+}
+
+// serveLocalBucket mounts the bucket volume, loads its keys, and dispatches the
+// request to the in-process S3 handler. Always called for buckets backed by
+// local storage drivers (dir, btrfs, zfs).
+func serveLocalBucket(d *Daemon, w http.ResponseWriter, r *http.Request, bucket *db.StorageBucket) {
+	s := d.State()
+
+	pool, err := storagePools.LoadByName(s, bucket.PoolName)
+	if err != nil {
+		(&s3.Error{Code: s3.ErrorCodeInternalError, Message: err.Error()}).Response(w)
+		return
+	}
+
+	// Load credentials for the bucket.
+	var keys []*db.StorageBucketKey
+	err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
+		var err error
+		keys, err = tx.GetStoragePoolBucketKeys(ctx, bucket.ID)
+		return err
+	})
+	if err != nil {
+		(&s3.Error{Code: s3.ErrorCodeInternalError, Message: err.Error()}).Response(w)
+		return
+	}
+
+	creds := make([]local.Credential, 0, len(keys))
+	for _, k := range keys {
+		creds = append(creds, local.Credential{
+			AccessKey: k.AccessKey,
+			SecretKey: k.SecretKey,
+			Role:      local.Role(k.Role),
+		})
+	}
+
+	bucketDir, unmount, err := pool.MountLocalBucket(bucket.Project, bucket.Name, nil)
+	if err != nil {
+		(&s3.Error{Code: s3.ErrorCodeInternalError, Message: err.Error()}).Response(w)
+		return
+	}
+
+	defer func() {
+		err := unmount()
+		if err != nil {
+			logger.Errorf("Failed unmounting bucket %q after S3 request: %v", bucket.Name, err)
+		}
+	}()
+
+	srv := local.NewServer(bucketDir, bucket.Name, creds)
+
+	// Migrate any data left over from the legacy minio layout, but only
+	// once the request has cleared authentication. This is a no-op once
+	// the bucket has been migrated.
+	srv.OnAuthenticated = func() error {
+		return local.MigrateMinioBucket(bucketDir, bucket.Name)
+	}
+
+	srv.ServeHTTP(w, r)
+}
+
+type httpServer struct {
+	r *http.ServeMux
+	d *Daemon
+	n func(w http.ResponseWriter, r *http.Request)
+}
+
+func (s *httpServer) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
+	if !strings.HasPrefix(req.URL.Path, "/internal") {
+		// Wait for startup if not cluster internal queries.
+		if !isClusterNotification(req) {
+			<-s.d.setupChan
+		}
+
+		// Set CORS headers, unless this is an internal request.
+		setCORSHeaders(rw, req, s.d.State().GlobalConfig)
+	}
+
+	// OPTIONS request don't need any further processing
+	if req.Method == "OPTIONS" {
+		return
+	}
+
+	// http.ServeMux has no NotFoundHandler, so when no route matches the
+	// request we dispatch to the configured NotFound handler ourselves.
+	if s.n != nil {
+		_, pattern := s.r.Handler(req)
+		if pattern == "" {
+			s.n(rw, req)
+			return
+		}
+	}
+
+	// Call the original server
+	s.r.ServeHTTP(rw, req)
+}
+
+func setCORSHeaders(rw http.ResponseWriter, req *http.Request, config *clusterConfig.Config) {
+	// Check if we have a working config.
+	if config == nil {
+		return
+	}
+
+	allowedOrigin := config.HTTPSAllowedOrigin()
+	origin := req.Header.Get("Origin")
+	if allowedOrigin != "" && origin != "" {
+		rw.Header().Set("Access-Control-Allow-Origin", allowedOrigin)
+	}
+
+	allowedMethods := config.HTTPSAllowedMethods()
+	if allowedMethods != "" && origin != "" {
+		rw.Header().Set("Access-Control-Allow-Methods", allowedMethods)
+	}
+
+	allowedHeaders := config.HTTPSAllowedHeaders()
+	if allowedHeaders != "" && origin != "" {
+		rw.Header().Set("Access-Control-Allow-Headers", allowedHeaders)
+	}
+
+	allowedCredentials := config.HTTPSAllowedCredentials()
+	if allowedCredentials {
+		rw.Header().Set("Access-Control-Allow-Credentials", "true")
+	}
+}
+
+// Return true if this an API request coming from a cluster node that is
+// notifying us of some user-initiated API request that needs some action to be
+// taken on this node as well.
+func isClusterNotification(r *http.Request) bool {
+	return r.Header.Get("User-Agent") == clusterRequest.UserAgentNotifier
+}
+
+func isClusterInternal(r *http.Request) bool {
+	return r.Header.Get("User-Agent") == clusterRequest.UserAgentClient
+}
+
+type uiHTTPDir struct {
+	http.FileSystem
+}
+
+// Open is part of the http.FileSystem interface.
+func (httpFS uiHTTPDir) Open(name string) (http.File, error) {
+	fsFile, err := httpFS.FileSystem.Open(name)
+	if err != nil && errors.Is(err, fs.ErrNotExist) {
+		return httpFS.FileSystem.Open("index.html")
+	}
+
+	return fsFile, err
+}
+
+type documentationHTTPDir struct {
+	http.FileSystem
+}
+
+// Open is part of the http.FileSystem interface.
+func (httpFS documentationHTTPDir) Open(name string) (http.File, error) {
+	fsFile, err := httpFS.FileSystem.Open(name)
+	if err != nil && errors.Is(err, fs.ErrNotExist) {
+		return httpFS.FileSystem.Open("index.html")
+	}
+
+	return fsFile, err
+}
+
+func (d *Daemon) gatewayAccess(w http.ResponseWriter, r *http.Request) bool {
+	certs, err := d.getTrustedServerCertificates()
+	if err != nil {
+		http.Error(w, "403 failed to read trusted certificate cache", http.StatusForbidden)
+
+		return false
+	}
+
+	if !cluster.CheckCert(r, d.endpoints.NetworkCert(), d.serverCert(), certs) {
+		http.Error(w, "403 invalid client certificate", http.StatusForbidden)
+
+		return false
+	}
+
+	return true
+}

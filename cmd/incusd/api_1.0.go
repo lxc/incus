@@ -1,0 +1,1152 @@
+package main
+
+import (
+	"context"
+	"encoding/json"
+	"errors"
+	"fmt"
+	"net"
+	"net/http"
+	"os"
+	"strings"
+
+	incus "github.com/lxc/incus/v7/client"
+	"github.com/lxc/incus/v7/internal/server/auth"
+	"github.com/lxc/incus/v7/internal/server/auth/oidc"
+	"github.com/lxc/incus/v7/internal/server/cluster"
+	clusterConfig "github.com/lxc/incus/v7/internal/server/cluster/config"
+	"github.com/lxc/incus/v7/internal/server/config"
+	"github.com/lxc/incus/v7/internal/server/db"
+	instanceDrivers "github.com/lxc/incus/v7/internal/server/instance/drivers"
+	"github.com/lxc/incus/v7/internal/server/lifecycle"
+	"github.com/lxc/incus/v7/internal/server/node"
+	"github.com/lxc/incus/v7/internal/server/request"
+	"github.com/lxc/incus/v7/internal/server/response"
+	scriptletLoad "github.com/lxc/incus/v7/internal/server/scriptlet/load"
+	localUtil "github.com/lxc/incus/v7/internal/server/util"
+	"github.com/lxc/incus/v7/internal/version"
+	"github.com/lxc/incus/v7/shared/api"
+	"github.com/lxc/incus/v7/shared/logger"
+	"github.com/lxc/incus/v7/shared/osarch"
+	"github.com/lxc/incus/v7/shared/revert"
+	localtls "github.com/lxc/incus/v7/shared/tls"
+	"github.com/lxc/incus/v7/shared/util"
+	"github.com/lxc/incus/v7/shared/ws"
+)
+
+var api10Cmd = APIEndpoint{
+	Get:   APIEndpointAction{Handler: api10Get, AllowUntrusted: true},
+	Patch: APIEndpointAction{Handler: api10Patch, AccessHandler: allowPermission(auth.ObjectTypeServer, auth.EntitlementCanEdit)},
+	Put:   APIEndpointAction{Handler: api10Put, AccessHandler: allowPermission(auth.ObjectTypeServer, auth.EntitlementCanEdit)},
+}
+
+var api10 = []APIEndpoint{
+	api10Cmd,
+	api10ResourcesCmd,
+	certificateCmd,
+	certificatesCmd,
+	clusterCmd,
+	clusterGroupCmd,
+	clusterGroupsCmd,
+	clusterNodeCmd,
+	clusterNodeStateCmd,
+	clusterNodesCmd,
+	clusterCertificateCmd,
+	instanceBackupCmd,
+	instanceBackupExportCmd,
+	instanceBackupsCmd,
+	instanceBitmapsCmd,
+	instanceCmd,
+	instanceConsoleCmd,
+	instanceExecCmd,
+	instanceFileCmd,
+	instanceExecOutputCmd,
+	instanceExecOutputsCmd,
+	instanceLogCmd,
+	instanceLogsCmd,
+	instanceMetadataCmd,
+	instanceMetadataTemplatesCmd,
+	instancesCmd,
+	instanceNBDCmd,
+	instanceNVRAMCmd,
+	instanceNVRAMGUIDCmd,
+	instanceNVRAMGUIDVarCmd,
+	instancePortForwardCmd,
+	instanceRebuildCmd,
+	instanceSFTPCmd,
+	instanceSnapshotCmd,
+	instanceSnapshotsCmd,
+	instanceStateCmd,
+	instanceAccessCmd,
+	instanceDebugMemoryCmd,
+	instanceDebugRepairCmd,
+	eventsCmd,
+	imageAliasCmd,
+	imageAliasesCmd,
+	imageCmd,
+	imagesCmd,
+	metadataConfigurationCmd,
+	networkCmd,
+	networkLeasesCmd,
+	networksCmd,
+	networkStateCmd,
+	networkACLCmd,
+	networkACLsCmd,
+	networkACLLogCmd,
+	networkAddressSetCmd,
+	networkAddressSetsCmd,
+	networkAllocationsCmd,
+	networkForwardCmd,
+	networkForwardsCmd,
+	networkIntegrationCmd,
+	networkIntegrationsCmd,
+	networkLoadBalancerCmd,
+	networkLoadBalancerStateCmd,
+	networkLoadBalancersCmd,
+	networkPeerCmd,
+	networkPeersCmd,
+	networkZoneCmd,
+	networkZonesCmd,
+	networkZoneRecordCmd,
+	networkZoneRecordsCmd,
+	operationCmd,
+	operationsCmd,
+	operationWait,
+	operationWebsocket,
+	profileCmd,
+	profilesCmd,
+	projectCmd,
+	projectsCmd,
+	projectStateCmd,
+	projectAccessCmd,
+	storagePoolCmd,
+	storagePoolResourcesCmd,
+	storagePoolsCmd,
+	storagePoolBucketsCmd,
+	storagePoolBucketCmd,
+	storagePoolBucketKeysCmd,
+	storagePoolBucketKeyCmd,
+	storagePoolBucketBackupsCmd,
+	storagePoolBucketBackupCmd,
+	storagePoolBucketBackupsExportCmd,
+	storagePoolVolumesCmd,
+	storagePoolVolumeSnapshotsTypeCmd,
+	storagePoolVolumeSnapshotTypeCmd,
+	storagePoolVolumesTypeCmd,
+	storagePoolVolumeTypeCmd,
+	storagePoolVolumeTypeBitmapCmd,
+	storagePoolVolumeTypeBitmapsCmd,
+	storagePoolVolumeTypeNBDCmd,
+	storagePoolVolumeTypeSFTPCmd,
+	storagePoolVolumeTypeFileCmd,
+	storagePoolVolumeTypeCustomBackupsCmd,
+	storagePoolVolumeTypeCustomBackupCmd,
+	storagePoolVolumeTypeCustomBackupExportCmd,
+	storagePoolVolumeTypeRebuildCmd,
+	storagePoolVolumeTypeStateCmd,
+	warningsCmd,
+	warningCmd,
+	metricsCmd,
+}
+
+// swagger:operation GET /1.0?public server server_get_untrusted
+//
+//  Get the server environment
+//
+//  Shows a small subset of the server environment and configuration
+//  which is required by untrusted clients to reach a server.
+//
+//  The `?public` part of the URL isn't required, it's simply used to
+//  separate the two behaviors of this endpoint.
+//
+//  ---
+//  produces:
+//    - application/json
+//  responses:
+//    "200":
+//      description: Server environment and configuration
+//      schema:
+//        type: object
+//        description: Sync response
+//        properties:
+//          type:
+//            type: string
+//            description: Response type
+//            example: sync
+//          status:
+//            type: string
+//            description: Status description
+//            example: Success
+//          status_code:
+//            type: integer
+//            description: Status code
+//            example: 200
+//          metadata:
+//            $ref: "#/definitions/ServerUntrusted"
+//    "400":
+//      $ref: "#/responses/BadRequest"
+//    "403":
+//      $ref: "#/responses/Forbidden"
+//    "404":
+//      $ref: "#/responses/NotFound"
+//    "409":
+//      $ref: "#/responses/Conflict"
+//    "500":
+//      $ref: "#/responses/InternalServerError"
+
+// swagger:operation GET /1.0 server server_get
+//
+//	Get the server environment and configuration
+//
+//	Shows the full server environment and configuration.
+//
+//	---
+//	produces:
+//	  - application/json
+//	parameters:
+//	  - in: query
+//	    name: target
+//	    description: Cluster member name
+//	    type: string
+//	    x-example: server01
+//	  - in: query
+//	    name: project
+//	    description: Project name
+//	    type: string
+//	    x-example: default
+//	responses:
+//	  "200":
+//	    description: Server environment and configuration
+//	    schema:
+//	      type: object
+//	      description: Sync response
+//	      properties:
+//	        type:
+//	          type: string
+//	          description: Response type
+//	          example: sync
+//	        status:
+//	          type: string
+//	          description: Status description
+//	          example: Success
+//	        status_code:
+//	          type: integer
+//	          description: Status code
+//	          example: 200
+//	        metadata:
+//	          $ref: "#/definitions/Server"
+//	  "400":
+//	    $ref: "#/responses/BadRequest"
+//	  "403":
+//	    $ref: "#/responses/Forbidden"
+//	  "404":
+//	    $ref: "#/responses/NotFound"
+//	  "409":
+//	    $ref: "#/responses/Conflict"
+//	  "500":
+//	    $ref: "#/responses/InternalServerError"
+func api10Get(d *Daemon, r *http.Request) response.Response {
+	s := d.State()
+
+	// Pull the full server config.
+	fullSrvConfig, err := daemonConfigRender(s)
+	if err != nil {
+		return response.InternalError(err)
+	}
+
+	// Get the authentication methods.
+	authMethods := []string{api.AuthenticationMethodTLS}
+
+	oidcIssuer, oidcClientID, _, _, _ := s.GlobalConfig.OIDCServer()
+	if oidcIssuer != "" && oidcClientID != "" {
+		authMethods = append(authMethods, api.AuthenticationMethodOIDC)
+	}
+
+	srv := api.ServerUntrusted{
+		APIStatus:   "stable",
+		APIVersion:  version.APIVersion,
+		Public:      false,
+		Auth:        "untrusted",
+		AuthMethods: authMethods,
+	}
+
+	// Populate the untrusted config (user.ui.XYZ).
+	srv.Config = map[string]string{}
+	for k, v := range fullSrvConfig {
+		if strings.HasPrefix(k, "user.ui.") {
+			srv.Config[k] = v
+		}
+	}
+
+	// If untrusted, return now
+	if d.checkTrustedClient(r) != nil {
+		return response.SyncResponseETag(true, srv, nil)
+	}
+
+	// If not authorized, return now.
+	err = s.Authorizer.CheckPermission(r.Context(), r, auth.ObjectServer(), auth.EntitlementCanView)
+	if err != nil {
+		return response.SmartError(err)
+	}
+
+	// Add the API extensions to authenticated requests.
+	srv.APIExtensions = version.APIExtensions[:d.apiExtensions]
+
+	// If a target was specified, forward the request to the relevant node.
+	resp := forwardedResponseIfTargetIsRemote(s, r)
+	if resp != nil {
+		return resp
+	}
+
+	srv.Auth = "trusted"
+
+	localHTTPSAddress := s.LocalConfig.HTTPSAddress()
+
+	addresses, err := localUtil.ListenAddresses(localHTTPSAddress)
+	if err != nil {
+		return response.InternalError(err)
+	}
+
+	// When clustered, use the node name, otherwise use the hostname.
+	var serverName string
+	if s.ServerClustered {
+		serverName = s.ServerName
+	} else {
+		hostname, err := os.Hostname()
+		if err != nil {
+			return response.SmartError(err)
+		}
+
+		serverName = hostname
+	}
+
+	certificate := string(s.Endpoints.NetworkPublicKey())
+	var certificateFingerprint string
+	if certificate != "" {
+		certificateFingerprint, err = localtls.CertFingerprintStr(certificate)
+		if err != nil {
+			return response.InternalError(err)
+		}
+	}
+
+	architectures := []string{}
+
+	for _, architecture := range s.OS.Architectures {
+		architectureName, err := osarch.ArchitectureName(architecture)
+		if err != nil {
+			return response.InternalError(err)
+		}
+
+		architectures = append(architectures, architectureName)
+	}
+
+	projectName := r.FormValue("project")
+	if projectName == "" {
+		projectName = api.ProjectDefaultName
+	}
+
+	env := api.ServerEnvironment{
+		Addresses:              addresses,
+		Architectures:          architectures,
+		Certificate:            certificate,
+		CertificateFingerprint: certificateFingerprint,
+		Kernel:                 s.OS.Uname.Sysname,
+		KernelArchitecture:     s.OS.Uname.Machine,
+		KernelVersion:          s.OS.Uname.Release,
+		OSName:                 s.OS.ReleaseInfo["NAME"],
+		OSVersion:              s.OS.ReleaseInfo["VERSION_ID"],
+		Project:                projectName,
+		Server:                 "incus",
+		ServerPid:              os.Getpid(),
+		ServerVersion:          version.Version,
+		ServerClustered:        s.ServerClustered,
+		ServerEventMode:        string(cluster.ServerEventMode()),
+		ServerName:             serverName,
+		Firewall:               s.Firewall.String(),
+	}
+
+	env.KernelFeatures = map[string]string{}
+
+	drivers := instanceDrivers.DriverStatuses()
+	for _, driver := range drivers {
+		// Only report the supported drivers.
+		if !driver.Supported {
+			continue
+		}
+
+		if env.Driver != "" {
+			env.Driver = env.Driver + " | " + driver.Info.Name
+		} else {
+			env.Driver = driver.Info.Name
+		}
+
+		// Get the version of the instance drivers in use.
+		if env.DriverVersion != "" {
+			env.DriverVersion = env.DriverVersion + " | " + driver.Info.Version
+		} else {
+			env.DriverVersion = driver.Info.Version
+		}
+	}
+
+	if s.OS.LXCFeatures != nil {
+		env.LXCFeatures = map[string]string{}
+		for k, v := range s.OS.LXCFeatures {
+			env.LXCFeatures[k] = fmt.Sprintf("%v", v)
+		}
+	}
+
+	supportedStorageDrivers, usedStorageDrivers := readStoragePoolDriversCache()
+	for driver, ver := range usedStorageDrivers {
+		if env.Storage != "" {
+			env.Storage = env.Storage + " | " + driver
+		} else {
+			env.Storage = driver
+		}
+
+		// Get the version of the storage drivers in use.
+		if env.StorageVersion != "" {
+			env.StorageVersion = env.StorageVersion + " | " + ver
+		} else {
+			env.StorageVersion = ver
+		}
+	}
+
+	env.StorageSupportedDrivers = supportedStorageDrivers
+
+	fullSrv := api.Server{ServerUntrusted: srv}
+	fullSrv.Environment = env
+	requestor := request.CreateRequestor(r)
+	fullSrv.AuthUserName = requestor.Username
+	fullSrv.AuthUserMethod = requestor.Protocol
+
+	err = s.Authorizer.CheckPermission(r.Context(), r, auth.ObjectServer(), auth.EntitlementCanViewSensitive)
+	if err != nil {
+		if !api.StatusErrorCheck(err, http.StatusForbidden) {
+			return response.SmartError(err)
+		}
+
+		return response.SyncResponseETag(true, fullSrv, nil)
+	}
+
+	fullSrv.Config = fullSrvConfig
+
+	etag, err := daemonConfigETag(s, r)
+	if err != nil {
+		return response.SmartError(err)
+	}
+
+	return response.SyncResponseETag(true, fullSrv, etag)
+}
+
+// swagger:operation PUT /1.0 server server_put
+//
+//	Update the server configuration
+//
+//	Updates the entire server configuration.
+//
+//	---
+//	consumes:
+//	  - application/json
+//	produces:
+//	  - application/json
+//	parameters:
+//	  - in: query
+//	    name: target
+//	    description: Cluster member name
+//	    type: string
+//	    x-example: server01
+//	  - in: body
+//	    name: server
+//	    description: Server configuration
+//	    required: true
+//	    schema:
+//	      $ref: "#/definitions/ServerPut"
+//	responses:
+//	  "200":
+//	    $ref: "#/responses/EmptySyncResponse"
+//	  "400":
+//	    $ref: "#/responses/BadRequest"
+//	  "403":
+//	    $ref: "#/responses/Forbidden"
+//	  "404":
+//	    $ref: "#/responses/NotFound"
+//	  "409":
+//	    $ref: "#/responses/Conflict"
+//	  "412":
+//	    $ref: "#/responses/PreconditionFailed"
+//	  "500":
+//	    $ref: "#/responses/InternalServerError"
+func api10Put(d *Daemon, r *http.Request) response.Response {
+	s := d.State()
+
+	// If a target was specified, forward the request to the relevant node.
+	resp := forwardedResponseIfTargetIsRemote(s, r)
+	if resp != nil {
+		return resp
+	}
+
+	// Don't apply changes to settings until daemon is fully started.
+	<-d.waitReady.Done()
+
+	req := api.ServerPut{}
+	err := json.NewDecoder(r.Body).Decode(&req)
+	if err != nil {
+		return response.BadRequest(err)
+	}
+
+	// If this is a notification from a cluster node, just run the triggers
+	// for reacting to the values that changed.
+	if isClusterNotification(r) {
+		logger.Debug("Handling config changed notification")
+		changed := util.CloneMap(req.Config)
+
+		// Get the current (updated) config.
+		var clusterConf *clusterConfig.Config
+		err := s.DB.Cluster.Transaction(context.Background(), func(ctx context.Context, tx *db.ClusterTx) error {
+			var err error
+			clusterConf, err = clusterConfig.Load(ctx, tx)
+			return err
+		})
+		if err != nil {
+			return response.SmartError(err)
+		}
+
+		// Update the daemon config.
+		d.globalConfigMu.Lock()
+		d.globalConfig = clusterConf
+		d.globalConfigMu.Unlock()
+
+		// Run any update triggers.
+		err = doAPI10UpdateTriggers(d, nil, changed, s.LocalConfig, clusterConf)
+		if err != nil {
+			return response.SmartError(err)
+		}
+
+		return response.EmptySyncResponse
+	}
+
+	render, err := daemonConfigETag(s, r)
+	if err != nil {
+		return response.SmartError(err)
+	}
+
+	err = localUtil.EtagCheck(r, render)
+	if err != nil {
+		return response.PreconditionFailed(err)
+	}
+
+	return doAPI10Update(d, r, req, false)
+}
+
+// swagger:operation PATCH /1.0 server server_patch
+//
+//	Partially update the server configuration
+//
+//	Updates a subset of the server configuration.
+//
+//	---
+//	consumes:
+//	  - application/json
+//	produces:
+//	  - application/json
+//	parameters:
+//	  - in: query
+//	    name: target
+//	    description: Cluster member name
+//	    type: string
+//	    x-example: server01
+//	  - in: body
+//	    name: server
+//	    description: Server configuration
+//	    required: true
+//	    schema:
+//	      $ref: "#/definitions/ServerPut"
+//	responses:
+//	  "200":
+//	    $ref: "#/responses/EmptySyncResponse"
+//	  "400":
+//	    $ref: "#/responses/BadRequest"
+//	  "403":
+//	    $ref: "#/responses/Forbidden"
+//	  "404":
+//	    $ref: "#/responses/NotFound"
+//	  "409":
+//	    $ref: "#/responses/Conflict"
+//	  "412":
+//	    $ref: "#/responses/PreconditionFailed"
+//	  "500":
+//	    $ref: "#/responses/InternalServerError"
+func api10Patch(d *Daemon, r *http.Request) response.Response {
+	s := d.State()
+
+	// If a target was specified, forward the request to the relevant node.
+	resp := forwardedResponseIfTargetIsRemote(s, r)
+	if resp != nil {
+		return resp
+	}
+
+	// Don't apply changes to settings until daemon is fully started.
+	<-d.waitReady.Done()
+
+	render, err := daemonConfigETag(s, r)
+	if err != nil {
+		return response.InternalError(err)
+	}
+
+	err = localUtil.EtagCheck(r, render)
+	if err != nil {
+		return response.PreconditionFailed(err)
+	}
+
+	req := api.ServerPut{}
+	err = json.NewDecoder(r.Body).Decode(&req)
+	if err != nil {
+		return response.BadRequest(err)
+	}
+
+	if req.Config == nil {
+		return response.EmptySyncResponse
+	}
+
+	return doAPI10Update(d, r, req, true)
+}
+
+func doAPI10Update(d *Daemon, r *http.Request, req api.ServerPut, patch bool) response.Response {
+	s := d.State()
+
+	// First deal with config specific to the local daemon
+	nodeValues := map[string]string{}
+
+	for key := range node.ConfigSchema {
+		value, ok := req.Config[key]
+		if ok {
+			nodeValues[key] = value
+			delete(req.Config, key)
+		}
+	}
+
+	nodeChanged := map[string]string{}
+	var newNodeConfig *node.Config
+	var oldNodeConfig map[string]string
+
+	err := s.DB.Node.Transaction(r.Context(), func(ctx context.Context, tx *db.NodeTx) error {
+		var err error
+		newNodeConfig, err = node.ConfigLoad(ctx, tx)
+		if err != nil {
+			return fmt.Errorf("Failed to load node config: %w", err)
+		}
+
+		// Keep old config around in case something goes wrong. In that case the config will be reverted.
+		oldNodeConfig = util.CloneMap(newNodeConfig.Dump())
+
+		// We currently don't allow changing the cluster.https_address once it's set.
+		if s.ServerClustered {
+			curConfig, err := tx.Config(ctx)
+			if err != nil {
+				return fmt.Errorf("Cannot fetch node config from database: %w", err)
+			}
+
+			newClusterHTTPSAddress, found := nodeValues["cluster.https_address"]
+			if !found && patch {
+				newClusterHTTPSAddress = curConfig["cluster.https_address"]
+			} else if !found {
+				newClusterHTTPSAddress = ""
+			}
+
+			if curConfig["cluster.https_address"] != newClusterHTTPSAddress {
+				return errors.New("Changing cluster.https_address is currently not supported")
+			}
+		}
+
+		// Validate the storage volumes
+		if nodeValues["storage.backups_volume"] != "" && nodeValues["storage.backups_volume"] != newNodeConfig.StorageBackupsVolume() {
+			err := daemonStorageValidate(s, "backups", nodeValues["storage.backups_volume"])
+			if err != nil {
+				return fmt.Errorf("Failed validation of %q: %w", "storage.backups_volume", err)
+			}
+		}
+
+		if nodeValues["storage.images_volume"] != "" && nodeValues["storage.images_volume"] != newNodeConfig.StorageImagesVolume() {
+			err := daemonStorageValidate(s, "images", nodeValues["storage.images_volume"])
+			if err != nil {
+				return fmt.Errorf("Failed validation of %q: %w", "storage.images_volume", err)
+			}
+		}
+
+		if nodeValues["storage.logs_volume"] != "" && nodeValues["storage.logs_volume"] != newNodeConfig.StorageLogsVolume() {
+			err := daemonStorageValidate(s, "logs", nodeValues["storage.logs_volume"])
+			if err != nil {
+				return fmt.Errorf("Failed validation of %q: %w", "storage.logs_volume", err)
+			}
+		}
+
+		if patch {
+			nodeChanged, err = newNodeConfig.Patch(nodeValues)
+		} else {
+			nodeChanged, err = newNodeConfig.Replace(nodeValues)
+		}
+
+		return err
+	})
+	if err != nil {
+		var errorList *config.ErrorList
+		switch {
+		case errors.As(err, &errorList):
+			return response.BadRequest(err)
+		default:
+			return response.SmartError(err)
+		}
+	}
+
+	reverter := revert.New()
+	defer reverter.Fail()
+
+	reverter.Add(func() {
+		for key := range nodeValues {
+			val, ok := oldNodeConfig[key]
+			if !ok {
+				nodeValues[key] = ""
+			} else {
+				nodeValues[key] = val
+			}
+		}
+
+		err = s.DB.Node.Transaction(r.Context(), func(ctx context.Context, tx *db.NodeTx) error {
+			newNodeConfig, err := node.ConfigLoad(ctx, tx)
+			if err != nil {
+				return fmt.Errorf("Failed to load node config: %w", err)
+			}
+
+			if patch {
+				_, err = newNodeConfig.Patch(nodeValues)
+			} else {
+				_, err = newNodeConfig.Replace(nodeValues)
+			}
+
+			if err != nil {
+				return fmt.Errorf("Failed updating node config: %w", err)
+			}
+
+			return nil
+		})
+		if err != nil {
+			logger.Warn("Failed reverting node config", logger.Ctx{"err": err})
+		}
+	})
+
+	// Then deal with cluster wide configuration
+	var clusterChanged map[string]string
+	var newClusterConfig *clusterConfig.Config
+	var oldClusterConfig map[string]string
+
+	err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
+		var err error
+		newClusterConfig, err = clusterConfig.Load(ctx, tx)
+		if err != nil {
+			return fmt.Errorf("Failed to load cluster config: %w", err)
+		}
+
+		// Keep old config around in case something goes wrong. In that case the config will be reverted.
+		oldClusterConfig = util.CloneMap(newClusterConfig.Dump())
+
+		if patch {
+			clusterChanged, err = newClusterConfig.Patch(req.Config)
+		} else {
+			clusterChanged, err = newClusterConfig.Replace(req.Config)
+		}
+
+		return err
+	})
+	if err != nil {
+		var errorList *config.ErrorList
+		switch {
+		case errors.As(err, &errorList):
+			return response.BadRequest(err)
+		default:
+			return response.SmartError(err)
+		}
+	}
+
+	reverter.Add(func() {
+		for key := range req.Config {
+			val, ok := oldClusterConfig[key]
+			if !ok {
+				req.Config[key] = ""
+			} else {
+				req.Config[key] = val
+			}
+		}
+
+		err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
+			newClusterConfig, err = clusterConfig.Load(ctx, tx)
+			if err != nil {
+				return fmt.Errorf("Failed to load cluster config: %w", err)
+			}
+
+			if patch {
+				_, err = newClusterConfig.Patch(req.Config)
+			} else {
+				_, err = newClusterConfig.Replace(req.Config)
+			}
+
+			if err != nil {
+				return fmt.Errorf("Failed updating cluster config: %w", err)
+			}
+
+			return nil
+		})
+		if err != nil {
+			logger.Warn("Failed reverting cluster config", logger.Ctx{"err": err})
+		}
+	})
+
+	// Notify the other nodes about changes
+	notifier, err := cluster.NewNotifier(s, s.Endpoints.NetworkCert(), s.ServerCert(), cluster.NotifyAlive)
+	if err != nil {
+		return response.SmartError(err)
+	}
+
+	err = notifier(func(client incus.InstanceServer) error {
+		server, etag, err := client.GetServer()
+		if err != nil {
+			return err
+		}
+
+		serverPut := server.Writable()
+		// Only propagated cluster-wide changes
+		serverPut.Config = util.CloneMap(clusterChanged)
+
+		return client.UpdateServer(serverPut, etag)
+	})
+	if err != nil {
+		logger.Error("Failed to notify other members about config change", logger.Ctx{"err": err})
+		return response.SmartError(err)
+	}
+
+	// Update the daemon config.
+	d.globalConfigMu.Lock()
+	oldGlobalConfig := d.globalConfig
+	oldLocalConfig := d.localConfig
+	d.globalConfig = newClusterConfig
+	d.localConfig = newNodeConfig
+	d.globalConfigMu.Unlock()
+
+	reverter.Add(func() {
+		d.globalConfigMu.Lock()
+		d.globalConfig = oldGlobalConfig
+		d.localConfig = oldLocalConfig
+		d.globalConfigMu.Unlock()
+	})
+
+	// Run any update triggers.
+	err = doAPI10UpdateTriggers(d, nodeChanged, clusterChanged, newNodeConfig, newClusterConfig)
+	if err != nil {
+		return response.SmartError(err)
+	}
+
+	reverter.Success()
+
+	s.Events.SendLifecycle(api.ProjectDefaultName, lifecycle.ConfigUpdated.Event(request.CreateRequestor(r), nil))
+
+	return response.EmptySyncResponse
+}
+
+func doAPI10UpdateTriggers(d *Daemon, nodeChanged, clusterChanged map[string]string, nodeConfig *node.Config, clusterConf *clusterConfig.Config) error {
+	s := d.State()
+
+	acmeChanged := false
+	bgpChanged := false
+	dnsChanged := false
+	oidcChanged := false
+	authorizationChanged := false
+	openfgaChanged := false
+	authorizationScriptletChanged := false
+	ovnChanged := false
+	linstorChanged := false
+	ovsChanged := false
+	syslogChanged := false
+	loggingChanges := map[string]struct{}{}
+
+	for key := range clusterChanged {
+		switch key {
+		case "acme.agree_tos", "acme.ca_url", "acme.challenge", "acme.domain", "acme.email", "acme.provider", "acme.provider.environment", "acme.provider.resolvers", "acme.http.port":
+			acmeChanged = true
+
+		case "cluster.images_minimal_replica":
+			err := autoSyncImages(s.ShutdownCtx, s)
+			if err != nil {
+				logger.Warn("Could not auto-sync images", logger.Ctx{"err": err})
+			}
+
+		case "cluster.offline_threshold":
+			d.gateway.SetHeartbeatOfflineThreshold(clusterConf.OfflineThreshold())
+			d.taskClusterHeartbeat.Reset()
+
+		case "core.bgp_asn":
+			bgpChanged = true
+
+		case "core.https_trusted_proxy":
+			s.Endpoints.NetworkUpdateTrustedProxy(clusterChanged[key])
+
+		case "core.https_allowed_websocket_origin":
+			ws.SetTrustedOrigins(clusterConf.HTTPSAllowedWebsocketOrigin())
+
+		case "core.proxy_http", "core.proxy_https", "core.proxy_ignore_hosts":
+			daemonConfigSetProxy(d, clusterConf)
+
+		case "images.auto_update_interval", "images.remote_cache_expiry":
+			if !s.OS.MockMode {
+				d.taskPruneImages.Reset()
+			}
+
+		case "loki.api.url", "loki.auth.username", "loki.auth.password", "loki.api.ca_cert", "loki.instance", "loki.labels", "loki.loglevel", "loki.types":
+			// Notify the logging mechanism about changes to the deprecated keys for backward compatibility.
+			loggingChanges["loki"] = struct{}{}
+
+		case "network.ovn.northbound_connection", "network.ovn.ca_cert", "network.ovn.client_cert", "network.ovn.client_key":
+			ovnChanged = true
+
+		case "oidc.issuer", "oidc.client.id", "oidc.audience", "oidc.claim", "oidc.scopes":
+			oidcChanged = true
+
+		case "authorization.openfga.api.url", "authorization.openfga.api.token", "authorization.openfga.store.id", "authorization.openfga.tls.identifier":
+			authorizationChanged = true
+			openfgaChanged = true
+
+		case "authorization.scriptlet":
+			authorizationChanged = true
+			authorizationScriptletChanged = true
+
+		case "authorization.client.default", "authorization.client.unix", "authorization.client.tls", "authorization.client.tls-restricted", "authorization.client.oidc":
+			authorizationChanged = true
+
+		case "storage.linstor.controller_connection", "storage.linstor.ca_cert", "storage.linstor.client_cert", "storage.linstor.client_key":
+			linstorChanged = true
+		default:
+			if strings.HasPrefix(key, "logging.") {
+				fields := strings.Split(key, ".")
+				if len(fields) > 2 {
+					loggingChanges[fields[1]] = struct{}{}
+				}
+			}
+		}
+	}
+
+	for key := range nodeChanged {
+		switch key {
+		case "core.bgp_address", "core.bgp_routerid":
+			bgpChanged = true
+
+		case "core.dns_address":
+			dnsChanged = true
+
+		case "core.syslog_socket":
+			syslogChanged = true
+
+		case "network.ovs.connection":
+			ovsChanged = true
+		}
+	}
+
+	// Process some additional keys. We do it sequentially because some keys are
+	// correlated with others, and need to be processed first (for example
+	// core.https_address need to be processed before
+	// cluster.https_address).
+	value, ok := nodeChanged["core.https_address"]
+	if ok {
+		if value == "" && s.OS.IncusOS != nil {
+			return errors.New("Cannot unset HTTPS address on an IncusOS system")
+		}
+
+		err := s.Endpoints.NetworkUpdateAddress(value)
+		if err != nil {
+			return err
+		}
+
+		// Re-establish the cluster listener in case it was sharing the network listener.
+		clusterAddress := nodeConfig.ClusterAddress()
+		if clusterAddress != "" {
+			err := s.Endpoints.ClusterUpdateAddress(clusterAddress)
+			if err != nil {
+				return err
+			}
+		}
+
+		s.Endpoints.NetworkUpdateTrustedProxy(clusterConf.HTTPSTrustedProxy())
+	}
+
+	value, ok = nodeChanged["cluster.https_address"]
+	if ok {
+		err := s.Endpoints.ClusterUpdateAddress(value)
+		if err != nil {
+			return err
+		}
+
+		s.Endpoints.NetworkUpdateTrustedProxy(clusterConf.HTTPSTrustedProxy())
+	}
+
+	value, ok = nodeChanged["core.debug_address"]
+	if ok {
+		err := s.Endpoints.PprofUpdateAddress(value)
+		if err != nil {
+			return err
+		}
+	}
+
+	value, ok = nodeChanged["core.metrics_address"]
+	if ok {
+		err := s.Endpoints.MetricsUpdateAddress(value, s.Endpoints.NetworkCert())
+		if err != nil {
+			return err
+		}
+	}
+
+	value, ok = nodeChanged["core.storage_buckets_address"]
+	if ok {
+		err := s.Endpoints.StorageBucketsUpdateAddress(value, s.Endpoints.NetworkCert())
+		if err != nil {
+			return err
+		}
+	}
+
+	value, ok = nodeChanged["storage.backups_volume"]
+	if ok {
+		err := daemonStorageMove(s, "backups", value)
+		if err != nil {
+			return err
+		}
+	}
+
+	value, ok = nodeChanged["storage.images_volume"]
+	if ok {
+		err := daemonStorageMove(s, "images", value)
+		if err != nil {
+			return err
+		}
+	}
+
+	value, ok = nodeChanged["storage.logs_volume"]
+	if ok {
+		err := daemonStorageMove(s, "logs", value)
+		if err != nil {
+			return err
+		}
+	}
+
+	// Apply larger changes.
+	if acmeChanged {
+		err := autoRenewCertificate(s.ShutdownCtx, d, true)
+		if err != nil {
+			return err
+		}
+	}
+
+	if bgpChanged {
+		address := nodeConfig.BGPAddress()
+		asn := clusterConf.BGPASN()
+		routerid := nodeConfig.BGPRouterID()
+
+		err := s.BGP.Configure(address, uint32(asn), net.ParseIP(routerid))
+		if err != nil {
+			return fmt.Errorf("Failed reconfiguring BGP: %w", err)
+		}
+	}
+
+	if dnsChanged {
+		address := nodeConfig.DNSAddress()
+
+		err := s.DNS.Reconfigure(address)
+		if err != nil {
+			return fmt.Errorf("Failed reconfiguring DNS: %w", err)
+		}
+	}
+
+	if len(loggingChanges) > 0 {
+		err := d.loggingController.Reconfigure(d.State(), loggingChanges)
+		if err != nil {
+			return err
+		}
+	}
+	if oidcChanged {
+		oidcIssuer, oidcClientID, oidcScope, oidcAudience, oidcClaim := clusterConf.OIDCServer()
+
+		if oidcIssuer == "" || oidcClientID == "" {
+			d.oidcVerifier = nil
+		} else {
+			var err error
+			d.oidcVerifier, err = oidc.NewVerifier(oidcIssuer, oidcClientID, oidcScope, oidcAudience, oidcClaim)
+			if err != nil {
+				return fmt.Errorf("Failed creating verifier: %w", err)
+			}
+		}
+	}
+
+	if authorizationChanged {
+		// Reload only the optional drivers whose config changed.
+		var reload []string
+		if openfgaChanged {
+			reload = append(reload, auth.DriverOpenFGA)
+		}
+
+		if authorizationScriptletChanged {
+			reload = append(reload, auth.DriverScriptlet)
+		}
+
+		err := d.setupAuthorization(reload...)
+		if err != nil {
+			return err
+		}
+	}
+
+	if ovnChanged {
+		err := d.setupOVN()
+		if err != nil {
+			// Ignore the failure when the OVN connection is being unset and no OVN network exists.
+			value, ok := clusterChanged["network.ovn.northbound_connection"]
+			if !ok || value != "" {
+				return err
+			}
+
+			hasOVN, dbErr := d.hasOVNNetworks()
+			if dbErr != nil {
+				return dbErr
+			}
+
+			if hasOVN {
+				return err
+			}
+		}
+	}
+
+	if ovsChanged {
+		err := d.setupOVS()
+		if err != nil {
+			return err
+		}
+	}
+
+	if syslogChanged {
+		err := d.setupSyslogSocket(nodeConfig.SyslogSocket())
+		if err != nil {
+			return err
+		}
+	}
+
+	if linstorChanged {
+		err := d.setupLinstor()
+		if err != nil {
+			return err
+		}
+	}
+
+	// Compile and load the instance placement scriptlet.
+	value, ok = clusterChanged["instances.placement.scriptlet"]
+	if ok {
+		err := scriptletLoad.InstancePlacementSet(value)
+		if err != nil {
+			return fmt.Errorf("Failed saving instance placement scriptlet: %w", err)
+		}
+	}
+
+	return nil
+}

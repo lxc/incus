@@ -1,0 +1,34 @@
+//go:build !linux || !cgo || agent
+
+package operations
+
+import (
+	"errors"
+
+	"github.com/lxc/incus/v7/internal/server/db/operationtype"
+	"github.com/lxc/incus/v7/shared/api"
+)
+
+func registerDBOperation(op *Operation, opType operationtype.Type) error {
+	if op.state != nil {
+		return errors.New("registerDBOperation not supported on this platform")
+	}
+
+	return nil
+}
+
+func removeDBOperation(op *Operation) error {
+	if op.state != nil {
+		return errors.New("registerDBOperation not supported on this platform")
+	}
+
+	return nil
+}
+
+func (op *Operation) sendEvent(eventMessage any) {
+	if op.events == nil {
+		return
+	}
+
+	op.events.Send(op.projectName, api.EventTypeOperation, eventMessage)
+}

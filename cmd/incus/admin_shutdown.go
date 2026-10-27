@@ -1,0 +1,103 @@
+//go:build linux
+
+package main
+
+import (
+	"errors"
+	"fmt"
+	"net/http"
+	"net/url"
+	"strconv"
+	"time"
+
+	"github.com/spf13/cobra"
+
+	incus "github.com/lxc/incus/v7/client"
+	"github.com/lxc/incus/v7/cmd/incus/color"
+	u "github.com/lxc/incus/v7/cmd/incus/usage"
+	"github.com/lxc/incus/v7/internal/i18n"
+	cli "github.com/lxc/incus/v7/shared/cmd"
+)
+
+type cmdAdminShutdown struct {
+	global *cmdGlobal
+
+	flagForce   bool
+	flagTimeout int
+}
+
+var cmdAdminShutdownUsage = u.Usage{}
+
+func (c *cmdAdminShutdown) command() *cobra.Command {
+	cmd := &cobra.Command{}
+	cmd.Use = cli.U("shutdown", cmdAdminShutdownUsage...)
+	cmd.Short = i18n.G("Tell the daemon to shutdown all instances and exit")
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Tell the daemon to shutdown all instances and exit
+
+  This will tell the daemon to start a clean shutdown of all instances,
+  followed by having itself shutdown and exit.
+
+  This can take quite a while as instances can take a long time to
+  shutdown, especially if a non-standard timeout was configured for them.`))
+	cmd.RunE = c.run
+	cli.AddIntFlag(cmd.Flags(), &c.flagTimeout, "timeout|t", "Number of seconds to wait before giving up", 0)
+	cli.AddBoolFlag(cmd.Flags(), &c.flagForce, "force|f", "Force shutdown instead of waiting for running operations to finish")
+
+	return cmd
+}
+
+func (c *cmdAdminShutdown) run(cmd *cobra.Command, args []string) error {
+	_, err := c.global.Parse(cmdAdminShutdownUsage, cmd, args)
+	if err != nil {
+		return err
+	}
+
+	connArgs := &incus.ConnectionArgs{
+		SkipGetServer: true,
+	}
+
+	d, err := incus.ConnectIncusUnix("", connArgs)
+	if err != nil {
+		return err
+	}
+
+	v := url.Values{}
+	v.Set("force", strconv.FormatBool(c.flagForce))
+
+	chResult := make(chan error, 1)
+	go func() {
+		defer close(chResult)
+
+		httpClient, err := d.GetHTTPClient()
+		if err != nil {
+			chResult <- err
+			return
+		}
+
+		// Request shutdown, this shouldn't return until daemon has stopped so use a large request timeout.
+		httpTransport, ok := httpClient.Transport.(*http.Transport)
+		if !ok {
+			chResult <- errors.New("Bad http transport")
+			return
+		}
+
+		httpTransport.ResponseHeaderTimeout = 3600 * time.Second
+
+		_, _, err = d.RawQuery("PUT", fmt.Sprintf("/internal/shutdown?%s", v.Encode()), nil, "")
+		if err != nil {
+			chResult <- err
+			return
+		}
+	}()
+
+	if c.flagTimeout > 0 {
+		select {
+		case err = <-chResult:
+			return err
+		case <-time.After(time.Second * time.Duration(c.flagTimeout)):
+			return fmt.Errorf(i18n.G("Daemon still running after %ds timeout"), c.flagTimeout)
+		}
+	}
+
+	return <-chResult
+}

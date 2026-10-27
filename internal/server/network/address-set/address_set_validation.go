@@ -1,0 +1,28 @@
+package addressset
+
+import (
+	"fmt"
+
+	"github.com/lxc/incus/v7/shared/util"
+	"github.com/lxc/incus/v7/shared/validate"
+)
+
+// ValidName checks the address set name is valid.
+func ValidName(name string) error {
+	err := validate.IsAPIName(name, false)
+	if err != nil {
+		return err
+	}
+
+	// Don't allow address set names to start with dollar or arobase.
+	if util.StringHasPrefix(name, "@", "$") {
+		return fmt.Errorf("Name cannot start with reserved character %q", name[0])
+	}
+
+	err = validate.IsHostname(name)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}

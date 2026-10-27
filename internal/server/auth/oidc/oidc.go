@@ -1,0 +1,461 @@
+package oidc
+
+import (
+	"context"
+	"errors"
+	"fmt"
+	"net/http"
+	"net/netip"
+	"slices"
+	"strings"
+	"time"
+
+	"github.com/google/uuid"
+	"github.com/zitadel/oidc/v3/pkg/client"
+	"github.com/zitadel/oidc/v3/pkg/client/rp"
+	httphelper "github.com/zitadel/oidc/v3/pkg/http"
+	"github.com/zitadel/oidc/v3/pkg/oidc"
+	"github.com/zitadel/oidc/v3/pkg/op"
+
+	"github.com/lxc/incus/v7/internal/server/request"
+	"github.com/lxc/incus/v7/shared/logger"
+	"github.com/lxc/incus/v7/shared/util"
+)
+
+// Verifier holds all information needed to verify an access token offline.
+type Verifier struct {
+	accessTokenVerifier *op.AccessTokenVerifier
+	idTokenVerifier     *rp.IDTokenVerifier
+
+	clientID  string
+	issuer    string
+	scopes    []string
+	audience  string
+	claim     string
+	cookieKey []byte
+}
+
+// AuthError represents an authentication error.
+type AuthError struct {
+	Err error
+}
+
+func (e AuthError) Error() string {
+	return fmt.Sprintf("Failed to authenticate: %s", e.Err.Error())
+}
+
+func (e AuthError) Unwrap() error {
+	return e.Err
+}
+
+// Auth extracts the token, validates it and returns the user name and validated claims.
+func (o *Verifier) Auth(ctx context.Context, w http.ResponseWriter, r *http.Request) (string, map[string]any, error) {
+	var token string
+	var idToken string
+
+	auth := r.Header.Get("Authorization")
+	if auth != "" {
+		// When a client wants to authenticate, it needs to set the Authorization HTTP header like this:
+		//    Authorization Bearer <access_token>
+		// If set correctly, Incus will attempt to verify the access token, and grant access if it's valid.
+		// If the verification fails, Incus will return an InvalidToken error. The client should then either use its refresh token to get a new valid access token, or log in again.
+		// If the Authorization header is missing, Incus returns an AuthenticationRequired error.
+		// Both returned errors contain information which are needed for the client to authenticate.
+		parts := strings.Split(auth, "Bearer ")
+		if len(parts) != 2 {
+			return "", nil, &AuthError{errors.New("Bad authorization token, expected a Bearer token")}
+		}
+
+		token = parts[1]
+
+		// Clients send the ID token alongside an opaque access token.
+		idToken = r.Header.Get("X-Incus-OIDC-idtoken")
+	} else {
+		// When not using a Bearer token, fetch the equivalent from a cookie and move on with it.
+		cookie, err := r.Cookie("oidc_access")
+		if err != nil {
+			return "", nil, &AuthError{err}
+		}
+
+		token = cookie.Value
+
+		idCookie, err := r.Cookie("oidc_id")
+		if err == nil {
+			idToken = idCookie.Value
+		}
+	}
+
+	claims, err := o.verifyTokens(ctx, r, token, idToken)
+	if err != nil {
+		// See if we can refresh the access token.
+		cookie, cookieErr := r.Cookie("oidc_refresh")
+		if cookieErr != nil {
+			return "", nil, &AuthError{err}
+		}
+
+		// Get the provider.
+		provider, err := o.getProvider(r)
+		if err != nil {
+			return "", nil, &AuthError{err}
+		}
+
+		// Attempt the refresh.
+		tokens, err := rp.RefreshTokens[*oidc.IDTokenClaims](context.TODO(), provider, cookie.Value, "", "")
+		if err != nil {
+			// If the refresh token is no longer usable, clear the cookies so the UI can redirect to login.
+			if w != nil && isTerminalRefreshError(err) {
+				o.clearCookies(w)
+			}
+
+			return "", nil, &AuthError{err}
+		}
+
+		// Validate the refreshed tokens.
+		claims, err = o.verifyTokens(ctx, r, tokens.AccessToken, tokens.IDToken)
+		if err != nil {
+			return "", nil, &AuthError{err}
+		}
+
+		// If we have a ResponseWriter, refresh the cookies.
+		if w != nil {
+			o.setCookies(w, tokens)
+		}
+	}
+
+	if o.claim != "" {
+		claim := claims.Claims[o.claim]
+		username, ok := claim.(string)
+		if claim == nil || !ok || username == "" {
+			return "", nil, fmt.Errorf("OIDC user is missing required claim %q", o.claim)
+		}
+
+		return username, claims.Claims, nil
+	}
+
+	user, ok := claims.Claims["email"]
+	if ok && user != nil {
+		email, ok := user.(string)
+		if ok && email != "" {
+			return email, claims.Claims, nil
+		}
+	}
+
+	return claims.Subject, claims.Claims, nil
+}
+
+// Login starts the OIDC login flow by redirecting the client to the provider's authorization endpoint.
+func (o *Verifier) Login(w http.ResponseWriter, r *http.Request) {
+	// Get the provider.
+	provider, err := o.getProvider(r)
+	if err != nil {
+		logger.Error("Failed to get OIDC provider", logger.Ctx{"err": err})
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	handler := rp.AuthURLHandler(func() string { return uuid.New().String() }, provider, rp.WithURLParam("audience", o.audience))
+	handler(w, r)
+}
+
+// Logout ends the OIDC session and clears the authentication cookies.
+func (o *Verifier) Logout(w http.ResponseWriter, r *http.Request) {
+	// Attempt to get the provider.
+	provider, _ := o.getProvider(r)
+
+	// Attempt to get the token.
+	var token string
+	cookie, err := r.Cookie("oidc_id")
+	if err == nil {
+		token = cookie.Value
+	}
+
+	// Attempt to end the OIDC session.
+	if provider != nil && token != "" {
+		_, _ = rp.EndSession(r.Context(), provider, token, fmt.Sprintf("https://%s", r.Host), "", "", nil)
+	}
+
+	// Clear the authentication cookies.
+	o.clearCookies(w)
+}
+
+// Callback handles the redirect back from the OIDC provider and completes the login flow.
+func (o *Verifier) Callback(w http.ResponseWriter, r *http.Request) {
+	// Get the provider.
+	provider, err := o.getProvider(r)
+	if err != nil {
+		logger.Error("Failed to get OIDC provider", logger.Ctx{"err": err})
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	handler := rp.CodeExchangeHandler(func(w http.ResponseWriter, r *http.Request, tokens *oidc.Tokens[*oidc.IDTokenClaims], state string, rp rp.RelyingParty) {
+		// Set the authentication cookies.
+		o.setCookies(w, tokens)
+
+		// Send to the UI.
+		// NOTE: Once the UI does the redirection on its own, we may be able to use the referer here instead.
+		http.Redirect(w, r, "/ui/", http.StatusMovedPermanently)
+	}, provider)
+
+	handler(w, r)
+}
+
+// cookieExpiry returns the cookie expiration, preferring the provider's refresh token lifetime over a 30 day default.
+func cookieExpiry(tokens *oidc.Tokens[*oidc.IDTokenClaims]) time.Time {
+	// Fall back to 30 days when the provider doesn't report a refresh token lifetime.
+	lifetime := 30 * 24 * time.Hour
+
+	if tokens != nil && tokens.Token != nil {
+		expiresIn, ok := tokens.Extra("refresh_expires_in").(float64)
+		if ok && expiresIn > 0 {
+			lifetime = time.Duration(expiresIn) * time.Second
+
+			// Make the lifetime a second shorter than the refresh timer.
+			if lifetime > time.Second {
+				lifetime -= time.Second
+			}
+		}
+	}
+
+	return time.Now().Add(lifetime)
+}
+
+// setCookies sets the OIDC authentication cookies on the response based on the provided tokens.
+func (o *Verifier) setCookies(w http.ResponseWriter, tokens *oidc.Tokens[*oidc.IDTokenClaims]) {
+	expiry := cookieExpiry(tokens)
+
+	// Access token.
+	accessCookie := http.Cookie{
+		Name:     "oidc_access",
+		Value:    tokens.AccessToken,
+		Path:     "/",
+		Secure:   true,
+		HttpOnly: true,
+		SameSite: http.SameSiteStrictMode,
+		Expires:  expiry,
+	}
+
+	http.SetCookie(w, &accessCookie)
+
+	// Refresh token.
+	if tokens.RefreshToken != "" {
+		refreshCookie := http.Cookie{
+			Name:     "oidc_refresh",
+			Value:    tokens.RefreshToken,
+			Path:     "/",
+			Secure:   true,
+			HttpOnly: true,
+			SameSite: http.SameSiteStrictMode,
+			Expires:  expiry,
+		}
+
+		http.SetCookie(w, &refreshCookie)
+	}
+
+	// ID token.
+	if tokens.IDToken != "" {
+		idCookie := http.Cookie{
+			Name:     "oidc_id",
+			Value:    tokens.IDToken,
+			Path:     "/",
+			Secure:   true,
+			HttpOnly: true,
+			SameSite: http.SameSiteStrictMode,
+			Expires:  expiry,
+		}
+
+		http.SetCookie(w, &idCookie)
+	}
+}
+
+// clearCookies removes the OIDC authentication cookies from the browser.
+func (o *Verifier) clearCookies(w http.ResponseWriter) {
+	for _, name := range []string{"oidc_access", "oidc_id", "oidc_refresh"} {
+		cookie := http.Cookie{
+			Name:     name,
+			Path:     "/",
+			Secure:   true,
+			HttpOnly: true,
+			SameSite: http.SameSiteStrictMode,
+			Expires:  time.Unix(0, 0),
+		}
+
+		http.SetCookie(w, &cookie)
+	}
+}
+
+// isTerminalRefreshError reports whether the refresh failed because the refresh token is no longer usable.
+func isTerminalRefreshError(err error) bool {
+	var oidcErr *oidc.Error
+	if !errors.As(err, &oidcErr) {
+		return false
+	}
+
+	switch oidcErr.ErrorType {
+	case oidc.InvalidGrant, oidc.AccessDenied, oidc.ExpiredToken:
+		return true
+	}
+
+	return false
+}
+
+// verifyTokens validates the access token, or the ID token issued alongside an opaque one, and returns its claims.
+func (o *Verifier) verifyTokens(ctx context.Context, r *http.Request, accessToken string, idToken string) (*oidc.AccessTokenClaims, error) {
+	if o.accessTokenVerifier == nil {
+		err := o.discover()
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	claims, err := op.VerifyAccessToken[*oidc.AccessTokenClaims](ctx, accessToken, o.accessTokenVerifier)
+	if err != nil {
+		// Only fall back to the ID token when the access token isn't a JWT at all.
+		if !errors.Is(err, oidc.ErrParse) || idToken == "" {
+			return nil, err
+		}
+
+		// The configured audience can't be verified on an opaque access token.
+		if o.audience != "" {
+			return nil, errors.New("Opaque access tokens can't be used with a configured audience")
+		}
+
+		// The ID token is checked for issuer, signature, expiration and the configured client ID as audience.
+		idClaims, err := rp.VerifyIDToken[*oidc.IDTokenClaims](ctx, idToken, o.idTokenVerifier)
+		if err != nil {
+			return nil, err
+		}
+
+		claims = &oidc.AccessTokenClaims{TokenClaims: idClaims.TokenClaims, Claims: idClaims.Claims}
+	} else if o.audience != "" && !slices.Contains(claims.GetAudience(), o.audience) {
+		// Check that the access token includes the configured audience.
+		return nil, errors.New("Provided OIDC token doesn't allow the configured audience")
+	}
+
+	// Check if we have a subnet restriction.
+	err = o.validateSubnet(r, claims.Claims["incus.allowed_subnets"])
+	if err != nil {
+		return nil, err
+	}
+
+	return claims, nil
+}
+
+func (o *Verifier) validateSubnet(r *http.Request, claim any) error {
+	// If the claim is missing, allow access.
+	if claim == nil {
+		return nil
+	}
+
+	subnets, ok := claim.([]any)
+	if !ok {
+		// Invalid claim type.
+		return errors.New("Bad type for incus.allowed_subnets OIDC claim")
+	}
+
+	if len(subnets) == 0 {
+		// User isn't allowed from any subnet.
+		return errors.New("Client isn't allowed to connect from its current network")
+	}
+
+	// Check if the requestor is allowed access.
+	requestor := request.CreateRequestor(r)
+
+	found := false
+	for _, subnet := range subnets {
+		subnetStr, ok := subnet.(string)
+		if !ok {
+			continue
+		}
+
+		subnetCIDR, err := netip.ParsePrefix(subnetStr)
+		if err != nil {
+			return fmt.Errorf("Bad subnet in incus.allowed_subnets claim %q: %w", subnet, err)
+		}
+
+		clientIP, err := netip.ParseAddr(requestor.Address)
+		if err != nil {
+			return fmt.Errorf("Bad client address %q: %w", requestor.Address, err)
+		}
+
+		if subnetCIDR.Contains(clientIP) {
+			found = true
+			break
+		}
+	}
+
+	if !found {
+		return errors.New("Client isn't allowed to connect from its current network")
+	}
+
+	return nil
+}
+
+// WriteHeaders writes the OIDC configuration as HTTP headers so the client can initatiate the device code flow.
+func (o *Verifier) WriteHeaders(w http.ResponseWriter) error {
+	w.Header().Set("X-Incus-OIDC-audience", o.audience)
+	w.Header().Set("X-Incus-OIDC-clientid", o.clientID)
+	w.Header().Set("X-Incus-OIDC-issuer", o.issuer)
+	w.Header().Set("X-Incus-OIDC-scopes", strings.Join(o.scopes, ","))
+
+	return nil
+}
+
+// IsRequest checks if the request is using OIDC authentication.
+func (o *Verifier) IsRequest(r *http.Request) bool {
+	if r.Header.Get("Authorization") != "" {
+		return true
+	}
+
+	cookie, err := r.Cookie("oidc_access")
+	if err == nil && cookie != nil {
+		return true
+	}
+
+	return false
+}
+
+func (o *Verifier) getProvider(r *http.Request) (rp.RelyingParty, error) {
+	cookieHandler := httphelper.NewCookieHandler(o.cookieKey, o.cookieKey, httphelper.WithUnsecure())
+	options := []rp.Option{
+		rp.WithCookieHandler(cookieHandler),
+		rp.WithVerifierOpts(rp.WithIssuedAtOffset(5 * time.Second)),
+		rp.WithPKCE(cookieHandler),
+	}
+
+	provider, err := rp.NewRelyingPartyOIDC(context.TODO(), o.issuer, o.clientID, "", fmt.Sprintf("https://%s/oidc/callback", r.Host), o.scopes, options...)
+	if err != nil {
+		return nil, err
+	}
+
+	return provider, nil
+}
+
+// discover calls the OIDC discovery endpoint in order to get the issuer's remote keys which are needed to create the token verifiers.
+func (o *Verifier) discover() error {
+	discoveryConfig, err := client.Discover(context.TODO(), o.issuer, http.DefaultClient)
+	if err != nil {
+		return fmt.Errorf("Failed calling OIDC discovery endpoint: %w", err)
+	}
+
+	keySet := rp.NewRemoteKeySet(http.DefaultClient, discoveryConfig.JwksURI)
+
+	o.accessTokenVerifier = op.NewAccessTokenVerifier(o.issuer, keySet)
+	o.idTokenVerifier = rp.NewIDTokenVerifier(o.issuer, o.clientID, keySet, rp.WithIssuedAtOffset(5*time.Second))
+
+	return nil
+}
+
+// NewVerifier returns a Verifier.
+func NewVerifier(issuer string, clientid string, scope string, audience string, claim string) (*Verifier, error) {
+	cookieKey, err := uuid.New().MarshalBinary()
+	if err != nil {
+		return nil, fmt.Errorf("Failed to create UUID: %w", err)
+	}
+
+	scopes := util.SplitNTrimSpace(scope, ",", -1, false)
+	verifier := &Verifier{issuer: issuer, clientID: clientid, scopes: scopes, audience: audience, cookieKey: cookieKey, claim: claim}
+	_ = verifier.discover()
+
+	return verifier, nil
+}

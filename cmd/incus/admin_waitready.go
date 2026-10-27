@@ -1,0 +1,108 @@
+//go:build linux
+
+package main
+
+import (
+	"fmt"
+	"time"
+
+	"github.com/spf13/cobra"
+
+	incus "github.com/lxc/incus/v7/client"
+	"github.com/lxc/incus/v7/cmd/incus/color"
+	u "github.com/lxc/incus/v7/cmd/incus/usage"
+	"github.com/lxc/incus/v7/internal/i18n"
+	cli "github.com/lxc/incus/v7/shared/cmd"
+	"github.com/lxc/incus/v7/shared/logger"
+)
+
+type cmdAdminWaitready struct {
+	global *cmdGlobal
+
+	flagTimeout int
+}
+
+var cmdAdminWaitreadyUsage = u.Usage{}
+
+func (c *cmdAdminWaitready) command() *cobra.Command {
+	cmd := &cobra.Command{}
+	cmd.Use = cli.U("waitready", cmdAdminWaitreadyUsage...)
+	cmd.Short = i18n.G("Wait for the daemon to be ready to process requests")
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Wait for the daemon to be ready to process requests
+
+  This command will block until the daemon is reachable over its REST API and
+  is done with early start tasks like re-starting previously started
+  containers.`))
+	cmd.RunE = c.run
+	cli.AddIntFlag(cmd.Flags(), &c.flagTimeout, "timeout|t", "Number of seconds to wait before giving up", 0)
+
+	return cmd
+}
+
+func (c *cmdAdminWaitready) run(cmd *cobra.Command, args []string) error {
+	_, err := c.global.Parse(cmdAdminWaitreadyUsage, cmd, args)
+	if err != nil {
+		return err
+	}
+
+	finger := make(chan struct{})
+	var errLast error
+	go func() {
+		for i := 0; ; i++ {
+			// Start logging only after the 10'th attempt (about 5
+			// seconds). Then after the 30'th attempt (about 15
+			// seconds), log only only one attempt every 10
+			// attempts (about 5 seconds), to avoid being too
+			// verbose.
+			doLog := false
+			if i > 10 {
+				doLog = i < 30 || ((i % 10) == 0)
+			}
+
+			if doLog {
+				logger.Debugf(i18n.G("Connecting to the daemon (attempt %d)"), i)
+			}
+
+			d, err := incus.ConnectIncusUnix("", nil)
+			if err != nil {
+				errLast = err
+				if doLog {
+					logger.Debugf(i18n.G("Failed connecting to the daemon (attempt %d): %v"), i, err)
+				}
+
+				time.Sleep(500 * time.Millisecond)
+				continue
+			}
+
+			if doLog {
+				logger.Debugf(i18n.G("Checking if the daemon is ready (attempt %d)"), i)
+			}
+
+			_, _, err = d.RawQuery("GET", "/internal/ready", nil, "")
+			if err != nil {
+				errLast = err
+				if doLog {
+					logger.Debugf(i18n.G("Failed to check if the daemon is ready (attempt %d): %v"), i, err)
+				}
+
+				time.Sleep(500 * time.Millisecond)
+				continue
+			}
+
+			close(finger)
+			return
+		}
+	}()
+
+	if c.flagTimeout > 0 {
+		select {
+		case <-finger:
+		case <-time.After(time.Second * time.Duration(c.flagTimeout)):
+			return fmt.Errorf(i18n.G("Daemon still not running after %ds timeout (%v)"), c.flagTimeout, errLast)
+		}
+	} else {
+		<-finger
+	}
+
+	return nil
+}

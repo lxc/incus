@@ -1,0 +1,199 @@
+//go:build darwin || freebsd || netbsd
+
+package main
+
+import (
+	"bytes"
+	"errors"
+	"fmt"
+	"io"
+	"net"
+	"os"
+	"os/exec"
+	"strconv"
+	"unsafe"
+
+	"github.com/creack/pty"
+	"golang.org/x/sys/unix"
+
+	"github.com/lxc/incus/v7/internal/version"
+	"github.com/lxc/incus/v7/shared/api"
+	"github.com/lxc/incus/v7/shared/logger"
+	"github.com/lxc/incus/v7/shared/revert"
+)
+
+func parseBytes(b []byte) string {
+	n := bytes.IndexByte(b, 0)
+	if n < 0 {
+		n = len(b)
+	}
+
+	return string(b[:n])
+}
+
+func osGetEnvironment() (*api.ServerEnvironment, error) {
+	uname := unix.Utsname{}
+	err := unix.Uname(&uname)
+	if err != nil {
+		return nil, err
+	}
+
+	env := &api.ServerEnvironment{
+		Kernel:             parseBytes(uname.Sysname[:]),
+		KernelArchitecture: parseBytes(uname.Machine[:]),
+		KernelVersion:      parseBytes(uname.Release[:]),
+		Server:             "incus-agent",
+		ServerPid:          os.Getpid(),
+		ServerVersion:      version.Version,
+		ServerName:         parseBytes(uname.Nodename[:]),
+	}
+
+	return env, nil
+}
+
+// setPtySize is the same as linux.SetPtySize for BSD-likes.
+func setPtySize(fd int, width int, height int) (err error) {
+	var dimensions [4]uint16
+	dimensions[0] = uint16(height)
+	dimensions[1] = uint16(width)
+
+	_, _, errno := unix.Syscall6(unix.SYS_IOCTL, uintptr(fd), uintptr(unix.TIOCSWINSZ), uintptr(unsafe.Pointer(&dimensions)), 0, 0, 0)
+	if errno != 0 {
+		return errno
+	}
+
+	return nil
+}
+
+func osGetInteractiveConsole(s *execWs) (*os.File, *os.File, error) {
+	pty, tty, err := openPty(int64(s.uid), int64(s.gid))
+	if err != nil {
+		return nil, nil, err
+	}
+
+	if s.width > 0 && s.height > 0 {
+		_ = setPtySize(int(pty.Fd()), s.width, s.height)
+	}
+
+	return pty, tty, nil
+}
+
+func osHandleExecControl(control api.InstanceExecControl, s *execWs, pty io.ReadWriteCloser, proc execProcess, l logger.Logger) {
+	if control.Command == "window-resize" && s.interactive {
+		winchWidth, err := strconv.Atoi(control.Args["width"])
+		if err != nil {
+			l.Debug("Unable to extract window width", logger.Ctx{"err": err})
+			return
+		}
+
+		winchHeight, err := strconv.Atoi(control.Args["height"])
+		if err != nil {
+			l.Debug("Unable to extract window height", logger.Ctx{"err": err})
+			return
+		}
+
+		osFile, ok := pty.(*os.File)
+		if ok {
+			err = setPtySize(int(osFile.Fd()), winchWidth, winchHeight)
+			if err != nil {
+				l.Debug("Failed to set window size", logger.Ctx{"err": err, "width": winchWidth, "height": winchHeight})
+				return
+			}
+		}
+	} else if control.Command == "signal" {
+		err := unix.Kill(proc.Pid(), unix.Signal(control.Signal))
+		if err != nil {
+			l.Debug("Failed forwarding signal", logger.Ctx{"err": err, "signal": control.Signal})
+			return
+		}
+
+		l.Info("Forwarded signal", logger.Ctx{"signal": control.Signal})
+	}
+}
+
+// osExitStatus is is the same as linux.ExitStatus for BSD-likes.
+func osExitStatus(err error) (int, error) {
+	if err == nil {
+		return 0, err // No error exit status.
+	}
+
+	var exitErr *exec.ExitError
+
+	// Detect and extract ExitError to check the embedded exit status.
+	if errors.As(err, &exitErr) {
+		// If the process was signaled, extract the signal.
+		status, isWaitStatus := exitErr.Sys().(unix.WaitStatus)
+		if isWaitStatus && status.Signaled() {
+			return 128 + int(status.Signal()), nil // 128 + n == Fatal error signal "n"
+		}
+
+		// Otherwise capture the exit status from the command.
+		return exitErr.ExitCode(), nil
+	}
+
+	return -1, err // Not able to extract an exit status.
+}
+
+func osGetListener(port int64) (net.Listener, error) {
+	l, err := net.Listen("tcp", fmt.Sprintf(":%d", port))
+	if err != nil {
+		return nil, fmt.Errorf("Failed to listen on TCP: %w", err)
+	}
+
+	logger.Info("Started TCP listener")
+
+	return l, nil
+}
+
+// openPty is is the same as linux.OpenPty for BSDs.
+func openPty(uid, gid int64) (*os.File, *os.File, error) {
+	reverter := revert.New()
+	defer reverter.Fail()
+
+	pty, tty, err := pty.Open()
+	if err != nil {
+		return nil, nil, err
+	}
+
+	// Configure both sides
+	for _, entry := range []*os.File{pty, tty} {
+		// Get termios.
+		t, err := unix.IoctlGetTermios(int(entry.Fd()), unix.TIOCGETA)
+		if err != nil {
+			return nil, nil, err
+		}
+
+		// Set flags.
+		t.Cflag |= unix.IMAXBEL
+		t.Cflag |= unix.BRKINT
+		t.Cflag |= unix.IXANY
+		t.Cflag |= unix.HUPCL
+
+		// Set termios.
+		err = unix.IoctlSetTermios(int(entry.Fd()), unix.TIOCSETA, t)
+		if err != nil {
+			return nil, nil, err
+		}
+
+		// Set the default window size.
+		sz := &unix.Winsize{
+			Col: 80,
+			Row: 25,
+		}
+
+		err = unix.IoctlSetWinsize(int(entry.Fd()), unix.TIOCSWINSZ, sz)
+		if err != nil {
+			return nil, nil, err
+		}
+
+		// Set CLOEXEC.
+		_, _, errno := unix.Syscall(unix.SYS_FCNTL, uintptr(entry.Fd()), unix.F_SETFD, unix.FD_CLOEXEC)
+		if errno != 0 {
+			return nil, nil, unix.Errno(errno)
+		}
+	}
+
+	reverter.Success()
+
+	return pty, tty, nil
+}

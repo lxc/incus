@@ -1,0 +1,648 @@
+package main
+
+import (
+	"context"
+	"errors"
+	"fmt"
+	"io"
+	"net"
+	"net/http"
+	"runtime"
+	"slices"
+	"strings"
+	"sync"
+	"time"
+
+	"github.com/lxc/incus/v7/internal/server/auth"
+	"github.com/lxc/incus/v7/internal/server/db"
+	dbCluster "github.com/lxc/incus/v7/internal/server/db/cluster"
+	"github.com/lxc/incus/v7/internal/server/instance"
+	instanceDrivers "github.com/lxc/incus/v7/internal/server/instance/drivers"
+	"github.com/lxc/incus/v7/internal/server/instance/instancetype"
+	"github.com/lxc/incus/v7/internal/server/locking"
+	"github.com/lxc/incus/v7/internal/server/metrics"
+	projecthelpers "github.com/lxc/incus/v7/internal/server/project"
+	"github.com/lxc/incus/v7/internal/server/request"
+	"github.com/lxc/incus/v7/internal/server/response"
+	"github.com/lxc/incus/v7/internal/server/state"
+	storagePools "github.com/lxc/incus/v7/internal/server/storage"
+	"github.com/lxc/incus/v7/shared/api"
+	"github.com/lxc/incus/v7/shared/logger"
+)
+
+type metricsCacheEntry struct {
+	metrics *metrics.MetricSet
+	expiry  time.Time
+}
+
+var (
+	metricsCache     map[string]metricsCacheEntry
+	metricsCacheLock sync.Mutex
+)
+
+var metricsCmd = APIEndpoint{
+	Path: "metrics",
+
+	Get: APIEndpointAction{Handler: metricsGet, AccessHandler: allowMetrics, AllowUntrusted: true},
+}
+
+func allowMetrics(d *Daemon, r *http.Request) response.Response {
+	s := d.State()
+
+	if !s.GlobalConfig.MetricsAuthentication() {
+		return response.EmptySyncResponse
+	}
+
+	return allowPermission(auth.ObjectTypeServer, auth.EntitlementCanViewMetrics)(d, r)
+}
+
+// swagger:operation GET /1.0/metrics metrics metrics_get
+//
+//	Get metrics
+//
+//	Gets metrics of instances.
+//
+//	---
+//	produces:
+//	  - text/plain
+//	parameters:
+//	  - in: query
+//	    name: project
+//	    description: Project name
+//	    type: string
+//	    x-example: default
+//	  - in: query
+//	    name: target
+//	    description: Cluster member name
+//	    type: string
+//	    x-example: server01
+//	responses:
+//	  "200":
+//	    description: Metrics
+//	    schema:
+//	      type: string
+//	      description: Instance metrics
+//	  "400":
+//	    $ref: "#/responses/BadRequest"
+//	  "403":
+//	    $ref: "#/responses/Forbidden"
+//	  "404":
+//	    $ref: "#/responses/NotFound"
+//	  "409":
+//	    $ref: "#/responses/Conflict"
+//	  "500":
+//	    $ref: "#/responses/InternalServerError"
+func metricsGet(d *Daemon, r *http.Request) response.Response {
+	s := d.State()
+
+	projectName := request.QueryParam(r, "project")
+	compress := strings.Contains(r.Header.Get("Accept-Encoding"), "gzip")
+
+	// Forward if requested.
+	resp := forwardedResponseIfTargetIsRemote(s, r)
+	if resp != nil {
+		return resp
+	}
+
+	// Wait until daemon is fully started.
+	<-d.waitReady.Done()
+
+	// Prepare response.
+	metricSet := metrics.NewMetricSet(nil)
+
+	var projectNames []string
+	var poolNames []string
+	var intMetrics *metrics.MetricSet
+
+	err := s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
+		// Figure out the projects to retrieve.
+		if projectName != "" {
+			projectNames = []string{projectName}
+		} else {
+			// Get all project names if no specific project requested.
+			projects, err := dbCluster.GetProjects(ctx, tx.Tx())
+			if err != nil {
+				return fmt.Errorf("Failed loading projects: %w", err)
+			}
+
+			projectNames = make([]string, 0, len(projects))
+			for _, project := range projects {
+				projectNames = append(projectNames, project.Name)
+			}
+		}
+
+		// Get the storage pool names.
+		var err error
+
+		poolNames, err = tx.GetCreatedStoragePoolNames(ctx)
+		if err != nil {
+			return fmt.Errorf("Failed loading storage pools: %w", err)
+		}
+
+		// Add internal metrics.
+		intMetrics = internalMetrics(ctx, s, tx)
+
+		return nil
+	})
+	if err != nil {
+		return response.SmartError(err)
+	}
+
+	// Add storage pool metrics (outside of the transaction as it loads the pools).
+	for _, poolName := range poolNames {
+		pool, err := storagePools.LoadByName(s, poolName)
+		if err != nil {
+			logger.Warn("Failed loading storage pool", logger.Ctx{"pool": poolName, "err": err})
+			continue
+		}
+
+		res, err := pool.GetResources()
+		if err != nil {
+			logger.Warn("Failed getting storage pool resources", logger.Ctx{"pool": poolName, "err": err})
+			continue
+		}
+
+		labels := map[string]string{"pool": poolName, "driver": pool.Driver().Info().Name}
+		intMetrics.AddSamples(metrics.StoragePoolUsedBytes, metrics.Sample{Labels: labels, Value: float64(res.Space.Used)})
+		intMetrics.AddSamples(metrics.StoragePoolSizeBytes, metrics.Sample{Labels: labels, Value: float64(res.Space.Total)})
+	}
+
+	// Add cluster member metrics.
+	if s.ServerClustered {
+		err = clusterMemberMetrics(r.Context(), s, intMetrics)
+		if err != nil {
+			logger.Warn("Failed getting cluster member metrics", logger.Ctx{"err": err})
+		}
+	}
+
+	// invalidProjectFilters returns project filters which are either not in cache or have expired.
+	invalidProjectFilters := func(projectNames []string) []dbCluster.InstanceFilter {
+		metricsCacheLock.Lock()
+		defer metricsCacheLock.Unlock()
+
+		var filters []dbCluster.InstanceFilter
+		for _, p := range projectNames {
+			projectName := p // Local var for filter pointer.
+
+			cache, ok := metricsCache[projectName]
+			if !ok || cache.expiry.Before(time.Now()) {
+				// If missing or expired, record it.
+				filters = append(filters, dbCluster.InstanceFilter{
+					Project: &projectName,
+					Node:    &s.ServerName,
+				})
+
+				continue
+			}
+
+			// If present and valid, merge the existing data.
+			metricSet.Merge(cache.metrics)
+		}
+
+		return filters
+	}
+
+	// Review the cache for invalid projects.
+	projectsToFetch := invalidProjectFilters(projectNames)
+
+	// If all valid, return immediately.
+	if len(projectsToFetch) == 0 {
+		// Merge in the internal metrics.
+		metricSet.Merge(intMetrics)
+
+		return getFilteredMetrics(s, r, compress, metricSet)
+	}
+
+	cacheDuration := time.Duration(8) * time.Second
+
+	// Acquire update lock.
+	lockCtx, lockCtxCancel := context.WithTimeout(r.Context(), cacheDuration)
+	defer lockCtxCancel()
+
+	unlock, err := locking.Lock(lockCtx, "metricsGet")
+	if err != nil {
+		return response.SmartError(api.StatusErrorf(http.StatusLocked, "Metrics are currently being built by another request: %s", err))
+	}
+
+	defer unlock()
+
+	// Setup a new response.
+	metricSet = metrics.NewMetricSet(nil)
+
+	// Merge in the internal metrics.
+	metricSet.Merge(intMetrics)
+
+	// Check if any of the missing data has been filled in since acquiring the lock.
+	// As its possible another request was already populating the cache when we tried to take the lock.
+	projectsToFetch = invalidProjectFilters(projectNames)
+
+	// If all valid, return immediately.
+	if len(projectsToFetch) == 0 {
+		return getFilteredMetrics(s, r, compress, metricSet)
+	}
+
+	var instances []instance.Instance
+	err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
+		return tx.InstanceList(ctx, func(dbInst db.InstanceArgs, p api.Project) error {
+			inst, err := instance.Load(s, dbInst, p)
+			if err != nil {
+				return fmt.Errorf("Failed loading instance %q in project %q: %w", dbInst.Name, dbInst.Project, err)
+			}
+
+			instances = append(instances, inst)
+
+			return nil
+		}, projectsToFetch...)
+	})
+	if err != nil {
+		return response.SmartError(err)
+	}
+
+	// Prepare temporary metrics storage.
+	newMetrics := make(map[string]*metrics.MetricSet, len(projectsToFetch))
+	newMetricsLock := sync.Mutex{}
+
+	// Limit metrics build concurrency to number of instances or number of CPU cores (which ever is less).
+	var wg sync.WaitGroup
+	instMetricsCh := make(chan instance.Instance)
+	maxConcurrent := runtime.NumCPU()
+	instCount := len(instances)
+	if instCount < maxConcurrent {
+		maxConcurrent = instCount
+	}
+
+	// Start metrics builder routines.
+	for range maxConcurrent {
+		go func(instMetricsCh <-chan instance.Instance) {
+			for inst := range instMetricsCh {
+				projectName := inst.Project().Name
+				instanceMetrics, err := inst.Metrics()
+				if err != nil {
+					// Ignore stopped instances.
+					if !errors.Is(err, instanceDrivers.ErrInstanceIsStopped) {
+						logger.Warn("Failed getting instance metrics", logger.Ctx{"instance": inst.Name(), "project": projectName, "err": err})
+					}
+				} else {
+					// Add the metrics.
+					newMetricsLock.Lock()
+
+					// Initialize metrics set for project if needed.
+					if newMetrics[projectName] == nil {
+						newMetrics[projectName] = metrics.NewMetricSet(nil)
+					}
+
+					newMetrics[projectName].Merge(instanceMetrics)
+
+					newMetricsLock.Unlock()
+				}
+
+				wg.Done()
+			}
+		}(instMetricsCh)
+	}
+
+	// Fetch what's missing.
+	for _, inst := range instances {
+		wg.Add(1)
+		instMetricsCh <- inst
+	}
+
+	wg.Wait()
+	close(instMetricsCh)
+
+	// Put the new data in the global cache and in response.
+	metricsCacheLock.Lock()
+
+	if metricsCache == nil {
+		metricsCache = map[string]metricsCacheEntry{}
+	}
+
+	updatedProjects := []string{}
+	for project, entries := range newMetrics {
+		metricsCache[project] = metricsCacheEntry{
+			expiry:  time.Now().Add(cacheDuration),
+			metrics: entries,
+		}
+
+		updatedProjects = append(updatedProjects, project)
+		metricSet.Merge(entries)
+	}
+
+	for _, project := range projectsToFetch {
+		if slices.Contains(updatedProjects, *project.Project) {
+			continue
+		}
+
+		metricsCache[*project.Project] = metricsCacheEntry{
+			expiry: time.Now().Add(cacheDuration),
+		}
+	}
+
+	metricsCacheLock.Unlock()
+
+	return getFilteredMetrics(s, r, compress, metricSet)
+}
+
+func getFilteredMetrics(s *state.State, r *http.Request, compress bool, metricSet *metrics.MetricSet) response.Response {
+	if !s.GlobalConfig.MetricsAuthentication() {
+		return response.SyncResponsePlain(true, compress, metricSet.String())
+	}
+
+	// Get instances the user is allowed to view.
+	userHasPermission, err := s.Authorizer.GetPermissionChecker(r.Context(), r, auth.EntitlementCanView, auth.ObjectTypeInstance)
+	if err != nil && !api.StatusErrorCheck(err, http.StatusForbidden) {
+		return response.SmartError(err)
+	} else if err != nil {
+		userHasPermission, err = s.Authorizer.GetPermissionChecker(r.Context(), r, auth.EntitlementCanViewMetrics, auth.ObjectTypeInstance)
+		if err != nil {
+			return response.SmartError(err)
+		}
+	}
+
+	metricSet.FilterSamples(userHasPermission)
+
+	return response.SyncResponsePlain(true, compress, metricSet.String())
+}
+
+// clusterMemberMetrics adds info, status and role metrics for every cluster member.
+func clusterMemberMetrics(ctx context.Context, s *state.State, out *metrics.MetricSet) error {
+	// Without a known leader, still report the members but without a leader role.
+	leaderAddress, err := s.Cluster.LeaderAddress()
+	if err != nil {
+		leaderAddress = ""
+	}
+
+	var raftNodes []db.RaftNode
+	err = s.DB.Node.Transaction(ctx, func(ctx context.Context, tx *db.NodeTx) error {
+		raftNodes, err = tx.GetRaftNodes(ctx)
+		return err
+	})
+	if err != nil {
+		return err
+	}
+
+	var members []api.ClusterMember
+	err = s.DB.Cluster.Transaction(ctx, func(ctx context.Context, tx *db.ClusterTx) error {
+		failureDomains, err := tx.GetFailureDomainsNames(ctx)
+		if err != nil {
+			return err
+		}
+
+		memberFailureDomains, err := tx.GetNodesFailureDomains(ctx)
+		if err != nil {
+			return err
+		}
+
+		nodes, err := tx.GetNodes(ctx)
+		if err != nil {
+			return err
+		}
+
+		maxVersion, err := tx.GetNodeMaxVersion(ctx)
+		if err != nil {
+			return err
+		}
+
+		args := db.NodeInfoArgs{
+			LeaderAddress:        leaderAddress,
+			FailureDomains:       failureDomains,
+			MemberFailureDomains: memberFailureDomains,
+			OfflineThreshold:     s.GlobalConfig.OfflineThreshold(),
+			MaxMemberVersion:     maxVersion,
+			RaftNodes:            raftNodes,
+		}
+
+		members = make([]api.ClusterMember, 0, len(nodes))
+		for _, node := range nodes {
+			member, err := db.APINodeInfo{NodeInfo: node}.ToAPI(ctx, tx, args)
+			if err != nil {
+				return err
+			}
+
+			members = append(members, *member)
+		}
+
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+
+	for _, member := range members {
+		out.AddSamples(metrics.ClusterMemberInfo, metrics.Sample{
+			Labels: map[string]string{"member": member.ServerName, "architecture": member.Architecture, "failure_domain": member.FailureDomain},
+			Value:  1,
+		})
+
+		for _, status := range []string{"online", "offline", "blocked", "evacuated", "evacuating", "restoring"} {
+			value := float64(0)
+			if strings.EqualFold(member.Status, status) {
+				value = 1
+			}
+
+			out.AddSamples(metrics.ClusterMemberStatus, metrics.Sample{
+				Labels: map[string]string{"member": member.ServerName, "status": status},
+				Value:  value,
+			})
+		}
+
+		for _, role := range member.Roles {
+			out.AddSamples(metrics.ClusterMemberRole, metrics.Sample{
+				Labels: map[string]string{"member": member.ServerName, "role": role},
+				Value:  1,
+			})
+		}
+
+		for _, group := range member.Groups {
+			out.AddSamples(metrics.ClusterMemberGroup, metrics.Sample{
+				Labels: map[string]string{"member": member.ServerName, "group": group},
+				Value:  1,
+			})
+		}
+	}
+
+	return nil
+}
+
+func internalMetrics(ctx context.Context, s *state.State, tx *db.ClusterTx) *metrics.MetricSet {
+	out := metrics.NewMetricSet(nil)
+
+	warnings, err := dbCluster.GetWarnings(ctx, tx.Tx())
+	if err != nil {
+		logger.Warn("Failed to get warnings", logger.Ctx{"err": err})
+	} else {
+		// Total number of warnings
+		out.AddSamples(metrics.WarningsTotal, metrics.Sample{Value: float64(len(warnings))})
+	}
+
+	operations, err := dbCluster.GetOperations(ctx, tx.Tx())
+	if err != nil {
+		logger.Warn("Failed to get operations", logger.Ctx{"err": err})
+	} else {
+		// Total number of operations
+		out.AddSamples(metrics.OperationsTotal, metrics.Sample{Value: float64(len(operations))})
+	}
+
+	// Project metrics.
+	projects, err := dbCluster.GetProjects(ctx, tx.Tx())
+	if err != nil {
+		logger.Warn("Failed to get projects", logger.Ctx{"err": err})
+	} else {
+		for _, p := range projects {
+			project, err := p.ToAPI(ctx, tx.Tx())
+			if err != nil {
+				logger.Warn("Failed to convert project", logger.Ctx{"project": p.Name, "err": err})
+				continue
+			}
+
+			containerType := instancetype.Container
+			containers, err := dbCluster.GetInstances(ctx, tx.Tx(), dbCluster.InstanceFilter{Project: &p.Name, Type: &containerType})
+			if err != nil {
+				logger.Warn("Failed to get container count", logger.Ctx{"project": p.Name, "err": err})
+			} else {
+				out.AddSamples(metrics.ProjectResourcesTotal, metrics.Sample{
+					Labels: map[string]string{"project": p.Name, "resource": "containers"},
+					Value:  float64(len(containers)),
+				})
+			}
+
+			vmType := instancetype.VM
+			vms, err := dbCluster.GetInstances(ctx, tx.Tx(), dbCluster.InstanceFilter{Project: &p.Name, Type: &vmType})
+			if err != nil {
+				logger.Warn("Failed to get VM count", logger.Ctx{"project": p.Name, "err": err})
+			} else {
+				out.AddSamples(metrics.ProjectResourcesTotal, metrics.Sample{
+					Labels: map[string]string{"project": p.Name, "resource": "virtual-machines"},
+					Value:  float64(len(vms)),
+				})
+			}
+
+			images, err := dbCluster.GetImages(ctx, tx.Tx(), dbCluster.ImageFilter{Project: &p.Name})
+			if err != nil {
+				logger.Warn("Failed to get image count", logger.Ctx{"project": p.Name, "err": err})
+			} else {
+				out.AddSamples(metrics.ProjectResourcesTotal, metrics.Sample{
+					Labels: map[string]string{"project": p.Name, "resource": "images"},
+					Value:  float64(len(images)),
+				})
+			}
+
+			profiles, err := dbCluster.GetProfiles(ctx, tx.Tx(), dbCluster.ProfileFilter{Project: &p.Name})
+			if err != nil {
+				logger.Warn("Failed to get profile count", logger.Ctx{"project": p.Name, "err": err})
+			} else {
+				out.AddSamples(metrics.ProjectResourcesTotal, metrics.Sample{
+					Labels: map[string]string{"project": p.Name, "resource": "profiles"},
+					Value:  float64(len(profiles)),
+				})
+			}
+
+			networks, err := tx.GetNetworks(ctx, p.Name)
+			if err != nil {
+				logger.Warn("Failed to get network count", logger.Ctx{"project": p.Name, "err": err})
+			} else {
+				out.AddSamples(metrics.ProjectResourcesTotal, metrics.Sample{
+					Labels: map[string]string{"project": p.Name, "resource": "networks"},
+					Value:  float64(len(networks)),
+				})
+			}
+
+			volumes, err := tx.GetCustomVolumesInProject(ctx, p.Name)
+			if err != nil {
+				logger.Warn("Failed to get storage volume count", logger.Ctx{"project": p.Name, "err": err})
+			} else {
+				out.AddSamples(metrics.ProjectResourcesTotal, metrics.Sample{
+					Labels: map[string]string{"project": p.Name, "resource": "storage-volumes"},
+					Value:  float64(len(volumes)),
+				})
+			}
+
+			hasLimits := false
+			for limitKey := range project.Config {
+				if strings.HasPrefix(limitKey, "limits.") {
+					hasLimits = true
+					break
+				}
+			}
+
+			if hasLimits {
+				allocations, err := projecthelpers.GetCurrentAllocations(ctx, tx, p.Name)
+				if err != nil {
+					logger.Warn("Failed to get project allocations", logger.Ctx{"project": p.Name, "err": err})
+					continue
+				}
+
+				for resource, alloc := range allocations {
+					out.AddSamples(metrics.ProjectLimit, metrics.Sample{
+						Labels: map[string]string{"project": p.Name, "resource": resource},
+						Value:  float64(alloc.Limit),
+					})
+
+					out.AddSamples(metrics.ProjectUsage, metrics.Sample{
+						Labels: map[string]string{"project": p.Name, "resource": resource},
+						Value:  float64(alloc.Usage),
+					})
+				}
+			}
+		}
+	}
+
+	// Daemon uptime
+	out.AddSamples(metrics.UptimeSeconds, metrics.Sample{Value: time.Since(s.StartTime).Seconds()})
+
+	// Number of goroutines
+	out.AddSamples(metrics.GoGoroutines, metrics.Sample{Value: float64(runtime.NumGoroutine())})
+
+	// Go memory stats
+	var ms runtime.MemStats
+
+	runtime.ReadMemStats(&ms)
+
+	out.AddSamples(metrics.GoAllocBytes, metrics.Sample{Value: float64(ms.Alloc)})
+	out.AddSamples(metrics.GoAllocBytesTotal, metrics.Sample{Value: float64(ms.TotalAlloc)})
+	out.AddSamples(metrics.GoBuckHashSysBytes, metrics.Sample{Value: float64(ms.BuckHashSys)})
+	out.AddSamples(metrics.GoFreesTotal, metrics.Sample{Value: float64(ms.Frees)})
+	out.AddSamples(metrics.GoGCSysBytes, metrics.Sample{Value: float64(ms.GCSys)})
+	out.AddSamples(metrics.GoHeapAllocBytes, metrics.Sample{Value: float64(ms.HeapAlloc)})
+	out.AddSamples(metrics.GoHeapIdleBytes, metrics.Sample{Value: float64(ms.HeapIdle)})
+	out.AddSamples(metrics.GoHeapInuseBytes, metrics.Sample{Value: float64(ms.HeapInuse)})
+	out.AddSamples(metrics.GoHeapObjects, metrics.Sample{Value: float64(ms.HeapObjects)})
+	out.AddSamples(metrics.GoHeapReleasedBytes, metrics.Sample{Value: float64(ms.HeapReleased)})
+	out.AddSamples(metrics.GoHeapSysBytes, metrics.Sample{Value: float64(ms.HeapSys)})
+	out.AddSamples(metrics.GoLookupsTotal, metrics.Sample{Value: float64(ms.Lookups)})
+	out.AddSamples(metrics.GoMallocsTotal, metrics.Sample{Value: float64(ms.Mallocs)})
+	out.AddSamples(metrics.GoMCacheInuseBytes, metrics.Sample{Value: float64(ms.MCacheInuse)})
+	out.AddSamples(metrics.GoMCacheSysBytes, metrics.Sample{Value: float64(ms.MCacheSys)})
+	out.AddSamples(metrics.GoMSpanInuseBytes, metrics.Sample{Value: float64(ms.MSpanInuse)})
+	out.AddSamples(metrics.GoMSpanSysBytes, metrics.Sample{Value: float64(ms.MSpanSys)})
+	out.AddSamples(metrics.GoNextGCBytes, metrics.Sample{Value: float64(ms.NextGC)})
+	out.AddSamples(metrics.GoOtherSysBytes, metrics.Sample{Value: float64(ms.OtherSys)})
+	out.AddSamples(metrics.GoStackInuseBytes, metrics.Sample{Value: float64(ms.StackInuse)})
+	out.AddSamples(metrics.GoStackSysBytes, metrics.Sample{Value: float64(ms.StackSys)})
+	out.AddSamples(metrics.GoSysBytes, metrics.Sample{Value: float64(ms.Sys)})
+
+	// If on IncusOS, include OS metrics.
+	if s.OS.IncusOS != nil {
+		client := http.Client{}
+		client.Transport = &http.Transport{
+			DialContext: func(_ context.Context, network, addr string) (net.Conn, error) {
+				return net.DialTimeout("tcp", "127.0.0.1:9100", 50*time.Millisecond)
+			},
+			DisableKeepAlives:     true,
+			ExpectContinueTimeout: time.Second * 5,
+			ResponseHeaderTimeout: time.Second * 5,
+		}
+
+		resp, err := client.Get("http://incus-os/metrics")
+		if err == nil {
+			defer logger.WarnOnError(resp.Body.Close, "Failed to close response body")
+
+			osMetrics, err := io.ReadAll(resp.Body)
+			if err == nil {
+				out.AddRaw(osMetrics)
+			}
+		}
+	}
+
+	return out
+}

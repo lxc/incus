@@ -1,0 +1,106 @@
+(network-bgp)=
+# How to configure Incus as a BGP server
+
+```{note}
+The BGP server feature is available for the {ref}`network-bridge` and the {ref}`network-physical`.
+```
+
+{abbr}`BGP (Border Gateway Protocol)` is a protocol that allows exchanging routing information between autonomous systems.
+
+If you want to directly route external addresses to specific Incus servers or instances, you can configure Incus as a BGP server.
+Incus will then act as a BGP peer and advertise relevant routes and next hops to external routers, for example, your network router.
+It automatically establishes sessions with upstream BGP routers and announces the addresses and subnets that it's using.
+
+The BGP server feature can be used to allow an Incus server or cluster to directly use internal/external address space by getting the specific subnets or addresses routed to the correct host.
+This way, traffic can be forwarded to the target instance.
+
+For bridge networks, the following addresses and networks are being advertised:
+
+- Network `ipv4.address` or `ipv6.address` subnets (if the matching `nat` property isn't set to `true`)
+- Network `ipv4.nat.address` or `ipv6.nat.address` subnets (if the matching `nat` property is set to `true`)
+- Network forward addresses
+- Addresses or subnets specified in `ipv4.routes.external` or `ipv6.routes.external` on an instance NIC that is connected to the bridge network
+- Individual instance addresses (a `/32` for IPv4 and a `/128` for IPv6) when `bgp.ipv4.instances` or `bgp.ipv6.instances` is enabled on the network
+
+Make sure to add your subnets to the respective configuration options.
+Otherwise, they won't be advertised.
+
+For physical networks, no addresses are advertised directly at the level of the physical network.
+Instead, the networks, forwards and routes of all downstream networks (the networks that specify the physical network as their uplink network through the `network` option) are advertised in the same way as for bridge networks.
+
+```{note}
+At this time, it is not possible to announce only some specific routes/addresses to particular peers.
+If you need this, filter prefixes on the upstream routers.
+```
+
+## Configure the BGP server
+
+To configure Incus as a BGP server, set the following server configuration options on all cluster members:
+
+- {config:option}`server-core:core.bgp_address` - the IP address for the BGP server
+- {config:option}`server-core:core.bgp_asn` - the {abbr}`ASN (Autonomous System Number)` for the local server
+- {config:option}`server-core:core.bgp_routerid` - the unique identifier for the BGP server
+
+For example, set the following values:
+
+```bash
+incus config set core.bgp_address=192.0.2.50:179
+incus config set core.bgp_asn=65536
+incus config set core.bgp_routerid=192.0.2.50
+```
+
+Once these configuration options are set, Incus starts listening for BGP sessions.
+
+### Configure next-hop (`bridge` only)
+
+For bridge networks, you can override the next-hop configuration.
+By default, the next-hop is set to the address used for the BGP session.
+
+To configure a different address, set `bgp.ipv4.nexthop` or `bgp.ipv6.nexthop`.
+
+### Attach BGP communities (`bridge` and `ovn`)
+
+To attach standard BGP communities to every prefix advertised by a network, set `bgp.communities` to a comma-separated list of `ASN:value` pairs.
+
+```bash
+incus network set incusbr0 bgp.communities=65000:100,65000:200
+```
+
+### Advertise individual instance addresses (`bridge` only)
+
+By default, a bridge network only advertises its own subnets (or NAT addresses).
+If you instead want to advertise a route for each individual instance address (for example to route a shared subnet to the specific server that currently runs an instance), enable `bgp.ipv4.instances` and/or `bgp.ipv6.instances` on the network.
+
+When enabled, Incus advertises a `/32` (IPv4) or `/128` (IPv6) route for each running instance connected to the network and withdraws it when the instance stops:
+
+- If the instance NIC has a static `ipv4.address` or `ipv6.address` set, that address is advertised as soon as the instance starts.
+- Otherwise, Incus looks up the dynamically allocated addresses (DHCPv4, DHCPv6 or SLAAC) tied to the NIC's MAC address in the kernel neighbor table for a short period after the instance starts. This requires the instance to generate some network traffic shortly after booting so that its address becomes visible.
+
+```bash
+incus network set incusbr0 bgp.ipv4.instances=true
+incus network set incusbr0 bgp.ipv6.instances=true
+```
+
+### Configure BGP peers for OVN networks
+
+If you run an OVN network with an uplink network (`physical` or `bridge`), the uplink network is the one that holds the list of allowed subnets and the BGP configuration.
+Therefore, you must configure BGP peers on the uplink network that contain the information that is required to connect to the BGP server.
+
+Set the following configuration options on the uplink network:
+
+- `bgp.peers.<name>.address` - the peer address to be used by the downstream networks
+- `bgp.peers.<name>.interface` - the interface to use for BGP unnumbered peering (alternative to the peer address)
+- `bgp.peers.<name>.asn` - the {abbr}`ASN (Autonomous System Number)` for the local server
+- `bgp.peers.<name>.password` - an optional password for the peer session
+- `bgp.peers.<name>.holdtime` - an optional hold time for the peer session (in seconds)
+
+### Use BGP unnumbered
+
+Instead of configuring a peer address, you can set `bgp.peers.<name>.interface` to establish the session using BGP unnumbered.
+In that mode, the peer's IPv6 link-local address is automatically discovered on the given interface and used for the session, with IPv4 routes exchanged over it using the extended next-hop capability.
+
+This removes the need to assign a global address to each host for BGP peering, which is particularly useful in larger clusters.
+It requires the upstream router to also support BGP unnumbered and to be directly connected on that interface.
+
+Once the uplink network is configured, downstream OVN networks will get their external subnets and addresses announced over BGP.
+The next-hop is set to the address of the OVN router on the uplink network.

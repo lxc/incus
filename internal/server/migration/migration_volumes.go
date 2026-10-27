@@ -1,0 +1,431 @@
+package migration
+
+import (
+	"fmt"
+	"io"
+	"net/http"
+	"slices"
+
+	"google.golang.org/protobuf/proto"
+
+	internalInstance "github.com/lxc/incus/v7/internal/instance"
+	"github.com/lxc/incus/v7/internal/migration"
+	backupConfig "github.com/lxc/incus/v7/internal/server/backup/config"
+	"github.com/lxc/incus/v7/internal/server/operations"
+	"github.com/lxc/incus/v7/shared/api"
+	"github.com/lxc/incus/v7/shared/ioprogress"
+	"github.com/lxc/incus/v7/shared/units"
+)
+
+// Info represents the index frame sent if supported.
+type Info struct {
+	Config *backupConfig.Config `json:"config,omitempty" yaml:"config,omitempty"` // Equivalent of backup.yaml but embedded in index.
+}
+
+// InfoResponse represents the response to the index frame sent if supported.
+// Right now this doesn't contain anything useful, its just used to indicate receipt of the index header.
+// But in the future the intention is to use it allow the target to send back additional information to the source
+// about which frames (such as snapshots) it needs for the migration after having inspected the Info index header.
+type InfoResponse struct {
+	StatusCode int
+	Error      string
+	Refresh    *bool // This is used to let the source know whether to actually refresh a volume.
+}
+
+// Err returns the error of the response.
+func (r *InfoResponse) Err() error {
+	if r.StatusCode != http.StatusOK {
+		return api.StatusErrorf(r.StatusCode, "%s", r.Error)
+	}
+
+	return nil
+}
+
+// Type represents the migration transport type. It indicates the method by which the migration can
+// take place and what optional features are available.
+type Type struct {
+	FSType   migration.MigrationFSType // Transport mode selected.
+	Features []string                  // Feature hints for selected FSType transport mode.
+}
+
+// DependentVolumeArgs represents the arguments needed to set up a dependent volume migration.
+type DependentVolumeArgs struct {
+	Name          string
+	Pool          string
+	DeviceName    string
+	ContentType   string
+	MigrationType Type
+	Snapshots     []*migration.Snapshot
+	VolumeSize    int64
+}
+
+// VolumeSourceArgs represents the arguments needed to setup a volume migration source.
+type VolumeSourceArgs struct {
+	IndexHeaderVersion uint32
+	Name               string
+	Snapshots          []string
+	MigrationType      Type
+	TrackProgress      bool
+	MultiSync          bool
+	FinalSync          bool
+	Data               any // Optional store to persist storage driver state between MultiSync phases.
+	ContentType        string
+	AllowInconsistent  bool
+	Refresh            bool
+	Info               *Info
+	VolumeOnly         bool
+	ClusterMove        bool
+	StorageMove        bool
+	DependentVolumes   []DependentVolumeArgs
+}
+
+// VolumeTargetArgs represents the arguments needed to setup a volume migration sink.
+type VolumeTargetArgs struct {
+	IndexHeaderVersion    uint32
+	Name                  string
+	Description           string
+	Config                map[string]string // Only used for custom volume migration.
+	Snapshots             []*migration.Snapshot
+	MigrationType         Type
+	TrackProgress         bool
+	Refresh               bool
+	RefreshExcludeOlder   bool
+	Live                  bool
+	VolumeSize            int64
+	ContentType           string
+	VolumeOnly            bool
+	ClusterMoveSourceName string
+	StoragePool           string
+	DependentVolumes      []DependentVolumeArgs
+}
+
+// TypesToHeader converts one or more Types to a MigrationHeader. It uses the first type argument
+// supplied to indicate the preferred migration method and sets the MigrationHeader's Fs type
+// to that. If the preferred type is ZFS then it will also set the header's optional ZfsFeatures.
+// If the fallback Rsync type is present in any of the types even if it is not preferred, then its
+// optional features are added to the header's RsyncFeatures, allowing for fallback negotiation to
+// take place on the farside.
+func TypesToHeader(types ...Type) *migration.MigrationHeader {
+	missingFeature := false
+	hasFeature := true
+	var preferredType Type
+
+	if len(types) > 0 {
+		preferredType = types[0]
+	}
+
+	header := migration.MigrationHeader{Fs: &preferredType.FSType}
+
+	// Add ZFS features if preferred type is ZFS.
+	if preferredType.FSType == migration.MigrationFSType_ZFS {
+		features := migration.ZfsFeatures{
+			Compress: &missingFeature,
+		}
+
+		for _, feature := range preferredType.Features {
+			switch feature {
+			case "compress":
+				features.Compress = &hasFeature
+			case migration.ZFSFeatureMigrationHeader:
+				features.MigrationHeader = &hasFeature
+			case migration.ZFSFeatureZvolFilesystems:
+				features.HeaderZvols = &hasFeature
+			}
+		}
+
+		header.ZfsFeatures = &features
+	}
+
+	// Add BTRFS features if preferred type is BTRFS.
+	if preferredType.FSType == migration.MigrationFSType_BTRFS {
+		features := migration.BtrfsFeatures{
+			MigrationHeader:  &missingFeature,
+			HeaderSubvolumes: &missingFeature,
+		}
+
+		for _, feature := range preferredType.Features {
+			switch feature {
+			case migration.BTRFSFeatureMigrationHeader:
+				features.MigrationHeader = &hasFeature
+			case migration.BTRFSFeatureSubvolumes:
+				features.HeaderSubvolumes = &hasFeature
+			case migration.BTRFSFeatureSubvolumeUUIDs:
+				features.HeaderSubvolumeUuids = &hasFeature
+			}
+		}
+
+		header.BtrfsFeatures = &features
+	}
+
+	// Check all the types for an Rsync method, if found add its features to the header's RsyncFeatures list.
+	for _, t := range types {
+		if t.FSType != migration.MigrationFSType_RSYNC && t.FSType != migration.MigrationFSType_BLOCK_AND_RSYNC {
+			continue
+		}
+
+		features := migration.RsyncFeatures{
+			Xattrs:        &missingFeature,
+			Delete:        &missingFeature,
+			Compress:      &missingFeature,
+			Bidirectional: &missingFeature,
+		}
+
+		for _, feature := range t.Features {
+			switch feature {
+			case "xattrs":
+				features.Xattrs = &hasFeature
+			case "delete":
+				features.Delete = &hasFeature
+			case "compress":
+				features.Compress = &hasFeature
+			case "bidirectional":
+				features.Bidirectional = &hasFeature
+			}
+		}
+
+		header.RsyncFeatures = &features
+		break // Only use the first rsync transport type found to generate rsync features list.
+	}
+
+	// Always list the block transport features so the peer can tell that we understand them.
+	blockFeatures := migration.BlockFeatures{
+		Compress: &missingFeature,
+	}
+
+	for _, t := range types {
+		if t.FSType == migration.MigrationFSType_BLOCK_AND_RSYNC && slices.Contains(t.Features, migration.BlockFeatureCompress) {
+			blockFeatures.Compress = &hasFeature
+			break
+		}
+	}
+
+	header.BlockFeatures = &blockFeatures
+
+	return &header
+}
+
+// MatchTypes attempts to find matching migration transport types between an offered type sent from a remote
+// source and the types supported by a local storage pool. If matches are found then one or more Types are
+// returned containing the method and the matching optional features present in both. The function also takes a
+// fallback type which is used as an additional offer type preference in case the preferred remote type is not
+// compatible with the local type available. It is expected that both sides of the migration will support the
+// fallback type for the volume's content type that is being migrated.
+func MatchTypes(offer *migration.MigrationHeader, fallbackType migration.MigrationFSType, ourTypes []Type) ([]Type, error) {
+	// Generate an offer types slice from the preferred type supplied from remote and the
+	// fallback type supplied based on the content type of the transfer.
+	offeredFSTypes := []migration.MigrationFSType{offer.GetFs(), fallbackType}
+
+	matchedTypes := []Type{}
+
+	// Find first matching type.
+	for _, ourType := range ourTypes {
+		for _, offerFSType := range offeredFSTypes {
+			if offerFSType != ourType.FSType {
+				continue // Not a match, try the next one.
+			}
+
+			// We got a match, now extract the relevant offered features.
+			var offeredFeatures []string
+			switch offerFSType {
+			case migration.MigrationFSType_ZFS:
+				offeredFeatures = offer.GetZfsFeaturesSlice()
+			case migration.MigrationFSType_BTRFS:
+				offeredFeatures = offer.GetBtrfsFeaturesSlice()
+			case migration.MigrationFSType_RSYNC:
+				offeredFeatures = offer.GetRsyncFeaturesSlice()
+			case migration.MigrationFSType_BLOCK_AND_RSYNC:
+				// The rsync features were never negotiated for this transport, keep it that way for compatibility.
+				offeredFeatures = offer.GetBlockFeaturesSlice()
+			}
+
+			// Find common features in both our type and offered type.
+			commonFeatures := []string{}
+			for _, ourFeature := range ourType.Features {
+				if slices.Contains(offeredFeatures, ourFeature) {
+					commonFeatures = append(commonFeatures, ourFeature)
+				}
+			}
+
+			if offer.GetRefresh() {
+				// Optimized refresh with zfs only works if ZfsFeatureMigrationHeader is available.
+				if ourType.FSType == migration.MigrationFSType_ZFS && !slices.Contains(commonFeatures, migration.ZFSFeatureMigrationHeader) {
+					continue
+				}
+
+				// Optimized refresh with btrfs only works if BtrfsFeatureSubvolumeUUIDs is available.
+				if ourType.FSType == migration.MigrationFSType_BTRFS && !slices.Contains(commonFeatures, migration.BTRFSFeatureSubvolumeUUIDs) {
+					continue
+				}
+			}
+
+			// Append type with combined features.
+			matchedTypes = append(matchedTypes, Type{
+				FSType:   ourType.FSType,
+				Features: commonFeatures,
+			})
+		}
+	}
+
+	if len(matchedTypes) < 1 {
+		// No matching transport type found, generate an error with offered types and our types.
+		offeredTypeStrings := make([]string, 0, len(offeredFSTypes))
+		for _, offerFSType := range offeredFSTypes {
+			offeredTypeStrings = append(offeredTypeStrings, offerFSType.String())
+		}
+
+		ourTypeStrings := make([]string, 0, len(ourTypes))
+		for _, ourType := range ourTypes {
+			ourTypeStrings = append(ourTypeStrings, ourType.FSType.String())
+		}
+
+		return matchedTypes, fmt.Errorf("No matching migration types found. Offered types: %v, our types: %v", offeredTypeStrings, ourTypeStrings)
+	}
+
+	return matchedTypes, nil
+}
+
+// DependentVolumeFromHeader creates a DependentVolume from a MigrationHeader.
+func DependentVolumeFromHeader(header *migration.MigrationHeader, volName string, poolName string, contentType string, volSize int64, deviceName string) *migration.DependentVolume {
+	fs := header.GetFs()
+	return &migration.DependentVolume{
+		Fs:            &fs,
+		BtrfsFeatures: header.GetBtrfsFeatures(),
+		RsyncFeatures: header.GetRsyncFeatures(),
+		ZfsFeatures:   header.GetZfsFeatures(),
+		BlockFeatures: header.GetBlockFeatures(),
+		Name:          &volName,
+		Pool:          &poolName,
+		ContentType:   &contentType,
+		VolumeSize:    &volSize,
+		DeviceName:    &deviceName,
+	}
+}
+
+// HeaderFromDependentVolume creates a MigrationHeader from a DependentVolume.
+func HeaderFromDependentVolume(volume *migration.DependentVolume) *migration.MigrationHeader {
+	return &migration.MigrationHeader{
+		Fs:            volume.Fs,
+		BtrfsFeatures: volume.GetBtrfsFeatures(),
+		RsyncFeatures: volume.GetRsyncFeatures(),
+		ZfsFeatures:   volume.GetZfsFeatures(),
+		BlockFeatures: volume.GetBlockFeatures(),
+	}
+}
+
+// ProtobufToDependentVolume converts a migration.DependentVolume into DependentVolumeArgs.
+func ProtobufToDependentVolume(volume *migration.DependentVolume, migrationType Type, overrides map[string]string) DependentVolumeArgs {
+	volName := *volume.Name
+	poolName := *volume.Pool
+	if overrides != nil {
+		if overrides["pool"] != "" {
+			poolName = overrides["pool"]
+		}
+
+		if overrides["source"] != "" {
+			volName, _ = internalInstance.SplitVolumeSource(overrides["source"])
+		}
+	}
+
+	return DependentVolumeArgs{
+		Name:          volName,
+		Pool:          poolName,
+		DeviceName:    *volume.DeviceName,
+		ContentType:   *volume.ContentType,
+		MigrationType: migrationType,
+		Snapshots:     volume.Snapshots,
+		VolumeSize:    *volume.VolumeSize,
+	}
+}
+
+// VolumeSnapshotToProtobuf converts an api.StorageVolumeSnapshot into a migration.Snapshot.
+func VolumeSnapshotToProtobuf(vol *api.StorageVolumeSnapshot) *migration.Snapshot {
+	config := []*migration.Config{}
+	for k, v := range vol.Config {
+		kCopy := string(k)
+		vCopy := string(v)
+		config = append(config, &migration.Config{Key: &kCopy, Value: &vCopy})
+	}
+
+	return &migration.Snapshot{
+		Name:         &vol.Name,
+		LocalConfig:  config,
+		Profiles:     []string{},
+		Ephemeral:    new(false),
+		LocalDevices: []*migration.Device{},
+		Architecture: proto.Int32(0),
+		Stateful:     new(false),
+		CreationDate: new(vol.CreatedAt.UnixNano()),
+		ExpiryDate:   new(vol.CreatedAt.UnixNano()),
+	}
+}
+
+func progressWrapperRender(op *operations.Operation, key string, description string, progressInt int64, speedInt int64) {
+	meta := map[string]any{}
+
+	progress := fmt.Sprintf("%s (%s/s)", units.GetByteSizeString(progressInt, 2), units.GetByteSizeString(speedInt, 2))
+	if description != "" {
+		progress = fmt.Sprintf("%s: %s (%s/s)", description, units.GetByteSizeString(progressInt, 2), units.GetByteSizeString(speedInt, 2))
+	}
+
+	if meta[key] != progress {
+		meta[key] = progress
+		_ = op.ExtendMetadata(meta)
+	}
+}
+
+// ProgressReader reports the read progress.
+func ProgressReader(op *operations.Operation, key string, description string) func(io.ReadCloser) io.ReadCloser {
+	return func(reader io.ReadCloser) io.ReadCloser {
+		if op == nil {
+			return reader
+		}
+
+		progress := func(progressInt int64, speedInt int64) {
+			progressWrapperRender(op, key, description, progressInt, speedInt)
+		}
+
+		readPipe := &ioprogress.ProgressReader{
+			ReadCloser: reader,
+			Tracker: &ioprogress.ProgressTracker{
+				Handler: progress,
+			},
+		}
+
+		return readPipe
+	}
+}
+
+// ProgressWriter reports the write progress.
+func ProgressWriter(op *operations.Operation, key string, description string) func(io.WriteCloser) io.WriteCloser {
+	return func(writer io.WriteCloser) io.WriteCloser {
+		if op == nil {
+			return writer
+		}
+
+		progress := func(progressInt int64, speedInt int64) {
+			progressWrapperRender(op, key, description, progressInt, speedInt)
+		}
+
+		writePipe := &ioprogress.ProgressWriter{
+			WriteCloser: writer,
+			Tracker: &ioprogress.ProgressTracker{
+				Handler: progress,
+			},
+		}
+
+		return writePipe
+	}
+}
+
+// ProgressTracker returns a migration I/O tracker.
+func ProgressTracker(op *operations.Operation, key string, description string) *ioprogress.ProgressTracker {
+	progress := func(progressInt int64, speedInt int64) {
+		progressWrapperRender(op, key, description, progressInt, speedInt)
+	}
+
+	tracker := &ioprogress.ProgressTracker{
+		Handler: progress,
+	}
+
+	return tracker
+}

@@ -1,0 +1,1008 @@
+test_container_devices_proxy() {
+    container_devices_proxy_validation
+    container_devices_proxy_tcp
+    container_devices_proxy_tcp_unix
+    container_devices_proxy_tcp_udp
+    container_devices_proxy_udp
+    container_devices_proxy_unix
+    container_devices_proxy_unix_udp
+    container_devices_proxy_unix_tcp
+    container_devices_proxy_with_overlapping_forward_net
+}
+
+container_devices_proxy_validation() {
+    ensure_import_testimage
+    ensure_has_localhost_remote "${INCUS_ADDR}"
+    HOST_TCP_PORT=$(local_tcp_port)
+    incus launch testimage proxyTester
+
+    # Check that connecting to a DNS name is not allowed (security risk).
+    if incus config device add proxyTester proxyDev proxy "listen=tcp:127.0.0.1:$HOST_TCP_PORT" connect=tcp:localhost:4321 bind=host; then
+        echo "Proxy device shouldn't allow connect hostnames, only IPs"
+        false
+    fi
+
+    # Check using mixing IP versions in listen/connect addresses isn't allowed in NAT mode.
+    if incus config device add proxyTester proxyDev proxy "listen=tcp:127.0.0.1:$HOST_TCP_PORT" "connect=tcp:[::]:4321" nat=true; then
+        echo "Proxy device shouldn't allow mixing IP address versions in NAT mode"
+        false
+    fi
+    if incus config device add proxyTester proxyDev proxy "listen=tcp:[::1]:$HOST_TCP_PORT" connect=tcp:0.0.0.0:4321 nat=true; then
+        echo "Proxy device shouldn't allow mixing IP address versions in NAT mode"
+        false
+    fi
+
+    # Check user proxy_protocol isn't allowed in NAT mode.
+    if incus config device add proxyTester proxyDev proxy "listen=tcp:[::1]:$HOST_TCP_PORT" "connect=tcp:[::]:4321" nat=true proxy_protocol=true; then
+        echo "Proxy device shouldn't allow proxy_protocol in NAT mode"
+        false
+    fi
+
+    # Check that old invalid config doesn't prevent device being stopped and removed cleanly.
+    incus config device add proxyTester proxyDev proxy "listen=tcp:127.0.0.1:$HOST_TCP_PORT" connect=tcp:127.0.0.1:4321 bind=host
+    incus admin sql global "UPDATE instances_devices_config SET value='tcp:localhost:4321' WHERE value='tcp:127.0.0.1:4321';"
+    incus config device remove proxyTester proxyDev
+
+    # Add the device again with the same listen param so if the old process hasn't been stopped it will fail to start.
+    incus config device add proxyTester proxyDev proxy "listen=tcp:127.0.0.1:$HOST_TCP_PORT" connect=tcp:127.0.0.1:4321 bind=host
+
+    incus delete -f proxyTester
+}
+
+container_devices_proxy_tcp() {
+    echo "====> Testing tcp proxying"
+    ensure_import_testimage
+    ensure_has_localhost_remote "${INCUS_ADDR}"
+
+    # Setup
+    MESSAGE="Proxy device test string: tcp"
+    HOST_TCP_PORT=$(local_tcp_port)
+    incus launch testimage proxyTester
+
+    # Initial test
+    nsenter -n -U -t "$(incus query /1.0/instances/proxyTester/state | jq .pid)" -- socat tcp4-listen:4321 exec:/bin/cat &
+    NSENTER_PID=$!
+    incus config device add proxyTester proxyDev proxy "listen=tcp:127.0.0.1:$HOST_TCP_PORT" connect=tcp:127.0.0.1:4321 bind=host
+    sleep 0.5
+
+    ECHO=$( (
+        echo "${MESSAGE}"
+        sleep 0.5
+    ) | socat - tcp4:127.0.0.1:"${HOST_TCP_PORT}")
+    kill "${NSENTER_PID}" 2> /dev/null || true
+    wait "${NSENTER_PID}" 2> /dev/null || true
+
+    if [ "${ECHO}" != "${MESSAGE}" ]; then
+        cat "${INCUS_DIR}/logs/proxyTester/proxy.proxyDev.log"
+        echo "Proxy device did not properly send data from host to container"
+        false
+    fi
+
+    # Restart the container
+    incus restart -f proxyTester
+    nsenter -n -U -t "$(incus query /1.0/instances/proxyTester/state | jq .pid)" -- socat tcp4-listen:4321 exec:/bin/cat &
+    NSENTER_PID=$!
+    sleep 1
+
+    ECHO=$( (
+        echo "${MESSAGE}"
+        sleep 0.5
+    ) | socat - tcp4:127.0.0.1:"${HOST_TCP_PORT}")
+    kill "${NSENTER_PID}" 2> /dev/null || true
+    wait "${NSENTER_PID}" 2> /dev/null || true
+
+    if [ "${ECHO}" != "${MESSAGE}" ]; then
+        cat "${INCUS_DIR}/logs/proxyTester/proxy.proxyDev.log"
+        echo "Proxy device did not properly restart on container restart"
+        false
+    fi
+
+    # Change the port
+    nsenter -n -U -t "$(incus query /1.0/instances/proxyTester/state | jq .pid)" -- socat tcp4-listen:1337 exec:/bin/cat &
+    NSENTER_PID=$!
+    incus config device set proxyTester proxyDev connect tcp:127.0.0.1:1337
+    sleep 0.5
+
+    ECHO=$( (
+        echo "${MESSAGE}"
+        sleep 0.5
+    ) | socat - tcp4:127.0.0.1:"${HOST_TCP_PORT}")
+    kill "${NSENTER_PID}" 2> /dev/null || true
+    wait "${NSENTER_PID}" 2> /dev/null || true
+
+    if [ "${ECHO}" != "${MESSAGE}" ]; then
+        cat "${INCUS_DIR}/logs/proxyTester/proxy.proxyDev.log"
+        echo "Proxy device did not properly restart when config was updated"
+        false
+    fi
+
+    # Initial test
+    incus config device remove proxyTester proxyDev
+    HOST_TCP_PORT2=$(local_tcp_port)
+    nsenter -n -U -t "$(incus query /1.0/instances/proxyTester/state | jq .pid)" -- socat tcp4-listen:4321 exec:/bin/cat &
+    NSENTER_PID=$!
+    nsenter -n -U -t "$(incus query /1.0/instances/proxyTester/state | jq .pid)" -- socat tcp4-listen:4322 exec:/bin/cat &
+    NSENTER_PID1=$!
+    incus config device add proxyTester proxyDev proxy "listen=tcp:127.0.0.1:$HOST_TCP_PORT,$HOST_TCP_PORT2" connect=tcp:127.0.0.1:4321-4322 bind=host
+    sleep 0.5
+
+    ECHO=$( (
+        echo "${MESSAGE}"
+        sleep 0.5
+    ) | socat - tcp4:127.0.0.1:"${HOST_TCP_PORT}")
+    kill "${NSENTER_PID}" 2> /dev/null || true
+    wait "${NSENTER_PID}" 2> /dev/null || true
+    ECHO1=$( (
+        echo "${MESSAGE}"
+        sleep 0.5
+    ) | socat - tcp4:127.0.0.1:"${HOST_TCP_PORT2}")
+    kill "${NSENTER_PID1}" 2> /dev/null || true
+    wait "${NSENTER_PID1}" 2> /dev/null || true
+
+    if [ "${ECHO}" != "${MESSAGE}" ]; then
+        cat "${INCUS_DIR}/logs/proxyTester/proxy.proxyDev.log"
+        echo "Proxy device did not properly send data from host to container"
+        false
+    fi
+
+    if [ "${ECHO1}" != "${MESSAGE}" ]; then
+        cat "${INCUS_DIR}/logs/proxyTester/proxy.proxyDev.log"
+        echo "Proxy device did not properly send data from host to container"
+        false
+    fi
+
+    # Cleanup
+    incus delete -f proxyTester
+
+    # Try NAT
+    incus init testimage nattest
+
+    incus network create inct$$ dns.domain=test dns.mode=managed ipv6.dhcp.stateful=true
+    incus network attach inct$$ nattest eth0
+    v4_addr="$(incus network get inct$$ ipv4.address | cut -d/ -f1)0"
+    v6_addr="$(incus network get inct$$ ipv6.address | cut -d/ -f1)00"
+    incus config device set nattest eth0 ipv4.address "${v4_addr}"
+    incus config device set nattest eth0 ipv6.address "${v6_addr}"
+
+    incus start nattest
+    ! nft -nn list chain inet incus prert.nattest.validNAT || false
+    ! nft -nn list chain inet incus out.nattest.validNAT || false
+
+    incus config device add nattest validNAT proxy listen="tcp:127.0.0.1:1234" connect="tcp:${v4_addr}:1234" bind=host
+    ! nft -nn list chain inet incus prert.nattest.validNAT || false
+    ! nft -nn list chain inet incus out.nattest.validNAT || false
+
+    # enable NAT
+    incus config device set nattest validNAT nat true
+    [ "$(nft -nn list chain inet incus prert.nattest.validNAT | grep -c "ip daddr 127.0.0.1 tcp dport 1234 dnat ip to ${v4_addr}:1234")" -eq 1 ]
+    [ "$(nft -nn list chain inet incus out.nattest.validNAT | grep -c "ip daddr 127.0.0.1 tcp dport 1234 dnat ip to ${v4_addr}:1234")" -eq 1 ]
+
+    incus config device remove nattest validNAT
+    ! nft -nn list chain inet incus prert.nattest.validNAT
+    ! nft -nn list chain inet incus out.nattest.validNAT
+
+    incus config device add nattest validNAT proxy listen="tcp:127.0.0.1:1234-1235" connect="tcp:${v4_addr}:1234" bind=host nat=true
+    [ "$(nft -nn list chain inet incus prert.nattest.validNAT | grep -c "ip daddr 127.0.0.1 tcp dport 1234-1235 dnat ip to ${v4_addr}:1234")" -eq 1 ]
+    [ "$(nft -nn list chain inet incus out.nattest.validNAT | grep -c "ip daddr 127.0.0.1 tcp dport 1234-1235 dnat ip to ${v4_addr}:1234")" -eq 1 ]
+
+    incus config device remove nattest validNAT
+    ! nft -nn list chain inet incus prert.nattest.validNAT || false
+    ! nft -nn list chain inet incus out.nattest.validNAT || false
+
+    incus config device add nattest validNAT proxy listen="tcp:127.0.0.1:1234-1235" connect="tcp:${v4_addr}:1234-1235" bind=host nat=true
+    [ "$(nft -nn list chain inet incus prert.nattest.validNAT | grep -c "ip daddr 127.0.0.1 tcp dport 1234-1235 dnat ip to ${v4_addr}")" -eq 1 ]
+    [ "$(nft -nn list chain inet incus out.nattest.validNAT | grep -c "ip daddr 127.0.0.1 tcp dport 1234-1235 dnat ip to ${v4_addr}")" -eq 1 ]
+
+    incus config device remove nattest validNAT
+    ! nft -nn list chain inet incus prert.nattest.validNAT || false
+    ! nft -nn list chain inet incus out.nattest.validNAT || false
+
+    # IPv6 test
+    incus config device add nattest validNAT proxy listen="tcp:[::1]:1234" connect="tcp:[::]:1234" bind=host nat=true
+    [ "$(nft -nn list chain inet incus prert.nattest.validNAT | grep -c "ip6 daddr ::1 tcp dport 1234 dnat ip6 to \[${v6_addr}\]:1234")" -eq 1 ]
+    [ "$(nft -nn list chain inet incus out.nattest.validNAT | grep -c "ip6 daddr ::1 tcp dport 1234 dnat ip6 to \[${v6_addr}\]:1234")" -eq 1 ]
+
+    incus config device unset nattest validNAT nat
+    ! nft -nn list chain inet incus prert.nattest.validNAT || false
+    ! nft -nn list chain inet incus out.nattest.validNAT || false
+
+    incus config device remove nattest validNAT
+
+    # Wildcard listen address (only host-local destination addresses are matched).
+    incus config device add nattest validNAT proxy listen="tcp:0.0.0.0:1234" connect="tcp:${v4_addr}:1234" bind=host nat=true
+    [ "$(nft -nn list chain inet incus prert.nattest.validNAT | grep -c "meta nfproto .* fib daddr type .* tcp dport 1234 dnat ip to ${v4_addr}:1234")" -eq 1 ]
+    [ "$(nft -nn list chain inet incus out.nattest.validNAT | grep -c "ip daddr != 127.0.0.0/8 fib daddr type .* tcp dport 1234 dnat ip to ${v4_addr}:1234")" -eq 1 ]
+
+    incus config device remove nattest validNAT
+    ! nft -nn list chain inet incus prert.nattest.validNAT || false
+    ! nft -nn list chain inet incus out.nattest.validNAT || false
+
+    # Wildcard IPv6 listen address.
+    incus config device add nattest validNAT proxy listen="tcp:[::]:1234" connect="tcp:[${v6_addr}]:1234" bind=host nat=true
+    [ "$(nft -nn list chain inet incus prert.nattest.validNAT | grep -c "meta nfproto .* fib daddr type .* tcp dport 1234 dnat ip6 to \[${v6_addr}\]:1234")" -eq 1 ]
+    [ "$(nft -nn list chain inet incus out.nattest.validNAT | grep -c "ip6 daddr != ::1.*fib daddr type .* tcp dport 1234 dnat ip6 to \[${v6_addr}\]:1234")" -eq 1 ]
+
+    incus config device remove nattest validNAT
+    ! nft -nn list chain inet incus prert.nattest.validNAT || false
+    ! nft -nn list chain inet incus out.nattest.validNAT || false
+
+    # Wildcard connect address with a static IP picks the NIC's IP as the target.
+    incus config device add nattest validNAT proxy listen="tcp:127.0.0.1:1234" connect="tcp:0.0.0.0:1234" bind=host nat=true
+    [ "$(nft -nn list chain inet incus prert.nattest.validNAT | grep -c "ip daddr 127.0.0.1 tcp dport 1234 dnat ip to ${v4_addr}:1234")" -eq 1 ]
+
+    incus config device remove nattest validNAT
+    ! nft -nn list chain inet incus prert.nattest.validNAT || false
+    ! nft -nn list chain inet incus out.nattest.validNAT || false
+
+    # This won't enable NAT
+    incus config device add nattest invalidNAT proxy listen="tcp:127.0.0.1:1234" connect="udp:${v4_addr}:1234" bind=host
+    ! nft -nn list chain inet incus prert.nattest.invalidNAT || false
+    ! nft -nn list chain inet incus out.nattest.invalidNAT || false
+
+    incus delete -f nattest
+
+    # Dynamic connect address detection. The NIC has no static IP set in Incus, so the
+    # connect address must be detected from the bridge's neighbor table (ARP/NDP).
+    incus launch testimage dhcptest -n inct$$
+
+    # Wait for the instance to be ready for exec.
+    for _ in $(seq 30); do
+        incus exec dhcptest -- true 2>/dev/null && break
+        sleep 1
+    done
+
+    # The busybox image doesn't run a DHCP client out of the box, so assign an address
+    # manually inside the instance to stand in for a dynamically obtained one.
+    dhcp_v4="$(incus network get inct$$ ipv4.address | cut -d/ -f1)50"
+    incus exec dhcptest -- ip link set eth0 up
+    incus exec dhcptest -- ip address add "${dhcp_v4}/24" dev eth0
+
+    # Populate the host neighbor table so the address can be detected.
+    ping -c1 -W1 "${dhcp_v4}" || true
+
+    incus config device add dhcptest dynNAT proxy listen="tcp:127.0.0.1:1234" connect="tcp:0.0.0.0:1234" bind=host nat=true
+    for _ in $(seq 30); do
+        nft -nn list chain inet incus prert.dhcptest.dynNAT 2>/dev/null | grep -q "dnat ip to ${dhcp_v4}:1234" && break
+        ping -c1 -W1 "${dhcp_v4}" || true
+        sleep 1
+    done
+    [ "$(nft -nn list chain inet incus prert.dhcptest.dynNAT | grep -c "ip daddr 127.0.0.1 tcp dport 1234 dnat ip to ${dhcp_v4}:1234")" -eq 1 ]
+
+    incus delete -f dhcptest
+    ! nft -nn list chain inet incus prert.dhcptest.dynNAT || false
+    ! nft -nn list chain inet incus prert.nattest.validNAT || false
+    ! nft -nn list chain inet incus out.nattest.validNAT || false
+
+    incus network delete inct$$
+}
+
+container_devices_proxy_unix() {
+    echo "====> Testing unix proxying"
+    ensure_import_testimage
+    ensure_has_localhost_remote "${INCUS_ADDR}"
+
+    # Setup
+    MESSAGE="Proxy device test string: unix"
+    HOST_SOCK="${TEST_DIR}/incustest-$(basename "${INCUS_DIR}")-host.sock"
+    incus launch testimage proxyTester
+
+    # Some busybox images don't have /tmp globally accessible.
+    incus exec proxyTester -- chmod 1777 /tmp
+
+    # Initial test
+    (
+        PID="$(incus query /1.0/instances/proxyTester/state | jq .pid)"
+        cd "/proc/${PID}/root/tmp/" || exit
+        umask 0000
+        exec nsenter -n -U -t "${PID}" -- socat unix-listen:"incustest-$(basename "${INCUS_DIR}").sock",unlink-early exec:/bin/cat
+    ) &
+    NSENTER_PID=$!
+    sleep 0.5
+
+    incus config device add proxyTester proxyDev proxy "listen=unix:${HOST_SOCK}" uid=1234 gid=1234 security.uid=1234 security.gid=1234 connect=unix:/tmp/"incustest-$(basename "${INCUS_DIR}").sock" bind=host
+
+    ECHO=$( (
+        echo "${MESSAGE}"
+        sleep 0.5
+    ) | socat - unix:"${HOST_SOCK#"$(pwd)"/}")
+    kill "${NSENTER_PID}" 2> /dev/null || true
+    wait "${NSENTER_PID}" 2> /dev/null || true
+
+    if [ "${ECHO}" != "${MESSAGE}" ]; then
+        cat "${INCUS_DIR}/logs/proxyTester/proxy.proxyDev.log"
+        echo "Proxy device did not properly send data from host to container"
+        false
+    fi
+
+    rm -f "${HOST_SOCK}"
+
+    # Restart the container
+    incus restart -f proxyTester
+    (
+        PID="$(incus query /1.0/instances/proxyTester/state | jq .pid)"
+        cd "/proc/${PID}/root/tmp/" || exit
+        umask 0000
+        exec nsenter -n -U -t "${PID}" -- socat unix-listen:"incustest-$(basename "${INCUS_DIR}").sock",unlink-early exec:/bin/cat
+    ) &
+    NSENTER_PID=$!
+    sleep 1
+
+    ECHO=$( (
+        echo "${MESSAGE}"
+        sleep 0.5
+    ) | socat - unix:"${HOST_SOCK#"$(pwd)"/}")
+    kill "${NSENTER_PID}" 2> /dev/null || true
+    wait "${NSENTER_PID}" 2> /dev/null || true
+
+    if [ "${ECHO}" != "${MESSAGE}" ]; then
+        cat "${INCUS_DIR}/logs/proxyTester/proxy.proxyDev.log"
+        echo "Proxy device did not properly restart on container restart"
+        false
+    fi
+
+    rm -f "${HOST_SOCK}"
+
+    # Change the socket
+    (
+        PID="$(incus query /1.0/instances/proxyTester/state | jq .pid)"
+        cd "/proc/${PID}/root/tmp/" || exit
+        umask 0000
+        exec nsenter -n -U -t "${PID}" -- socat unix-listen:"incustest-$(basename "${INCUS_DIR}")-2.sock",unlink-early exec:/bin/cat
+    ) &
+    NSENTER_PID=$!
+
+    incus config device set proxyTester proxyDev connect unix:/tmp/"incustest-$(basename "${INCUS_DIR}")-2.sock"
+    sleep 0.5
+
+    ECHO=$( (
+        echo "${MESSAGE}"
+        sleep 0.5
+    ) | socat - unix:"${HOST_SOCK#"$(pwd)"/}")
+    kill "${NSENTER_PID}" 2> /dev/null || true
+    wait "${NSENTER_PID}" 2> /dev/null || true
+
+    if [ "${ECHO}" != "${MESSAGE}" ]; then
+        cat "${INCUS_DIR}/logs/proxyTester/proxy.proxyDev.log"
+        echo "Proxy device did not properly restart when config was updated"
+        false
+    fi
+
+    rm -f "${HOST_SOCK}"
+
+    # Switch to bind=container.
+    (
+        umask 0000
+        exec socat unix-listen:"${HOST_SOCK}",unlink-early exec:/bin/cat
+    ) &
+    SOCAT_PID=$!
+
+    # We need to swap connect= and listen= so it's simpler to just remove the
+    # device and re-add it with the right configuration.
+    incus config device remove proxyTester proxyDev
+    incus config device add proxyTester proxyDev proxy \
+        bind=container connect="unix:${HOST_SOCK}" listen="unix:/tmp/incustest-$(basename "${INCUS_DIR}").sock" \
+        mode=0777 uid=1234 gid=1234 security.uid=1234 security.gid=1234
+    sleep 0.5
+
+    PID="$(incus query /1.0/instances/proxyTester/state | jq .pid)"
+    CTR_SOCK="/proc/${PID}/root/tmp/incustest-$(basename "${INCUS_DIR}").sock"
+    # Double-check that the listen socket exists.
+    # <https://github.com/lxc/incus/pull/2136>
+    if ! [ -S "${CTR_SOCK}" ]; then
+        cat "${INCUS_DIR}/logs/proxyTester/proxy.proxyDev.log"
+        echo "Proxy device with bind=container did not create a container-side listen socket"
+        false
+    fi
+
+    ECHO="$( (
+        echo "${MESSAGE}"
+        sleep 0.5
+    ) | nsenter -n -U -t "${PID}" -- socat - unix:"${CTR_SOCK}")"
+    kill "${SOCAT_PID}" 2> /dev/null || true
+    wait "${SOCAT_PID}" 2> /dev/null || true
+
+    if [ "${ECHO}" != "${MESSAGE}" ]; then
+        cat "${INCUS_DIR}/logs/proxyTester/proxy.proxyDev.log"
+        echo "Proxy device with bind=container did not properly send data from container to host"
+        false
+    fi
+
+    rm -f "${HOST_SOCK}"
+
+    # Cleanup
+    incus delete -f proxyTester
+}
+
+container_devices_proxy_tcp_unix() {
+    echo "====> Testing tcp to unix proxying"
+    ensure_import_testimage
+    ensure_has_localhost_remote "${INCUS_ADDR}"
+
+    # Setup
+    MESSAGE="Proxy device test string: tcp -> unix"
+    HOST_TCP_PORT=$(local_tcp_port)
+    incus launch testimage proxyTester
+
+    # Initial test
+    (
+        PID="$(incus query /1.0/instances/proxyTester/state | jq .pid)"
+        cd "/proc/${PID}/root/tmp/" || exit
+        umask 0000
+        exec nsenter -n -U -t "${PID}" -- socat unix-listen:"incustest-$(basename "${INCUS_DIR}").sock",unlink-early exec:/bin/cat
+    ) &
+    NSENTER_PID=$!
+
+    incus config device add proxyTester proxyDev proxy "listen=tcp:127.0.0.1:${HOST_TCP_PORT}" connect=unix:/tmp/"incustest-$(basename "${INCUS_DIR}").sock" bind=host
+    sleep 0.5
+
+    ECHO=$( (
+        echo "${MESSAGE}"
+        sleep 0.5
+    ) | socat - tcp4:127.0.0.1:"${HOST_TCP_PORT}")
+    kill "${NSENTER_PID}" 2> /dev/null || true
+    wait "${NSENTER_PID}" 2> /dev/null || true
+
+    if [ "${ECHO}" != "${MESSAGE}" ]; then
+        cat "${INCUS_DIR}/logs/proxyTester/proxy.proxyDev.log"
+        echo "Proxy device did not properly send data from host to container"
+        false
+    fi
+
+    # Restart the container
+    incus restart -f proxyTester
+    (
+        PID="$(incus query /1.0/instances/proxyTester/state | jq .pid)"
+        cd "/proc/${PID}/root/tmp/" || exit
+        umask 0000
+        exec nsenter -n -U -t "${PID}" -- socat unix-listen:"incustest-$(basename "${INCUS_DIR}").sock",unlink-early exec:/bin/cat
+    ) &
+    NSENTER_PID=$!
+    sleep 1
+
+    ECHO=$( (
+        echo "${MESSAGE}"
+        sleep 0.5
+    ) | socat - tcp4:127.0.0.1:"${HOST_TCP_PORT}")
+    kill "${NSENTER_PID}" 2> /dev/null || true
+    wait "${NSENTER_PID}" 2> /dev/null || true
+
+    if [ "${ECHO}" != "${MESSAGE}" ]; then
+        cat "${INCUS_DIR}/logs/proxyTester/proxy.proxyDev.log"
+        echo "Proxy device did not properly restart on container restart"
+        false
+    fi
+
+    # Change the socket
+    (
+        PID="$(incus query /1.0/instances/proxyTester/state | jq .pid)"
+        cd "/proc/${PID}/root/tmp/" || exit
+        umask 0000
+        exec nsenter -n -U -t "${PID}" -- socat unix-listen:"incustest-$(basename "${INCUS_DIR}")-2.sock",unlink-early exec:/bin/cat
+    ) &
+    NSENTER_PID=$!
+
+    incus config device set proxyTester proxyDev connect unix:/tmp/"incustest-$(basename "${INCUS_DIR}")-2.sock"
+    sleep 0.5
+
+    ECHO=$( (
+        echo "${MESSAGE}"
+        sleep 0.5
+    ) | socat - tcp4:127.0.0.1:"${HOST_TCP_PORT}")
+    kill "${NSENTER_PID}" 2> /dev/null || true
+    wait "${NSENTER_PID}" 2> /dev/null || true
+
+    if [ "${ECHO}" != "${MESSAGE}" ]; then
+        cat "${INCUS_DIR}/logs/proxyTester/proxy.proxyDev.log"
+        echo "Proxy device did not properly restart when config was updated"
+        false
+    fi
+
+    # Switch to bind=container.
+    HOST_TCP_PORT2=$(local_tcp_port)
+    socat tcp4-listen:"${HOST_TCP_PORT2}" exec:/bin/cat &
+    SOCAT_PID=$!
+
+    # We need to swap connect= and listen= so it's simpler to just remove the
+    # device and re-add it with the right configuration.
+    incus config device remove proxyTester proxyDev
+    incus config device add proxyTester proxyDev proxy \
+        bind=container connect="tcp:127.0.0.1:${HOST_TCP_PORT2}" listen="unix:/tmp/incustest-$(basename "${INCUS_DIR}").sock" \
+        mode=0777 uid=1234 gid=1234 security.uid=1234 security.gid=1234
+    sleep 0.5
+
+    PID="$(incus query /1.0/instances/proxyTester/state | jq .pid)"
+    CTR_SOCK="/proc/${PID}/root/tmp/incustest-$(basename "${INCUS_DIR}").sock"
+    # Double-check that the listen socket exists.
+    # <https://github.com/lxc/incus/pull/2136>
+    if ! [ -S "${CTR_SOCK}" ]; then
+        cat "${INCUS_DIR}/logs/proxyTester/proxy.proxyDev.log"
+        echo "Proxy device with bind=container did not create a container-side listen socket"
+        false
+    fi
+
+    ECHO="$( (
+        echo "${MESSAGE}"
+        sleep 0.5
+    ) | nsenter -n -U -t "${PID}" -- socat - unix:"${CTR_SOCK}")"
+    kill "${SOCAT_PID}" 2> /dev/null || true
+    wait "${SOCAT_PID}" 2> /dev/null || true
+
+    if [ "${ECHO}" != "${MESSAGE}" ]; then
+        cat "${INCUS_DIR}/logs/proxyTester/proxy.proxyDev.log"
+        echo "Proxy device with bind=container did not properly send data from container to host"
+        false
+    fi
+
+    # Cleanup
+    incus delete -f proxyTester
+}
+
+container_devices_proxy_unix_tcp() {
+    echo "====> Testing unix to tcp proxying"
+    ensure_import_testimage
+    ensure_has_localhost_remote "${INCUS_ADDR}"
+
+    # Setup
+    MESSAGE="Proxy device test string: unix -> tcp"
+    HOST_SOCK="${TEST_DIR}/incustest-$(basename "${INCUS_DIR}")-host.sock"
+    incus launch testimage proxyTester
+
+    # Initial test
+    nsenter -n -U -t "$(incus query /1.0/instances/proxyTester/state | jq .pid)" -- socat tcp4-listen:4321 exec:/bin/cat &
+    NSENTER_PID=$!
+    incus config device add proxyTester proxyDev proxy "listen=unix:${HOST_SOCK}" connect=tcp:127.0.0.1:4321 bind=host
+    sleep 0.5
+
+    ECHO=$( (
+        echo "${MESSAGE}"
+        sleep 0.5
+    ) | socat - unix:"${HOST_SOCK#"$(pwd)"/}")
+    kill "${NSENTER_PID}" 2> /dev/null || true
+    wait "${NSENTER_PID}" 2> /dev/null || true
+
+    if [ "${ECHO}" != "${MESSAGE}" ]; then
+        cat "${INCUS_DIR}/logs/proxyTester/proxy.proxyDev.log"
+        echo "Proxy device did not properly send data from host to container"
+        false
+    fi
+
+    rm -f "${HOST_SOCK}"
+
+    # Restart the container
+    incus restart -f proxyTester
+    nsenter -n -U -t "$(incus query /1.0/instances/proxyTester/state | jq .pid)" -- socat tcp4-listen:4321 exec:/bin/cat &
+    NSENTER_PID=$!
+    sleep 1
+
+    ECHO=$( (
+        echo "${MESSAGE}"
+        sleep 0.5
+    ) | socat - unix:"${HOST_SOCK#"$(pwd)"/}")
+    kill "${NSENTER_PID}" 2> /dev/null || true
+    wait "${NSENTER_PID}" 2> /dev/null || true
+
+    if [ "${ECHO}" != "${MESSAGE}" ]; then
+        cat "${INCUS_DIR}/logs/proxyTester/proxy.proxyDev.log"
+        echo "Proxy device did not properly restart on container restart"
+        false
+    fi
+
+    rm -f "${HOST_SOCK}"
+
+    # Change the port
+    nsenter -n -U -t "$(incus query /1.0/instances/proxyTester/state | jq .pid)" -- socat tcp4-listen:1337 exec:/bin/cat &
+    NSENTER_PID=$!
+    incus config device set proxyTester proxyDev connect tcp:127.0.0.1:1337
+    sleep 0.5
+
+    ECHO=$( (
+        echo "${MESSAGE}"
+        sleep 0.5
+    ) | socat - unix:"${HOST_SOCK#"$(pwd)"/}")
+    kill "${NSENTER_PID}" 2> /dev/null || true
+    wait "${NSENTER_PID}" 2> /dev/null || true
+
+    if [ "${ECHO}" != "${MESSAGE}" ]; then
+        cat "${INCUS_DIR}/logs/proxyTester/proxy.proxyDev.log"
+        echo "Proxy device did not properly restart when config was updated"
+        false
+    fi
+
+    rm -f "${HOST_SOCK}"
+
+    # Switch to bind=container.
+    (
+        umask 0000
+        exec socat unix-listen:"${HOST_SOCK}",unlink-early exec:/bin/cat
+    ) &
+    SOCAT_PID=$!
+
+    # We need to swap connect= and listen= so it's simpler to just remove the
+    # device and re-add it with the right configuration.
+    incus config device remove proxyTester proxyDev
+    incus config device add proxyTester proxyDev proxy \
+        bind=container connect="unix:${HOST_SOCK}" listen="tcp:0.0.0.0:4321" \
+        security.uid=1234 security.gid=1234
+    sleep 0.5
+
+    PID="$(incus query /1.0/instances/proxyTester/state | jq .pid)"
+    ECHO="$( (
+        echo "${MESSAGE}"
+        sleep 0.5
+    ) | nsenter -n -U -t "${PID}" -- socat - tcp4:127.0.0.1:4321)"
+    kill "${SOCAT_PID}" 2> /dev/null || true
+    wait "${SOCAT_PID}" 2> /dev/null || true
+
+    if [ "${ECHO}" != "${MESSAGE}" ]; then
+        cat "${INCUS_DIR}/logs/proxyTester/proxy.proxyDev.log"
+        echo "Proxy device with bind=container did not properly send data from container to host"
+        false
+    fi
+
+    rm -f "${HOST_SOCK}"
+
+    # Cleanup
+    incus delete -f proxyTester
+}
+
+container_devices_proxy_udp() {
+    echo "====> Testing udp proxying"
+    ensure_import_testimage
+    ensure_has_localhost_remote "${INCUS_ADDR}"
+
+    # Setup
+    MESSAGE="Proxy device test string: udp"
+    HOST_UDP_PORT=$(local_tcp_port)
+    incus launch testimage proxyTester
+
+    # Initial test
+    nsenter -n -U -t "$(incus query /1.0/instances/proxyTester/state | jq .pid)" -- socat udp4-listen:4321 exec:/bin/cat &
+    NSENTER_PID=$!
+    incus config device add proxyTester proxyDev proxy "listen=udp:127.0.0.1:$HOST_UDP_PORT" connect=udp:127.0.0.1:4321 bind=host
+    sleep 0.5
+
+    ECHO=$( (
+        echo "${MESSAGE}"
+        sleep 0.5
+    ) | socat - udp4:127.0.0.1:"${HOST_UDP_PORT}")
+    kill "${NSENTER_PID}" 2> /dev/null || true
+    wait "${NSENTER_PID}" 2> /dev/null || true
+
+    if [ "${ECHO}" != "${MESSAGE}" ]; then
+        cat "${INCUS_DIR}/logs/proxyTester/proxy.proxyDev.log"
+        echo "Proxy device did not properly send data from host to container"
+        false
+    fi
+
+    # Restart the container
+    incus restart -f proxyTester
+    nsenter -n -U -t "$(incus query /1.0/instances/proxyTester/state | jq .pid)" -- socat udp4-listen:4321 exec:/bin/cat &
+    NSENTER_PID=$!
+    sleep 1
+
+    ECHO=$( (
+        echo "${MESSAGE}"
+        sleep 0.5
+    ) | socat - udp4:127.0.0.1:"${HOST_UDP_PORT}")
+    kill "${NSENTER_PID}" 2> /dev/null || true
+    wait "${NSENTER_PID}" 2> /dev/null || true
+
+    if [ "${ECHO}" != "${MESSAGE}" ]; then
+        cat "${INCUS_DIR}/logs/proxyTester/proxy.proxyDev.log"
+        echo "Proxy device did not properly restart on container restart"
+        false
+    fi
+
+    # Change the port
+    nsenter -n -U -t "$(incus query /1.0/instances/proxyTester/state | jq .pid)" -- socat udp4-listen:1337 exec:/bin/cat &
+    NSENTER_PID=$!
+    incus config device set proxyTester proxyDev connect udp:127.0.0.1:1337
+    sleep 0.5
+
+    ECHO=$( (
+        echo "${MESSAGE}"
+        sleep 0.5
+    ) | socat - udp4:127.0.0.1:"${HOST_UDP_PORT}")
+    kill "${NSENTER_PID}" 2> /dev/null || true
+    wait "${NSENTER_PID}" 2> /dev/null || true
+
+    if [ "${ECHO}" != "${MESSAGE}" ]; then
+        cat "${INCUS_DIR}/logs/proxyTester/proxy.proxyDev.log"
+        echo "Proxy device did not properly restart when config was updated"
+        false
+    fi
+
+    # Switch to bind=container.
+    HOST_UDP_PORT2=$(local_tcp_port)
+    socat udp4-listen:"${HOST_UDP_PORT2}" exec:/bin/cat &
+    SOCAT_PID=$!
+
+    # We need to swap connect= and listen= so it's simpler to just remove the
+    # device and re-add it with the right configuration.
+    incus config device remove proxyTester proxyDev
+    incus config device add proxyTester proxyDev proxy \
+        bind=container connect="udp:127.0.0.1:${HOST_UDP_PORT2}" listen="udp:127.0.0.1:4321" \
+        security.uid=1234 security.gid=1234
+    sleep 0.5
+
+    PID="$(incus query /1.0/instances/proxyTester/state | jq .pid)"
+    ECHO="$( (
+        echo "${MESSAGE}"
+        sleep 0.5
+    ) | nsenter -n -U -t "${PID}" -- socat - udp4:127.0.0.1:4321)"
+    kill "${SOCAT_PID}" 2> /dev/null || true
+    wait "${SOCAT_PID}" 2> /dev/null || true
+
+    if [ "${ECHO}" != "${MESSAGE}" ]; then
+        cat "${INCUS_DIR}/logs/proxyTester/proxy.proxyDev.log"
+        echo "Proxy device with bind=container did not properly send data from container to host"
+        false
+    fi
+
+    # Cleanup
+    incus delete -f proxyTester
+}
+
+container_devices_proxy_unix_udp() {
+    echo "====> Testing unix to udp proxying"
+    ensure_import_testimage
+    ensure_has_localhost_remote "${INCUS_ADDR}"
+
+    # Setup
+    MESSAGE="Proxy device test string: unix -> udp"
+    HOST_SOCK="${TEST_DIR}/incustest-$(basename "${INCUS_DIR}")-host.sock"
+    incus launch testimage proxyTester
+
+    # Initial test
+    nsenter -n -U -t "$(incus query /1.0/instances/proxyTester/state | jq .pid)" -- socat udp4-listen:4321 exec:/bin/cat &
+    NSENTER_PID=$!
+    incus config device add proxyTester proxyDev proxy "listen=unix:${HOST_SOCK}" connect=udp:127.0.0.1:4321 bind=host
+    sleep 0.5
+
+    ECHO=$( (
+        echo "${MESSAGE}"
+        sleep 0.5
+    ) | socat - unix:"${HOST_SOCK#"$(pwd)"/}")
+    kill "${NSENTER_PID}" 2> /dev/null || true
+    wait "${NSENTER_PID}" 2> /dev/null || true
+
+    if [ "${ECHO}" != "${MESSAGE}" ]; then
+        cat "${INCUS_DIR}/logs/proxyTester/proxy.proxyDev.log"
+        echo "Proxy device did not properly send data from host to container"
+        false
+    fi
+
+    rm -f "${HOST_SOCK}"
+
+    # Restart the container
+    incus restart -f proxyTester
+    nsenter -n -U -t "$(incus query /1.0/instances/proxyTester/state | jq .pid)" -- socat udp4-listen:4321 exec:/bin/cat &
+    NSENTER_PID=$!
+    sleep 1
+
+    ECHO=$( (
+        echo "${MESSAGE}"
+        sleep 0.5
+    ) | socat - unix:"${HOST_SOCK#"$(pwd)"/}")
+    kill "${NSENTER_PID}" 2> /dev/null || true
+    wait "${NSENTER_PID}" 2> /dev/null || true
+
+    if [ "${ECHO}" != "${MESSAGE}" ]; then
+        cat "${INCUS_DIR}/logs/proxyTester/proxy.proxyDev.log"
+        echo "Proxy device did not properly restart on container restart"
+        false
+    fi
+
+    rm -f "${HOST_SOCK}"
+
+    # Change the port
+    nsenter -n -U -t "$(incus query /1.0/instances/proxyTester/state | jq .pid)" -- socat udp4-listen:1337 exec:/bin/cat &
+    NSENTER_PID=$!
+    incus config device set proxyTester proxyDev connect udp:127.0.0.1:1337
+    sleep 0.5
+
+    ECHO=$( (
+        echo "${MESSAGE}"
+        sleep 0.5
+    ) | socat - unix:"${HOST_SOCK#"$(pwd)"/}")
+    kill "${NSENTER_PID}" 2> /dev/null || true
+    wait "${NSENTER_PID}" 2> /dev/null || true
+
+    if [ "${ECHO}" != "${MESSAGE}" ]; then
+        cat "${INCUS_DIR}/logs/proxyTester/proxy.proxyDev.log"
+        echo "Proxy device did not properly restart when config was updated"
+        false
+    fi
+
+    rm -f "${HOST_SOCK}"
+
+    # Switch to bind=container (we use connect=udp for the host because
+    # listen=udp doesn't work with non-udp connect= proxies).
+    HOST_UDP_PORT=$(local_tcp_port)
+    socat udp4-listen:"${HOST_UDP_PORT}" exec:/bin/cat &
+    SOCAT_PID=$!
+
+    # We need to swap connect= and listen= so it's simpler to just remove the
+    # device and re-add it with the right configuration.
+    incus config device remove proxyTester proxyDev
+    incus config device add proxyTester proxyDev proxy \
+        bind=container connect="udp:127.0.0.1:${HOST_UDP_PORT}" listen="unix:/tmp/incustest-$(basename "${INCUS_DIR}").sock" \
+        mode=0777 uid=1234 gid=1234 security.uid=1234 security.gid=1234
+    sleep 0.5
+
+    PID="$(incus query /1.0/instances/proxyTester/state | jq .pid)"
+    CTR_SOCK="/proc/${PID}/root/tmp/incustest-$(basename "${INCUS_DIR}").sock"
+    # Double-check that the listen socket exists.
+    # <https://github.com/lxc/incus/pull/2136>
+    if ! [ -S "${CTR_SOCK}" ]; then
+        cat "${INCUS_DIR}/logs/proxyTester/proxy.proxyDev.log"
+        echo "Proxy device with bind=container did not create a container-side listen socket"
+        false
+    fi
+
+    ECHO="$( (
+        echo "${MESSAGE}"
+        sleep 0.5
+    ) | nsenter -n -U -t "${PID}" -- socat - unix:"${CTR_SOCK}")"
+    kill "${SOCAT_PID}" 2> /dev/null || true
+    wait "${SOCAT_PID}" 2> /dev/null || true
+
+    if [ "${ECHO}" != "${MESSAGE}" ]; then
+        cat "${INCUS_DIR}/logs/proxyTester/proxy.proxyDev.log"
+        echo "Proxy device with bind=container did not properly send data from container to host"
+        false
+    fi
+
+    # Cleanup
+    incus delete -f proxyTester
+}
+
+container_devices_proxy_tcp_udp() {
+    echo "====> Testing tcp to udp proxying"
+    ensure_import_testimage
+    ensure_has_localhost_remote "${INCUS_ADDR}"
+
+    # Setup
+    MESSAGE="Proxy device test string: tcp -> udp"
+    HOST_TCP_PORT=$(local_tcp_port)
+    incus launch testimage proxyTester
+
+    # Initial test
+    nsenter -n -U -t "$(incus query /1.0/instances/proxyTester/state | jq .pid)" -- socat udp4-listen:4321 exec:/bin/cat &
+    NSENTER_PID=$!
+    incus config device add proxyTester proxyDev proxy "listen=tcp:127.0.0.1:$HOST_TCP_PORT" connect=udp:127.0.0.1:4321 bind=host
+    sleep 0.5
+
+    ECHO=$( (
+        echo "${MESSAGE}"
+        sleep 0.5
+    ) | socat - tcp4:127.0.0.1:"${HOST_TCP_PORT}")
+    kill "${NSENTER_PID}" 2> /dev/null || true
+    wait "${NSENTER_PID}" 2> /dev/null || true
+
+    if [ "${ECHO}" != "${MESSAGE}" ]; then
+        cat "${INCUS_DIR}/logs/proxyTester/proxy.proxyDev.log"
+        echo "Proxy device did not properly send data from host to container"
+        false
+    fi
+
+    # Restart the container
+    incus restart -f proxyTester
+    nsenter -n -U -t "$(incus query /1.0/instances/proxyTester/state | jq .pid)" -- socat udp4-listen:4321 exec:/bin/cat &
+    NSENTER_PID=$!
+    sleep 1
+
+    ECHO=$( (
+        echo "${MESSAGE}"
+        sleep 0.5
+    ) | socat - tcp4:127.0.0.1:"${HOST_TCP_PORT}")
+    kill "${NSENTER_PID}" 2> /dev/null || true
+    wait "${NSENTER_PID}" 2> /dev/null || true
+
+    if [ "${ECHO}" != "${MESSAGE}" ]; then
+        cat "${INCUS_DIR}/logs/proxyTester/proxy.proxyDev.log"
+        echo "Proxy device did not properly restart on container restart"
+        false
+    fi
+
+    # Change the port
+    nsenter -n -U -t "$(incus query /1.0/instances/proxyTester/state | jq .pid)" -- socat udp4-listen:1337 exec:/bin/cat &
+    NSENTER_PID=$!
+    incus config device set proxyTester proxyDev connect udp:127.0.0.1:1337
+    sleep 0.5
+
+    ECHO=$( (
+        echo "${MESSAGE}"
+        sleep 0.5
+    ) | socat - tcp4:127.0.0.1:"${HOST_TCP_PORT}")
+    kill "${NSENTER_PID}" 2> /dev/null || true
+    wait "${NSENTER_PID}" 2> /dev/null || true
+
+    if [ "${ECHO}" != "${MESSAGE}" ]; then
+        cat "${INCUS_DIR}/logs/proxyTester/proxy.proxyDev.log"
+        echo "Proxy device did not properly restart when config was updated"
+        false
+    fi
+
+    # Switch to bind=container (we use connect=udp for the host because
+    # listen=udp doesn't work with non-udp connect= proxies).
+    HOST_UDP_PORT=$(local_tcp_port)
+    socat udp4-listen:"${HOST_UDP_PORT}" exec:/bin/cat &
+    SOCAT_PID=$!
+
+    # We need to swap connect= and listen= so it's simpler to just remove the
+    # device and re-add it with the right configuration.
+    incus config device remove proxyTester proxyDev
+    incus config device add proxyTester proxyDev proxy \
+        bind=container connect="udp:127.0.0.1:${HOST_UDP_PORT}" listen="tcp:127.0.0.1:4321" \
+        security.uid=1234 security.gid=1234
+    sleep 0.5
+
+    PID="$(incus query /1.0/instances/proxyTester/state | jq .pid)"
+    ECHO="$( (
+        echo "${MESSAGE}"
+        sleep 0.5
+    ) | nsenter -n -U -t "${PID}" -- socat - tcp4:127.0.0.1:4321)"
+    kill "${SOCAT_PID}" 2> /dev/null || true
+    wait "${SOCAT_PID}" 2> /dev/null || true
+
+    if [ "${ECHO}" != "${MESSAGE}" ]; then
+        cat "${INCUS_DIR}/logs/proxyTester/proxy.proxyDev.log"
+        echo "Proxy device with bind=container did not properly send data from container to host"
+        false
+    fi
+
+    # Cleanup
+    incus delete -f proxyTester
+}
+
+container_devices_proxy_with_overlapping_forward_net() {
+    echo "====> Testing proxy creation with overlapping network forward"
+    ensure_import_testimage
+    ensure_has_localhost_remote "${INCUS_ADDR}"
+
+    netName="testnet"
+
+    incus network create "${netName}" \
+        ipv4.address=192.0.2.1/24 \
+        ipv6.address=fd42:4242:4242:1010::1/64
+
+    overlappingAddr="192.0.2.2"
+    proxyTesterStaticIP="192.0.2.3"
+    HOST_TCP_PORT=$(local_tcp_port)
+
+    # First, launch container with a static IP
+    incus launch testimage proxyTester
+    incus config device add proxyTester eth0 nic \
+        nictype=bridged \
+        name=eth0 \
+        parent=${netName} \
+        ipv4.address=${proxyTesterStaticIP}
+
+    # Check creating empty forward doesn't create any firewall rules.
+    incus network forward create "${netName}" "${overlappingAddr}"
+
+    # Test overlapping issue (network forward exists --> proxy creation should fail)
+    ! incus config device add proxyTester proxyDev proxy "listen=tcp:${overlappingAddr}:$HOST_TCP_PORT" "connect=tcp:${proxyTesterStaticIP}:4321" nat=true || false
+
+    # Intermediary cleanup
+    incus delete -f proxyTester
+    incus network forward delete "${netName}" "${overlappingAddr}"
+
+    # Same operations as before but in the reverse order
+    incus launch testimage proxyTester
+    incus config device add proxyTester eth0 nic \
+        nictype=bridged \
+        name=eth0 \
+        parent=${netName} \
+        ipv4.address=${proxyTesterStaticIP}
+
+    incus config device add proxyTester proxyDev proxy "listen=tcp:${overlappingAddr}:$HOST_TCP_PORT" "connect=tcp:${proxyTesterStaticIP}:4321" nat=true
+
+    # Test overlapping issue (proxy exists --> network forward creation should fail)
+    ! incus network forward create "${netName}" "${overlappingAddr}" || false
+
+    # Final cleanup
+    incus delete -f proxyTester
+    incus network delete "${netName}"
+}

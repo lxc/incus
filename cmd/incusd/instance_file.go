@@ -1,0 +1,664 @@
+package main
+
+import (
+	"bytes"
+	"errors"
+	"fmt"
+	"io"
+	"io/fs"
+	"net/http"
+	"os"
+	"path/filepath"
+	"slices"
+	"strings"
+	"time"
+
+	"github.com/pkg/sftp"
+
+	internalInstance "github.com/lxc/incus/v7/internal/instance"
+	"github.com/lxc/incus/v7/internal/server/instance"
+	"github.com/lxc/incus/v7/internal/server/lifecycle"
+	"github.com/lxc/incus/v7/internal/server/request"
+	"github.com/lxc/incus/v7/internal/server/response"
+	"github.com/lxc/incus/v7/internal/server/state"
+	"github.com/lxc/incus/v7/shared/api"
+	"github.com/lxc/incus/v7/shared/logger"
+	"github.com/lxc/incus/v7/shared/revert"
+	"github.com/lxc/incus/v7/shared/util"
+)
+
+func instanceFileHandler(d *Daemon, r *http.Request) response.Response {
+	s := d.State()
+
+	projectName := request.ProjectParam(r)
+	name, err := pathVar(r, "name")
+	if err != nil {
+		return response.SmartError(err)
+	}
+
+	if internalInstance.IsSnapshot(name) {
+		return response.BadRequest(errors.New("Invalid instance name"))
+	}
+
+	// Redirect to correct server if needed.
+	resp, err := forwardedResponseIfInstanceIsRemote(s, r, projectName, name)
+	if err != nil {
+		return response.SmartError(err)
+	}
+
+	if resp != nil {
+		return resp
+	}
+
+	// Load the instance.
+	inst, err := instance.LoadByProjectAndName(s, projectName, name)
+	if err != nil {
+		return response.SmartError(err)
+	}
+
+	// Parse and cleanup the path.
+	path := r.FormValue("path")
+	if path == "" {
+		return response.BadRequest(errors.New("Missing path argument"))
+	}
+
+	if !strings.HasPrefix(path, "/") {
+		path = "/" + path
+	}
+
+	switch r.Method {
+	case "GET":
+		return instanceFileGet(s, inst, path, r)
+	case "HEAD":
+		return instanceFileHead(s, inst, path, r)
+	case "POST":
+		return instanceFilePost(s, inst, path, r)
+	case "DELETE":
+		return instanceFileDelete(s, inst, path, r)
+	default:
+		return response.NotFound(fmt.Errorf("Method %q not found", r.Method))
+	}
+}
+
+// swagger:operation GET /1.0/instances/{name}/files instances instance_files_get
+//
+//	Get a file
+//
+//	Gets the file content. If it's a directory, a json list of files will be returned instead.
+//
+//	---
+//	produces:
+//	  - application/json
+//	  - application/octet-stream
+//	parameters:
+//	  - in: path
+//	    name: name
+//	    description: Instance name
+//	    type: string
+//	    required: true
+//	  - in: query
+//	    name: path
+//	    description: Path to the file
+//	    type: string
+//	    x-example: default
+//	  - in: query
+//	    name: project
+//	    description: Project name
+//	    type: string
+//	    x-example: default
+//	responses:
+//	  "200":
+//	     description: Raw file or directory listing
+//	     headers:
+//	       X-Incus-uid:
+//	         description: File owner UID
+//	         type: integer
+//	       X-Incus-gid:
+//	         description: File owner GID
+//	         type: integer
+//	       X-Incus-mode:
+//	         description: Mode mask
+//	         type: integer
+//	       X-Incus-modified:
+//	         description: Last modified date
+//	         type: string
+//	       X-Incus-type:
+//	         description: Type of file (file, symlink or directory)
+//	         type: string
+//	     content:
+//	       application/octet-stream:
+//	         schema:
+//	           type: string
+//	           example: some-text
+//	       application/json:
+//	         schema:
+//	           type: array
+//	           items:
+//	             type: string
+//	           example:
+//	             - /etc
+//	             - /home
+//	  "400":
+//	    $ref: "#/responses/BadRequest"
+//	  "403":
+//	    $ref: "#/responses/Forbidden"
+//	  "404":
+//	    $ref: "#/responses/NotFound"
+//	  "409":
+//	    $ref: "#/responses/Conflict"
+//	  "500":
+//	    $ref: "#/responses/InternalServerError"
+func instanceFileGet(s *state.State, inst instance.Instance, path string, r *http.Request) response.Response {
+	reverter := revert.New()
+	defer reverter.Fail()
+
+	// Get a SFTP client.
+	client, err := inst.FileSFTP()
+	if err != nil {
+		return response.InternalError(err)
+	}
+
+	reverter.Add(func() { _ = client.Close() })
+
+	return fileSFTPGet(client, path, r, reverter, func() {
+		s.Events.SendLifecycle(inst.Project().Name, lifecycle.InstanceFileRetrieved.Event(inst, logger.Ctx{"path": path}))
+	})
+}
+
+// swagger:operation HEAD /1.0/instances/{name}/files instances instance_files_head
+//
+//	Get metadata for a file
+//
+//	Gets the file or directory metadata.
+//
+//	---
+//	parameters:
+//	  - in: path
+//	    name: name
+//	    description: Instance name
+//	    type: string
+//	    required: true
+//	  - in: query
+//	    name: path
+//	    description: Path to the file
+//	    type: string
+//	    x-example: default
+//	  - in: query
+//	    name: project
+//	    description: Project name
+//	    type: string
+//	    x-example: default
+//	responses:
+//	  "200":
+//	     description: Raw file or directory listing
+//	     headers:
+//	       X-Incus-uid:
+//	         description: File owner UID
+//	         type: integer
+//	       X-Incus-gid:
+//	         description: File owner GID
+//	         type: integer
+//	       X-Incus-mode:
+//	         description: Mode mask
+//	         type: integer
+//	       X-Incus-modified:
+//	         description: Last modified date
+//	         type: string
+//	       X-Incus-type:
+//	         description: Type of file (file, symlink or directory)
+//	         type: string
+//	  "400":
+//	    $ref: "#/responses/BadRequest"
+//	  "403":
+//	    $ref: "#/responses/Forbidden"
+//	  "404":
+//	    $ref: "#/responses/NotFound"
+//	  "409":
+//	    $ref: "#/responses/Conflict"
+//	  "500":
+//	    $ref: "#/responses/InternalServerError"
+func instanceFileHead(_ *state.State, inst instance.Instance, path string, _ *http.Request) response.Response {
+	reverter := revert.New()
+	defer reverter.Fail()
+
+	// Get a SFTP client.
+	client, err := inst.FileSFTP()
+	if err != nil {
+		return response.InternalError(err)
+	}
+
+	reverter.Add(func() { _ = client.Close() })
+
+	return fileSFTPHead(client, path)
+}
+
+// swagger:operation POST /1.0/instances/{name}/files instances instance_files_post
+//
+//	Create or replace a file
+//
+//	Creates a new file in the instance.
+//
+//	---
+//	consumes:
+//	  - application/octet-stream
+//	produces:
+//	  - application/json
+//	parameters:
+//	  - in: path
+//	    name: name
+//	    description: Instance name
+//	    type: string
+//	    required: true
+//	  - in: query
+//	    name: path
+//	    description: Path to the file
+//	    type: string
+//	    x-example: default
+//	  - in: query
+//	    name: project
+//	    description: Project name
+//	    type: string
+//	    x-example: default
+//	  - in: body
+//	    name: raw_file
+//	    description: Raw file content
+//	    schema:
+//	      type: string
+//	  - in: header
+//	    name: X-Incus-uid
+//	    description: File owner UID
+//	    type: integer
+//	    x-example: 1000
+//	  - in: header
+//	    name: X-Incus-gid
+//	    description: File owner GID
+//	    type: integer
+//	    x-example: 1000
+//	  - in: header
+//	    name: X-Incus-mode
+//	    description: File mode
+//	    type: integer
+//	    x-example: 0644
+//	  - in: header
+//	    name: X-Incus-type
+//	    description: Type of file (file, symlink or directory)
+//	    type: string
+//	    x-example: file
+//	  - in: header
+//	    name: X-Incus-write
+//	    description: Write mode (overwrite or append)
+//	    type: string
+//	    x-example: overwrite
+//	responses:
+//	  "200":
+//	    $ref: "#/responses/EmptySyncResponse"
+//	  "400":
+//	    $ref: "#/responses/BadRequest"
+//	  "403":
+//	    $ref: "#/responses/Forbidden"
+//	  "404":
+//	    $ref: "#/responses/NotFound"
+//	  "409":
+//	    $ref: "#/responses/Conflict"
+//	  "500":
+//	    $ref: "#/responses/InternalServerError"
+func instanceFilePost(s *state.State, inst instance.Instance, path string, r *http.Request) response.Response {
+	// Get a SFTP client.
+	client, err := inst.FileSFTP()
+	if err != nil {
+		return response.InternalError(err)
+	}
+
+	defer logger.WarnOnError(client.Close, "Failed to close SFTP client")
+
+	return fileSFTPPost(client, path, r, func() {
+		s.Events.SendLifecycle(inst.Project().Name, lifecycle.InstanceFilePushed.Event(inst, logger.Ctx{"path": path}))
+	})
+}
+
+// swagger:operation DELETE /1.0/instances/{name}/files instances instance_files_delete
+//
+//	Delete a file
+//
+//	Removes the file.
+//
+//	---
+//	produces:
+//	  - application/json
+//	parameters:
+//	  - in: path
+//	    name: name
+//	    description: Instance name
+//	    type: string
+//	    required: true
+//	  - in: query
+//	    name: path
+//	    description: Path to the file
+//	    type: string
+//	    x-example: default
+//	  - in: query
+//	    name: project
+//	    description: Project name
+//	    type: string
+//	    x-example: default
+//	  - in: header
+//	    name: X-Incus-force
+//	    description: Perform recursive deletion
+//	    type: boolean
+//	    x-example: true
+//	responses:
+//	  "200":
+//	    $ref: "#/responses/EmptySyncResponse"
+//	  "400":
+//	    $ref: "#/responses/BadRequest"
+//	  "403":
+//	    $ref: "#/responses/Forbidden"
+//	  "404":
+//	    $ref: "#/responses/NotFound"
+//	  "409":
+//	    $ref: "#/responses/Conflict"
+//	  "500":
+//	    $ref: "#/responses/InternalServerError"
+func instanceFileDelete(s *state.State, inst instance.Instance, path string, r *http.Request) response.Response {
+	// Get a SFTP client.
+	client, err := inst.FileSFTP()
+	if err != nil {
+		return response.InternalError(err)
+	}
+
+	defer logger.WarnOnError(client.Close, "Failed to close SFTP client")
+
+	return fileSFTPDelete(client, path, r, func() {
+		s.Events.SendLifecycle(inst.Project().Name, lifecycle.InstanceFileDeleted.Event(inst, logger.Ctx{"path": path}))
+	})
+}
+
+func fileSFTPGet(client *sftp.Client, path string, r *http.Request, reverter *revert.Reverter, onSuccess func()) response.Response {
+	// Get the file stats.
+	stat, err := client.Lstat(path)
+	if err != nil {
+		return response.SmartError(err)
+	}
+
+	fileType := "file"
+	if stat.Mode().IsDir() {
+		fileType = "directory"
+	} else if stat.Mode()&os.ModeSymlink == os.ModeSymlink {
+		fileType = "symlink"
+	}
+
+	fileStat, ok := stat.Sys().(*sftp.FileStat)
+	if !ok {
+		return response.InternalError(fmt.Errorf("Unexpected stat type %T", stat.Sys()))
+	}
+
+	// Prepare the response.
+	headers := map[string]string{
+		"X-Incus-uid":      fmt.Sprintf("%d", fileStat.UID),
+		"X-Incus-gid":      fmt.Sprintf("%d", fileStat.GID),
+		"X-Incus-mode":     fmt.Sprintf("%04o", stat.Mode().Perm()),
+		"X-Incus-modified": stat.ModTime().UTC().String(),
+		"X-Incus-type":     fileType,
+	}
+
+	switch fileType {
+	case "file":
+		// Open the file.
+		file, err := client.Open(path)
+		if err != nil {
+			return response.SmartError(err)
+		}
+
+		reverter.Add(func() { _ = file.Close() })
+
+		// Setup cleanup logic.
+		cleanup := reverter.Clone()
+		reverter.Success()
+
+		// Make a file response struct.
+		files := make([]response.FileResponseEntry, 1)
+		files[0].Identifier = filepath.Base(path)
+		files[0].Filename = filepath.Base(path)
+		files[0].File = file
+		files[0].FileSize = stat.Size()
+		files[0].FileModified = stat.ModTime()
+		files[0].Cleanup = func() {
+			cleanup.Fail()
+		}
+
+		onSuccess()
+		return response.FileResponse(r, files, headers)
+	case "symlink":
+		// Find symlink target.
+		target, err := client.ReadLink(path)
+		if err != nil {
+			return response.SmartError(err)
+		}
+
+		// If not an absolute symlink, need to mangle to something
+		// relative to the source path. This is required because there
+		// is no sftp function to get the final target path and RealPath doesn't
+		// allow specifying the path to resolve from.
+		if !strings.HasPrefix(target, "/") {
+			target = filepath.Join(filepath.Dir(path), target)
+		}
+
+		// Convert to absolute path.
+		target, err = client.RealPath(target)
+		if err != nil {
+			return response.SmartError(err)
+		}
+
+		// Make a file response struct.
+		files := make([]response.FileResponseEntry, 1)
+		files[0].Identifier = filepath.Base(path)
+		files[0].Filename = filepath.Base(path)
+		files[0].File = bytes.NewReader([]byte(target))
+		files[0].FileModified = time.Now()
+		files[0].FileSize = int64(len(target))
+
+		onSuccess()
+		return response.FileResponse(r, files, headers)
+	case "directory":
+		dirEnts := []string{}
+
+		// List the directory.
+		entries, err := client.ReadDir(path)
+		if err != nil {
+			return response.SmartError(err)
+		}
+
+		for _, entry := range entries {
+			dirEnts = append(dirEnts, entry.Name())
+		}
+
+		onSuccess()
+		return response.SyncResponseHeaders(true, dirEnts, headers)
+	}
+
+	return response.InternalError(fmt.Errorf("Bad file type: %s", fileType))
+}
+
+func fileSFTPHead(client *sftp.Client, path string) response.Response {
+	// Get the file stats.
+	stat, err := client.Lstat(path)
+	if err != nil {
+		return response.SmartError(err)
+	}
+
+	fileType := "file"
+	if stat.Mode().IsDir() {
+		fileType = "directory"
+	} else if stat.Mode()&os.ModeSymlink == os.ModeSymlink {
+		fileType = "symlink"
+	}
+
+	fileStat, ok := stat.Sys().(*sftp.FileStat)
+	if !ok {
+		return response.InternalError(fmt.Errorf("Unexpected stat type %T", stat.Sys()))
+	}
+
+	// Prepare the response.
+	headers := map[string]string{
+		"X-Incus-uid":      fmt.Sprintf("%d", fileStat.UID),
+		"X-Incus-gid":      fmt.Sprintf("%d", fileStat.GID),
+		"X-Incus-mode":     fmt.Sprintf("%04o", stat.Mode().Perm()),
+		"X-Incus-modified": stat.ModTime().UTC().String(),
+		"X-Incus-type":     fileType,
+	}
+
+	if fileType == "file" {
+		headers["Content-Type"] = "application/octet-stream"
+		headers["Content-Length"] = fmt.Sprintf("%d", stat.Size())
+	}
+
+	// Return an empty body (per RFC for HEAD).
+	return response.ManualResponse(func(w http.ResponseWriter) error {
+		// Set the headers.
+		for k, v := range headers {
+			w.Header().Set(k, v)
+		}
+
+		// Flush the connection.
+		w.WriteHeader(http.StatusOK)
+		return nil
+	})
+}
+
+func fileSFTPPost(client *sftp.Client, path string, r *http.Request, onSuccess func()) response.Response {
+	// Extract file ownership and mode from headers
+	uid, gid, mode, fileType, write := api.ParseFileHeaders(r.Header)
+
+	if !slices.Contains([]string{"overwrite", "append"}, write) {
+		return response.BadRequest(fmt.Errorf("Bad file write mode: %s", write))
+	}
+
+	// Check if the file already exists.
+	_, err := client.Stat(path)
+	exists := err == nil
+
+	switch fileType {
+	case "file":
+		fileMode := os.O_RDWR
+
+		if write == "overwrite" {
+			fileMode |= os.O_CREATE | os.O_TRUNC
+		}
+
+		// Open/create the file.
+		file, err := client.OpenFile(path, fileMode)
+		if err != nil {
+			return response.SmartError(err)
+		}
+
+		defer logger.WarnOnError(file.Close, "Failed to close file")
+
+		// Go to the end of the file.
+		_, err = file.Seek(0, io.SeekEnd)
+		if err != nil {
+			return response.InternalError(err)
+		}
+
+		// Transfer the file into the instance.
+		_, err = util.SafeCopy(file, r.Body)
+		if err != nil {
+			return response.InternalError(err)
+		}
+
+		if !exists {
+			// Set file permissions.
+			if mode >= 0 {
+				err = file.Chmod(fs.FileMode(mode))
+				if err != nil {
+					return response.SmartError(err)
+				}
+			}
+
+			// Set file ownership.
+			if uid >= 0 || gid >= 0 {
+				err = file.Chown(int(uid), int(gid))
+				if err != nil {
+					return response.SmartError(err)
+				}
+			}
+		}
+
+		onSuccess()
+		return response.EmptySyncResponse
+	case "symlink":
+		// Figure out target.
+		target, err := io.ReadAll(r.Body)
+		if err != nil {
+			return response.InternalError(err)
+		}
+
+		// Check if already setup.
+		currentTarget, err := client.ReadLink(path)
+		if err == nil && currentTarget == string(target) {
+			return response.EmptySyncResponse
+		}
+
+		// Create the symlink.
+		err = client.Symlink(string(target), path)
+		if err != nil {
+			return response.SmartError(err)
+		}
+
+		onSuccess()
+		return response.EmptySyncResponse
+	case "directory":
+		// Check if it already exists.
+		if exists {
+			return response.EmptySyncResponse
+		}
+
+		// Create the directory.
+		err = client.Mkdir(path)
+		if err != nil {
+			return response.SmartError(err)
+		}
+
+		// Set file permissions.
+		if mode < 0 {
+			// Default mode for directories (sftp doesn't know about umask).
+			mode = 0o755
+		}
+
+		err = client.Chmod(path, fs.FileMode(mode))
+		if err != nil {
+			return response.SmartError(err)
+		}
+
+		// Set file ownership.
+		if uid >= 0 || gid >= 0 {
+			err = client.Chown(path, int(uid), int(gid))
+			if err != nil {
+				return response.SmartError(err)
+			}
+		}
+
+		onSuccess()
+		return response.EmptySyncResponse
+	default:
+		return response.BadRequest(fmt.Errorf("Bad file type: %s", fileType))
+	}
+}
+
+func fileSFTPDelete(client *sftp.Client, path string, r *http.Request, onSuccess func()) response.Response {
+	if util.IsFalseOrEmpty(r.Header.Get("X-Incus-force")) {
+		// Delete the file.
+		err := client.Remove(path)
+		if err != nil {
+			return response.SmartError(err)
+		}
+	} else {
+		// Delete the tree.
+		err := client.RemoveAll(path)
+		if err != nil {
+			return response.SmartError(err)
+		}
+	}
+
+	onSuccess()
+	return response.EmptySyncResponse
+}

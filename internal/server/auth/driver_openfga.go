@@ -1,0 +1,1672 @@
+package auth
+
+import (
+	"context"
+	"encoding/json"
+	"errors"
+	"fmt"
+	"net/http"
+	"slices"
+	"sync"
+	"time"
+
+	openfga "github.com/openfga/go-sdk"
+	"github.com/openfga/go-sdk/client"
+	"github.com/openfga/go-sdk/credentials"
+
+	"github.com/lxc/incus/v7/internal/server/certificate"
+	"github.com/lxc/incus/v7/shared/api"
+	"github.com/lxc/incus/v7/shared/logger"
+)
+
+// FGA represents an OpenFGA authorizer.
+type FGA struct {
+	commonAuthorizer
+	certificates *certificate.Cache
+
+	apiURL        string
+	apiToken      string
+	storeID       string
+	tlsIdentifier string
+
+	onlineMu sync.Mutex
+	online   bool
+
+	shutdownCtx    context.Context
+	shutdownCancel context.CancelFunc
+
+	client *client.OpenFgaClient
+}
+
+func (f *FGA) configure(opts Opts) error {
+	if opts.config == nil {
+		return errors.New("Missing OpenFGA config")
+	}
+
+	val, ok := opts.config["authorization.openfga.api.token"]
+	if !ok || val == nil {
+		return errors.New("Missing OpenFGA API token")
+	}
+
+	f.apiToken, ok = val.(string)
+	if !ok {
+		return fmt.Errorf("Expected a string for configuration key %q, got: %T", "authorization.openfga.api.token", val)
+	}
+
+	val, ok = opts.config["authorization.openfga.api.url"]
+	if !ok || val == nil {
+		return errors.New("Missing OpenFGA API URL")
+	}
+
+	f.apiURL, ok = val.(string)
+	if !ok {
+		return fmt.Errorf("Expected a string for configuration key %q, got: %T", "authorization.openfga.api.url", val)
+	}
+
+	val, ok = opts.config["authorization.openfga.store.id"]
+	if !ok || val == nil {
+		return errors.New("Missing OpenFGA store ID")
+	}
+
+	f.storeID, ok = val.(string)
+	if !ok {
+		return fmt.Errorf("Expected a string for configuration key %q, got: %T", "authorization.openfga.store.id", val)
+	}
+
+	// TLS clients mapping to an OpenFGA user (defaults to "name").
+	f.tlsIdentifier = "name"
+	val, ok = opts.config["authorization.openfga.tls.identifier"]
+	if ok && val != nil {
+		identifier, ok := val.(string)
+		if !ok {
+			return fmt.Errorf("Expected a string for configuration key %q, got: %T", "authorization.openfga.tls.identifier", val)
+		}
+
+		if identifier != "" {
+			f.tlsIdentifier = identifier
+		}
+	}
+
+	return nil
+}
+
+func (f *FGA) load(ctx context.Context, certificateCache *certificate.Cache, opts Opts) error {
+	_, cancel := context.WithTimeout(ctx, 10*time.Second)
+	defer cancel()
+
+	err := f.configure(opts)
+	if err != nil {
+		return err
+	}
+
+	f.certificates = certificateCache
+
+	conf := client.ClientConfiguration{
+		ApiUrl:  f.apiURL,
+		StoreId: f.storeID,
+		Credentials: &credentials.Credentials{
+			Method: credentials.CredentialsMethodApiToken,
+			Config: &credentials.Config{
+				ApiToken: f.apiToken,
+			},
+		},
+	}
+
+	f.client, err = client.NewSdkClient(&conf)
+	if err != nil {
+		return fmt.Errorf("Failed to create OpenFGA client: %w", err)
+	}
+
+	f.shutdownCtx, f.shutdownCancel = context.WithCancel(context.Background())
+
+	// Connect in the background.
+	go func(ctx context.Context, certificateCache *certificate.Cache, opts Opts) {
+		first := true
+
+		for {
+			// Attempt a connection.
+			err := f.connect(ctx, certificateCache, opts)
+			if err == nil {
+				if !first {
+					logger.Warn("Connection with OpenFGA established")
+				}
+
+				f.onlineMu.Lock()
+				defer f.onlineMu.Unlock()
+				f.online = true
+
+				return
+			}
+
+			// Handle re-tries.
+			if first {
+				logger.Warn("Unable to connect to the OpenFGA server, will retry every 30s", logger.Ctx{"err": err})
+				first = false
+			}
+
+			select {
+			case <-time.After(30 * time.Second):
+				continue
+			case <-f.shutdownCtx.Done():
+				return
+			}
+		}
+	}(f.shutdownCtx, certificateCache, opts)
+
+	return nil
+}
+
+// StopService stops the authorizer gracefully.
+func (f *FGA) StopService(ctx context.Context) error {
+	// Cancel any background routine.
+	f.shutdownCancel()
+
+	return nil
+}
+
+// ApplyPatch is called when an applicable server patch is run, this triggers a model re-upload.
+func (f *FGA) ApplyPatch(ctx context.Context, name string) error {
+	// Always refresh the model.
+	logger.Info("Refreshing the OpenFGA model")
+	err := f.refreshModel(ctx)
+	if err != nil {
+		return err
+	}
+
+	if name == "auth_openfga_viewer" {
+		// Add the public access permission if not set.
+		resp, err := f.client.Check(ctx).Body(client.ClientCheckRequest{
+			User:     "user:*",
+			Relation: "authenticated",
+			Object:   ObjectServer().String(),
+		}).Execute()
+		if err != nil {
+			return err
+		}
+
+		if !resp.GetAllowed() {
+			err = f.sendTuples(ctx, []client.ClientTupleKey{
+				{User: "user:*", Relation: "authenticated", Object: ObjectServer().String()},
+			}, nil)
+			if err != nil {
+				return err
+			}
+
+			// Attempt to clear the former version of this permission.
+			_ = f.sendTuples(ctx, nil, []client.ClientTupleKeyWithoutCondition{
+				{User: "user:*", Relation: "viewer", Object: ObjectServer().String()},
+			})
+		}
+	}
+
+	return nil
+}
+
+func (f *FGA) refreshModel(ctx context.Context) error {
+	var builtinAuthorizationModel client.ClientWriteAuthorizationModelRequest
+	err := json.Unmarshal([]byte(authModel), &builtinAuthorizationModel)
+	if err != nil {
+		return fmt.Errorf("Failed to unmarshal built in authorization model: %w", err)
+	}
+
+	_, err = f.client.WriteAuthorizationModel(ctx).Body(builtinAuthorizationModel).Execute()
+	if err != nil {
+		return fmt.Errorf("Failed to write the authorization model: %w", err)
+	}
+
+	return nil
+}
+
+func (f *FGA) connect(ctx context.Context, certificateCache *certificate.Cache, opts Opts) error {
+	// Load current authorization model.
+	readModelResponse, err := f.client.ReadLatestAuthorizationModel(ctx).Execute()
+	if err != nil {
+		return fmt.Errorf("Failed to read pre-existing OpenFGA model: %w", err)
+	}
+
+	// Check if we need to upload an initial model.
+	if readModelResponse.AuthorizationModel == nil {
+		logger.Info("Upload initial OpenFGA model")
+
+		// Upload the model itself.
+		err := f.refreshModel(ctx)
+		if err != nil {
+			return fmt.Errorf("Failed to load initial model: %w", err)
+		}
+
+		// Allow basic authenticated access.
+		err = f.sendTuples(ctx, []client.ClientTupleKey{
+			{User: "user:*", Relation: "authenticated", Object: ObjectServer().String()},
+		}, nil)
+		if err != nil {
+			return err
+		}
+	}
+
+	if opts.resourcesFunc != nil {
+		// Start resource sync routine.
+		go func(resourcesFunc func() (*Resources, error)) {
+			for {
+				resources, err := resourcesFunc()
+				if err == nil {
+					// resources will be nil on cluster members that shouldn't be performing updates.
+					if resources != nil {
+						err := f.syncResources(f.shutdownCtx, *resources)
+						if err != nil {
+							logger.Error("Failed background OpenFGA resource sync", logger.Ctx{"err": err})
+						}
+					}
+				} else {
+					logger.Error("Failed getting local OpenFGA resources", logger.Ctx{"err": err})
+				}
+
+				select {
+				case <-time.After(time.Hour):
+					continue
+				case <-f.shutdownCtx.Done():
+					return
+				}
+			}
+		}(opts.resourcesFunc)
+	}
+
+	return nil
+}
+
+// userForRequest returns the OpenFGA user identifier for a request.
+func (f *FGA) userForRequest(details *requestDetails) string {
+	username := details.username()
+
+	if details.authenticationProtocol() == api.AuthenticationMethodTLS && f.tlsIdentifier == "name" && f.certificates != nil {
+		cert := f.certificates.GetAPICertificate(username)
+		if cert != nil && cert.Name != "" {
+			return cert.Name
+		}
+	}
+
+	return username
+}
+
+// CheckPermission returns an error if the user does not have the given Entitlement on the given Object.
+func (f *FGA) CheckPermission(ctx context.Context, r *http.Request, object Object, entitlement Entitlement) error {
+	logCtx := logger.Ctx{"object": object, "entitlement": entitlement, "url": r.URL.String(), "method": r.Method}
+	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	defer cancel()
+
+	details, err := f.requestDetails(r)
+	if err != nil {
+		return api.StatusErrorf(http.StatusForbidden, "Failed to extract request details: %v", err)
+	}
+
+	if details.isInternalOrUnix() {
+		return nil
+	}
+
+	// If offline, return a clear error to the user.
+	if !f.isOnline() {
+		return api.StatusErrorf(http.StatusForbidden, "The authorization server is currently offline, please try again later")
+	}
+
+	username := f.userForRequest(details)
+	logCtx["username"] = username
+	logCtx["protocol"] = details.Protocol
+
+	objectUser := ObjectUser(username)
+	body := client.ClientCheckRequest{
+		User:     objectUser.String(),
+		Relation: string(entitlement),
+		Object:   object.String(),
+	}
+
+	f.logger.Debug("Checking OpenFGA relation", logCtx)
+	resp, err := f.client.Check(ctx).Body(body).Execute()
+	if err != nil {
+		return fmt.Errorf("Failed to check OpenFGA relation: %w", err)
+	}
+
+	if !resp.GetAllowed() {
+		return api.StatusErrorf(http.StatusForbidden, "User does not have entitlement %q on object %q", entitlement, object)
+	}
+
+	return nil
+}
+
+// GetPermissionChecker returns a function that can be used to check whether a user has the required entitlement on an authorization object.
+func (f *FGA) GetPermissionChecker(ctx context.Context, r *http.Request, entitlement Entitlement, objectType ObjectType) (PermissionChecker, error) {
+	allowFunc := func(b bool) func(Object) bool {
+		return func(Object) bool {
+			return b
+		}
+	}
+
+	logCtx := logger.Ctx{"object_type": objectType, "entitlement": entitlement, "url": r.URL.String(), "method": r.Method}
+	details, err := f.requestDetails(r)
+	if err != nil {
+		return nil, api.StatusErrorf(http.StatusForbidden, "Failed to extract request details: %v", err)
+	}
+
+	if details.isInternalOrUnix() {
+		return allowFunc(true), nil
+	}
+
+	// If offline, return a clear error to the user.
+	if !f.isOnline() {
+		return nil, api.StatusErrorf(http.StatusForbidden, "The authorization server is currently offline, please try again later")
+	}
+
+	username := f.userForRequest(details)
+	logCtx["username"] = username
+	logCtx["protocol"] = details.Protocol
+
+	f.logger.Debug("Listing related objects for user", logCtx)
+	resp, err := f.client.ListObjects(ctx).Body(client.ClientListObjectsRequest{
+		User:     ObjectUser(username).String(),
+		Relation: string(entitlement),
+		Type:     string(objectType),
+	}).Execute()
+	if err != nil {
+		return nil, fmt.Errorf("Failed to OpenFGA objects of type %q with relation %q for user %q: %w", objectType, entitlement, username, err)
+	}
+
+	objects := resp.GetObjects()
+
+	return func(object Object) bool {
+		return slices.Contains(objects, object.String())
+	}, nil
+}
+
+// AddProject adds a project to the authorizer.
+func (f *FGA) AddProject(ctx context.Context, _ int64, projectName string) error {
+	writes := []client.ClientTupleKey{
+		{
+			User:     ObjectServer().String(),
+			Relation: relationServer,
+			Object:   ObjectProject(projectName).String(),
+		},
+		{
+			User:     ObjectProject(projectName).String(),
+			Relation: relationProject,
+			Object:   ObjectProfile(projectName, "default").String(),
+		},
+	}
+
+	return f.updateTuples(ctx, writes, nil)
+}
+
+// DeleteProject deletes a project from the authorizer.
+func (f *FGA) DeleteProject(ctx context.Context, _ int64, projectName string) error {
+	// Only empty projects can be deleted, so we don't need to worry about any tuples with this project as a parent.
+	deletions := []client.ClientTupleKeyWithoutCondition{
+		{
+			// Remove the default profile
+			User:     ObjectProject(projectName).String(),
+			Relation: relationProject,
+			Object:   ObjectProfile(projectName, "default").String(),
+		},
+		{
+			User:     ObjectServer().String(),
+			Relation: relationServer,
+			Object:   ObjectProject(projectName).String(),
+		},
+	}
+
+	return f.updateTuples(ctx, nil, deletions)
+}
+
+// RenameProject renames a project in the authorizer.
+func (f *FGA) RenameProject(ctx context.Context, _ int64, oldName string, newName string) error {
+	writes := []client.ClientTupleKey{
+		{
+			User:     ObjectServer().String(),
+			Relation: relationServer,
+			Object:   ObjectProject(newName).String(),
+		},
+		{
+			User:     ObjectProject(newName).String(),
+			Relation: relationProject,
+			Object:   ObjectProfile(newName, "default").String(),
+		},
+	}
+
+	// Only empty projects can be renamed, so we don't need to worry about any tuples with this project as a parent.
+	deletions := []client.ClientTupleKeyWithoutCondition{
+		{
+			// Remove the default profile
+			User:     ObjectProject(oldName).String(),
+			Relation: relationProject,
+			Object:   ObjectProfile(oldName, "default").String(),
+		},
+		{
+			User:     ObjectServer().String(),
+			Relation: relationServer,
+			Object:   ObjectProject(oldName).String(),
+		},
+	}
+
+	return f.updateTuples(ctx, writes, deletions)
+}
+
+// AddCertificate adds a certificate to the authorizer.
+func (f *FGA) AddCertificate(ctx context.Context, fingerprint string) error {
+	writes := []client.ClientTupleKey{
+		{
+			User:     ObjectServer().String(),
+			Relation: relationServer,
+			Object:   ObjectCertificate(fingerprint).String(),
+		},
+	}
+
+	return f.updateTuples(ctx, writes, nil)
+}
+
+// DeleteCertificate deletes a certificate from the authorizer.
+func (f *FGA) DeleteCertificate(ctx context.Context, fingerprint string) error {
+	deletions := []client.ClientTupleKeyWithoutCondition{
+		{
+			User:     ObjectServer().String(),
+			Relation: relationServer,
+			Object:   ObjectCertificate(fingerprint).String(),
+		},
+	}
+
+	return f.updateTuples(ctx, nil, deletions)
+}
+
+// AddStoragePool adds a storage pool to the authorizer.
+func (f *FGA) AddStoragePool(ctx context.Context, storagePoolName string) error {
+	writes := []client.ClientTupleKey{
+		{
+			User:     ObjectServer().String(),
+			Relation: relationServer,
+			Object:   ObjectStoragePool(storagePoolName).String(),
+		},
+	}
+
+	return f.updateTuples(ctx, writes, nil)
+}
+
+// DeleteStoragePool deletes a storage pool from the authorizer.
+func (f *FGA) DeleteStoragePool(ctx context.Context, storagePoolName string) error {
+	deletions := []client.ClientTupleKeyWithoutCondition{
+		{
+			User:     ObjectServer().String(),
+			Relation: relationServer,
+			Object:   ObjectStoragePool(storagePoolName).String(),
+		},
+	}
+
+	return f.updateTuples(ctx, nil, deletions)
+}
+
+// AddImage adds an image to the authorizer.
+func (f *FGA) AddImage(ctx context.Context, projectName string, fingerprint string) error {
+	writes := []client.ClientTupleKey{
+		{
+			User:     ObjectProject(projectName).String(),
+			Relation: relationProject,
+			Object:   ObjectImage(projectName, fingerprint).String(),
+		},
+	}
+
+	return f.updateTuples(ctx, writes, nil)
+}
+
+// DeleteImage deletes an image from the authorizer.
+func (f *FGA) DeleteImage(ctx context.Context, projectName string, fingerprint string) error {
+	deletions := []client.ClientTupleKeyWithoutCondition{
+		{
+			User:     ObjectProject(projectName).String(),
+			Relation: relationProject,
+			Object:   ObjectImage(projectName, fingerprint).String(),
+		},
+	}
+
+	return f.updateTuples(ctx, nil, deletions)
+}
+
+// AddImageAlias adds an image alias to the authorizer.
+func (f *FGA) AddImageAlias(ctx context.Context, projectName string, imageAliasName string) error {
+	writes := []client.ClientTupleKey{
+		{
+			User:     ObjectProject(projectName).String(),
+			Relation: relationProject,
+			Object:   ObjectImageAlias(projectName, imageAliasName).String(),
+		},
+	}
+
+	return f.updateTuples(ctx, writes, nil)
+}
+
+// DeleteImageAlias deletes an image alias from the authorizer.
+func (f *FGA) DeleteImageAlias(ctx context.Context, projectName string, imageAliasName string) error {
+	deletions := []client.ClientTupleKeyWithoutCondition{
+		{
+			User:     ObjectProject(projectName).String(),
+			Relation: relationProject,
+			Object:   ObjectImageAlias(projectName, imageAliasName).String(),
+		},
+	}
+
+	return f.updateTuples(ctx, nil, deletions)
+}
+
+// RenameImageAlias renames an image alias in the authorizer.
+func (f *FGA) RenameImageAlias(ctx context.Context, projectName string, oldAliasName string, newAliasName string) error {
+	writes := []client.ClientTupleKey{
+		{
+			User:     ObjectProject(projectName).String(),
+			Relation: relationProject,
+			Object:   ObjectImageAlias(projectName, newAliasName).String(),
+		},
+	}
+
+	deletions := []client.ClientTupleKeyWithoutCondition{
+		{
+			User:     ObjectProject(projectName).String(),
+			Relation: relationProject,
+			Object:   ObjectImageAlias(projectName, oldAliasName).String(),
+		},
+	}
+
+	return f.updateTuples(ctx, writes, deletions)
+}
+
+// AddInstance adds an instance to the authorizer.
+func (f *FGA) AddInstance(ctx context.Context, projectName string, instanceName string) error {
+	writes := []client.ClientTupleKey{
+		{
+			User:     ObjectProject(projectName).String(),
+			Relation: relationProject,
+			Object:   ObjectInstance(projectName, instanceName).String(),
+		},
+	}
+
+	return f.updateTuples(ctx, writes, nil)
+}
+
+// DeleteInstance deletes an instance from the authorizer.
+func (f *FGA) DeleteInstance(ctx context.Context, projectName string, instanceName string) error {
+	// If offline, skip updating as a full sync will happen after connection.
+	if !f.isOnline() {
+		return nil
+	}
+
+	instanceObject := ObjectInstance(projectName, instanceName)
+
+	// Get the security tags currently applied to the instance.
+	tagObjectStrs, err := f.instanceSecurityTags(ctx, instanceObject)
+	if err != nil {
+		return err
+	}
+
+	deletions := []client.ClientTupleKeyWithoutCondition{
+		{
+			User:     ObjectProject(projectName).String(),
+			Relation: relationProject,
+			Object:   instanceObject.String(),
+		},
+	}
+
+	for _, tagObjectStr := range tagObjectStrs {
+		deletions = append(deletions, client.ClientTupleKeyWithoutCondition{
+			User:     tagObjectStr,
+			Relation: relationTag,
+			Object:   instanceObject.String(),
+		})
+	}
+
+	err = f.updateTuples(ctx, nil, deletions)
+	if err != nil {
+		return err
+	}
+
+	return f.pruneSecurityTags(ctx, tagObjectStrs)
+}
+
+// RenameInstance renames an instance in the authorizer.
+func (f *FGA) RenameInstance(ctx context.Context, projectName string, oldInstanceName string, newInstanceName string) error {
+	// If offline, skip updating as a full sync will happen after connection.
+	if !f.isOnline() {
+		return nil
+	}
+
+	oldInstanceObject := ObjectInstance(projectName, oldInstanceName)
+	newInstanceObject := ObjectInstance(projectName, newInstanceName)
+
+	// Get the security tags currently applied to the instance.
+	tagObjectStrs, err := f.instanceSecurityTags(ctx, oldInstanceObject)
+	if err != nil {
+		return err
+	}
+
+	writes := []client.ClientTupleKey{
+		{
+			User:     ObjectProject(projectName).String(),
+			Relation: relationProject,
+			Object:   newInstanceObject.String(),
+		},
+	}
+
+	deletions := []client.ClientTupleKeyWithoutCondition{
+		{
+			User:     ObjectProject(projectName).String(),
+			Relation: relationProject,
+			Object:   oldInstanceObject.String(),
+		},
+	}
+
+	for _, tagObjectStr := range tagObjectStrs {
+		writes = append(writes, client.ClientTupleKey{
+			User:     tagObjectStr,
+			Relation: relationTag,
+			Object:   newInstanceObject.String(),
+		})
+
+		deletions = append(deletions, client.ClientTupleKeyWithoutCondition{
+			User:     tagObjectStr,
+			Relation: relationTag,
+			Object:   oldInstanceObject.String(),
+		})
+	}
+
+	return f.updateTuples(ctx, writes, deletions)
+}
+
+// SetInstanceSecurityTags sets the security tags of an instance in the authorizer.
+func (f *FGA) SetInstanceSecurityTags(ctx context.Context, projectName string, instanceName string, tags []string) error {
+	// If offline, skip updating as a full sync will happen after connection.
+	if !f.isOnline() {
+		return nil
+	}
+
+	instanceObject := ObjectInstance(projectName, instanceName)
+
+	// Get the security tags currently applied to the instance.
+	remoteTagObjectStrs, err := f.instanceSecurityTags(ctx, instanceObject)
+	if err != nil {
+		return err
+	}
+
+	// Get the security tags known to OpenFGA.
+	knownTagObjectStrs, err := f.securityTags(ctx)
+	if err != nil {
+		return err
+	}
+
+	var writes []client.ClientTupleKey
+	var deletions []client.ClientTupleKeyWithoutCondition
+
+	localTagObjectStrs := make([]string, 0, len(tags))
+	for _, tag := range tags {
+		tagObjectStr := ObjectSecurityTag(tag).String()
+		localTagObjectStrs = append(localTagObjectStrs, tagObjectStr)
+
+		if slices.Contains(remoteTagObjectStrs, tagObjectStr) {
+			continue
+		}
+
+		// Register the security tag if it's new.
+		if !slices.Contains(knownTagObjectStrs, tagObjectStr) {
+			writes = append(writes, client.ClientTupleKey{
+				User:     ObjectServer().String(),
+				Relation: relationServer,
+				Object:   tagObjectStr,
+			})
+
+			knownTagObjectStrs = append(knownTagObjectStrs, tagObjectStr)
+		}
+
+		writes = append(writes, client.ClientTupleKey{
+			User:     tagObjectStr,
+			Relation: relationTag,
+			Object:   instanceObject.String(),
+		})
+	}
+
+	removedTagObjectStrs := []string{}
+	for _, tagObjectStr := range remoteTagObjectStrs {
+		if slices.Contains(localTagObjectStrs, tagObjectStr) {
+			continue
+		}
+
+		deletions = append(deletions, client.ClientTupleKeyWithoutCondition{
+			User:     tagObjectStr,
+			Relation: relationTag,
+			Object:   instanceObject.String(),
+		})
+
+		removedTagObjectStrs = append(removedTagObjectStrs, tagObjectStr)
+	}
+
+	err = f.updateTuples(ctx, writes, deletions)
+	if err != nil {
+		return err
+	}
+
+	return f.pruneSecurityTags(ctx, removedTagObjectStrs)
+}
+
+// instanceSecurityTags returns the security tag objects currently applied to an instance in OpenFGA.
+func (f *FGA) instanceSecurityTags(ctx context.Context, instanceObject Object) ([]string, error) {
+	object := instanceObject.String()
+	relation := relationTag
+
+	tagObjectStrs := []string{}
+	opts := client.ClientReadOptions{}
+	for {
+		resp, err := f.client.Read(ctx).Body(client.ClientReadRequest{Object: &object, Relation: &relation}).Options(opts).Execute()
+		if err != nil {
+			return nil, err
+		}
+
+		for _, tuple := range resp.GetTuples() {
+			tagObjectStrs = append(tagObjectStrs, tuple.Key.User)
+		}
+
+		continuationToken := resp.GetContinuationToken()
+		if continuationToken == "" {
+			break
+		}
+
+		opts.ContinuationToken = &continuationToken
+	}
+
+	return tagObjectStrs, nil
+}
+
+// listObjects returns every object of a type related to the user, reading tuples page by page.
+// The ListObjects API silently caps its results (1000 by default), so it can't be used for syncing.
+func (f *FGA) listObjects(ctx context.Context, user string, relation string, objectType ObjectType, consistency *openfga.ConsistencyPreference) ([]string, error) {
+	object := string(objectType) + ":"
+
+	objectStrs := []string{}
+	opts := client.ClientReadOptions{Consistency: consistency}
+	for {
+		resp, err := f.client.Read(ctx).Body(client.ClientReadRequest{User: &user, Relation: &relation, Object: &object}).Options(opts).Execute()
+		if err != nil {
+			return nil, err
+		}
+
+		for _, tuple := range resp.GetTuples() {
+			objectStrs = append(objectStrs, tuple.Key.Object)
+		}
+
+		continuationToken := resp.GetContinuationToken()
+		if continuationToken == "" {
+			break
+		}
+
+		opts.ContinuationToken = &continuationToken
+	}
+
+	return objectStrs, nil
+}
+
+// securityTags returns the security tag objects known to OpenFGA.
+func (f *FGA) securityTags(ctx context.Context) ([]string, error) {
+	return f.listObjects(ctx, ObjectServer().String(), relationServer, ObjectTypeSecurityTag, nil)
+}
+
+// pruneSecurityTags removes the given security tags from OpenFGA if no instance uses them anymore.
+func (f *FGA) pruneSecurityTags(ctx context.Context, tagObjectStrs []string) error {
+	var deletions []client.ClientTupleKeyWithoutCondition
+
+	// Make sure we see the effect of the deletions we just made.
+	consistency := openfga.CONSISTENCYPREFERENCE_HIGHER_CONSISTENCY
+
+	for _, tagObjectStr := range tagObjectStrs {
+		instanceStrs, err := f.listObjects(ctx, tagObjectStr, relationTag, ObjectTypeInstance, &consistency)
+		if err != nil {
+			return err
+		}
+
+		if len(instanceStrs) > 0 {
+			continue
+		}
+
+		deletions = append(deletions, client.ClientTupleKeyWithoutCondition{
+			User:     ObjectServer().String(),
+			Relation: relationServer,
+			Object:   tagObjectStr,
+		})
+	}
+
+	return f.updateTuples(ctx, nil, deletions)
+}
+
+// AddNetwork adds a network to the authorizer.
+func (f *FGA) AddNetwork(ctx context.Context, projectName string, networkName string) error {
+	writes := []client.ClientTupleKey{
+		{
+			User:     ObjectProject(projectName).String(),
+			Relation: relationProject,
+			Object:   ObjectNetwork(projectName, networkName).String(),
+		},
+	}
+
+	return f.updateTuples(ctx, writes, nil)
+}
+
+// DeleteNetwork deletes a network from the authorizer.
+func (f *FGA) DeleteNetwork(ctx context.Context, projectName string, networkName string) error {
+	deletions := []client.ClientTupleKeyWithoutCondition{
+		{
+			User:     ObjectProject(projectName).String(),
+			Relation: relationProject,
+			Object:   ObjectNetwork(projectName, networkName).String(),
+		},
+	}
+
+	return f.updateTuples(ctx, nil, deletions)
+}
+
+// RenameNetwork renames a network in the authorizer.
+func (f *FGA) RenameNetwork(ctx context.Context, projectName string, oldNetworkName string, newNetworkName string) error {
+	writes := []client.ClientTupleKey{
+		{
+			User:     ObjectProject(projectName).String(),
+			Relation: relationProject,
+			Object:   ObjectNetwork(projectName, newNetworkName).String(),
+		},
+	}
+
+	deletions := []client.ClientTupleKeyWithoutCondition{
+		{
+			User:     ObjectProject(projectName).String(),
+			Relation: relationProject,
+			Object:   ObjectNetwork(projectName, oldNetworkName).String(),
+		},
+	}
+
+	return f.updateTuples(ctx, writes, deletions)
+}
+
+// AddNetworkShare shares a default project network with another project in the authorizer.
+func (f *FGA) AddNetworkShare(ctx context.Context, projectName string, networkName string) error {
+	writes := []client.ClientTupleKey{
+		{
+			User:     ObjectProject(projectName).String(),
+			Relation: relationSharedWith,
+			Object:   ObjectNetwork(api.ProjectDefaultName, networkName).String(),
+		},
+	}
+
+	return f.updateTuples(ctx, writes, nil)
+}
+
+// DeleteNetworkShare removes the sharing of a default project network with another project in the authorizer.
+func (f *FGA) DeleteNetworkShare(ctx context.Context, projectName string, networkName string) error {
+	deletions := []client.ClientTupleKeyWithoutCondition{
+		{
+			User:     ObjectProject(projectName).String(),
+			Relation: relationSharedWith,
+			Object:   ObjectNetwork(api.ProjectDefaultName, networkName).String(),
+		},
+	}
+
+	return f.updateTuples(ctx, nil, deletions)
+}
+
+// AddNetworkZone adds a network zone in the authorizer.
+func (f *FGA) AddNetworkZone(ctx context.Context, projectName string, networkZoneName string) error {
+	writes := []client.ClientTupleKey{
+		{
+			User:     ObjectProject(projectName).String(),
+			Relation: relationProject,
+			Object:   ObjectNetworkZone(projectName, networkZoneName).String(),
+		},
+	}
+
+	return f.updateTuples(ctx, writes, nil)
+}
+
+// DeleteNetworkZone deletes a network zone from the authorizer.
+func (f *FGA) DeleteNetworkZone(ctx context.Context, projectName string, networkZoneName string) error {
+	deletions := []client.ClientTupleKeyWithoutCondition{
+		{
+			User:     ObjectProject(projectName).String(),
+			Relation: relationProject,
+			Object:   ObjectNetworkZone(projectName, networkZoneName).String(),
+		},
+	}
+
+	return f.updateTuples(ctx, nil, deletions)
+}
+
+// AddNetworkIntegration adds a network integration to the authorizer.
+func (f *FGA) AddNetworkIntegration(ctx context.Context, networkIntegrationName string) error {
+	writes := []client.ClientTupleKey{
+		{
+			User:     ObjectServer().String(),
+			Relation: relationServer,
+			Object:   ObjectNetworkIntegration(networkIntegrationName).String(),
+		},
+	}
+
+	return f.updateTuples(ctx, writes, nil)
+}
+
+// DeleteNetworkIntegration deletes a network integration from the authorizer.
+func (f *FGA) DeleteNetworkIntegration(ctx context.Context, networkIntegrationName string) error {
+	deletions := []client.ClientTupleKeyWithoutCondition{
+		{
+			User:     ObjectServer().String(),
+			Relation: relationServer,
+			Object:   ObjectNetworkIntegration(networkIntegrationName).String(),
+		},
+	}
+
+	return f.updateTuples(ctx, nil, deletions)
+}
+
+// RenameNetworkIntegration renames a network integration in the authorizer.
+func (f *FGA) RenameNetworkIntegration(ctx context.Context, oldNetworkIntegrationName string, newNetworkIntegrationName string) error {
+	writes := []client.ClientTupleKey{
+		{
+			User:     ObjectServer().String(),
+			Relation: relationServer,
+			Object:   ObjectNetworkIntegration(newNetworkIntegrationName).String(),
+		},
+	}
+
+	deletions := []client.ClientTupleKeyWithoutCondition{
+		{
+			User:     ObjectServer().String(),
+			Relation: relationServer,
+			Object:   ObjectNetworkIntegration(oldNetworkIntegrationName).String(),
+		},
+	}
+
+	return f.updateTuples(ctx, writes, deletions)
+}
+
+// AddNetworkACL adds a network ACL in the authorizer.
+func (f *FGA) AddNetworkACL(ctx context.Context, projectName string, networkACLName string) error {
+	writes := []client.ClientTupleKey{
+		{
+			User:     ObjectProject(projectName).String(),
+			Relation: relationProject,
+			Object:   ObjectNetworkACL(projectName, networkACLName).String(),
+		},
+	}
+
+	return f.updateTuples(ctx, writes, nil)
+}
+
+// DeleteNetworkACL deletes a network ACL from the authorizer.
+func (f *FGA) DeleteNetworkACL(ctx context.Context, projectName string, networkACLName string) error {
+	deletions := []client.ClientTupleKeyWithoutCondition{
+		{
+			User:     ObjectProject(projectName).String(),
+			Relation: relationProject,
+			Object:   ObjectNetworkACL(projectName, networkACLName).String(),
+		},
+	}
+
+	return f.updateTuples(ctx, nil, deletions)
+}
+
+// RenameNetworkACL renames a network ACL in the authorizer.
+func (f *FGA) RenameNetworkACL(ctx context.Context, projectName string, oldNetworkACLName string, newNetworkACLName string) error {
+	writes := []client.ClientTupleKey{
+		{
+			User:     ObjectProject(projectName).String(),
+			Relation: relationProject,
+			Object:   ObjectNetworkACL(projectName, newNetworkACLName).String(),
+		},
+	}
+
+	deletions := []client.ClientTupleKeyWithoutCondition{
+		{
+			User:     ObjectProject(projectName).String(),
+			Relation: relationProject,
+			Object:   ObjectNetworkACL(projectName, oldNetworkACLName).String(),
+		},
+	}
+
+	return f.updateTuples(ctx, writes, deletions)
+}
+
+// AddNetworkAddressSet adds a network address set to the authorization model.
+func (f *FGA) AddNetworkAddressSet(ctx context.Context, projectName string, networkAddressSetName string) error {
+	writes := []client.ClientTupleKey{
+		{
+			User:     ObjectProject(projectName).String(),
+			Relation: relationProject,
+			Object:   ObjectNetworkAddressSet(projectName, networkAddressSetName).String(),
+		},
+	}
+
+	return f.updateTuples(ctx, writes, nil)
+}
+
+// DeleteNetworkAddressSet removes a network address set from the authorization model.
+func (f *FGA) DeleteNetworkAddressSet(ctx context.Context, projectName string, networkAddressSetName string) error {
+	deletions := []client.ClientTupleKeyWithoutCondition{
+		{
+			User:     ObjectProject(projectName).String(),
+			Relation: relationProject,
+			Object:   ObjectNetworkAddressSet(projectName, networkAddressSetName).String(),
+		},
+	}
+
+	return f.updateTuples(ctx, nil, deletions)
+}
+
+// RenameNetworkAddressSet renames an existing network address set in the authorization model.
+func (f *FGA) RenameNetworkAddressSet(ctx context.Context, projectName string, oldNetworkAddressSetName string, newNetworkAddressSetName string) error {
+	writes := []client.ClientTupleKey{
+		{
+			User:     ObjectProject(projectName).String(),
+			Relation: relationProject,
+			Object:   ObjectNetworkAddressSet(projectName, newNetworkAddressSetName).String(),
+		},
+	}
+
+	deletions := []client.ClientTupleKeyWithoutCondition{
+		{
+			User:     ObjectProject(projectName).String(),
+			Relation: relationProject,
+			Object:   ObjectNetworkAddressSet(projectName, oldNetworkAddressSetName).String(),
+		},
+	}
+
+	return f.updateTuples(ctx, writes, deletions)
+}
+
+// AddProfile is a no-op.
+func (f *FGA) AddProfile(ctx context.Context, projectName string, profileName string) error {
+	writes := []client.ClientTupleKey{
+		{
+			User:     ObjectProject(projectName).String(),
+			Relation: relationProject,
+			Object:   ObjectProfile(projectName, profileName).String(),
+		},
+	}
+
+	return f.updateTuples(ctx, writes, nil)
+}
+
+// DeleteProfile deletes a profile from the authorizer.
+func (f *FGA) DeleteProfile(ctx context.Context, projectName string, profileName string) error {
+	deletions := []client.ClientTupleKeyWithoutCondition{
+		{
+			User:     ObjectProject(projectName).String(),
+			Relation: relationProject,
+			Object:   ObjectProfile(projectName, profileName).String(),
+		},
+	}
+
+	return f.updateTuples(ctx, nil, deletions)
+}
+
+// RenameProfile renames a profile in the authorizer.
+func (f *FGA) RenameProfile(ctx context.Context, projectName string, oldProfileName string, newProfileName string) error {
+	writes := []client.ClientTupleKey{
+		{
+			User:     ObjectProject(projectName).String(),
+			Relation: relationProject,
+			Object:   ObjectProfile(projectName, newProfileName).String(),
+		},
+	}
+
+	deletions := []client.ClientTupleKeyWithoutCondition{
+		{
+			User:     ObjectProject(projectName).String(),
+			Relation: relationProject,
+			Object:   ObjectProfile(projectName, oldProfileName).String(),
+		},
+	}
+
+	return f.updateTuples(ctx, writes, deletions)
+}
+
+// AddStoragePoolVolume adds a storage volume to the authorizer.
+func (f *FGA) AddStoragePoolVolume(ctx context.Context, projectName string, storagePoolName string, storageVolumeType string, storageVolumeName string, storageVolumeLocation string) error {
+	writes := []client.ClientTupleKey{
+		{
+			User:     ObjectProject(projectName).String(),
+			Relation: relationProject,
+			Object:   ObjectStorageVolume(projectName, storagePoolName, storageVolumeType, storageVolumeName, storageVolumeLocation).String(),
+		},
+	}
+
+	return f.updateTuples(ctx, writes, nil)
+}
+
+// DeleteStoragePoolVolume deletes a storage volume from the authorizer.
+func (f *FGA) DeleteStoragePoolVolume(ctx context.Context, projectName string, storagePoolName string, storageVolumeType string, storageVolumeName string, storageVolumeLocation string) error {
+	deletions := []client.ClientTupleKeyWithoutCondition{
+		{
+			User:     ObjectProject(projectName).String(),
+			Relation: relationProject,
+			Object:   ObjectStorageVolume(projectName, storagePoolName, storageVolumeType, storageVolumeName, storageVolumeLocation).String(),
+		},
+	}
+
+	return f.updateTuples(ctx, nil, deletions)
+}
+
+// RenameStoragePoolVolume renames a storage volume in the authorizer.
+func (f *FGA) RenameStoragePoolVolume(ctx context.Context, projectName string, storagePoolName string, storageVolumeType string, oldStorageVolumeName string, newStorageVolumeName string, storageVolumeLocation string) error {
+	writes := []client.ClientTupleKey{
+		{
+			User:     ObjectProject(projectName).String(),
+			Relation: relationProject,
+			Object:   ObjectStorageVolume(projectName, storagePoolName, storageVolumeType, newStorageVolumeName, storageVolumeLocation).String(),
+		},
+	}
+
+	deletions := []client.ClientTupleKeyWithoutCondition{
+		{
+			User:     ObjectProject(projectName).String(),
+			Relation: relationProject,
+			Object:   ObjectStorageVolume(projectName, storagePoolName, storageVolumeType, oldStorageVolumeName, storageVolumeLocation).String(),
+		},
+	}
+
+	return f.updateTuples(ctx, writes, deletions)
+}
+
+// AddStorageBucket adds a storage bucket to the authorizer.
+func (f *FGA) AddStorageBucket(ctx context.Context, projectName string, storagePoolName string, storageBucketName string, storageBucketLocation string) error {
+	writes := []client.ClientTupleKey{
+		{
+			User:     ObjectProject(projectName).String(),
+			Relation: relationProject,
+			Object:   ObjectStorageBucket(projectName, storagePoolName, storageBucketName, storageBucketLocation).String(),
+		},
+	}
+
+	return f.updateTuples(ctx, writes, nil)
+}
+
+// DeleteStorageBucket deletes a storage bucket from the authorizer.
+func (f *FGA) DeleteStorageBucket(ctx context.Context, projectName string, storagePoolName string, storageBucketName string, storageBucketLocation string) error {
+	deletions := []client.ClientTupleKeyWithoutCondition{
+		{
+			User:     ObjectProject(projectName).String(),
+			Relation: relationProject,
+			Object:   ObjectStorageBucket(projectName, storagePoolName, storageBucketName, storageBucketLocation).String(),
+		},
+	}
+
+	return f.updateTuples(ctx, nil, deletions)
+}
+
+// isOnline returns whether the OpenFGA connection is currently usable.
+func (f *FGA) isOnline() bool {
+	f.onlineMu.Lock()
+	defer f.onlineMu.Unlock()
+
+	return f.online
+}
+
+// updateTuples sends an object update to OpenFGA if it's currently online.
+func (f *FGA) updateTuples(ctx context.Context, writes []client.ClientTupleKey, deletions []client.ClientTupleKeyWithoutCondition) error {
+	// If offline, skip updating as a full sync will happen after connection.
+	if !f.isOnline() {
+		return nil
+	}
+
+	if len(writes) == 0 && len(deletions) == 0 {
+		return nil
+	}
+
+	return f.sendTuples(ctx, writes, deletions)
+}
+
+// isTupleConflict returns true when a write or deletion failed because the store already matched it.
+func isTupleConflict(err error) bool {
+	var apiErr openfga.FgaApiValidationError
+	if !errors.As(err, &apiErr) {
+		return false
+	}
+
+	return apiErr.ResponseCode() == openfga.ERRORCODE_WRITE_FAILED_DUE_TO_INVALID_INPUT
+}
+
+// sendTuples directly sends the write/deletion tuples to OpenFGA.
+func (f *FGA) sendTuples(ctx context.Context, writes []client.ClientTupleKey, deletions []client.ClientTupleKeyWithoutCondition) error {
+	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	defer cancel()
+
+	opts := client.ClientWriteOptions{
+		Transaction: &client.TransactionOptions{
+			Disable:             true,
+			MaxParallelRequests: 5,
+			MaxPerChunk:         50,
+		},
+	}
+
+	body := client.ClientWriteRequest{}
+
+	if writes != nil {
+		body.Writes = writes
+	} else {
+		body.Writes = []client.ClientTupleKey{}
+	}
+
+	if deletions != nil {
+		body.Deletes = deletions
+	} else {
+		body.Deletes = []openfga.TupleKeyWithoutCondition{}
+	}
+
+	clientWriteResponse, err := f.client.Write(ctx).Options(opts).Body(body).Execute()
+	if err != nil {
+		return fmt.Errorf("Failed to write to OpenFGA store: %w", err)
+	}
+
+	for _, write := range clientWriteResponse.Writes {
+		if write.Error != nil {
+			// Another writer may have added the tuple since we checked.
+			if isTupleConflict(write.Error) {
+				continue
+			}
+
+			return fmt.Errorf("Failed to write tuple to OpenFGA store (user: %q; relation: %q; object: %q): %w", write.TupleKey.User, write.TupleKey.Relation, write.TupleKey.Object, write.Error)
+		}
+	}
+
+	for _, deletion := range clientWriteResponse.Deletes {
+		if deletion.Error != nil {
+			// Another writer may have removed the tuple since we checked.
+			if isTupleConflict(deletion.Error) {
+				continue
+			}
+
+			return fmt.Errorf("Failed to delete tuple from OpenFGA store (user: %q; relation: %q; object: %q): %w", deletion.TupleKey.User, deletion.TupleKey.Relation, deletion.TupleKey.Object, deletion.Error)
+		}
+	}
+
+	return nil
+}
+
+func (f *FGA) projectObjects(ctx context.Context, projectName string) ([]string, error) {
+	objectTypes := []ObjectType{
+		ObjectTypeInstance,
+		ObjectTypeImage,
+		ObjectTypeImageAlias,
+		ObjectTypeNetwork,
+		ObjectTypeNetworkACL,
+		ObjectTypeNetworkAddressSet,
+		ObjectTypeNetworkZone,
+		ObjectTypeProfile,
+		ObjectTypeStorageVolume,
+		ObjectTypeStorageBucket,
+	}
+
+	var allObjects []string
+	projectObjectString := ObjectProject(projectName).String()
+	for _, objectType := range objectTypes {
+		objectStrs, err := f.listObjects(ctx, projectObjectString, relationProject, objectType, nil)
+		if err != nil {
+			return nil, err
+		}
+
+		allObjects = append(allObjects, objectStrs...)
+	}
+
+	return allObjects, nil
+}
+
+func (f *FGA) syncResources(ctx context.Context, resources Resources) error {
+	var writes []client.ClientTupleKey
+	var deletions []client.ClientTupleKeyWithoutCondition
+
+	// Helper function for diffing local objects with those in OpenFGA. These are appended to the writes and deletions
+	// slices as appropriate. If the given relation is relationProject, we need to construct a project object for the
+	// "user" field. The project is calculated from the object we are inspecting.
+	diffObjects := func(relation string, remoteObjectStrs []string, localObjects []Object) error {
+		user := ObjectServer().String()
+
+		for _, localObject := range localObjects {
+			if !slices.Contains(remoteObjectStrs, localObject.String()) {
+				if relation == relationProject {
+					user = ObjectProject(localObject.Project()).String()
+				}
+
+				writes = append(writes, client.ClientTupleKey{
+					User:     user,
+					Relation: relation,
+					Object:   localObject.String(),
+				})
+			}
+		}
+
+		for _, remoteObjectStr := range remoteObjectStrs {
+			remoteObject, err := ObjectFromString(remoteObjectStr)
+			if err != nil {
+				return err
+			}
+
+			if !slices.Contains(localObjects, remoteObject) {
+				if relation == relationProject {
+					user = ObjectProject(remoteObject.Project()).String()
+				}
+
+				deletions = append(deletions, client.ClientTupleKeyWithoutCondition{
+					User:     user,
+					Relation: relation,
+					Object:   remoteObject.String(),
+				})
+			}
+		}
+
+		return nil
+	}
+
+	// List the certificates we have added to OpenFGA already.
+	certificatesResp, err := f.listObjects(ctx, ObjectServer().String(), relationServer, ObjectTypeCertificate, nil)
+	if err != nil {
+		return err
+	}
+
+	// Compare with local certificates.
+	err = diffObjects(relationServer, certificatesResp, resources.CertificateObjects)
+	if err != nil {
+		return err
+	}
+
+	// List the network integrations we have added to OpenFGA already.
+	networkIntegrationsResp, err := f.listObjects(ctx, ObjectServer().String(), relationServer, ObjectTypeNetworkIntegration, nil)
+	if err != nil {
+		return err
+	}
+
+	// Compare with local network integrations.
+	err = diffObjects(relationServer, networkIntegrationsResp, resources.NetworkIntegrationObjects)
+	if err != nil {
+		return err
+	}
+
+	// List the storage pools we have added to OpenFGA already.
+	storagePoolsResp, err := f.listObjects(ctx, ObjectServer().String(), relationServer, ObjectTypeStoragePool, nil)
+	if err != nil {
+		return err
+	}
+
+	// Compare with local storage pools.
+	err = diffObjects(relationServer, storagePoolsResp, resources.StoragePoolObjects)
+	if err != nil {
+		return err
+	}
+
+	// List the projects we have added to OpenFGA already.
+	projectsResp, err := f.listObjects(ctx, ObjectServer().String(), relationServer, ObjectTypeProject, nil)
+	if err != nil {
+		return err
+	}
+
+	// Compare with local projects.
+	remoteProjectObjectStrs := projectsResp
+	err = diffObjects(relationServer, remoteProjectObjectStrs, resources.ProjectObjects)
+	if err != nil {
+		return err
+	}
+
+	// Get a slice of project level resources for all projects.
+	var remoteProjectResourceObjectStrs []string
+	for _, remoteProjectObjectStr := range remoteProjectObjectStrs {
+		remoteProjectObject, err := ObjectFromString(remoteProjectObjectStr)
+		if err != nil {
+			return err
+		}
+
+		// project level resources just for this project.
+		remoteProjectResources, err := f.projectObjects(ctx, remoteProjectObject.Project())
+		if err != nil {
+			return err
+		}
+
+		remoteProjectResourceObjectStrs = append(remoteProjectResourceObjectStrs, remoteProjectResources...)
+	}
+
+	// Compose a slice of all project level objects from the given Resources.
+	localProjectObjects := append(resources.ImageObjects, resources.ImageAliasObjects...)
+	localProjectObjects = append(localProjectObjects, resources.InstanceObjects...)
+	localProjectObjects = append(localProjectObjects, resources.NetworkObjects...)
+	localProjectObjects = append(localProjectObjects, resources.NetworkZoneObjects...)
+	localProjectObjects = append(localProjectObjects, resources.NetworkACLObjects...)
+	localProjectObjects = append(localProjectObjects, resources.NetworkAddressSetObjects...)
+	localProjectObjects = append(localProjectObjects, resources.ProfileObjects...)
+	localProjectObjects = append(localProjectObjects, resources.StoragePoolVolumeObjects...)
+	localProjectObjects = append(localProjectObjects, resources.StorageBucketObjects...)
+
+	// Perform a diff on the project resource objects.
+	err = diffObjects(relationProject, remoteProjectResourceObjectStrs, localProjectObjects)
+	if err != nil {
+		return err
+	}
+
+	// Compose the local security tags and the instances using them.
+	localTagObjects := []Object{}
+	localTagInstances := map[string][]string{}
+	for instanceObject, tags := range resources.InstanceSecurityTags {
+		for _, tag := range tags {
+			tagObject := ObjectSecurityTag(tag)
+			if !slices.Contains(localTagObjects, tagObject) {
+				localTagObjects = append(localTagObjects, tagObject)
+			}
+
+			localTagInstances[tagObject.String()] = append(localTagInstances[tagObject.String()], instanceObject.String())
+		}
+	}
+
+	// List the security tags we have added to OpenFGA already.
+	remoteTagObjectStrs, err := f.securityTags(ctx)
+	if err != nil {
+		return err
+	}
+
+	// Compare with local security tags.
+	err = diffObjects(relationServer, remoteTagObjectStrs, localTagObjects)
+	if err != nil {
+		return err
+	}
+
+	// Perform a per-tag diff of the tagged instances.
+	allTagObjectStrs := slices.Clone(remoteTagObjectStrs)
+	for _, localTagObject := range localTagObjects {
+		if !slices.Contains(allTagObjectStrs, localTagObject.String()) {
+			allTagObjectStrs = append(allTagObjectStrs, localTagObject.String())
+		}
+	}
+
+	for _, tagObjectStr := range allTagObjectStrs {
+		remoteInstanceStrs, err := f.listObjects(ctx, tagObjectStr, relationTag, ObjectTypeInstance, nil)
+		if err != nil {
+			return err
+		}
+
+		localInstanceStrs := localTagInstances[tagObjectStr]
+
+		for _, localInstanceStr := range localInstanceStrs {
+			if !slices.Contains(remoteInstanceStrs, localInstanceStr) {
+				writes = append(writes, client.ClientTupleKey{
+					User:     tagObjectStr,
+					Relation: relationTag,
+					Object:   localInstanceStr,
+				})
+			}
+		}
+
+		for _, remoteInstanceStr := range remoteInstanceStrs {
+			if !slices.Contains(localInstanceStrs, remoteInstanceStr) {
+				deletions = append(deletions, client.ClientTupleKeyWithoutCondition{
+					User:     tagObjectStr,
+					Relation: relationTag,
+					Object:   remoteInstanceStr,
+				})
+			}
+		}
+	}
+
+	// Compose the union of local and remote project names for the network share diff.
+	shareProjectNames := []string{}
+	for _, localProjectObject := range resources.ProjectObjects {
+		shareProjectNames = append(shareProjectNames, localProjectObject.Project())
+	}
+
+	for _, remoteProjectObjectStr := range remoteProjectObjectStrs {
+		remoteProjectObject, err := ObjectFromString(remoteProjectObjectStr)
+		if err != nil {
+			return err
+		}
+
+		if !slices.Contains(shareProjectNames, remoteProjectObject.Project()) {
+			shareProjectNames = append(shareProjectNames, remoteProjectObject.Project())
+		}
+	}
+
+	// Perform a per-project diff of the shared network objects.
+	for _, projectName := range shareProjectNames {
+		remoteShareStrs, err := f.listObjects(ctx, ObjectProject(projectName).String(), relationSharedWith, ObjectTypeNetwork, nil)
+		if err != nil {
+			return err
+		}
+
+		localShares := resources.NetworkShareObjects[projectName]
+
+		for _, localShare := range localShares {
+			if !slices.Contains(remoteShareStrs, localShare.String()) {
+				writes = append(writes, client.ClientTupleKey{
+					User:     ObjectProject(projectName).String(),
+					Relation: relationSharedWith,
+					Object:   localShare.String(),
+				})
+			}
+		}
+
+		for _, remoteShareStr := range remoteShareStrs {
+			remoteShare, err := ObjectFromString(remoteShareStr)
+			if err != nil {
+				return err
+			}
+
+			if !slices.Contains(localShares, remoteShare) {
+				deletions = append(deletions, client.ClientTupleKeyWithoutCondition{
+					User:     ObjectProject(projectName).String(),
+					Relation: relationSharedWith,
+					Object:   remoteShareStr,
+				})
+			}
+		}
+	}
+
+	// Perform any necessary writes and deletions against the OpenFGA server.
+	return f.updateTuples(ctx, writes, deletions)
+}
+
+// GetInstanceAccess returns the list of entities who have access to the instance.
+func (f *FGA) GetInstanceAccess(ctx context.Context, projectName string, instanceName string) (*api.Access, error) {
+	// Get all the entries from OpenFGA.
+	entries := map[string]string{}
+
+	userFilters := []openfga.UserTypeFilter{{Type: "user"}}
+	relations := []string{"admin", "operator", "user", "viewer"}
+	for _, relation := range relations {
+		resp, err := f.client.ListUsers(ctx).Body(client.ClientListUsersRequest{
+			Object: openfga.FgaObject{
+				Type: "instance",
+				Id:   fmt.Sprintf("%s/%s", projectName, instanceName),
+			},
+			Relation:    relation,
+			UserFilters: userFilters,
+		}).Execute()
+		if err != nil {
+			var fgaAPIErr openfga.FgaApiValidationError
+			ok := errors.As(err, &fgaAPIErr)
+			if !ok || fgaAPIErr.ResponseCode() != openfga.ERRORCODE_RELATION_NOT_FOUND {
+				var fgaNotFoundErr openfga.FgaApiNotFoundError
+				ok := errors.As(err, &fgaNotFoundErr)
+				if ok && fgaNotFoundErr.ResponseCode() == openfga.NOTFOUNDERRORCODE_UNDEFINED_ENDPOINT {
+					return nil, errors.New("OpenFGA server doesn't support listing users")
+				}
+
+				return nil, fmt.Errorf("Failed to list objects with relation %q: %w: %T", relation, err, err)
+			}
+		}
+
+		for _, user := range resp.GetUsers() {
+			obj := user.GetObject()
+			if obj.Id == "" {
+				continue
+			}
+
+			_, ok := entries[obj.Id]
+			if !ok {
+				entries[obj.Id] = relation
+			}
+		}
+	}
+
+	// Convert to our access records.
+	access := api.Access{}
+	for user, relation := range entries {
+		access = append(access, api.AccessEntry{
+			Identifier: user,
+			Role:       relation,
+			Provider:   "openfga",
+		})
+	}
+
+	return &access, nil
+}
+
+// GetProjectAccess returns the list of entities who have access to the project.
+func (f *FGA) GetProjectAccess(ctx context.Context, projectName string) (*api.Access, error) {
+	// Get all the entries from OpenFGA.
+	entries := map[string]string{}
+
+	userFilters := []openfga.UserTypeFilter{{Type: "user"}}
+	relations := []string{"admin", "operator", "user", "viewer"}
+	for _, relation := range relations {
+		resp, err := f.client.ListUsers(ctx).Body(client.ClientListUsersRequest{
+			Object: openfga.FgaObject{
+				Type: "project",
+				Id:   projectName,
+			},
+			Relation:    relation,
+			UserFilters: userFilters,
+		}).Execute()
+		if err != nil {
+			var fgaAPIErr openfga.FgaApiValidationError
+			ok := errors.As(err, &fgaAPIErr)
+			if !ok || fgaAPIErr.ResponseCode() != openfga.ERRORCODE_RELATION_NOT_FOUND {
+				var fgaNotFoundErr openfga.FgaApiNotFoundError
+				ok := errors.As(err, &fgaNotFoundErr)
+				if ok && fgaNotFoundErr.ResponseCode() == openfga.NOTFOUNDERRORCODE_UNDEFINED_ENDPOINT {
+					return nil, errors.New("OpenFGA server doesn't support listing users")
+				}
+
+				return nil, fmt.Errorf("Failed to list objects with relation %q: %w: %T", relation, err, err)
+			}
+		}
+
+		for _, user := range resp.GetUsers() {
+			obj := user.GetObject()
+			if obj.Id == "" {
+				continue
+			}
+
+			_, ok := entries[obj.Id]
+			if !ok {
+				entries[obj.Id] = relation
+			}
+		}
+	}
+
+	// Convert to our access records.
+	access := api.Access{}
+	for user, relation := range entries {
+		access = append(access, api.AccessEntry{
+			Identifier: user,
+			Role:       relation,
+			Provider:   "openfga",
+		})
+	}
+
+	return &access, nil
+}

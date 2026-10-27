@@ -1,0 +1,75 @@
+package filter_test
+
+import (
+	"testing"
+	"time"
+
+	"github.com/stretchr/testify/assert"
+
+	"github.com/lxc/incus/v7/internal/filter"
+	"github.com/lxc/incus/v7/shared/api"
+)
+
+func TestDotPrefixMatch(t *testing.T) {
+	pass := true
+	pass = pass && filter.DotPrefixMatch("s.privileged", "security.privileged")
+	pass = pass && filter.DotPrefixMatch("u.blah", "user.blah")
+
+	// Only the namespace may be abbreviated.
+	pass = pass && filter.DotPrefixMatch("u.foo.bar", "user.foo.bar")
+	pass = pass && !filter.DotPrefixMatch("user.f.bar", "user.foo.bar")
+	pass = pass && !filter.DotPrefixMatch("user.bla", "user.blah")
+	pass = pass && !filter.DotPrefixMatch("s.priv", "security.privileged")
+
+	if !pass {
+		t.Error("failed prefix matching")
+	}
+}
+
+func TestValueOf_Instance(t *testing.T) {
+	date := time.Date(2020, 1, 29, 11, 10, 32, 0, time.UTC)
+	instance := api.Instance{
+		InstancePut: api.InstancePut{
+			Architecture: "x86_64",
+			Config: map[string]string{
+				"image.os": "BusyBox",
+			},
+			Stateful: false,
+		},
+		CreatedAt: date,
+		Name:      "c1",
+		ExpandedConfig: map[string]string{
+			"image.os":  "BusyBox",
+			"user.bla":  "abc",
+			"user.blah": "def",
+		},
+		ExpandedDevices: map[string]map[string]string{
+			"root": {
+				"path": "/",
+				"pool": "default",
+				"type": "disk",
+			},
+		},
+		Status: "Running",
+	}
+
+	cases := map[string]any{}
+	cases["architecture"] = "x86_64"
+	cases["created_at"] = date
+	cases["config.image.os"] = "BusyBox"
+	cases["name"] = "c1"
+	cases["expanded_config.image.os"] = "BusyBox"
+	cases["expanded_config.im.os"] = "BusyBox"
+	cases["expanded_config.user.bla"] = "abc"
+	cases["expanded_config.user.blah"] = "def"
+	cases["expanded_devices.root.pool"] = "default"
+	cases["status"] = "Running"
+	cases["stateful"] = false
+
+	for field := range cases {
+		t.Run(field, func(t *testing.T) {
+			value := filter.ValueOf(instance, field)
+			assert.Equal(t, cases[field], value)
+		})
+	}
+}

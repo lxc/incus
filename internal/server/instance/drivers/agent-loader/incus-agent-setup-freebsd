@@ -1,0 +1,48 @@
+#!/bin/sh
+set -eu
+PREFIX="/var/run/incus_agent"
+
+# Functions.
+mount_9p() {
+    kldload virtio_p9fs >/dev/null 2>&1 || true
+    mount -t p9fs -o ro config "$PREFIX.mnt" >/dev/null 2>&1
+}
+
+fail() {
+    # Check if we already have an agent in place.
+    if [ -x "$PREFIX/incus-agent" ]; then
+        echo "$1, reusing existing agent"
+        exit 0
+    fi
+
+    # Cleanup and fail.
+    umount "$PREFIX" >/dev/null 2>&1 || true
+    rmdir "$PREFIX" >/dev/null 2>&1 || true
+    echo "$1, failing"
+
+    exit 1
+}
+
+# Try getting an agent drive.
+mkdir -p "$PREFIX.mnt"
+mount_9p || fail "Couldn't mount 9p"
+
+# Setup the mount target.
+umount "$PREFIX" >/dev/null 2>&1 || true
+mkdir -p "$PREFIX"
+mount -t tmpfs -o mode=0700,size=50M tmpfs "$PREFIX"
+
+# Copy the data.
+cp -Ra "$PREFIX.mnt/"* "$PREFIX"
+
+# Unmount the temporary mount.
+umount "$PREFIX.mnt"
+rmdir "$PREFIX.mnt"
+
+# Fix up permissions.
+chown -R root:wheel "$PREFIX"
+
+# Load pty
+kldload pty >/dev/null 2>&1 || true
+
+exit 0

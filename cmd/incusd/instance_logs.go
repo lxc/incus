@@ -1,0 +1,732 @@
+package main
+
+import (
+	"errors"
+	"fmt"
+	"io/fs"
+	"net/http"
+	"os"
+	"path/filepath"
+	"slices"
+	"strings"
+
+	internalInstance "github.com/lxc/incus/v7/internal/instance"
+	"github.com/lxc/incus/v7/internal/server/auth"
+	"github.com/lxc/incus/v7/internal/server/instance"
+	"github.com/lxc/incus/v7/internal/server/lifecycle"
+	"github.com/lxc/incus/v7/internal/server/request"
+	"github.com/lxc/incus/v7/internal/server/response"
+	"github.com/lxc/incus/v7/internal/server/storage"
+	"github.com/lxc/incus/v7/internal/version"
+	"github.com/lxc/incus/v7/shared/logger"
+	"github.com/lxc/incus/v7/shared/revert"
+)
+
+var instanceLogCmd = APIEndpoint{
+	Name: "instanceLog",
+	Path: "instances/{name}/logs/{file}",
+
+	Delete: APIEndpointAction{Handler: instanceLogDelete, AccessHandler: allowPermission(auth.ObjectTypeInstance, auth.EntitlementCanEdit, "name")},
+	Get:    APIEndpointAction{Handler: instanceLogGet, AccessHandler: allowPermission(auth.ObjectTypeInstance, auth.EntitlementCanView, "name")},
+}
+
+var instanceLogsCmd = APIEndpoint{
+	Name: "instanceLogs",
+	Path: "instances/{name}/logs",
+
+	Get: APIEndpointAction{Handler: instanceLogsGet, AccessHandler: allowPermission(auth.ObjectTypeInstance, auth.EntitlementCanView, "name")},
+}
+
+var instanceExecOutputCmd = APIEndpoint{
+	Name: "instanceExecOutput",
+	Path: "instances/{name}/logs/exec-output/{file}",
+
+	Delete: APIEndpointAction{Handler: instanceExecOutputDelete, AccessHandler: allowPermission(auth.ObjectTypeInstance, auth.EntitlementCanExec, "name")},
+	Get:    APIEndpointAction{Handler: instanceExecOutputGet, AccessHandler: allowPermission(auth.ObjectTypeInstance, auth.EntitlementCanExec, "name")},
+}
+
+var instanceExecOutputsCmd = APIEndpoint{
+	Name: "instanceExecOutputs",
+	Path: "instances/{name}/logs/exec-output",
+
+	Get: APIEndpointAction{Handler: instanceExecOutputsGet, AccessHandler: allowPermission(auth.ObjectTypeInstance, auth.EntitlementCanExec, "name")},
+}
+
+// swagger:operation GET /1.0/instances/{name}/logs instances instance_logs_get
+//
+//	Get the log files
+//
+//	Returns a list of log files (URLs).
+//
+//	---
+//	produces:
+//	  - application/json
+//	parameters:
+//	  - in: path
+//	    name: name
+//	    description: Instance name
+//	    type: string
+//	    required: true
+//	  - in: query
+//	    name: project
+//	    description: Project name
+//	    type: string
+//	    x-example: default
+//	responses:
+//	  "200":
+//	    description: API endpoints
+//	    schema:
+//	      type: object
+//	      description: Sync response
+//	      properties:
+//	        type:
+//	          type: string
+//	          description: Response type
+//	          example: sync
+//	        status:
+//	          type: string
+//	          description: Status description
+//	          example: Success
+//	        status_code:
+//	          type: integer
+//	          description: Status code
+//	          example: 200
+//	        metadata:
+//	          type: array
+//	          description: List of endpoints
+//	          items:
+//	            type: string
+//	          example:
+//	            - /1.0/instances/foo/logs/lxc.log
+//	  "400":
+//	    $ref: "#/responses/BadRequest"
+//	  "403":
+//	    $ref: "#/responses/Forbidden"
+//	  "404":
+//	    $ref: "#/responses/NotFound"
+//	  "409":
+//	    $ref: "#/responses/Conflict"
+//	  "500":
+//	    $ref: "#/responses/InternalServerError"
+func instanceLogsGet(d *Daemon, r *http.Request) response.Response {
+	s := d.State()
+
+	projectName := request.ProjectParam(r)
+	name, err := pathVar(r, "name")
+	if err != nil {
+		return response.SmartError(err)
+	}
+
+	if internalInstance.IsSnapshot(name) {
+		return response.BadRequest(errors.New("Invalid instance name"))
+	}
+
+	// Ensure instance exists.
+	inst, err := instance.LoadByProjectAndName(s, projectName, name)
+	if err != nil {
+		return response.SmartError(err)
+	}
+
+	// Handle requests targeted to a container on a different node
+	resp, err := forwardedResponseIfInstanceIsRemote(d.State(), r, projectName, name)
+	if err != nil {
+		return response.SmartError(err)
+	}
+
+	if resp != nil {
+		return resp
+	}
+
+	result := []string{}
+
+	dents, err := os.ReadDir(inst.LogPath())
+	if err != nil {
+		return response.SmartError(err)
+	}
+
+	for _, f := range dents {
+		if !validLogFileName(f.Name()) {
+			continue
+		}
+
+		result = append(result, fmt.Sprintf("/%s/instances/%s/logs/%s", version.APIVersion, name, f.Name()))
+	}
+
+	return response.SyncResponse(true, result)
+}
+
+// swagger:operation GET /1.0/instances/{name}/logs/{filename} instances instance_log_get
+//
+//	Get the log file
+//
+//	Gets the log file.
+//
+//	---
+//	produces:
+//	  - application/json
+//	  - application/octet-stream
+//	parameters:
+//	  - in: path
+//	    name: name
+//	    description: Instance name
+//	    type: string
+//	    required: true
+//	  - in: path
+//	    name: filename
+//	    description: Log file name
+//	    type: string
+//	    required: true
+//	  - in: query
+//	    name: project
+//	    description: Project name
+//	    type: string
+//	    x-example: default
+//	responses:
+//	  "200":
+//	     description: Raw file
+//	     content:
+//	       application/octet-stream:
+//	         schema:
+//	           type: string
+//	           example: some-text
+//	  "400":
+//	    $ref: "#/responses/BadRequest"
+//	  "403":
+//	    $ref: "#/responses/Forbidden"
+//	  "404":
+//	    $ref: "#/responses/NotFound"
+//	  "409":
+//	    $ref: "#/responses/Conflict"
+//	  "500":
+//	    $ref: "#/responses/InternalServerError"
+func instanceLogGet(d *Daemon, r *http.Request) response.Response {
+	s := d.State()
+
+	projectName := request.ProjectParam(r)
+	name, err := pathVar(r, "name")
+	if err != nil {
+		return response.SmartError(err)
+	}
+
+	if internalInstance.IsSnapshot(name) {
+		return response.BadRequest(errors.New("Invalid instance name"))
+	}
+
+	// Ensure instance exists.
+	inst, err := instance.LoadByProjectAndName(s, projectName, name)
+	if err != nil {
+		return response.SmartError(err)
+	}
+
+	// Handle requests targeted to a container on a different node
+	resp, err := forwardedResponseIfInstanceIsRemote(s, r, projectName, name)
+	if err != nil {
+		return response.SmartError(err)
+	}
+
+	if resp != nil {
+		return resp
+	}
+
+	file, err := pathVar(r, "file")
+	if err != nil {
+		return response.SmartError(err)
+	}
+
+	if !validLogFileName(file) {
+		return response.BadRequest(fmt.Errorf("Log file name %q not valid", file))
+	}
+
+	ent := response.FileResponseEntry{
+		Path:     filepath.Join(inst.LogPath(), file),
+		Filename: file,
+	}
+
+	s.Events.SendLifecycle(projectName, lifecycle.InstanceLogRetrieved.Event(file, inst, request.CreateRequestor(r), nil))
+
+	return response.FileResponse(r, []response.FileResponseEntry{ent}, nil)
+}
+
+// swagger:operation DELETE /1.0/instances/{name}/logs/{filename} instances instance_log_delete
+//
+//	Delete the log file
+//
+//	Removes the log file.
+//
+//	---
+//	produces:
+//	  - application/json
+//	parameters:
+//	  - in: path
+//	    name: name
+//	    description: Instance name
+//	    type: string
+//	    required: true
+//	  - in: path
+//	    name: filename
+//	    description: Log file name
+//	    type: string
+//	    required: true
+//	  - in: query
+//	    name: project
+//	    description: Project name
+//	    type: string
+//	    x-example: default
+//	responses:
+//	  "200":
+//	    $ref: "#/responses/EmptySyncResponse"
+//	  "400":
+//	    $ref: "#/responses/BadRequest"
+//	  "403":
+//	    $ref: "#/responses/Forbidden"
+//	  "404":
+//	    $ref: "#/responses/NotFound"
+//	  "409":
+//	    $ref: "#/responses/Conflict"
+//	  "500":
+//	    $ref: "#/responses/InternalServerError"
+func instanceLogDelete(d *Daemon, r *http.Request) response.Response {
+	s := d.State()
+
+	projectName := request.ProjectParam(r)
+	name, err := pathVar(r, "name")
+	if err != nil {
+		return response.SmartError(err)
+	}
+
+	if internalInstance.IsSnapshot(name) {
+		return response.BadRequest(errors.New("Invalid instance name"))
+	}
+
+	// Ensure instance exists.
+	inst, err := instance.LoadByProjectAndName(s, projectName, name)
+	if err != nil {
+		return response.SmartError(err)
+	}
+
+	// Handle requests targeted to a container on a different node
+	resp, err := forwardedResponseIfInstanceIsRemote(s, r, projectName, name)
+	if err != nil {
+		return response.SmartError(err)
+	}
+
+	if resp != nil {
+		return resp
+	}
+
+	file, err := pathVar(r, "file")
+	if err != nil {
+		return response.SmartError(err)
+	}
+
+	if !validLogFileName(file) {
+		return response.BadRequest(fmt.Errorf("Log file name %q not valid", file))
+	}
+
+	if !strings.HasSuffix(file, ".log") || file == "lxc.log" || file == "qemu.log" {
+		return response.BadRequest(errors.New("Only log files excluding qemu.log and lxc.log may be deleted"))
+	}
+
+	err = os.Remove(filepath.Join(inst.LogPath(), file))
+	if err != nil {
+		return response.SmartError(err)
+	}
+
+	s.Events.SendLifecycle(projectName, lifecycle.InstanceLogDeleted.Event(file, inst, request.CreateRequestor(r), nil))
+
+	return response.EmptySyncResponse
+}
+
+// swagger:operation GET /1.0/instances/{name}/logs/exec-output instances instance_exec-outputs_get
+//
+//	Get the exec record-output files
+//
+//	Returns a list of exec record-output files (URLs).
+//
+//	---
+//	produces:
+//	  - application/json
+//	parameters:
+//	  - in: path
+//	    name: name
+//	    description: Instance name
+//	    type: string
+//	    required: true
+//	  - in: query
+//	    name: project
+//	    description: Project name
+//	    type: string
+//	    x-example: default
+//	responses:
+//	  "200":
+//	    description: API endpoints
+//	    schema:
+//	      type: object
+//	      description: Sync response
+//	      properties:
+//	        type:
+//	          type: string
+//	          description: Response type
+//	          example: sync
+//	        status:
+//	          type: string
+//	          description: Status description
+//	          example: Success
+//	        status_code:
+//	          type: integer
+//	          description: Status code
+//	          example: 200
+//	        metadata:
+//	          type: array
+//	          description: List of endpoints
+//	          items:
+//	            type: string
+//	          example:
+//	            - /1.0/instances/foo/logs/exec-output/exec_d0a89537-0617-4ed6-a79b-c2e88a970965.stdout
+//	            - /1.0/instances/foo/logs/exec-output/exec_d0a89537-0617-4ed6-a79b-c2e88a970965.stderr
+//	  "400":
+//	    $ref: "#/responses/BadRequest"
+//	  "403":
+//	    $ref: "#/responses/Forbidden"
+//	  "404":
+//	    $ref: "#/responses/NotFound"
+//	  "409":
+//	    $ref: "#/responses/Conflict"
+//	  "500":
+//	    $ref: "#/responses/InternalServerError"
+func instanceExecOutputsGet(d *Daemon, r *http.Request) response.Response {
+	s := d.State()
+
+	projectName := request.ProjectParam(r)
+	name, err := pathVar(r, "name")
+	if err != nil {
+		return response.SmartError(err)
+	}
+
+	if internalInstance.IsSnapshot(name) {
+		return response.BadRequest(errors.New("Invalid instance name"))
+	}
+
+	// Ensure instance exists.
+	inst, err := instance.LoadByProjectAndName(s, projectName, name)
+	if err != nil {
+		return response.SmartError(err)
+	}
+
+	// Handle requests targeted to a container on a different node
+	resp, err := forwardedResponseIfInstanceIsRemote(d.State(), r, projectName, name)
+	if err != nil {
+		return response.SmartError(err)
+	}
+
+	if resp != nil {
+		return resp
+	}
+
+	// Mount the instance's root volume
+	pool, err := storage.LoadByInstance(s, inst)
+	if err != nil {
+		return response.SmartError(err)
+	}
+
+	_, err = pool.MountInstance(inst, nil)
+	if err != nil {
+		return response.SmartError(err)
+	}
+
+	defer logger.WarnOnError(func() error { return pool.UnmountInstance(inst, nil) }, "Failed to unmount instance")
+
+	// Confine access to the exec output directory to avoid following symlinks.
+	root, err := os.OpenRoot(inst.ExecOutputPath())
+	if err != nil {
+		return response.SmartError(err)
+	}
+
+	defer logger.WarnOnError(root.Close, "Failed to close exec output root")
+
+	// Read exec record-output files
+	dents, err := fs.ReadDir(root.FS(), ".")
+	if err != nil {
+		return response.SmartError(err)
+	}
+
+	result := []string{}
+	for _, f := range dents {
+		if !validExecOutputFileName(f.Name()) {
+			continue
+		}
+
+		result = append(result, fmt.Sprintf("/%s/instances/%s/logs/exec-output/%s", version.APIVersion, name, f.Name()))
+	}
+
+	return response.SyncResponse(true, result)
+}
+
+// swagger:operation GET /1.0/instances/{name}/logs/exec-output/{filename} instances instance_exec-output_get
+//
+//	Get the exec-output log file
+//
+//	Gets the exec-output file.
+//
+//	---
+//	produces:
+//	  - application/json
+//	  - application/octet-stream
+//	parameters:
+//	  - in: path
+//	    name: name
+//	    description: Instance name
+//	    type: string
+//	    required: true
+//	  - in: path
+//	    name: filename
+//	    description: Log file name
+//	    type: string
+//	    required: true
+//	  - in: query
+//	    name: project
+//	    description: Project name
+//	    type: string
+//	    x-example: default
+//	responses:
+//	  "200":
+//	     description: Raw file
+//	     content:
+//	       application/octet-stream:
+//	         schema:
+//	           type: string
+//	           example: some-text
+//	  "400":
+//	    $ref: "#/responses/BadRequest"
+//	  "403":
+//	    $ref: "#/responses/Forbidden"
+//	  "404":
+//	    $ref: "#/responses/NotFound"
+//	  "409":
+//	    $ref: "#/responses/Conflict"
+//	  "500":
+//	    $ref: "#/responses/InternalServerError"
+func instanceExecOutputGet(d *Daemon, r *http.Request) response.Response {
+	reverter := revert.New()
+	defer reverter.Fail()
+
+	s := d.State()
+
+	projectName := request.ProjectParam(r)
+	name, err := pathVar(r, "name")
+	if err != nil {
+		return response.SmartError(err)
+	}
+
+	if internalInstance.IsSnapshot(name) {
+		return response.BadRequest(errors.New("Invalid instance name"))
+	}
+
+	// Ensure instance exists.
+	inst, err := instance.LoadByProjectAndName(s, projectName, name)
+	if err != nil {
+		return response.SmartError(err)
+	}
+
+	// Handle requests targeted to a container on a different node
+	resp, err := forwardedResponseIfInstanceIsRemote(s, r, projectName, name)
+	if err != nil {
+		return response.SmartError(err)
+	}
+
+	if resp != nil {
+		return resp
+	}
+
+	file, err := pathVar(r, "file")
+	if err != nil {
+		return response.SmartError(err)
+	}
+
+	if !validExecOutputFileName(file) {
+		return response.BadRequest(fmt.Errorf("Exec record-output file name %q not valid", file))
+	}
+
+	// Mount the instance's root volume
+	pool, err := storage.LoadByInstance(s, inst)
+	if err != nil {
+		return response.SmartError(err)
+	}
+
+	_, err = pool.MountInstance(inst, nil)
+	if err != nil {
+		return response.SmartError(err)
+	}
+
+	reverter.Add(func() { _ = pool.UnmountInstance(inst, nil) })
+
+	// Confine access to the exec output directory to avoid following symlinks.
+	root, err := os.OpenRoot(inst.ExecOutputPath())
+	if err != nil {
+		return response.SmartError(err)
+	}
+
+	reverter.Add(func() { _ = root.Close() })
+
+	f, err := root.Open(file)
+	if err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			return response.NotFound(fmt.Errorf("Exec record-output file %q not found", file))
+		}
+
+		return response.SmartError(err)
+	}
+
+	reverter.Add(func() { _ = f.Close() })
+
+	fi, err := f.Stat()
+	if err != nil {
+		return response.SmartError(err)
+	}
+
+	cleanup := reverter.Clone()
+	reverter.Success()
+
+	ent := response.FileResponseEntry{
+		File:         f,
+		FileSize:     fi.Size(),
+		FileModified: fi.ModTime(),
+		Filename:     file,
+		Cleanup:      cleanup.Fail,
+	}
+
+	s.Events.SendLifecycle(projectName, lifecycle.InstanceLogRetrieved.Event(file, inst, request.CreateRequestor(r), nil))
+
+	return response.FileResponse(r, []response.FileResponseEntry{ent}, nil)
+}
+
+// swagger:operation DELETE /1.0/instances/{name}/logs/exec-output/{filename} instances instance_exec-output_delete
+//
+//	Delete the exec record-output file
+//
+//	Removes the exec record-output file.
+//
+//	---
+//	produces:
+//	  - application/json
+//	parameters:
+//	  - in: path
+//	    name: name
+//	    description: Instance name
+//	    type: string
+//	    required: true
+//	  - in: path
+//	    name: filename
+//	    description: Log file name
+//	    type: string
+//	    required: true
+//	  - in: query
+//	    name: project
+//	    description: Project name
+//	    type: string
+//	    x-example: default
+//	responses:
+//	  "200":
+//	    $ref: "#/responses/EmptySyncResponse"
+//	  "400":
+//	    $ref: "#/responses/BadRequest"
+//	  "403":
+//	    $ref: "#/responses/Forbidden"
+//	  "404":
+//	    $ref: "#/responses/NotFound"
+//	  "409":
+//	    $ref: "#/responses/Conflict"
+//	  "500":
+//	    $ref: "#/responses/InternalServerError"
+func instanceExecOutputDelete(d *Daemon, r *http.Request) response.Response {
+	s := d.State()
+
+	projectName := request.ProjectParam(r)
+	name, err := pathVar(r, "name")
+	if err != nil {
+		return response.SmartError(err)
+	}
+
+	if internalInstance.IsSnapshot(name) {
+		return response.BadRequest(errors.New("Invalid instance name"))
+	}
+
+	// Ensure instance exists.
+	inst, err := instance.LoadByProjectAndName(s, projectName, name)
+	if err != nil {
+		return response.SmartError(err)
+	}
+
+	// Handle requests targeted to a container on a different node
+	resp, err := forwardedResponseIfInstanceIsRemote(s, r, projectName, name)
+	if err != nil {
+		return response.SmartError(err)
+	}
+
+	if resp != nil {
+		return resp
+	}
+
+	file, err := pathVar(r, "file")
+	if err != nil {
+		return response.SmartError(err)
+	}
+
+	if !validExecOutputFileName(file) {
+		return response.BadRequest(fmt.Errorf("Exec record-output file name %q not valid", file))
+	}
+
+	// Mount the instance's root volume
+	pool, err := storage.LoadByInstance(s, inst)
+	if err != nil {
+		return response.SmartError(err)
+	}
+
+	_, err = pool.MountInstance(inst, nil)
+	if err != nil {
+		return response.SmartError(err)
+	}
+
+	defer logger.WarnOnError(func() error { return pool.UnmountInstance(inst, nil) }, "Failed to unmount instance")
+
+	// Confine access to the exec output directory to avoid following symlinks.
+	root, err := os.OpenRoot(inst.ExecOutputPath())
+	if err != nil {
+		return response.SmartError(err)
+	}
+
+	defer logger.WarnOnError(root.Close, "Failed to close exec output root")
+
+	err = root.Remove(file)
+	if err != nil {
+		return response.SmartError(err)
+	}
+
+	s.Events.SendLifecycle(projectName, lifecycle.InstanceLogDeleted.Event(file, inst, request.CreateRequestor(r), nil))
+
+	return response.EmptySyncResponse
+}
+
+func validLogFileName(fname string) bool {
+	// Make sure that there's nothing fishy about the provided file name.
+	if filepath.Base(fname) != fname {
+		return false
+	}
+
+	/* Let's just require that the paths be relative, so that we don't have
+	 * to deal with any escaping or whatever.
+	 */
+	return slices.Contains([]string{"lxc.log", "qemu.log", "qemu.early.log", "qemu.qmp.log"}, fname) ||
+		strings.HasPrefix(fname, "migration_") ||
+		strings.HasPrefix(fname, "snapshot_")
+}
+
+func validExecOutputFileName(fName string) bool {
+	// Make sure that there's nothing fishy about the provided file name.
+	if filepath.Base(fName) != fName {
+		return false
+	}
+
+	return (strings.HasSuffix(fName, ".stdout") || strings.HasSuffix(fName, ".stderr")) &&
+		strings.HasPrefix(fName, "exec_")
+}

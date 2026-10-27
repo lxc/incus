@@ -1,0 +1,23 @@
+#!/bin/sh
+set -eu
+SHARE=agent
+VOLUME="/Volumes/$SHARE"
+PREFIX=/var/run/incus_agent
+
+mkdir -p "$PREFIX"
+
+# Mount the agent share.
+if [ ! -e "$VOLUME" ]; then
+    mount_9p "$SHARE" || fail "Couldn't mount 9p"
+fi
+
+# Transfer the agent binary.
+rm -f "$PREFIX/incus-agent"
+cp -a "$VOLUME/incus-agent.macos.$(uname -m)" "$PREFIX/incus-agent"
+chown root:wheel "$PREFIX/incus-agent"
+
+# Unmount the temporary mount.
+umount "$VOLUME"
+
+# Re-exec the agent.
+exec "$PREFIX/incus-agent" "$@"

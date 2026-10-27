@@ -1,0 +1,391 @@
+#!/usr/bin/env python3
+import argparse
+import atexit
+import hashlib
+import http.client
+import io
+import json
+import os
+import shutil
+import socket
+import subprocess
+import sys
+import tarfile
+import tempfile
+import uuid
+
+
+class FriendlyParser(argparse.ArgumentParser):
+    def error(self, message):
+        sys.stderr.write('\nerror: %s\n' % message)
+        self.print_help()
+        sys.exit(2)
+
+
+def find_on_path(command):
+    """Is command on the executable search path?"""
+
+    if 'PATH' not in os.environ:
+        return False
+
+    path = os.environ['PATH']
+    for element in path.split(os.pathsep):
+        if not element:
+            continue
+        filename = os.path.join(element, command)
+        if os.path.isfile(filename) and os.access(filename, os.X_OK):
+            return True
+
+    return False
+
+
+class UnixHTTPConnection(http.client.HTTPConnection):
+    def __init__(self, path):
+        http.client.HTTPConnection.__init__(self, 'localhost')
+        self.path = path
+
+    def connect(self):
+        sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        sock.connect(self.path)
+        self.sock = sock
+
+
+class Incus(object):
+    workdir = None
+
+    def __init__(self, path, project="default"):
+        self.incus = UnixHTTPConnection(path)
+        self.project = project
+
+        # Create our workdir
+        self.workdir = tempfile.mkdtemp()
+        atexit.register(self.cleanup)
+
+    def cleanup(self):
+        if self.workdir:
+            shutil.rmtree(self.workdir)
+
+    def rest_call(self, path, data=None, method="GET", headers={}):
+        if method == "GET" and data:
+            data["project"] = self.project
+            self.incus.request(
+                method,
+                "%s?%s" % "&".join(["%s=%s" % (key, value)
+                                    for key, value in data.items()]), headers)
+        else:
+            path += "?project=%s" % self.project
+            self.incus.request(method, path, data, headers)
+
+        r = self.incus.getresponse()
+        d = json.loads(r.read().decode("utf-8"))
+        return r.status, d
+
+    def aliases_create(self, name, target):
+        data = json.dumps({"target": target,
+                           "name": name})
+
+        status, data = self.rest_call("/1.0/images/aliases", data, "POST")
+
+        if status not in (200, 201):
+            raise Exception("Failed to create alias: %s" % name)
+
+    def aliases_remove(self, name):
+        status, data = self.rest_call("/1.0/images/aliases/%s" % name,
+                                      method="DELETE")
+
+        if status != 200:
+            raise Exception("Failed to remove alias: %s" % name)
+
+    def aliases_list(self):
+        status, data = self.rest_call("/1.0/images/aliases")
+
+        return [alias.split("/1.0/images/aliases/")[-1]
+                for alias in data['metadata']]
+
+    def images_list(self, recursive=False):
+        if recursive:
+            status, data = self.rest_call("/1.0/images?recursion=1")
+            return data['metadata']
+        else:
+            status, data = self.rest_call("/1.0/images")
+            return [image.split("/1.0/images/")[-1]
+                    for image in data['metadata']]
+
+    def images_upload(self, path, public, filename=None):
+        headers = {}
+        if public:
+            headers['X-Incus-public'] = "1"
+
+        if isinstance(path, str):
+            headers['Content-Type'] = "application/octet-stream"
+
+            status, data = self.rest_call("/1.0/images", open(path, "rb"),
+                                          "POST", headers)
+        else:
+            meta_path, rootfs_path = path
+            boundary = str(uuid.uuid1())
+            filename_entry = " filename=%s" % filename if filename else ""
+
+            upload_path = os.path.join(self.workdir, "upload")
+            body = open(upload_path, "wb+")
+            for name, path in [("metadata", meta_path),
+                               ("rootfs", rootfs_path)]:
+                body.write(bytes("--%s\r\n" % boundary, "utf-8"))
+                body.write(bytes("Content-Disposition: form-data; "
+                                 "name=%s;%s\r\n" % (name, filename_entry),
+                                 "utf-8"))
+                body.write(b"Content-Type: application/octet-stream\r\n")
+                body.write(b"\r\n")
+                with open(path, "rb") as fd:
+                    shutil.copyfileobj(fd, body)
+                body.write(b"\r\n")
+
+            body.write(bytes("--%s--\r\n" % boundary, "utf-8"))
+            body.write(b"\r\n")
+            body.close()
+
+            headers['Content-Type'] = "multipart/form-data; boundary=%s" \
+                % boundary
+
+            status, data = self.rest_call("/1.0/images",
+                                          open(upload_path, "rb"),
+                                          "POST", headers)
+
+        if status != 202:
+            raise Exception("Failed to upload the image: %s" % status)
+
+        status, data = self.rest_call(data['operation'] + "/wait",
+                                      "", "GET", {})
+        if status != 200:
+            raise Exception("Failed to query the operation: %s" % status)
+
+        if data['status_code'] != 200:
+            raise Exception("Failed to import the image: %s" %
+                            data['metadata'])
+
+        return data['metadata']['metadata']
+
+
+class BusyBox(object):
+    workdir = None
+
+    def __init__(self):
+        # Create our workdir
+        self.workdir = tempfile.mkdtemp()
+        atexit.register(self.cleanup)
+
+    def cleanup(self):
+        if self.workdir:
+            shutil.rmtree(self.workdir)
+
+    def create_tarball(self, split=False, template=[]):
+        xz = "pxz" if find_on_path("pxz") else "xz"
+
+        destination_tar = os.path.join(self.workdir, "busybox.tar")
+        target_tarball = tarfile.open(destination_tar, "w:")
+
+        if split:
+            destination_tar_rootfs = os.path.join(self.workdir,
+                                                  "busybox.rootfs.tar")
+            target_tarball_rootfs = tarfile.open(destination_tar_rootfs, "w:")
+
+        metadata = {'architecture': os.uname()[4],
+                    'creation_date': int(os.stat("/bin/busybox").st_ctime),
+                    'properties': {
+                        'os': "BusyBox",
+                        'architecture': os.uname()[4],
+                        'description': "BusyBox %s" % os.uname()[4],
+                        'name': "busybox-%s" % os.uname()[4]
+                        },
+                    }
+
+        # Add busybox
+        with open("/bin/busybox", "rb") as fd:
+            busybox_file = tarfile.TarInfo()
+            busybox_file.size = os.stat("/bin/busybox").st_size
+            busybox_file.mode = 0o755
+            if split:
+                busybox_file.name = "bin/busybox"
+                target_tarball_rootfs.addfile(busybox_file, fd)
+            else:
+                busybox_file.name = "rootfs/bin/busybox"
+                target_tarball.addfile(busybox_file, fd)
+
+        # Add symlinks
+        busybox = subprocess.Popen(["/bin/busybox", "--list-full"],
+                                   stdout=subprocess.PIPE,
+                                   universal_newlines=True)
+        busybox.wait()
+
+        for path in busybox.stdout.read().split("\n"):
+            # Prevent filesystem loop
+            if not path.strip() or path.strip() == "bin/busybox":
+                continue
+
+            symlink_file = tarfile.TarInfo()
+            symlink_file.type = tarfile.SYMTYPE
+            symlink_file.linkname = "/bin/busybox"
+            if split:
+                symlink_file.name = "%s" % path.strip()
+                target_tarball_rootfs.addfile(symlink_file)
+            else:
+                symlink_file.name = "rootfs/%s" % path.strip()
+                target_tarball.addfile(symlink_file)
+
+        # Add directories
+        for path in ("dev", "mnt", "proc", "root", "sys", "tmp"):
+            directory_file = tarfile.TarInfo()
+            directory_file.type = tarfile.DIRTYPE
+            if split:
+                directory_file.name = "%s" % path
+                target_tarball_rootfs.addfile(directory_file)
+            else:
+                directory_file.name = "rootfs/%s" % path
+                target_tarball.addfile(directory_file)
+
+        # Deal with templating
+        if template:
+            metadata["templates"] = {
+                "/template": {
+                    "when": template,
+                    "template": "template.tpl"}}
+
+            directory_file = tarfile.TarInfo()
+            directory_file.type = tarfile.DIRTYPE
+            directory_file.name = "templates"
+            target_tarball.addfile(directory_file)
+
+            template = """name: {{ container.name }}
+architecture: {{ container.architecture }}
+privileged: {{ container.privileged }}
+ephemeral: {{ container.ephemeral }}
+trigger: {{ trigger }}
+path: {{ path }}
+user.foo: {{ config_get("user.foo", "_unset_") }}
+"""
+
+            template_file = tarfile.TarInfo()
+            template_file.size = len(template)
+            template_file.name = "templates/template.tpl"
+            target_tarball.addfile(template_file,
+                                   io.BytesIO(template.encode()))
+
+        # Add the metadata file
+        metadata_yaml = json.dumps(metadata, sort_keys=True,
+                                   indent=4, separators=(',', ': '),
+                                   ensure_ascii=False).encode('utf-8') + b"\n"
+
+        metadata_file = tarfile.TarInfo()
+        metadata_file.size = len(metadata_yaml)
+        metadata_file.name = "metadata.yaml"
+        target_tarball.addfile(metadata_file,
+                               io.BytesIO(metadata_yaml))
+
+        # Add an /etc/inittab; this is to work around:
+        # http://lists.busybox.net/pipermail/busybox/2015-November/083618.html
+        # Basically, since there are some hardcoded defaults that misbehave, we
+        # just pass an empty inittab so those aren't applied, and then busybox
+        # doesn't spin forever.
+        inittab = tarfile.TarInfo()
+        inittab.size = 1
+        inittab.name = "/rootfs/etc/inittab"
+        target_tarball.addfile(inittab, io.BytesIO(b"\n"))
+
+        target_tarball.close()
+        if split:
+            target_tarball_rootfs.close()
+
+        # Compress the tarball
+        r = subprocess.call([xz, "-9", destination_tar])
+        if r:
+            raise Exception("Failed to compress: %s" % destination_tar)
+
+        if split:
+            r = subprocess.call([xz, "-9", destination_tar_rootfs])
+            if r:
+                raise Exception("Failed to compress: %s" %
+                                destination_tar_rootfs)
+            return destination_tar + ".xz", destination_tar_rootfs + ".xz"
+        else:
+            return destination_tar + ".xz"
+
+
+if __name__ == "__main__":
+    if "INCUS_DIR" in os.environ:
+        incus_socket = os.path.join(os.environ['INCUS_DIR'], "unix.socket")
+    else:
+        incus_socket = "/var/lib/incus/unix.socket"
+
+    if not os.path.exists(incus_socket):
+        print("Incus isn't running.")
+        sys.exit(1)
+
+    def setup_alias(aliases, fingerprint):
+        existing = incus.aliases_list()
+
+        for alias in aliases:
+            if alias in existing:
+                incus.aliases_remove(alias)
+            incus.aliases_create(alias, fingerprint)
+            print("Setup alias: %s" % alias)
+
+    def import_busybox(parser, args):
+        busybox = BusyBox()
+
+        if args.split:
+            meta_path, rootfs_path = busybox.create_tarball(
+                split=True,
+                template=args.template.split(","))
+
+            with open(meta_path, "rb") as meta_fd:
+                with open(rootfs_path, "rb") as rootfs_fd:
+                    fingerprint = hashlib.sha256(meta_fd.read() +
+                                                 rootfs_fd.read()).hexdigest()
+
+            if fingerprint in incus.images_list():
+                parser.exit(1, "This image is already in the store.\n")
+
+            if args.filename:
+                r = incus.images_upload((meta_path, rootfs_path), args.public,
+                                        meta_path.split("/")[-1])
+            else:
+                r = incus.images_upload((meta_path, rootfs_path), args.public)
+            print("Image imported as: %s" % r['fingerprint'])
+        else:
+            path = busybox.create_tarball(template=args.template.split(","))
+
+            with open(path, "rb") as fd:
+                fingerprint = hashlib.sha256(fd.read()).hexdigest()
+
+            if fingerprint in incus.images_list():
+                parser.exit(1, "This image is already in the store.\n")
+
+            r = incus.images_upload(path, args.public)
+            print("Image imported as: %s" % r['fingerprint'])
+
+        setup_alias(args.alias, fingerprint)
+
+    parser = FriendlyParser(description="Import a busybox image")
+    parser.add_argument("--alias", action="append",
+                        default=[], help="Aliases for the image")
+    parser.add_argument("--public", action="store_true",
+                        default=False, help="Make the image public")
+    parser.add_argument("--split", action="store_true",
+                        default=False, help="Whether to create a split image")
+    parser.add_argument("--filename", action="store_true",
+                        default=False, help="Set the split image's filename")
+    parser.add_argument("--template", type=str,
+                        default="", help="Trigger test template")
+    parser.add_argument("--project", type=str,
+                        default="default", help="Project to use")
+    parser.set_defaults(func=import_busybox)
+
+    # Call the function
+    args = parser.parse_args()
+
+    incus = Incus(incus_socket, project=args.project)
+
+    try:
+        args.func(parser, args)
+    except Exception as e:
+        parser.error(e)

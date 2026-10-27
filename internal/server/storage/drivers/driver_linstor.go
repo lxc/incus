@@ -1,0 +1,397 @@
+package drivers
+
+import (
+	"context"
+	"fmt"
+	"strconv"
+	"time"
+
+	"github.com/lxc/incus/v7/internal/migration"
+	deviceConfig "github.com/lxc/incus/v7/internal/server/device/config"
+	localMigration "github.com/lxc/incus/v7/internal/server/migration"
+	"github.com/lxc/incus/v7/internal/server/operations"
+	"github.com/lxc/incus/v7/internal/version"
+	"github.com/lxc/incus/v7/shared/api"
+	"github.com/lxc/incus/v7/shared/revert"
+	"github.com/lxc/incus/v7/shared/util"
+	"github.com/lxc/incus/v7/shared/validate"
+)
+
+var (
+	linstorVersion string
+	linstorLoaded  bool
+)
+
+// linstor represents the Linstor storage driver.
+type linstor struct {
+	common
+}
+
+func (d *linstor) load() error {
+	// Done if previously loaded.
+	if linstorLoaded {
+		return nil
+	}
+
+	// Validate the DRBD minimum version. The module should be already loaded by the Linstor satellite service.
+	//
+	// There are two major versions of DRBD, the one from the Linux kernel and the out of tree one used by Linstor.
+	// We need to ensure that the system is using the out of tree version (>= 9.0) as both are available even on modern systems.
+	drbdVer, err := d.drbdVersion()
+	if err != nil {
+		return err
+	}
+
+	ver, err := version.Parse(drbdVer)
+	if err != nil {
+		return fmt.Errorf("Could not determine DRBD module version: %w", err)
+	}
+
+	if ver.Major < 9 {
+		return fmt.Errorf("Could not load Linstor driver: Linstor requires DRBD version 9.0 to be loaded, got: %s", ver)
+	}
+
+	// Get the controller version.
+	controllerVer, err := d.controllerVersion()
+	if err != nil {
+		return err
+	}
+
+	linstorVersion = controllerVer + " / " + drbdVer
+	linstorLoaded = true
+
+	return nil
+}
+
+// isRemote returns true indicating this driver uses remote storage.
+func (d *linstor) isRemote() bool {
+	return true
+}
+
+// Validate checks that all provide keys are supported and that no conflicting or missing configuration is present.
+func (d *linstor) Validate(config map[string]string) error {
+	rules := map[string]func(value string) error{
+		// gendoc:generate(entity=storage_linstor, group=common, key=linstor.resource_group.name)
+		//
+		// ---
+		//  type: string
+		//  scope: global
+		//  default: `incus`
+		//  shortdesc: Name of the LINSTOR resource group that will be used for the storage pool
+		LinstorResourceGroupNameConfigKey: validate.IsAny,
+
+		// gendoc:generate(entity=storage_linstor, group=common, key=linstor.resource_group.place_count)
+		//
+		// ---
+		//  type: int
+		//  scope: global
+		//  default: `2`
+		//  shortdesc: Number of diskful replicas that should be created for resources in the resource group. Increasing the value of this option on a pool that already has volumes will result in LINSTOR creating new diskful replicas for all existing resources to match the new value
+		LinstorResourceGroupPlaceCountConfigKey: validate.Optional(validate.IsUint32),
+
+		// gendoc:generate(entity=storage_linstor, group=common, key=linstor.resource_group.storage_pool)
+		//
+		// ---
+		//  type: string
+		//  scope: global
+		//  default: -
+		//  shortdesc: The storage pool name in which resources should be placed on satellite nodes
+		LinstorResourceGroupStoragePoolConfigKey: validate.IsAny,
+
+		// gendoc:generate(entity=storage_linstor, group=common, key=linstor.volume.prefix)
+		//
+		// ---
+		//  type: string
+		//  scope: global
+		//  default: `incus-volume-`
+		//  shortdesc: The prefix to use for the internal names of LINSTOR-managed volumes. Cannot be updated after the storage pool is created
+		LinstorVolumePrefixConfigKey: validate.IsShorterThan(24),
+
+		// gendoc:generate(entity=storage_linstor, group=common, key=volatile.pool.pristine)
+		//
+		// ---
+		//  type: string
+		//  scope: global
+		//  default: `true`
+		//  shortdesc: Whether the pool was empty on creation time
+		"volatile.pool.pristine": validate.IsAny,
+
+		// gendoc:generate(entity=storage_linstor, group=common, key=drbd.on_no_quorum)
+		//
+		// ---
+		//  type: string
+		//  scope: global
+		//  default: -
+		//  shortdesc: The DRBD policy to use on resources when quorum is lost (applied to the resource group)
+		DrbdOnNoQuorumConfigKey: validate.Optional(validate.IsOneOf("io-error", "suspend-io")),
+
+		// gendoc:generate(entity=storage_linstor, group=common, key=drbd.auto_diskful)
+		//
+		// ---
+		//  type: string
+		//  scope: global
+		//  default: -
+		//  shortdesc: A duration string describing the time after which a primary diskless resource can be converted to diskful if storage is available on the node (applied to the resource group)
+		DrbdAutoDiskfulConfigKey: validate.Optional(validate.IsMinimumDuration(time.Minute)),
+
+		// gendoc:generate(entity=storage_linstor, group=common, key=drbd.auto_add_quorum_tiebreaker)
+		//
+		// ---
+		//  type: bool
+		//  scope: global
+		//  default: `true`
+		//  shortdesc: Whether to allow LINSTOR to automatically create diskless resources to act as quorum tiebreakers if needed (applied to the resource group)
+		DrbdAutoAddQuorumTiebreakerConfigKey: validate.Optional(validate.IsBool),
+
+		// gendoc:generate(entity=storage_linstor, group=common, key=source)
+		//
+		// ---
+		//  type: string
+		//  scope: global
+		//  default: `incus`
+		//  shortdesc: LINSTOR storage pool name. Alias for `linstor.resource_group.name`. Use either either one or the other or make sure they have the same value.
+		"source": validate.IsAny,
+	}
+
+	// gendoc:generate(entity=storage_linstor, group=common, key=linstor.raw.*)
+	//
+	// ---
+	//  type: string
+	//  scope: global
+	//  shortdesc: Extra LINSTOR properties to set. For example, `BCache/PoolName` is encoded as `linstor.raw.BCache/PoolName`.
+
+	return d.validatePool(config, rules, d.commonVolumeRules(), LinstorRawConfigKeyPrefix)
+}
+
+// FillConfig populates the storage pool's configuration file with the default values.
+func (d *linstor) FillConfig() error {
+	if d.config[LinstorResourceGroupPlaceCountConfigKey] == "" {
+		d.config[LinstorResourceGroupPlaceCountConfigKey] = LinstorDefaultResourceGroupPlaceCount
+	}
+
+	if d.config[LinstorVolumePrefixConfigKey] == "" {
+		d.config[LinstorVolumePrefixConfigKey] = LinstorDefaultVolumePrefix
+	}
+
+	if d.config[DrbdOnNoQuorumConfigKey] == "" {
+		d.config[DrbdOnNoQuorumConfigKey] = "suspend-io"
+	}
+
+	if d.config[DrbdAutoAddQuorumTiebreakerConfigKey] == "" {
+		d.config[DrbdAutoAddQuorumTiebreakerConfigKey] = "true"
+	}
+
+	return nil
+}
+
+// Create is called during storage pool creation.
+func (d *linstor) Create() error {
+	d.logger.Debug("Creating Linstor storage pool")
+	rev := revert.New()
+	defer rev.Fail()
+
+	// Track the initial source.
+	d.config["volatile.initial_source"] = d.config["source"]
+
+	// Fill default config values.
+	err := d.FillConfig()
+	if err != nil {
+		return fmt.Errorf("Could not create Linstor storage pool: %w", err)
+	}
+
+	// Quick check of conflicting values.
+	if d.config["source"] != "" && d.config[LinstorResourceGroupNameConfigKey] != "" && d.config["source"] != d.config[LinstorResourceGroupNameConfigKey] {
+		return fmt.Errorf(`The "source" and %q property must not differ for LINSTOR storage pools`, LinstorResourceGroupNameConfigKey)
+	}
+
+	// If a source is provided, use it as the resource group name.
+	if d.config["source"] != "" {
+		d.config[LinstorResourceGroupNameConfigKey] = d.config["source"]
+	} else if d.config[LinstorResourceGroupNameConfigKey] == "" {
+		d.config[LinstorResourceGroupNameConfigKey] = d.name
+	}
+
+	d.config["source"] = d.config[LinstorResourceGroupNameConfigKey]
+
+	resourceGroupExists, err := d.resourceGroupExists()
+	if err != nil {
+		return fmt.Errorf("Could not create Linstor storage pool: %w", err)
+	}
+
+	if !resourceGroupExists {
+		// Create new resource group.
+		d.logger.Debug("Resource group does not exist. Creating one")
+		err := d.createResourceGroup()
+		if err != nil {
+			return fmt.Errorf("Could not create Linstor storage pool: %w", err)
+		}
+
+		rev.Add(func() { _ = d.deleteResourceGroup() })
+
+		d.config["volatile.pool.pristine"] = "true"
+	} else {
+		d.logger.Debug("Resource group already exists. Using an existing one")
+		resourceGroup, err := d.getResourceGroup()
+		if err != nil {
+			return fmt.Errorf("Could not create Linstor storage pool: %w", err)
+		}
+
+		d.config[LinstorResourceGroupPlaceCountConfigKey] = strconv.Itoa(int(resourceGroup.SelectFilter.PlaceCount))
+		d.config[LinstorResourceGroupStoragePoolConfigKey] = resourceGroup.SelectFilter.StoragePool
+	}
+
+	rev.Success()
+	return nil
+}
+
+// Delete removes the storage pool from the storage device.
+func (d *linstor) Delete(op *operations.Operation) error {
+	d.logger.Debug("Deleting Linstor storage pool")
+
+	// Test if the resource group exists.
+	resourceGroupExists, err := d.resourceGroupExists()
+	if err != nil {
+		return fmt.Errorf("Could not check if Linstor resource group exists: %w", err)
+	}
+
+	if !resourceGroupExists {
+		d.logger.Warn("Resource group does not exist")
+	} else {
+		// Check whether we own the resource group and only remove in this case.
+		if util.IsTrue(d.config["volatile.pool.pristine"]) {
+			// Delete the resource group pool.
+			err := d.deleteResourceGroup()
+			if err != nil {
+				return err
+			}
+
+			d.logger.Debug("Deleted Linstor resource group")
+		} else {
+			d.logger.Debug("Linstor resource group is not owned by Incus, skipping delete")
+		}
+	}
+
+	// If the user completely destroyed it, call it done.
+	if !util.PathExists(GetPoolMountPath(d.name)) {
+		return nil
+	}
+
+	// On delete, wipe everything in the directory.
+	err = wipeDirectory(GetPoolMountPath(d.name))
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// Info returns info about the driver and its environment.
+func (d *linstor) Info() Info {
+	return Info{
+		Name:                         "linstor",
+		Version:                      linstorVersion,
+		VolumeTypes:                  []VolumeType{VolumeTypeCustom, VolumeTypeImage, VolumeTypeContainer, VolumeTypeVM},
+		DefaultVMBlockFilesystemSize: deviceConfig.DefaultVMBlockFilesystemSize,
+		Buckets:                      false,
+		Remote:                       d.isRemote(),
+		NearLiveMigration:            false,
+		VolumeMultiNode:              false, // DRBD uses an active-passive replication paradigm, so we cannot use the same volume concurrently in multiple nodes.
+		OptimizedImages:              true,
+		OptimizedBackups:             false,
+		OptimizedBackupHeader:        false,
+		PreservesInodes:              false,
+		BlockBacking:                 true,
+		RunningCopyFreeze:            true,
+		DirectIO:                     true,
+		IOUring:                      true,
+		MountedRoot:                  false,
+		Deactivate:                   false,
+	}
+}
+
+// Mount mounts the storage pool.
+func (d *linstor) Mount() (bool, error) {
+	linstorClient, err := d.state.Linstor()
+	if err != nil {
+		return false, err
+	}
+
+	satelliteName := d.getSatelliteName()
+	node, err := linstorClient.Client.Nodes.Get(context.TODO(), satelliteName)
+	if err != nil {
+		return false, err
+	}
+
+	if node.ConnectionStatus != "ONLINE" {
+		return false, fmt.Errorf("Node %s is offline", satelliteName)
+	}
+
+	return true, nil
+}
+
+// Unmount unmounts the storage pool.
+func (d *linstor) Unmount() (bool, error) {
+	return true, nil
+}
+
+// Update applies any driver changes required from a configuration change.
+func (d *linstor) Update(changedConfig map[string]string) error {
+	_, changed := changedConfig[LinstorResourceGroupNameConfigKey]
+	if changed {
+		return fmt.Errorf("%s cannot be changed", LinstorResourceGroupNameConfigKey)
+	}
+
+	_, changed = changedConfig[LinstorVolumePrefixConfigKey]
+	if changed {
+		return fmt.Errorf("%s cannot be changed", LinstorVolumePrefixConfigKey)
+	}
+
+	err := d.updateResourceGroup(changedConfig)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// GetResources returns utilisation and space info about the pool.
+func (d *linstor) GetResources() (*api.ResourcesStoragePool, error) {
+	freeCapacity, totalCapacity, err := d.getResourceGroupSize()
+	if err != nil {
+		return nil, fmt.Errorf("Could not fetch pool space info: %w", err)
+	}
+
+	// We have no information about inode usage, so we skip that.
+	res := api.ResourcesStoragePool{}
+	res.Space.Total = uint64(totalCapacity) * 1024
+	res.Space.Used = uint64(totalCapacity-freeCapacity) * 1024
+
+	return &res, nil
+}
+
+// MigrationTypes returns the type of transfer methods to be used when doing migrations between pools in preference order.
+func (d *linstor) MigrationTypes(contentType ContentType, refresh bool, copySnapshots bool, clusterMove bool, storageMove bool) []localMigration.Type {
+	if !clusterMove || storageMove {
+		return []localMigration.Type{d.rsyncMigrationType(contentType)}
+	}
+
+	return []localMigration.Type{
+		{
+			FSType: migration.MigrationFSType_LINSTOR,
+		},
+		d.rsyncMigrationType(contentType),
+	}
+}
+
+// roundVolumeBlockSizeBytes returns sizeBytes rounded up to the next multiple of MinBlockBoundary
+// and no smaller than the minimum size supported by DRBD.
+func (d *linstor) roundVolumeBlockSizeBytes(vol Volume, sizeBytes int64) (int64, error) {
+	// Smallest volume size supported by DRBD (space is needed for its metadata and activity log).
+	const drbdMinVolumeSizeBytes = int64(4 * 1024 * 1024)
+
+	if sizeBytes < drbdMinVolumeSizeBytes {
+		sizeBytes = drbdMinVolumeSizeBytes
+	}
+
+	return RoundAbove(MinBlockBoundary, sizeBytes), nil
+}

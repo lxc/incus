@@ -1,0 +1,209 @@
+package network
+
+import (
+	"fmt"
+
+	"github.com/lxc/incus/v7/internal/server/cluster/request"
+	"github.com/lxc/incus/v7/internal/server/db"
+	"github.com/lxc/incus/v7/shared/api"
+	"github.com/lxc/incus/v7/shared/logger"
+	"github.com/lxc/incus/v7/shared/revert"
+	"github.com/lxc/incus/v7/shared/validate"
+)
+
+// sriov represents an sriov network.
+type sriov struct {
+	common
+}
+
+// DBType returns the network type DB ID.
+func (n *sriov) DBType() db.NetworkType {
+	return db.NetworkTypeSriov
+}
+
+// Validate network config.
+func (n *sriov) Validate(config map[string]string, clientType request.ClientType) error {
+	rules := map[string]func(value string) error{
+		// gendoc:generate(entity=network_sriov, group=common, key=parent)
+		//
+		// ---
+		// type: string
+		// scope: local
+		// condition: -
+		// shortdesc: Parent interface to create `sriov` NICs on
+		"parent": validate.Required(validate.IsNotEmpty, validate.IsInterfaceName),
+
+		// gendoc:generate(entity=network_sriov, group=common, key=mtu)
+		//
+		// ---
+		// type: integer
+		// condition: -
+		// shortdesc: The MTU of the new interface
+		"mtu": validate.Optional(validate.IsNetworkMTU),
+
+		// gendoc:generate(entity=network_sriov, group=common, key=vlan)
+		//
+		// ---
+		// type: integer
+		// condition: -
+		// shortdesc: The VLAN ID to attach to
+		"vlan": validate.Optional(validate.IsNetworkVLAN),
+
+		// gendoc:generate(entity=network_sriov, group=common, key=failover)
+		//
+		// ---
+		// type: string
+		// scope: local
+		// condition: -
+		// shortdesc: Failover bridge to use when live-migrating `sriov` NICs
+		"failover": validate.Optional(validate.IsInterfaceName),
+
+		// gendoc:generate(entity=network_sriov, group=common, key=user.*)
+		//
+		// ---
+		// type: string
+		// condition: -
+		// shortdesc: User-provided free-form key/value pairs
+	}
+
+	err := n.validate(config, rules)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// Delete deletes a network.
+func (n *sriov) Delete(clientType request.ClientType) error {
+	n.logger.Debug("Delete", logger.Ctx{"clientType": clientType})
+
+	return n.delete(clientType)
+}
+
+// Rename renames a network.
+func (n *sriov) Rename(newName string) error {
+	n.logger.Debug("Rename", logger.Ctx{"newName": newName})
+
+	// Rename common steps.
+	err := n.rename(newName)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// checkParent checks that the parent is usable for the network.
+func (n *sriov) checkParent(parent string) error {
+	if !InterfaceExists(parent) {
+		return fmt.Errorf("Parent interface %q not found", parent)
+	}
+
+	return nil
+}
+
+// checkFailover checks that the failover is usable for the network.
+func (n *sriov) checkFailover(failover string) error {
+	if !IsNativeBridge(failover) {
+		// Check whether a non-native managed bridge exists.
+		_, err := LoadByName(n.state, api.ProjectDefaultName, failover)
+		if err != nil {
+			return fmt.Errorf("Failover network %q not found", failover)
+		}
+	}
+
+	return nil
+}
+
+// Start starts is a no-op.
+func (n *sriov) Start() error {
+	n.logger.Debug("Start")
+
+	reverter := revert.New()
+	defer reverter.Fail()
+
+	reverter.Add(func() { n.setUnavailable() })
+
+	err := n.checkParent(n.config["parent"])
+	if err != nil {
+		return err
+	}
+
+	if n.config["failover"] != "" {
+		err = n.checkFailover(n.config["failover"])
+		if err != nil {
+			return err
+		}
+	}
+
+	reverter.Success()
+
+	// Ensure network is marked as available now its started.
+	n.setAvailable()
+
+	return nil
+}
+
+// Stop stops is a no-op.
+func (n *sriov) Stop() error {
+	n.logger.Debug("Stop")
+
+	return nil
+}
+
+// Update updates the network. Accepts notification boolean indicating if this update request is coming from a
+// cluster notification, in which case do not update the database, just apply local changes needed.
+func (n *sriov) Update(newNetwork api.NetworkPut, targetNode string, clientType request.ClientType) error {
+	n.logger.Debug("Update", logger.Ctx{"clientType": clientType, "newNetwork": newNetwork})
+
+	dbUpdateNeeded, changedKeys, oldNetwork, err := n.configChanged(newNetwork)
+	if err != nil {
+		return err
+	}
+
+	if !dbUpdateNeeded {
+		return nil // Nothing changed.
+	}
+
+	// If the network as a whole has not had any previous creation attempts, or the node itself is still
+	// pending, then don't apply the new settings to the node, just to the database record (ready for the
+	// actual global create request to be initiated).
+	if n.Status() == api.NetworkStatusPending || n.LocalStatus() == api.NetworkStatusPending {
+		return n.update(newNetwork, targetNode, clientType)
+	}
+
+	reverter := revert.New()
+	defer reverter.Fail()
+
+	// Define a function which reverts everything.
+	reverter.Add(func() {
+		// Reset changes to all nodes and database.
+		_ = n.update(oldNetwork, targetNode, clientType)
+	})
+
+	for _, k := range changedKeys {
+		switch k {
+		case "parent":
+			err = n.checkParent(newNetwork.Config["parent"])
+			if err != nil {
+				return err
+			}
+
+		case "failover":
+			err = n.checkFailover(newNetwork.Config["failover"])
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	// Apply changes to all nodes and database.
+	err = n.update(newNetwork, targetNode, clientType)
+	if err != nil {
+		return err
+	}
+
+	reverter.Success()
+	return nil
+}

@@ -1,0 +1,54 @@
+package lifecycle
+
+import (
+	"strings"
+
+	"github.com/lxc/incus/v7/internal/server/operations"
+	"github.com/lxc/incus/v7/internal/version"
+	"github.com/lxc/incus/v7/shared/api"
+)
+
+// Internal copy of the volume interface.
+type volume interface {
+	Name() string
+	Pool() string
+}
+
+// StorageVolumeAction represents a lifecycle event action for storage volumes.
+type StorageVolumeAction string
+
+// All supported lifecycle events for storage volumes.
+const (
+	StorageVolumeCreated       = StorageVolumeAction(api.EventLifecycleStorageVolumeCreated)
+	StorageVolumeDeleted       = StorageVolumeAction(api.EventLifecycleStorageVolumeDeleted)
+	StorageVolumeFileDeleted   = StorageVolumeAction(api.EventLifecycleStorageVolumeFileDeleted)
+	StorageVolumeFilePushed    = StorageVolumeAction(api.EventLifecycleStorageVolumeFilePushed)
+	StorageVolumeFileRetrieved = StorageVolumeAction(api.EventLifecycleStorageVolumeFileRetrieved)
+	StorageVolumeUpdated       = StorageVolumeAction(api.EventLifecycleStorageVolumeUpdated)
+	StorageVolumeRenamed       = StorageVolumeAction(api.EventLifecycleStorageVolumeRenamed)
+	StorageVolumeRestored      = StorageVolumeAction(api.EventLifecycleStorageVolumeRestored)
+)
+
+// Event creates the lifecycle event for an action on a storage volume.
+func (a StorageVolumeAction) Event(v volume, volumeType string, projectName string, op *operations.Operation, ctx map[string]any) api.EventLifecycle {
+	volName := v.Name()
+
+	if volumeType == "custom" {
+		fields := strings.SplitN(volName, "_", 2)
+		volName = fields[1]
+	}
+
+	u := api.NewURL().Path(version.APIVersion, "storage-pools", v.Pool(), "volumes", volumeType, volName).Project(projectName)
+
+	var requestor *api.EventLifecycleRequestor
+	if op != nil {
+		requestor = op.Requestor()
+	}
+
+	return api.EventLifecycle{
+		Action:    string(a),
+		Source:    u.String(),
+		Context:   ctx,
+		Requestor: requestor,
+	}
+}

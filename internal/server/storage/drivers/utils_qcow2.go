@@ -1,0 +1,596 @@
+package drivers
+
+import (
+	"encoding/json"
+	"errors"
+	"fmt"
+	"io/fs"
+	"os"
+	"path/filepath"
+	"strconv"
+	"strings"
+	"sync"
+	"time"
+
+	"github.com/lxc/incus/v7/internal/linux"
+	"github.com/lxc/incus/v7/internal/server/operations"
+	internalUtil "github.com/lxc/incus/v7/internal/util"
+	"github.com/lxc/incus/v7/shared/api"
+	"github.com/lxc/incus/v7/shared/subprocess"
+	"github.com/lxc/incus/v7/shared/util"
+)
+
+// nbdMu serializes NBD device allocation so concurrent callers don't pick the same free device.
+var nbdMu sync.Mutex
+
+// Type of the block volume.
+const (
+	BlockVolumeTypeRaw   = "raw"
+	BlockVolumeTypeQcow2 = "qcow2"
+)
+
+// Qcow2ConfigVolumeBase represents the base component of a Btrfs subvolume name.
+const Qcow2ConfigVolumeBase = "instance"
+
+// Bitmap represents a dirty bitmap.
+type Bitmap struct {
+	Name string `json:"name"`
+}
+
+// FormatData contains format specific data.
+type FormatData struct {
+	Bitmaps       []Bitmap `json:"bitmaps"`
+	LazyRefcounts bool     `json:"lazy-refcounts"`
+}
+
+// FormatSpecific contains format dependent metadata.
+type FormatSpecific struct {
+	Type string     `json:"type"`
+	Data FormatData `json:"data"`
+}
+
+// ImageInfo contains information about a qcow2 image.
+type ImageInfo struct {
+	BackingFilename string         `json:"backing-filename"`
+	Format          string         `json:"format"`
+	VirtualSize     int            `json:"virtual-size"`
+	ClusterSize     int            `json:"cluster-size"`
+	FormatSpecific  FormatSpecific `json:"format-specific"`
+}
+
+// Qcow2Create creates a qcow2-formatted image.
+func Qcow2Create(path string, backingPath string, size int64) error {
+	args := []string{
+		"create",
+		"-f",
+		"qcow2",
+		"-o",
+		"lazy_refcounts=on",
+	}
+
+	if backingPath != "" {
+		args = append(args, "-b", backingPath)
+		args = append(args, "-F", "qcow2")
+	}
+
+	args = append(args, path)
+
+	if size > 0 {
+		args = append(args, fmt.Sprintf("%db", size))
+	}
+
+	_, err := subprocess.RunCommand("qemu-img", args...)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// Qcow2EnableLazyRefcounts turns on lazy refcounts on an existing qcow2 image, the image must not be in use.
+func Qcow2EnableLazyRefcounts(path string) error {
+	_, err := subprocess.RunCommand("qemu-img", "amend", "-f", "qcow2", "-o", "lazy_refcounts=on", path)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// Qcow2MeasureFullyAllocated returns the host size in bytes needed to hold a fully-allocated
+// qcow2 image of the given virtual size, including the qcow2 metadata overhead.
+func Qcow2MeasureFullyAllocated(virtualSizeBytes int64) (int64, error) {
+	out, err := subprocess.RunCommand("qemu-img", "measure", "--output=json", "-O", "qcow2", "--size", fmt.Sprintf("%d", virtualSizeBytes))
+	if err != nil {
+		return 0, err
+	}
+
+	var measure struct {
+		FullyAllocated int64 `json:"fully-allocated"`
+	}
+
+	err = json.Unmarshal([]byte(out), &measure)
+	if err != nil {
+		return 0, fmt.Errorf("Failed unmarshalling qcow2 measure output: %w", err)
+	}
+
+	return measure.FullyAllocated, nil
+}
+
+// Qcow2Resize resizes a qcow2-formatted image.
+func Qcow2Resize(path string, newSize int64) error {
+	args := []string{
+		"resize",
+		path,
+		fmt.Sprintf("%db", newSize),
+	}
+
+	_, err := subprocess.RunCommand("qemu-img", args...)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// Qcow2Rebase changes the backing file of a qcow2 image.
+func Qcow2Rebase(path string, backingPath string) error {
+	_, err := subprocess.RunCommand("qemu-img", "rebase", "-u", "-b", backingPath, "-F", "qcow2", path)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// Qcow2Flatten merges the backing chain into a qcow2 image and drops the backing file reference.
+func Qcow2Flatten(path string) error {
+	_, err := subprocess.RunCommand("qemu-img", "rebase", "-U", "-f", "qcow2", "-b", "", path)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// Qcow2Commit commits changes from a qcow2 image to its immediate backing file.
+func Qcow2Commit(path string) error {
+	_, err := subprocess.RunCommand("qemu-img", "commit", "-f", "qcow2", path)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// Qcow2Info returns information about a qcow2 image.
+func Qcow2Info(path string) (*ImageInfo, error) {
+	imgJSON, err := subprocess.RunCommand("qemu-img", "info", "-U", "--output=json", path)
+	if err != nil {
+		return nil, err
+	}
+
+	imgInfo := ImageInfo{}
+
+	err = json.Unmarshal([]byte(imgJSON), &imgInfo)
+	if err != nil {
+		return nil, fmt.Errorf("Failed unmarshalling image info %q: %w (%q)", path, err, imgJSON)
+	}
+
+	return &imgInfo, nil
+}
+
+// Qcow2BackingChain returns information about the backing chain of a qcow2 image.
+func Qcow2BackingChain(path string) ([]string, error) {
+	result := []string{}
+	imgJSON, err := subprocess.RunCommand("qemu-img", "info", "-U", "--backing-chain", "--output=json", path)
+	if err != nil {
+		return nil, err
+	}
+
+	imgInfo := []struct {
+		BackingFilename string `json:"backing-filename"`
+	}{}
+
+	err = json.Unmarshal([]byte(imgJSON), &imgInfo)
+	if err != nil {
+		return nil, fmt.Errorf("Failed unmarshalling image info %q: %w (%q)", path, err, imgJSON)
+	}
+
+	for _, info := range imgInfo {
+		if info.BackingFilename == "" {
+			break
+		}
+
+		result = append(result, info.BackingFilename)
+	}
+
+	return result, nil
+}
+
+// Qcow2MountConfigTask mounts the config filesystem volume with its snapshots and performs the task specified by the parameter.
+func Qcow2MountConfigTask(vol Volume, op *operations.Operation, task func(mountPath string) error) error {
+	mountPath := fmt.Sprintf("%s%s", vol.MountPath(), tmpVolSuffix)
+	mountVol := NewVolume(vol.driver, vol.driver.Name(), vol.volType, vol.contentType, vol.name, vol.config, vol.poolConfig)
+	mountVol.mountFullFilesystem = true
+	mountVol.mountCustomPath = mountPath
+	wasMounted := linux.IsMountPoint(mountPath)
+
+	err := mountVol.MountTask(func(mountPath string, op *operations.Operation) error {
+		taskErr := task(mountVol.MountPath())
+
+		// Return task error if failed.
+		if taskErr != nil {
+			return taskErr
+		}
+
+		return nil
+	}, op)
+	if err != nil {
+		return err
+	}
+
+	// MountTask delegates unmounting to UnmountVolume(), which calculates the
+	// refCount based on the volume name and type. Since a volume can be mounted
+	// at multiple paths, it is only unmounted when the refCount drops to zero.
+	// In this case, we unmount from customPath if the mount is no longer needed.
+	if !wasMounted && linux.IsMountPoint(mountPath) {
+		err = TryUnmount(mountPath, 0)
+		if err != nil {
+			return fmt.Errorf("Failed to unmount logical volume: %w", err)
+		}
+	}
+
+	// Remove temporary mount path.
+	isEmpty, err := internalUtil.PathIsEmpty(mountPath)
+	if err != nil {
+		return err
+	}
+
+	if isEmpty {
+		err := os.Remove(mountPath)
+		if err != nil && !errors.Is(err, fs.ErrNotExist) {
+			return fmt.Errorf("Failed to remove '%s': %w", mountPath, err)
+		}
+	}
+
+	return nil
+}
+
+// Qcow2CreateConfig creates the btrfs config filesystem associated with the QCOW2 block volume.
+func Qcow2CreateConfig(vol Volume, op *operations.Operation) error {
+	err := Qcow2MountConfigTask(vol, op, func(mountPath string) error {
+		volPath := filepath.Join(mountPath, Qcow2ConfigVolumeBase)
+		// Create the volume itself.
+		_, err := subprocess.RunCommand("btrfs", "subvolume", "create", volPath)
+		if err != nil {
+			return err
+		}
+
+		err = syncBtrfs(mountPath)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// Qcow2CreateConfigSnapshot creates the btrfs snapshot of the config filesystem associated with the QCOW2 block volume.
+func Qcow2CreateConfigSnapshot(vol Volume, snapVol Volume, op *operations.Operation) error {
+	err := Qcow2MountConfigTask(vol, op, func(mountPath string) error {
+		_, snapName, _ := api.GetParentAndSnapshotName(snapVol.Name())
+		dstPath := filepath.Join(mountPath, fmt.Sprintf("%s-%s", Qcow2ConfigVolumeBase, snapName))
+		srcPath := filepath.Join(mountPath, Qcow2ConfigVolumeBase)
+
+		_, err := subprocess.RunCommand("btrfs", "subvolume", "snapshot", srcPath, dstPath)
+		if err != nil {
+			return err
+		}
+
+		err = syncBtrfs(mountPath)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// Qcow2RestoreConfigSnapshot restores the btrfs snapshot of the config filesystem associated with the QCOW2 block volume.
+func Qcow2RestoreConfigSnapshot(vol Volume, snapVol Volume, op *operations.Operation) error {
+	err := Qcow2MountConfigTask(vol, op, func(mountPath string) error {
+		_, snapName, _ := api.GetParentAndSnapshotName(snapVol.Name())
+		snapPath := fmt.Sprintf("%s-%s", Qcow2ConfigVolumeBase, snapName)
+
+		// Delete the subvolume itself.
+		_, err := subprocess.RunCommand("btrfs", "subvolume", "delete", filepath.Join(mountPath, Qcow2ConfigVolumeBase))
+		if err != nil {
+			return err
+		}
+
+		_, err = subprocess.RunCommand("btrfs", "subvolume", "snapshot", filepath.Join(mountPath, snapPath), filepath.Join(mountPath, Qcow2ConfigVolumeBase))
+		if err != nil {
+			return err
+		}
+
+		err = syncBtrfs(mountPath)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// Qcow2RenameConfigSnapshot renames the btrfs snapshot of the config filesystem associated with the QCOW2 block volume.
+func Qcow2RenameConfigSnapshot(vol Volume, snapVol Volume, newName string, op *operations.Operation) error {
+	err := Qcow2MountConfigTask(vol, op, func(mountPath string) error {
+		_, snapName, _ := api.GetParentAndSnapshotName(snapVol.Name())
+		oldPath := filepath.Join(mountPath, fmt.Sprintf("%s-%s", Qcow2ConfigVolumeBase, snapName))
+		newPath := filepath.Join(mountPath, fmt.Sprintf("%s-%s", Qcow2ConfigVolumeBase, newName))
+
+		err := os.Rename(oldPath, newPath)
+		if err != nil {
+			return fmt.Errorf("Failed to rename %q to %q: %w", oldPath, newPath, err)
+		}
+
+		err = syncBtrfs(mountPath)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// Qcow2DeleteConfigSnapshot deletes the btrfs snapshot of the config filesystem associated with the QCOW2 block volume.
+func Qcow2DeleteConfigSnapshot(vol Volume, snapVol Volume, op *operations.Operation) error {
+	err := Qcow2MountConfigTask(vol, op, func(mountPath string) error {
+		_, snapName, _ := api.GetParentAndSnapshotName(snapVol.Name())
+		path := filepath.Join(mountPath, fmt.Sprintf("%s-%s", Qcow2ConfigVolumeBase, snapName))
+
+		// Delete the subvolume itself.
+		_, err := subprocess.RunCommand("btrfs", "subvolume", "delete", path)
+		if err != nil {
+			return err
+		}
+
+		err = syncBtrfs(mountPath)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+
+	// Remove the snapshot mount path from the storage device.
+	snapPath := snapVol.MountPath()
+	err = os.RemoveAll(snapPath)
+	if err != nil && !errors.Is(err, fs.ErrNotExist) {
+		return fmt.Errorf("Error removing snapshot mount path %q: %w", snapPath, err)
+	}
+
+	// Remove the parent snapshot directory if this is the last snapshot being removed.
+	parentName, _, _ := api.GetParentAndSnapshotName(snapVol.name)
+	err = deleteParentSnapshotDirIfEmpty(snapVol.pool, snapVol.volType, parentName)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func syncBtrfs(mountPath string) error {
+	_, err := subprocess.RunCommand("btrfs", "filesystem", "sync", mountPath)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// IsQcow2Block checks whether a volume is a QCOW2 block device.
+func IsQcow2Block(vol Volume) bool {
+	return vol.Config()["block.type"] == BlockVolumeTypeQcow2 && vol.ContentType() == ContentTypeBlock
+}
+
+// VolumeBlockSizeBytes returns the size of a block volume, using the virtual size for QCOW2 volumes.
+func VolumeBlockSizeBytes(vol Volume, diskPath string) (int64, error) {
+	if IsQcow2Block(vol) {
+		imgInfo, err := Qcow2Info(diskPath)
+		if err != nil {
+			return -1, err
+		}
+
+		return int64(imgInfo.VirtualSize), nil
+	}
+
+	return BlockDiskSizeBytes(diskPath)
+}
+
+// getFreeNbd returns the first free NBD device.
+func getFreeNbd() (string, error) {
+	nbdIndex := 0
+	for {
+		nbdPath := fmt.Sprintf("/sys/class/block/nbd%d", nbdIndex)
+		_, err := os.Stat(nbdPath)
+		if err != nil {
+			return "", fmt.Errorf("No free nbd device found")
+		}
+
+		data, err := os.ReadFile(fmt.Sprintf("%s/size", nbdPath))
+		if err != nil {
+			return "", err
+		}
+
+		size, err := strconv.ParseUint(strings.TrimSpace(string(data)), 10, 64)
+		if err != nil {
+			return "", err
+		}
+
+		if size == 0 {
+			return fmt.Sprintf("/dev/nbd%d", nbdIndex), nil
+		}
+
+		nbdIndex += 1
+	}
+}
+
+// ConnectQemuNbd exports a QCOW2 volume using the NBD protocol via qemu-nbd.
+func ConnectQemuNbd(devPath string, format string, detectZeroes string, readOnly bool) (string, error) {
+	nbdMu.Lock()
+	defer nbdMu.Unlock()
+
+	nbdPath, err := getFreeNbd()
+	if err != nil {
+		return "", err
+	}
+
+	err = connectQemuNbdDevice(nbdPath, devPath, format, detectZeroes, readOnly)
+	if err != nil {
+		return "", err
+	}
+
+	return nbdPath, nil
+}
+
+// ReconnectQemuNbd re-exports a volume on the NBD device already serving it, so that size changes are picked up.
+func ReconnectQemuNbd(nbdPath string, devPath string, format string, detectZeroes string, readOnly bool) error {
+	nbdMu.Lock()
+	defer nbdMu.Unlock()
+
+	err := DisconnectQemuNbdWait(nbdPath)
+	if err != nil {
+		return err
+	}
+
+	return connectQemuNbdDevice(nbdPath, devPath, format, detectZeroes, readOnly)
+}
+
+// connectQemuNbdDevice exports devPath on the given NBD device and waits for it to become usable.
+func connectQemuNbdDevice(nbdPath string, devPath string, format string, detectZeroes string, readOnly bool) error {
+	args := []string{fmt.Sprintf("--connect=%s", nbdPath)}
+
+	if detectZeroes != "" {
+		if detectZeroes == "unmap" {
+			args = append(args, "--discard=unmap")
+		}
+
+		args = append(args, fmt.Sprintf("--detect-zeroes=%s", detectZeroes))
+	}
+
+	if format != "" {
+		args = append(args, fmt.Sprintf("--format=%s", format))
+	}
+
+	if readOnly {
+		args = append(args, "--read-only")
+	}
+
+	args = append(args, devPath)
+
+	_, err := subprocess.RunCommand("qemu-nbd", args...)
+	if err != nil {
+		return err
+	}
+
+	// It can take a little while before the /dev/nbdX device is fully mapped.
+	var sz int64
+	for range 20 {
+		sz, err = BlockDiskSizeBytes(nbdPath)
+		if err != nil {
+			_ = DisconnectQemuNbd(nbdPath)
+
+			return err
+		}
+
+		if sz > 0 {
+			break
+		}
+
+		time.Sleep(100 * time.Millisecond)
+	}
+
+	if sz == 0 {
+		_ = DisconnectQemuNbd(nbdPath)
+
+		return fmt.Errorf("NBD device %q not correctly mapped after 2s", nbdPath)
+	}
+
+	return nil
+}
+
+// DisconnectQemuNbdWait disconnects the NBD device at nbdPath and waits for its qemu-nbd process to exit.
+func DisconnectQemuNbdWait(nbdPath string) error {
+	// Get the qemu-nbd process for the device so we can wait for it to exit.
+	pidData, err := os.ReadFile(fmt.Sprintf("/sys/class/block/%s/pid", filepath.Base(nbdPath)))
+	if err != nil {
+		// Not connected.
+		return nil
+	}
+
+	pid := strings.TrimSpace(string(pidData))
+
+	// The kernel records the thread driving the device, get the process it belongs to.
+	status, err := os.ReadFile(fmt.Sprintf("/proc/%s/status", pid))
+	if err == nil {
+		for line := range strings.SplitSeq(string(status), "\n") {
+			tgid, found := strings.CutPrefix(line, "Tgid:")
+			if found {
+				pid = strings.TrimSpace(tgid)
+				break
+			}
+		}
+	}
+
+	err = DisconnectQemuNbd(nbdPath)
+	if err != nil {
+		return err
+	}
+
+	// The device only becomes reusable once qemu-nbd has fully exited (it removes its control socket on the way out).
+	waitUntil := time.Now().Add(30 * time.Second)
+	for util.PathExists(fmt.Sprintf("/proc/%s", pid)) {
+		if time.Now().After(waitUntil) {
+			return fmt.Errorf("Timed out waiting for qemu-nbd to release %q", nbdPath)
+		}
+
+		time.Sleep(100 * time.Millisecond)
+	}
+
+	return nil
+}
+
+// DisconnectQemuNbd disconnects the NBD device at nbdPath.
+func DisconnectQemuNbd(nbdPath string) error {
+	_, err := subprocess.RunCommand("qemu-nbd", "--disconnect", nbdPath)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}

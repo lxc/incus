@@ -1,0 +1,613 @@
+package qmp
+
+import (
+	"context"
+	"encoding/json"
+	"errors"
+	"fmt"
+	"path/filepath"
+	"slices"
+	"strings"
+	"sync"
+	"time"
+
+	"github.com/lxc/incus/v7/internal/linux"
+	"github.com/lxc/incus/v7/shared/api"
+	"github.com/lxc/incus/v7/shared/logger"
+	"github.com/lxc/incus/v7/shared/util"
+)
+
+var (
+	monitors     = map[string]*Monitor{}
+	monitorsLock sync.Mutex
+)
+
+// RingbufSize is the size of the agent serial ringbuffer in bytes.
+var RingbufSize = 1024 * 16
+
+// EventAgentStarted is the event sent once the agent has started.
+var EventAgentStarted = "AGENT-STARTED"
+
+// EventAgentStopped is the event sent once the agent has stopped.
+var EventAgentStopped = "AGENT-STOPPED"
+
+// EventAgentTemplated is the event sent once the agent has applied the templates and is about to reboot.
+var EventAgentTemplated = "AGENT-TEMPLATED"
+
+// EventVMReset is the event sent when VM guest reboots.
+var EventVMReset = "RESET"
+
+// EventVMShutdown is the event sent when VM guest shuts down.
+var EventVMShutdown = "SHUTDOWN"
+
+// EventVMShutdownReasonDisconnect is used as the reason when the shutdown event is triggered by a QMP disconnect.
+var EventVMShutdownReasonDisconnect = "disconnect"
+
+// EventVMShutdownReasonGuestShutdown is set when the guest cleanly shut down (e.g. ACPI powerdown honored).
+var EventVMShutdownReasonGuestShutdown = "guest-shutdown"
+
+// EventVMShutdownReasonQuit is set when QEMU exits as a result of the host issuing a QMP quit command.
+var EventVMShutdownReasonQuit = "quit"
+
+// EventDiskEjected is used to indicate that a disk device was ejected by the guest.
+var EventDiskEjected = "DEVICE_TRAY_MOVED"
+
+// EventRTCChange is used to get RTC adjustment.
+var EventRTCChange = "RTC_CHANGE"
+
+// EventMigration is the event sent on migration status changes.
+var EventMigration = "MIGRATION"
+
+// ExcludedCommands is used to filter verbose commands from the QMP logs.
+var ExcludedCommands = []string{"ringbuf-read"}
+
+// Monitor represents a QMP monitor.
+type Monitor struct {
+	path string
+	qmp  *qemuMachineProtocol
+
+	agentStarted   bool
+	agentStartedMu sync.Mutex
+	disconnected   bool
+	chDisconnect   chan struct{}
+	eventHandler   func(name string, data map[string]any)
+	handlerCleared bool
+	serialCharDev  string
+	initialized    bool
+	expectingReset bool
+	stateMu        sync.Mutex
+	detachDisk     func(name string) error
+	instanceState  *api.InstanceState
+
+	listenersMu sync.Mutex
+	listenerID  uint64
+	listeners   map[uint64]eventListener
+}
+
+type eventListener struct {
+	name string
+	ch   chan map[string]any
+}
+
+// TransactionAction represents a single action within a QMP transaction.
+type TransactionAction struct {
+	Type string         `json:"type"`
+	Data map[string]any `json:"data"`
+}
+
+// start handles the background goroutines for event handling and monitoring the ringbuffer.
+func (m *Monitor) start() error {
+	// Ringbuffer monitoring function.
+	checkBuffer := func() {
+		// Prepare the response.
+		var resp struct {
+			Return string `json:"return"`
+		}
+
+		// Read the ringbuffer.
+		args := map[string]any{
+			"device": m.serialCharDev,
+			"size":   RingbufSize,
+			"format": "utf8",
+		}
+
+		err := m.Run("ringbuf-read", args, &resp)
+		if err != nil {
+			return
+		}
+
+		// Extract the last entry.
+		entries := strings.Split(resp.Return, "\n")
+		if len(entries) > 1 {
+			status := strings.TrimSuffix(entries[len(entries)-2], "\r")
+			var instanceState *api.InstanceState
+			if len(entries) > 2 {
+				var s api.InstanceState
+				err := json.Unmarshal([]byte(status), &s)
+
+				if err == nil && s.Pid == 1 {
+					instanceState = &s
+				}
+
+				status = strings.TrimSuffix(entries[len(entries)-3], "\r")
+			}
+
+			m.SetInstanceState(instanceState)
+			m.processAgentStatus(status)
+		}
+	}
+
+	// Start event monitoring go routine.
+	chEvents, err := m.qmp.getEvents(context.Background())
+	if err != nil {
+		return err
+	}
+
+	go func() {
+		logger.Debug("QMP monitor started", logger.Ctx{"path": m.path})
+		defer logger.Debug("QMP monitor stopped", logger.Ctx{"path": m.path})
+
+		// Initial read from the ringbuffer.
+		go checkBuffer()
+
+		for {
+			// Wait for an event, disconnection or timeout.
+			select {
+			case <-m.chDisconnect:
+				return
+			case e, more := <-chEvents:
+				// Handle media ejection.
+				if e.Event == EventDiskEjected {
+					id, ok := e.Data["id"].(string)
+					if ok {
+						// Only handle events that result in the tray being open.
+						trayOpen, ok := e.Data["tray-open"].(bool)
+						if ok && trayOpen {
+							go func() {
+								err = m.detachDisk(id)
+								if err != nil {
+									logger.Warnf("Unable to eject media %q: %v", id, err)
+								}
+							}()
+						}
+					}
+				}
+
+				// Deliver non-empty events to any registered listeners.
+				if e.Event != "" {
+					m.dispatchEvent(e.Event, e.Data)
+				}
+
+				// Deliver non-empty events to the event handler.
+				handler := m.getEventHandler()
+				if handler != nil && e.Event != "" {
+					if e.Event == EventVMShutdown {
+						// Prefer shutdown event generated by QEMU (contains useful info)
+						// and prevent duplicate shutdown event when monitor disconnects.
+						m.SetInitialized(false)
+					}
+
+					go handler(e.Event, e.Data)
+				}
+
+				// Event channel is closed, lets disconnect.
+				if !more {
+					// If disconnection happened unexpectedly then send shutdown event if
+					// enabled so that VM devices can be cleaned up on the host.
+
+					// Re-fetch the handler in case the QEMU driver has cleared the handler.
+					handler := m.getEventHandler()
+					if m.IsInitialized() && handler != nil {
+						go handler(EventVMShutdown, map[string]any{"reason": EventVMShutdownReasonDisconnect})
+					}
+
+					m.Disconnect()
+					return
+				}
+
+				if e.Event == "" {
+					logger.Warnf("Unexpected empty event received from qmp event channel")
+					time.Sleep(time.Second) // Don't spin if we receive a lot of these.
+					continue
+				}
+
+				// Check if the ringbuffer was updated (non-blocking).
+				go checkBuffer()
+			case <-time.After(10 * time.Second):
+				// Check if the ringbuffer was updated (non-blocking).
+				go checkBuffer()
+
+				continue
+			}
+		}
+	}()
+
+	return nil
+}
+
+// processAgentStatus handles a status string read from the agent vserial ringbuffer.
+func (m *Monitor) processAgentStatus(status string) {
+	m.agentStartedMu.Lock()
+	defer m.agentStartedMu.Unlock()
+
+	handler := m.getEventHandler()
+
+	switch status {
+	case "STARTED":
+		if !m.agentStarted && handler != nil {
+			go handler(EventAgentStarted, nil)
+		}
+
+		m.agentStarted = true
+	case "STOPPED":
+		if m.agentStarted && handler != nil {
+			go handler(EventAgentStopped, nil)
+		}
+
+		m.agentStarted = false
+	case "TEMPLATED":
+		if handler != nil {
+			go handler(EventAgentTemplated, nil)
+		}
+	}
+}
+
+// ping is used to validate if the QMP socket is still active.
+func (m *Monitor) ping() error {
+	// Check if disconnected
+	if m.disconnected {
+		return ErrMonitorDisconnect
+	}
+
+	id := m.qmp.qmpIncreaseID()
+
+	// Query the capabilities to validate the monitor.
+	_, err := m.qmp.run(fmt.Appendf([]byte{},
+		`{"execute": "query-version", "id": %d}`, id), id)
+	if err != nil {
+		// A slow QEMU is still alive, keep the monitor cached.
+		if errors.Is(err, ErrMonitorTimeout) {
+			return err
+		}
+
+		m.teardown()
+		return ErrMonitorDisconnect
+	}
+
+	return nil
+}
+
+// RunJSON executes a JSON-formatted command.
+func (m *Monitor) RunJSON(request []byte, resp any, logCommand bool, id uint32) error {
+	// Check if disconnected
+	if m.disconnected || m.qmp == nil {
+		return ErrMonitorDisconnect
+	}
+
+	var err error
+	if logCommand && m.qmp.log != nil {
+		_, err = fmt.Fprintf(m.qmp.log, "[%s] QUERY: %s\n", time.Now().Format(time.RFC3339), request)
+		if err != nil {
+			return err
+		}
+	}
+
+	out, err := m.qmp.run(request, id)
+	if err != nil {
+		// Keep the monitor cached on timeout so retries fail fast.
+		if errors.Is(err, ErrMonitorTimeout) {
+			return err
+		}
+
+		// An error reply came from QEMU itself, so it's alive.
+		var qmpErr *qmpError
+		if errors.As(err, &qmpErr) {
+			return err
+		}
+
+		// Confirm the daemon didn't die.
+		errPing := m.ping()
+		if errPing != nil {
+			return errPing
+		}
+
+		return err
+	}
+
+	if logCommand && m.qmp.log != nil {
+		_, err = fmt.Fprintf(m.qmp.log, "[%s] REPLY: %s\n\n", time.Now().Format(time.RFC3339), out)
+		if err != nil {
+			return err
+		}
+	}
+
+	// Decode the response if needed.
+	if resp != nil {
+		err = json.Unmarshal(out, &resp)
+		if err != nil {
+			// Confirm the daemon didn't die.
+			errPing := m.ping()
+			if errPing != nil {
+				return errPing
+			}
+
+			return fmt.Errorf("Unexpected monitor response: %w (%q)", err, string(out))
+		}
+	}
+
+	return nil
+}
+
+// IncreaseID returns on auto increment uint32 id.
+func (m *Monitor) IncreaseID() uint32 {
+	return m.qmp.qmpIncreaseID()
+}
+
+// Run executes a command.
+func (m *Monitor) Run(cmd string, args any, resp any) error {
+	id := m.IncreaseID()
+
+	// Construct the command.
+	requestArgs := qmpCommand{
+		ID:        id,
+		Execute:   cmd,
+		Arguments: args,
+	}
+
+	request, err := json.Marshal(requestArgs)
+	if err != nil {
+		return err
+	}
+
+	logCommand := !slices.Contains(ExcludedCommands, cmd)
+	return m.RunJSON(request, resp, logCommand, id)
+}
+
+// RunTransaction executes a series of commands as a single transaction.
+func (m *Monitor) RunTransaction(actions []TransactionAction) error {
+	var args struct {
+		Actions []TransactionAction `json:"actions"`
+	}
+
+	args.Actions = actions
+
+	err := m.Run("transaction", args, nil)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// Connect creates or retrieves an existing QMP monitor for the path.
+func Connect(path string, serialCharDev string, eventHandler func(name string, data map[string]any), logFile string, detachDisk func(name string) error) (*Monitor, error) {
+	monitorsLock.Lock()
+	defer monitorsLock.Unlock()
+
+	// Look for an existing monitor.
+	monitor, ok := monitors[path]
+	if ok {
+		monitor.setEventHandler(eventHandler)
+		return monitor, nil
+	}
+
+	// Setup the connection.
+	uc, err := linux.DialUnix(path)
+	if err != nil {
+		return nil, err
+	}
+
+	qmpConn := &qemuMachineProtocol{uc: uc}
+	if logFile != "" && util.PathExists(filepath.Dir(logFile)) {
+		qlog, err := newQmpLog(logFile)
+		if err != nil {
+			return nil, err
+		}
+
+		qmpConn.log = qlog
+	}
+
+	chError := make(chan error, 1)
+	go func() {
+		err = qmpConn.connect()
+		chError <- err
+	}()
+
+	select {
+	case err := <-chError:
+		if err != nil {
+			return nil, err
+		}
+
+	case <-time.After(5 * time.Second):
+		_ = qmpConn.disconnect()
+		return nil, errors.New("QMP connection timed out")
+	}
+
+	// Setup the monitor struct.
+	monitor = &Monitor{}
+	monitor.path = path
+	monitor.qmp = qmpConn
+	monitor.chDisconnect = make(chan struct{}, 1)
+	monitor.eventHandler = eventHandler
+	monitor.serialCharDev = serialCharDev
+	monitor.detachDisk = detachDisk
+
+	// Default to generating a shutdown event when the monitor disconnects so that devices can be
+	// cleaned up. This will be disabled after a shutdown event is received from QEMU itself to avoid
+	// causing multiple events.
+	monitor.initialized = true
+
+	// Spawn goroutines.
+	err = monitor.start()
+	if err != nil {
+		return nil, err
+	}
+
+	// Register in global map.
+	monitors[path] = monitor
+
+	return monitor, nil
+}
+
+// AgenStarted indicates whether an agent has been detected.
+func (m *Monitor) AgenStarted() bool {
+	m.agentStartedMu.Lock()
+	defer m.agentStartedMu.Unlock()
+
+	return m.agentStarted
+}
+
+// Disconnect forces a disconnection from QEMU.
+func (m *Monitor) Disconnect() {
+	// A deliberate disconnect must not be reported as a VM shutdown.
+	m.SetInitialized(false)
+	m.teardown()
+}
+
+// teardown closes the socket and drops the monitor from the cache.
+func (m *Monitor) teardown() {
+	monitorsLock.Lock()
+	defer monitorsLock.Unlock()
+
+	// Stop all go routines and disconnect from socket.
+	if !m.disconnected {
+		close(m.chDisconnect)
+		m.disconnected = true
+		_ = m.qmp.disconnect()
+	}
+
+	// Remove from the map.
+	delete(monitors, m.path)
+}
+
+// Wait returns a channel that will be closed on disconnection.
+func (m *Monitor) Wait() (chan struct{}, error) {
+	// Check if disconnected
+	if m.disconnected {
+		return nil, ErrMonitorDisconnect
+	}
+
+	return m.chDisconnect, nil
+}
+
+// GetInstanceState fetches the recorded instance state.
+func (m *Monitor) GetInstanceState() *api.InstanceState {
+	m.stateMu.Lock()
+	defer m.stateMu.Unlock()
+
+	return m.instanceState
+}
+
+// SetInstanceState updates the recorded instance state.
+func (m *Monitor) SetInstanceState(s *api.InstanceState) {
+	m.stateMu.Lock()
+	defer m.stateMu.Unlock()
+
+	m.instanceState = s
+}
+
+// SetInitialized enables or disables the on disconnect event.
+func (m *Monitor) SetInitialized(enable bool) {
+	m.stateMu.Lock()
+	defer m.stateMu.Unlock()
+
+	m.initialized = enable
+}
+
+// IsInitialized reports whether the monitor believes the VM has been fully initialized.
+func (m *Monitor) IsInitialized() bool {
+	m.stateMu.Lock()
+	defer m.stateMu.Unlock()
+
+	return m.initialized
+}
+
+// setEventHandler sets the current event handler (prevents race with getEventHandler).
+// setEventHandler sets the event handler. Clearing it is sticky so that the
+// caller taking over the shutdown of this QEMU isn't raced by re-arming connections.
+func (m *Monitor) setEventHandler(handler func(name string, data map[string]any)) {
+	m.stateMu.Lock()
+	defer m.stateMu.Unlock()
+
+	if handler == nil {
+		m.handlerCleared = true
+	} else if m.handlerCleared {
+		return
+	}
+
+	m.eventHandler = handler
+}
+
+// getEventHandler returns the current event handler (prevents race with setEventHandler).
+func (m *Monitor) getEventHandler() func(name string, data map[string]any) {
+	m.stateMu.Lock()
+	defer m.stateMu.Unlock()
+
+	return m.eventHandler
+}
+
+// listenForEvent registers a listener for the named event, returning a buffered channel
+// receiving the event data and a function to unregister the listener.
+func (m *Monitor) listenForEvent(name string) (chan map[string]any, func()) {
+	m.listenersMu.Lock()
+	defer m.listenersMu.Unlock()
+
+	if m.listeners == nil {
+		m.listeners = map[uint64]eventListener{}
+	}
+
+	m.listenerID++
+	id := m.listenerID
+
+	ch := make(chan map[string]any, 10)
+	m.listeners[id] = eventListener{name: name, ch: ch}
+
+	return ch, func() {
+		m.listenersMu.Lock()
+		defer m.listenersMu.Unlock()
+
+		delete(m.listeners, id)
+	}
+}
+
+// dispatchEvent delivers an event to matching listeners without ever blocking.
+func (m *Monitor) dispatchEvent(name string, data map[string]any) {
+	m.listenersMu.Lock()
+	defer m.listenersMu.Unlock()
+
+	for _, listener := range m.listeners {
+		if listener.name != name {
+			continue
+		}
+
+		select {
+		case listener.ch <- data:
+		default:
+		}
+	}
+}
+
+// ExpectReset marks the monitor as expecting a single RESET event triggered by us
+// (for example the deliberate system_reset issued during VM startup). The next RESET
+// event observed by the handler can be consumed via HandleReset.
+func (m *Monitor) ExpectReset() {
+	m.stateMu.Lock()
+	defer m.stateMu.Unlock()
+
+	m.expectingReset = true
+}
+
+// HandleReset returns true and clears the flag if a deliberate reset
+// was previously announced via ExpectReset. It returns false otherwise.
+func (m *Monitor) HandleReset() bool {
+	m.stateMu.Lock()
+	defer m.stateMu.Unlock()
+
+	if !m.expectingReset {
+		return false
+	}
+
+	m.expectingReset = false
+	return true
+}

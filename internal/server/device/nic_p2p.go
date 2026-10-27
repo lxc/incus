@@ -1,0 +1,422 @@
+package device
+
+import (
+	"errors"
+	"fmt"
+	"io/fs"
+
+	deviceConfig "github.com/lxc/incus/v7/internal/server/device/config"
+	"github.com/lxc/incus/v7/internal/server/instance"
+	"github.com/lxc/incus/v7/internal/server/instance/instancetype"
+	"github.com/lxc/incus/v7/internal/server/network"
+	localUtil "github.com/lxc/incus/v7/internal/server/util"
+	"github.com/lxc/incus/v7/shared/revert"
+	"github.com/lxc/incus/v7/shared/util"
+)
+
+type nicP2P struct {
+	deviceCommon
+}
+
+// CanHotPlug returns whether the device can be managed whilst the instance is running. Returns true.
+func (d *nicP2P) CanHotPlug() bool {
+	return true
+}
+
+// validateConfig checks the supplied config for correctness.
+func (d *nicP2P) validateConfig(instConf instance.ConfigReader, partialValidation bool) error {
+	if !instanceSupported(instConf.Type(), instancetype.Container, instancetype.VM) {
+		return ErrUnsupportedDevType
+	}
+
+	optionalFields := []string{
+		// gendoc:generate(entity=devices, group=nic_p2p, key=name)
+		//
+		// ---
+		//  type: string
+		//  default: kernel assigned
+		//  shortdesc: The name of the interface inside the instance
+		"name",
+
+		// gendoc:generate(entity=devices, group=nic_p2p, key=mtu)
+		//
+		// ---
+		//  type: integer
+		//  default: kernel assigned
+		//  shortdesc: The Maximum Transmit Unit (MTU) of the new interface
+		"mtu",
+
+		// gendoc:generate(entity=devices, group=nic_p2p, key=queue.discipline)
+		//
+		// ---
+		//  type: string
+		//  shortdesc: The queuing discipline to set on the NIC, applied to the rate limit's class when a limit is set
+		"queue.discipline",
+
+		// gendoc:generate(entity=devices, group=nic_p2p, key=queue.discipline.attach)
+		//
+		// ---
+		//  type: string
+		//  default: `queue`
+		//  shortdesc: Only for VMs: Whether to attach the queuing discipline to each transmit queue (`queue`) or to the interface root (`root`)
+		"queue.discipline.attach",
+
+		// gendoc:generate(entity=devices, group=nic_p2p, key=queue.tx.length)
+		//
+		// ---
+		//  type: integer
+		//  shortdesc: The transmit queue length for the NIC
+		"queue.tx.length",
+
+		// gendoc:generate(entity=devices, group=nic_p2p, key=hwaddr)
+		//
+		// ---
+		//  type: string
+		//  default: randomly assigned
+		//  shortdesc: The MAC address of the new interface
+		"hwaddr",
+
+		// gendoc:generate(entity=devices, group=nic_p2p, key=host_name)
+		//
+		// ---
+		//  type: string
+		//  default: randomly assigned
+		//  shortdesc: The name of the interface on the host
+		"host_name",
+
+		// gendoc:generate(entity=devices, group=nic_p2p, key=limits.ingress)
+		//
+		// ---
+		//  type: string
+		//  shortdesc: I/O limit in bit/s for incoming traffic (various suffixes supported, see {ref}`instances-limit-units`)
+		"limits.ingress",
+
+		// gendoc:generate(entity=devices, group=nic_p2p, key=limits.egress)
+		//
+		// ---
+		//  type: string
+		//  shortdesc: I/O limit in bit/s for outgoing traffic (various suffixes supported, see {ref}`instances-limit-units`)
+		"limits.egress",
+
+		// gendoc:generate(entity=devices, group=nic_p2p, key=limits.max)
+		//
+		// ---
+		//  type: string
+		//  shortdesc: I/O limit in bit/s for both incoming and outgoing traffic (same as setting both limits.ingress and limits.egress)
+		"limits.max",
+
+		// gendoc:generate(entity=devices, group=nic_p2p, key=limits.ingress.burst)
+		//
+		// ---
+		//  type: string
+		//  managed: no
+		//  shortdesc: I/O limit in bit/s that incoming traffic may burst up to, requires `limits.ingress.bucket`
+		"limits.ingress.burst",
+
+		// gendoc:generate(entity=devices, group=nic_p2p, key=limits.egress.burst)
+		//
+		// ---
+		//  type: string
+		//  managed: no
+		//  shortdesc: I/O limit in bit/s that outgoing traffic may burst up to, requires `limits.egress.bucket`
+		"limits.egress.burst",
+
+		// gendoc:generate(entity=devices, group=nic_p2p, key=limits.max.burst)
+		//
+		// ---
+		//  type: string
+		//  managed: no
+		//  shortdesc: I/O limit in bit/s that both incoming and outgoing traffic may burst up to (same as setting both `limits.ingress.burst` and `limits.egress.burst`)
+		"limits.max.burst",
+
+		// gendoc:generate(entity=devices, group=nic_p2p, key=limits.ingress.bucket)
+		//
+		// ---
+		//  type: string
+		//  managed: no
+		//  shortdesc: Amount of data in bit that incoming traffic may send in excess of `limits.ingress`, requires `limits.ingress.burst`
+		"limits.ingress.bucket",
+
+		// gendoc:generate(entity=devices, group=nic_p2p, key=limits.egress.bucket)
+		//
+		// ---
+		//  type: string
+		//  managed: no
+		//  shortdesc: Amount of data in bit that outgoing traffic may send in excess of `limits.egress`, requires `limits.egress.burst`
+		"limits.egress.bucket",
+
+		// gendoc:generate(entity=devices, group=nic_p2p, key=limits.max.bucket)
+		//
+		// ---
+		//  type: string
+		//  managed: no
+		//  shortdesc: Amount of data in bit that traffic may send in excess of the sustained limit (same as setting both `limits.ingress.bucket` and `limits.egress.bucket`)
+		"limits.max.bucket",
+
+		// gendoc:generate(entity=devices, group=nic_p2p, key=limits.priority)
+		//
+		// ---
+		//  type: integer
+		//  shortdesc: The priority for outgoing traffic, to be used by the kernel queuing discipline to prioritize network packets
+		"limits.priority",
+
+		// gendoc:generate(entity=devices, group=nic_p2p, key=ipv4.routes)
+		//
+		// ---
+		//  type: string
+		//  shortdesc: Comma-delimited list of IPv4 static routes to add on host to NIC
+		"ipv4.routes",
+
+		// gendoc:generate(entity=devices, group=nic_p2p, key=ipv6.routes)
+		//
+		// ---
+		//  type: string
+		//  shortdesc: Comma-delimited list of IPv6 static routes to add on host to NIC
+		"ipv6.routes",
+
+		// gendoc:generate(entity=devices, group=nic_p2p, key=boot.priority)
+		//
+		// ---
+		//  type: string
+		//  default: `skip`
+		//  shortdesc: Boot priority for VMs (higher value boots first), `skip` to skip
+		"boot.priority",
+
+		// gendoc:generate(entity=devices, group=nic_p2p, key=io.bus)
+		//
+		// ---
+		//  type: string
+		//  default: `virtio`
+		//  shortdesc: Override the bus for the device (can be `virtio` or `usb`) (VM only)
+		"io.bus",
+
+		// gendoc:generate(entity=devices, group=nic_p2p, key=attached)
+		//
+		// ---
+		//  type: bool
+		//  default: `true`
+		//  required: no
+		//  shortdesc: Whether the NIC is plugged in or not
+		"attached",
+
+		// gendoc:generate(entity=devices, group=nic_p2p, key=connected)
+		//
+		// ---
+		//  type: bool
+		//  default: `true`
+		//  required: no
+		//  shortdesc: Whether the NIC is connected to the host network
+		"connected",
+	}
+
+	err := d.config.Validate(nicValidationRules([]string{}, optionalFields, instConf))
+	if err != nil {
+		return err
+	}
+
+	err = nicValidateBurstLimits(d.config, true)
+	if err != nil {
+		return err
+	}
+
+	err = nicValidateQdisc(d.config, instConf.Type())
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// validateEnvironment checks the runtime environment for correctness.
+func (d *nicP2P) validateEnvironment() error {
+	if d.inst.Type() == instancetype.Container && d.config["name"] == "" {
+		return errors.New("Requires name property to start")
+	}
+
+	return nil
+}
+
+// UpdatableFields returns a list of fields that can be updated without triggering a device remove & add.
+func (d *nicP2P) UpdatableFields(oldDevice Type) []string {
+	// Check old and new device types match.
+	_, match := oldDevice.(*nicP2P)
+	if !match {
+		return []string{}
+	}
+
+	return []string{"limits.ingress", "limits.egress", "limits.max", "limits.ingress.burst", "limits.egress.burst", "limits.max.burst", "limits.ingress.bucket", "limits.egress.bucket", "limits.max.bucket", "limits.priority", "queue.discipline", "queue.discipline.attach", "ipv4.routes", "ipv6.routes", "connected", "boot.priority"}
+}
+
+// Start is run when the device is added to a running instance or instance is starting up.
+func (d *nicP2P) Start() (*deviceConfig.RunConfig, error) {
+	// Ignore detached NICs.
+	if !util.IsTrueOrEmpty(d.config["attached"]) {
+		return nil, nil
+	}
+
+	err := d.validateEnvironment()
+	if err != nil {
+		return nil, err
+	}
+
+	reverter := revert.New()
+	defer reverter.Fail()
+
+	saveData := make(map[string]string)
+	saveData["host_name"] = d.config["host_name"]
+
+	var peerName string
+	var mtu uint32
+
+	// Create veth pair and configure the peer end with custom hwaddr and mtu if supplied.
+	if d.inst.Type() == instancetype.Container {
+		err = d.generateAndPersistHostName(saveData, "veth")
+		if err != nil {
+			return nil, err
+		}
+
+		peerName, mtu, err = networkCreateVethPair(saveData["host_name"], d.config)
+	} else if d.inst.Type() == instancetype.VM {
+		err = d.generateAndPersistHostName(saveData, "tap")
+		if err != nil {
+			return nil, err
+		}
+
+		peerName = saveData["host_name"] // VMs use the host_name to link to the TAP FD.
+		mtu, err = networkCreateTap(saveData["host_name"], d.config)
+	}
+
+	if err != nil {
+		return nil, err
+	}
+
+	reverter.Add(func() { _ = network.InterfaceRemove(saveData["host_name"]) })
+
+	// Attempt to disable router advertisement acceptance.
+	err = localUtil.SysctlSet(fmt.Sprintf("net/ipv6/conf/%s/accept_ra", saveData["host_name"]), "0")
+	if err != nil && !errors.Is(err, fs.ErrNotExist) {
+		return nil, err
+	}
+
+	// Populate device config with volatile fields if needed.
+	networkVethFillFromVolatile(d.config, saveData)
+
+	// Apply host-side routes to veth interface.
+	err = networkNICRouteAdd(d.config["host_name"], "", "", append(util.SplitNTrimSpace(d.config["ipv4.routes"], ",", -1, true), util.SplitNTrimSpace(d.config["ipv6.routes"], ",", -1, true)...)...)
+	if err != nil {
+		return nil, err
+	}
+
+	// Apply host-side limits.
+	err = networkSetupHostVethLimits(&d.deviceCommon, nil, false)
+	if err != nil {
+		return nil, err
+	}
+
+	err = d.volatileSet(saveData)
+	if err != nil {
+		return nil, err
+	}
+
+	runConf := deviceConfig.RunConfig{}
+	runConf.NetworkInterface = []deviceConfig.RunConfigItem{
+		{Key: "type", Value: "phys"},
+		{Key: "name", Value: d.config["name"]},
+		{Key: "flags", Value: "up"},
+		{Key: "link", Value: peerName},
+		{Key: "hwaddr", Value: d.config["hwaddr"]},
+		{Key: "connected", Value: d.config["connected"]},
+	}
+
+	if d.config["io.bus"] == "usb" {
+		runConf.UseUSBBus = true
+	}
+
+	if d.inst.Type() == instancetype.VM {
+		runConf.NetworkInterface = append(runConf.NetworkInterface,
+			[]deviceConfig.RunConfigItem{
+				{Key: "devName", Value: d.name},
+				{Key: "mtu", Value: fmt.Sprintf("%d", mtu)},
+			}...)
+	}
+
+	reverter.Success()
+
+	return &runConf, nil
+}
+
+// Update applies configuration changes to a started device.
+func (d *nicP2P) Update(oldDevices deviceConfig.Devices, isRunning bool) error {
+	if !isRunning {
+		return nil
+	}
+
+	err := d.validateEnvironment()
+	if err != nil {
+		return err
+	}
+
+	oldConfig := oldDevices[d.name]
+	v := d.volatileGet()
+
+	// Populate device config with volatile fields if needed.
+	networkVethFillFromVolatile(d.config, v)
+	networkVethFillFromVolatile(oldConfig, v)
+
+	// Remove old host-side routes from veth interface.
+	networkNICRouteDelete(oldConfig["host_name"], "", "", append(util.SplitNTrimSpace(oldConfig["ipv4.routes"], ",", -1, true), util.SplitNTrimSpace(oldConfig["ipv6.routes"], ",", -1, true)...)...)
+
+	// Apply host-side routes to veth interface.
+	err = networkNICRouteAdd(d.config["host_name"], "", "", append(util.SplitNTrimSpace(d.config["ipv4.routes"], ",", -1, true), util.SplitNTrimSpace(d.config["ipv6.routes"], ",", -1, true)...)...)
+	if err != nil {
+		return err
+	}
+
+	// Apply host-side limits.
+	err = networkSetupHostVethLimits(&d.deviceCommon, oldConfig, false)
+	if err != nil {
+		return err
+	}
+
+	return d.setNICLink()
+}
+
+// Stop is run when the device is removed from the instance.
+func (d *nicP2P) Stop() (*deviceConfig.RunConfig, error) {
+	// Populate device config with volatile fields (hwaddr and host_name) if needed.
+	networkVethFillFromVolatile(d.config, d.volatileGet())
+
+	err := networkClearHostVethLimits(&d.deviceCommon)
+	if err != nil {
+		return nil, err
+	}
+
+	runConf := deviceConfig.RunConfig{
+		PostHooks: []func() error{d.postStop},
+	}
+
+	return &runConf, nil
+}
+
+// postStop is run after the device is removed from the instance.
+func (d *nicP2P) postStop() error {
+	defer func() {
+		_ = d.volatileSet(map[string]string{
+			"host_name": "",
+		})
+	}()
+
+	v := d.volatileGet()
+
+	networkVethFillFromVolatile(d.config, v)
+
+	if d.config["host_name"] != "" && network.InterfaceExists(d.config["host_name"]) {
+		// Removing host-side end of veth pair will delete the peer end too.
+		err := network.InterfaceRemove(d.config["host_name"])
+		if err != nil {
+			return fmt.Errorf("Failed to remove interface %s: %w", d.config["host_name"], err)
+		}
+	}
+
+	return nil
+}

@@ -1,0 +1,970 @@
+package usage
+
+import (
+	"fmt"
+	"os"
+	"slices"
+	"strings"
+
+	"github.com/fatih/color"
+
+	incus "github.com/lxc/incus/v7/client"
+	cliColor "github.com/lxc/incus/v7/cmd/incus/color"
+	"github.com/lxc/incus/v7/internal/i18n"
+)
+
+// makeList is a helper function building list atoms.
+func makeList(atom Atom, minOccurrences int, separator ...string) Atom {
+	if len(separator) == 0 {
+		return list{atom, minOccurrences, " "}
+	}
+
+	return list{atom, minOccurrences, separator[0]}
+}
+
+// makeOptional is a helper function building optional atoms.
+func makeOptional(atom Atom, chain []Atom) Atom {
+	if len(chain) == 0 {
+		return optional{atom}
+	}
+
+	return optional{compound{" ", append([]Atom{atom}, chain...)}}
+}
+
+// Atom is the type of command-line atoms.
+type Atom interface {
+	List(minOccurrences int, separator ...string) Atom
+	Optional(chain ...Atom) Atom
+	Parse(conf Config, servers map[string]incus.InstanceServer, args *[]string) (*Parsed, error)
+	Render() string
+	Remote() Atom
+}
+
+// alternative represents alternatives between several atoms.
+type alternative struct {
+	atoms []Atom
+}
+
+// List makes the atom accept a list.
+func (a alternative) List(minOccurrences int, separator ...string) Atom {
+	return makeList(a, minOccurrences, separator...)
+}
+
+// Optional makes the atom optional.
+func (a alternative) Optional(chain ...Atom) Atom {
+	return makeOptional(a, chain)
+}
+
+// Parse parses the atom.
+func (a alternative) Parse(conf Config, servers map[string]incus.InstanceServer, args *[]string) (*Parsed, error) {
+	// Parsing alternatives is not implemented cleverly at all: the first matching atom is the one
+	// that will be used. This means that matching against something optional will always succeed,
+	// which may not be intended.
+	verbatimOnly := true
+	verbatimElements := make([]string, len(a.atoms))
+	for i, atom := range a.atoms {
+		// For diagnosis purposes, we record verbatim atoms.
+		v, ok := atom.(verbatim)
+		if ok {
+			verbatimElements[i] = v.Render()
+		} else {
+			verbatimOnly = false
+		}
+
+		// We need to perform a deep copy of the arguments here, to easily rollback to a clean state if
+		// something bad happened.
+		argsCopy := make([]string, len(*args))
+		copy(argsCopy, *args)
+		p, err := atom.Parse(conf, servers, &argsCopy)
+		if err != nil {
+			if isParsingError(err) {
+				continue
+			}
+
+			return nil, err
+		}
+
+		*args = argsCopy
+		p.BranchID = i
+		return p, nil
+	}
+
+	// We defer this check to the very end, in case we have some exotic parsing rules. If we get out
+	// of the loop, this probably means that the argument count is a problem.
+	if len(*args) == 0 {
+		return nil, &notEnoughArgumentsError{a}
+	}
+
+	arg := (*args)[0]
+
+	// If nothing is found, try to emit a nice diagnosis if possible.
+	if verbatimOnly {
+		return nil, &argumentMismatchError{arg, verbatimElements}
+	}
+
+	return nil, &argumentMismatchError{arg, []string{}}
+}
+
+// Render renders the atom's usage string.
+func (a alternative) Render() string {
+	elements := make([]string, len(a.atoms))
+	for i, atom := range a.atoms {
+		elements[i] = atom.Render()
+	}
+
+	faint := color.New(color.Faint)
+	return faint.Sprint("(") + strings.Join(elements, faint.Sprint("|")) + faint.Sprint(")")
+}
+
+// Remote prefixes the atom with a remote.
+func (a alternative) Remote() Atom {
+	return remote{Remote, a, true}
+}
+
+// compound represents a sequence of atoms separated with a separator.
+type compound struct {
+	separator string
+	atoms     []Atom
+}
+
+// List makes the atom accept a list.
+func (c compound) List(minOccurrences int, separator ...string) Atom {
+	return makeList(c, minOccurrences, separator...)
+}
+
+// Optional makes the atom optional.
+func (c compound) Optional(chain ...Atom) Atom {
+	return makeOptional(c, chain)
+}
+
+// Parse parses the atom.
+func (c compound) Parse(conf Config, servers map[string]incus.InstanceServer, args *[]string) (*Parsed, error) {
+	var consumed []string
+	n := len(c.atoms)
+	ps := make([]*Parsed, n)
+	atoms := c.atoms
+
+	// RTL parsing requires us to reverse our atoms when the sequence is separated by spaces.
+	if c.separator == " " && conf.RTL {
+		// We don’t want to modify the original slice, as this may be reused.
+		atoms = make([]Atom, n)
+		for i, atom := range c.atoms {
+			atoms[n-1-i] = atom
+		}
+	}
+
+	// If the compound atom starts with optional atom(s), our dumb greedy parsing fails if those
+	// optional atoms are not set. Instead of coming up with something more clever, we just shift them
+	// as needed. We first have to count the optional atoms at the end of our compound.
+	nOpt := 0
+	for i := range n {
+		_, ok := atoms[n-i-1].(optional)
+		if !ok {
+			break
+		}
+
+		nOpt++
+	}
+
+	confLTR := conf
+	confLTR.RTL = false
+
+	// The parsing method differs a bit depending on the separator in use.
+	if c.separator == " " {
+		nSub := len(*args)
+		i := 0
+
+		// Ignore optional atoms that cannot be set.
+		for i < n-nOpt-nSub {
+			o, ok := atoms[i].(optional)
+			if !ok {
+				break
+			}
+
+			p, err := o.Parse(confLTR, servers, &[]string{})
+			if err != nil {
+				return nil, err
+			}
+
+			ps[i] = p
+			i++
+		}
+
+		for i < n {
+			p, err := atoms[i].Parse(confLTR, servers, args)
+			if err != nil {
+				return nil, err
+			}
+
+			ps[i] = p
+
+			// Prevent displaying useless spaces
+			if !p.Skipped {
+				consumed = append(consumed, p.String)
+			}
+
+			i++
+		}
+
+		if conf.RTL {
+			slices.Reverse(consumed)
+			slices.Reverse(ps)
+		}
+	} else {
+		if len(*args) == 0 {
+			return nil, &notEnoughArgumentsError{c}
+		}
+
+		arg := (*args)[0]
+		consumed = []string{arg}
+		subArgs := strings.Split(arg, c.separator)
+		nSub := len(subArgs)
+		i := 0
+
+		// Ignore optional atoms that cannot be set.
+		for i < n-nOpt-nSub {
+			o, ok := atoms[i].(optional)
+			if !ok {
+				break
+			}
+
+			p, err := o.Parse(confLTR, servers, &[]string{})
+			if err != nil {
+				return nil, err
+			}
+
+			ps[i] = p
+			i++
+		}
+
+		// Parsing up to the penultimate atom behaves normally.
+		for i < n-1 {
+			p, err := atoms[i].Parse(confLTR, servers, &subArgs)
+			if err != nil {
+				return nil, err
+			}
+
+			ps[i] = p
+			i++
+		}
+
+		// For the last atom, we join all the remaining sub-arguments. There are multiple reasons for
+		// this: when parsing K/V pairs, we want to allow the user to enter `=` characters in the values
+		// and have them processed normally, but in some very specific cases where the number of atoms
+		// not being ignored cannot easily be known in advance, we may end up messing with the arguments
+		// if we use `SplitN` naïvely.
+		lastArgs := []string{}
+		if len(subArgs) > 0 {
+			lastArgs = append(lastArgs, strings.Join(subArgs, c.separator))
+		}
+
+		p, err := atoms[n-1].Parse(confLTR, servers, &lastArgs)
+		if err != nil {
+			return nil, err
+		}
+
+		ps[n-1] = p
+		*args = (*args)[1:]
+	}
+
+	stringList := make([]string, len(ps))
+	for i, p := range ps {
+		stringList[i] = p.String
+	}
+
+	return &Parsed{source: c, String: strings.Join(consumed, " "), List: ps, StringList: stringList}, nil
+}
+
+// Render renders the atom's usage string.
+func (c compound) Render() string {
+	if len(c.atoms) == 1 {
+		return c.atoms[0].Render()
+	}
+
+	var sb strings.Builder
+	firstNonOptionalAtom := 0
+	for i, atom := range c.atoms {
+		// If our atom is optional, its separator should be included in the optional string, because it
+		// wouldn't appear if the atom is not specified by the user.
+		o, ok := atom.(optional)
+		// Spaces convey no semantic value in this case, so it feels more natural not to include them in
+		// optional blocks (`<foo> [<bar>]` vs `<foo>[ <bar>]`).
+		if ok && c.separator != " " {
+			if i == firstNonOptionalAtom {
+				// If optional atoms appear at the beginning of the compound atom, they behave differently
+				// with regard to the separator (`[<foo>/][<bar>/]<baz>` vs `[<foo>][/<bar>]/<baz>`).
+				sb.WriteString(optional{verbatim{o.atom.Render() + c.separator}}.Render())
+				firstNonOptionalAtom++
+			} else {
+				sb.WriteString(optional{verbatim{c.separator + o.atom.Render()}}.Render())
+			}
+		} else {
+			if i == firstNonOptionalAtom {
+				// The separator must be omitted at the beginning of the compound, or just after optional
+				// atoms at the beginning of the compound.
+				sb.WriteString(atom.Render())
+			} else {
+				sb.WriteString(c.separator + atom.Render())
+			}
+		}
+	}
+
+	return sb.String()
+}
+
+// Remote prefixes the atom with a remote.
+func (c compound) Remote() Atom {
+	return remote{Remote, c, true}
+}
+
+// deprecated represents an atom whose usage is deprecated.
+type deprecated struct {
+	atom    Atom
+	warning string
+}
+
+// List makes the atom accept a list.
+func (d deprecated) List(minOccurrences int, separator ...string) Atom {
+	return deprecated{d.atom.List(minOccurrences, separator...), d.warning}
+}
+
+// Optional makes the atom optional.
+func (d deprecated) Optional(chain ...Atom) Atom {
+	return deprecated{d.atom.Optional(chain...), d.warning}
+}
+
+// Parse parses the atom.
+func (d deprecated) Parse(conf Config, servers map[string]incus.InstanceServer, args *[]string) (*Parsed, error) {
+	parsed, err := d.atom.Parse(conf, servers, args)
+	if err != nil {
+		return nil, err
+	}
+
+	syntax := renderRaw(d.atom)
+	fmt.Fprintf(os.Stderr, i18n.G("%s the %s syntax is deprecated; %s\n"), cliColor.WarningPrefix, quote(syntax), d.warning)
+	return parsed, nil
+}
+
+// Render renders the atom's usage string.
+func (d deprecated) Render() string {
+	return d.atom.Render()
+}
+
+// Remote prefixes the atom with a remote.
+func (d deprecated) Remote() Atom {
+	return remote{Remote, d, true}
+}
+
+// flag represents a command-line flag.
+type flag struct {
+	name string
+}
+
+// List makes the atom accept a list. This is probably a very bad idea.
+func (f flag) List(minOccurrences int, separator ...string) Atom {
+	return makeList(f, minOccurrences, separator...)
+}
+
+// Optional makes the atom optional.
+func (f flag) Optional(chain ...Atom) Atom {
+	return makeOptional(f, chain)
+}
+
+// Parse parses the atom.
+func (f flag) Parse(conf Config, servers map[string]incus.InstanceServer, args *[]string) (*Parsed, error) {
+	cmdFlag := conf.Command.Flag(f.name)
+	if cmdFlag == nil {
+		return nil, fmt.Errorf(i18n.G("Unknown flag --%s"), f.name)
+	}
+
+	if cmdFlag.Changed {
+		return &Parsed{source: f, String: "--" + f.name}, nil
+	}
+
+	return nil, &argumentMismatchError{"", []string{"--" + f.name}}
+}
+
+// Render renders the atom's usage string.
+func (f flag) Render() string {
+	return verbatim{"--" + f.name}.Render()
+}
+
+// Remote is a no-op.
+func (f flag) Remote() Atom {
+	return f
+}
+
+// hide represents an atom whose internal value is hidden.
+type hide struct {
+	atom        Atom
+	replacement Atom
+}
+
+// List makes the atom accept a list.
+func (h hide) List(minOccurrences int, separator ...string) Atom {
+	return makeList(h, minOccurrences, separator...)
+}
+
+// Optional makes the atom optional.
+func (h hide) Optional(chain ...Atom) Atom {
+	return makeOptional(h, chain)
+}
+
+// Parse parses the atom.
+func (h hide) Parse(conf Config, servers map[string]incus.InstanceServer, args *[]string) (*Parsed, error) {
+	return h.atom.Parse(conf, servers, args)
+}
+
+// Render renders the atom's usage string.
+func (h hide) Render() string {
+	return h.replacement.Render()
+}
+
+// Remote prefixes the atom with a remote.
+func (h hide) Remote() Atom {
+	return remote{Remote, h, true}
+}
+
+// list represents a list of atoms of arbitrary length.
+type list struct {
+	atom           Atom
+	minOccurrences int
+	separator      string
+}
+
+// List makes the atom accept a list.
+func (l list) List(minOccurrences int, separator ...string) Atom {
+	return makeList(l, minOccurrences, separator...)
+}
+
+// Optional makes the atom optional.
+func (l list) Optional(chain ...Atom) Atom {
+	return makeOptional(list{l.atom, max(l.minOccurrences, 1), l.separator}, chain)
+}
+
+// Parse parses the atom.
+func (l list) Parse(conf Config, servers map[string]incus.InstanceServer, args *[]string) (*Parsed, error) {
+	var ps []*Parsed
+	var consumed []string
+
+	// The parsing method differs a bit depending on the separator in use.
+	if l.separator == " " {
+		// The required occurrences of the list can have direct access to the args.
+		for range l.minOccurrences {
+			p, err := l.atom.Parse(conf, servers, args)
+			if err != nil {
+				return nil, err
+			}
+
+			ps = append(ps, p)
+			consumed = append(consumed, p.String)
+		}
+
+		// For the rest, because we stop processing the list as soon as a problem is encountered, only a
+		// copy of the args should be manipulated. We do a full copy every time which is a bit costly,
+		// but it’s better to be safe here.
+		for {
+			argsCopy := make([]string, len(*args))
+			copy(argsCopy, *args)
+			p, err := l.atom.Parse(conf, servers, &argsCopy)
+			if err != nil {
+				// If there is a parsing error, simply throw it away.
+				if isParsingError(err) {
+					break
+				}
+
+				return nil, err
+			}
+
+			*args = argsCopy
+			ps = append(ps, p)
+			consumed = append(consumed, p.String)
+		}
+
+		if conf.RTL {
+			slices.Reverse(consumed)
+			slices.Reverse(ps)
+		}
+	} else {
+		// In this case, the whole argument needs to be consumed, but parsing failures when the list is
+		// optional are perfectly fine.
+		var subArgs []string
+		if len(*args) == 0 {
+			subArgs = []string{}
+			consumed = []string{}
+		} else {
+			arg := (*args)[0]
+			subArgs = strings.Split(arg, l.separator)
+			consumed = []string{arg}
+		}
+
+		i := 0
+		for i < l.minOccurrences || len(subArgs) > 0 {
+			confLTR := conf
+			confLTR.RTL = false
+			p, err := l.atom.Parse(confLTR, servers, &subArgs)
+			if err != nil {
+				// If there is a parsing error and the list is optional, simply throw it away and rollback
+				// the whole thing.
+				if l.minOccurrences == 0 && isParsingError(err) {
+					return &Parsed{source: l, err: err, Skipped: true}, nil
+				}
+
+				return nil, err
+			}
+
+			ps = append(ps, p)
+			i++
+		}
+
+		// If everything went right, we can safely consume the argument.
+		if len(*args) > 0 {
+			*args = (*args)[1:]
+		}
+	}
+
+	stringList := make([]string, len(ps))
+	for i, p := range ps {
+		stringList[i] = p.String
+	}
+
+	skipped := len(ps) == 0
+	return &Parsed{source: l, String: strings.Join(consumed, " "), List: ps, StringList: stringList, Skipped: skipped}, nil
+}
+
+// Render renders the atom's usage string.
+func (l list) Render() string {
+	faint := color.New(color.Faint)
+	switch l.minOccurrences {
+	case 0:
+		// Lists with 0 minimum elements behave like optional lists with at least 1 element.
+		return optional{list{l.atom, 1, l.separator}}.Render()
+	case 1:
+		element := l.atom.Render()
+		if l.separator == " " {
+			// If the separator is a space, `...` is widely understood as a valid repetition token
+			// (`<foo>...`).
+			return element + faint.Sprint("...")
+		}
+
+		// Else, we are a bit more explicit (e.g., with `,` as the separator, `<foo>[,<foo>...]`).
+		return element + optional{verbatim{l.separator + element + faint.Sprint("...")}}.Render()
+	default:
+		// We recurse when the list has more that 1 minimum elements.
+		return l.atom.Render() + l.separator + list{l.atom, l.minOccurrences - 1, l.separator}.Render()
+	}
+}
+
+// Remote prefixes the atom with a remote.
+func (l list) Remote() Atom {
+	// It doesn't really make sense to prefix a list with a remote, so we distribute the operation.
+	return remote{Remote, l.atom, true}.List(l.minOccurrences, l.separator)
+}
+
+// optional represents an optional atom.
+type optional struct {
+	atom Atom
+}
+
+// List makes the atom accept a list.
+func (o optional) List(minOccurrences int, separator ...string) Atom {
+	// We define optional.List as list.Optional.
+	return makeList(o.atom, minOccurrences, separator...).Optional()
+}
+
+// Optional makes the atom optional.
+func (o optional) Optional(chain ...Atom) Atom {
+	return makeOptional(o.atom, chain)
+}
+
+// Parse parses the atom.
+func (o optional) Parse(conf Config, servers map[string]incus.InstanceServer, args *[]string) (*Parsed, error) {
+	// We need to perform a deep copy of the arguments here, to easily rollback to a clean state if
+	// something bad happened.
+	argsCopy := make([]string, len(*args))
+	copy(argsCopy, *args)
+
+	p, err := o.atom.Parse(conf, servers, &argsCopy)
+	if err != nil {
+		// If there is a parsing error, simply throw it away.
+		if isParsingError(err) {
+			return &Parsed{source: o, err: err, Skipped: true}, nil
+		}
+
+		return nil, err
+	}
+
+	*args = argsCopy
+	return p, nil
+}
+
+// Render renders the atom's usage string.
+func (o optional) Render() string {
+	faint := color.New(color.Faint)
+	return faint.Sprint("[") + o.atom.Render() + faint.Sprint("]")
+}
+
+// Remote prefixes the atom with a remote.
+func (o optional) Remote() Atom {
+	return remote{Remote, o, true}
+}
+
+// placeholder represents a placeholder atom.
+type placeholder struct {
+	element    string
+	allowEmpty bool
+}
+
+// List makes the atom accept a list.
+func (p placeholder) List(minOccurrences int, separator ...string) Atom {
+	return makeList(p, minOccurrences, separator...)
+}
+
+// Optional makes the atom optional.
+func (p placeholder) Optional(chain ...Atom) Atom {
+	return makeOptional(p, chain)
+}
+
+// Parse parses the atom.
+func (p placeholder) Parse(conf Config, servers map[string]incus.InstanceServer, args *[]string) (*Parsed, error) {
+	if len(*args) == 0 {
+		return nil, &notEnoughArgumentsError{p}
+	}
+
+	arg := (*args)[0]
+	if arg == "" && !p.allowEmpty {
+		return nil, &notEnoughArgumentsError{p}
+	}
+
+	*args = (*args)[1:]
+	return &Parsed{source: p, String: arg}, nil
+}
+
+// Render renders the atom's usage string.
+func (p placeholder) Render() string {
+	return color.GreenString("<" + p.element + ">")
+}
+
+// Remote prefixes the atom with a remote.
+func (p placeholder) Remote() Atom {
+	return remote{Remote, p, true}
+}
+
+// remote represents an atom prefixed with a remote.
+type remote struct {
+	atom     Atom
+	suffix   Atom
+	optional bool
+}
+
+// List makes the atom accept a list.
+func (r remote) List(minOccurrences int, separator ...string) Atom {
+	return makeList(r, minOccurrences, separator...)
+}
+
+// Optional makes the atom optional.
+func (r remote) Optional(chain ...Atom) Atom {
+	return makeOptional(r, chain)
+}
+
+// Parse parses the atom.
+func (r remote) Parse(conf Config, servers map[string]incus.InstanceServer, args *[]string) (*Parsed, error) {
+	skipped := false
+	arg := ""
+	if len(*args) == 0 {
+		skipped = true
+	} else {
+		arg = (*args)[0]
+	}
+
+	if skipped && !r.optional {
+		return nil, &notEnoughArgumentsError{r}
+	}
+
+	remoteName, rest, remoteErr := conf.CLIConfig.ParseRemote(arg)
+	restArgs := []string{}
+	if rest != "" {
+		restArgs = append(restArgs, rest)
+	}
+
+	var p *Parsed
+	var err error
+
+	// From here, we soft-fail if the remote is of the form `[<remote>:]` and hard-fail otherwise.
+	if r.suffix == nil {
+		if rest != "" {
+			// Because this atom is skipped, we fallback to the default remote.
+			remoteServer, serverErr := getInstanceServer(conf, servers, conf.CLIConfig.DefaultRemote)
+			if serverErr != nil {
+				return nil, serverErr
+			}
+
+			if strings.Contains(arg, ":") {
+				// If `:` is in the original argument, it means there is superfluous data after the `:`.
+				err = &argumentNotFullyConsumedError{rest, arg}
+			} else {
+				// Otherwise, it is the same thing, but it may suggest that the user forgot to type `:`. The
+				// error type is semantically not the most appropriate, but it nicely mirrors what is done
+				// in compound atoms.
+				err = &notEnoughArgumentsError{verbatim{}}
+			}
+
+			if r.optional {
+				return &Parsed{source: r, err: err, RemoteName: conf.CLIConfig.DefaultRemote, RemoteServer: remoteServer, Skipped: true}, nil
+			}
+
+			return nil, err
+		}
+	} else {
+		confLTR := conf
+		confLTR.RTL = false
+		p, err = r.suffix.Parse(confLTR, servers, &restArgs)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	if len(restArgs) != 0 {
+		return nil, &argumentNotFullyConsumedError{restArgs[0], arg}
+	}
+
+	// If the remote doesn’t exist, we fail here.
+	if remoteErr != nil {
+		return nil, remoteErr
+	}
+
+	remoteServer, err := getInstanceServer(conf, servers, remoteName)
+	if err != nil {
+		return nil, err
+	}
+
+	// We defer the argument shifting so that code paths ignoring this atom can consume its arguments
+	// again.
+	if len(*args) > 0 {
+		*args = (*args)[1:]
+	}
+
+	return &Parsed{source: r, String: arg, RemoteName: remoteName, RemoteServer: remoteServer, RemoteObject: p, Skipped: skipped}, nil
+}
+
+// Render renders the atom's usage string.
+func (r remote) Render() string {
+	suffix := r.suffix
+	if suffix == nil {
+		suffix = verbatim{}
+	}
+
+	var prefix Atom
+	prefix = compound{":", []Atom{r.atom, verbatim{""}}}
+	if r.optional {
+		prefix = prefix.Optional()
+	}
+
+	return prefix.Render() + suffix.Render()
+}
+
+// Remote prefixes the atom with a remote.
+func (r remote) Remote() Atom {
+	// This is obviously a no-op.
+	return r
+}
+
+// remote represents a verbatim atom.
+type verbatim struct {
+	element string
+}
+
+// List makes the atom accept a list.
+func (v verbatim) List(minOccurrences int, separator ...string) Atom {
+	return makeList(v, minOccurrences, separator...)
+}
+
+// Optional makes the atom optional.
+func (v verbatim) Optional(chain ...Atom) Atom {
+	return makeOptional(v, chain)
+}
+
+// Parse parses the atom.
+func (v verbatim) Parse(conf Config, servers map[string]incus.InstanceServer, args *[]string) (*Parsed, error) {
+	if len(*args) == 0 {
+		return nil, &notEnoughArgumentsError{v}
+	}
+
+	arg := (*args)[0]
+	*args = (*args)[1:]
+
+	if arg != v.element {
+		expected := []string{}
+		if v.element != "" {
+			expected = append(expected, v.element)
+		}
+
+		return nil, &argumentMismatchError{arg, expected}
+	}
+
+	return &Parsed{source: v, String: arg}, nil
+}
+
+// Render renders the atom's usage string.
+func (v verbatim) Render() string {
+	return v.element
+}
+
+// Remote prefixes the atom with a remote.
+func (v verbatim) Remote() Atom {
+	return remote{Remote, v, true}
+}
+
+// A few strings used throughout the Incus client.
+var (
+	ACL                = placeholder{i18n.G("ACL"), false}
+	Address            = placeholder{i18n.G("address"), false}
+	AddressSet         = placeholder{i18n.G("address set"), false}
+	Alias              = placeholder{i18n.G("alias"), false}
+	Backend            = placeholder{i18n.G("backend"), false}
+	BackupFile         = placeholder{i18n.G("backup file"), false}
+	Bucket             = placeholder{i18n.G("bucket"), false}
+	Client             = placeholder{i18n.G("client"), false}
+	CommandLine        = list{placeholder{i18n.G("command-line argument"), true}, 1, " "}
+	Default            = placeholder{i18n.G("default"), false}
+	Device             = placeholder{i18n.G("device"), false}
+	Direction          = alternative{[]Atom{verbatim{"ingress"}, verbatim{"egress"}}}
+	Directory          = placeholder{i18n.G("directory"), false}
+	Driver             = placeholder{i18n.G("driver"), false}
+	EndOfFlags         = hide{optional{verbatim{"--"}}, verbatim{"[flags] [--]"}}
+	Expiry             = placeholder{i18n.G("expiry"), false}
+	File               = placeholder{i18n.G("file"), false}
+	Filter             = placeholder{i18n.G("filter"), false}
+	Fingerprint        = placeholder{i18n.G("fingerprint"), false}
+	Group              = placeholder{i18n.G("group"), false}
+	Image              = placeholder{i18n.G("image"), false}
+	Instance           = placeholder{i18n.G("instance"), false}
+	Interface          = placeholder{i18n.G("interface"), false}
+	ListenAddress      = placeholder{i18n.G("listen address"), false}
+	ListenPort         = placeholder{i18n.G("listen port"), false}
+	KeepaliveTimeout   = placeholder{i18n.G("keepalive timeout"), false}
+	Key                = placeholder{i18n.G("key"), false}
+	KV                 = MakeKV(Key, Value)
+	Member             = placeholder{i18n.G("member"), false}
+	Network            = placeholder{i18n.G("network"), false}
+	NetworkIntegration = placeholder{i18n.G("network integration"), false}
+	Operation          = placeholder{i18n.G("operation"), false}
+	Path               = placeholder{i18n.G("path"), true}
+	Peer               = placeholder{i18n.G("peer"), false}
+	Pool               = placeholder{i18n.G("pool"), false}
+	Port               = placeholder{i18n.G("port"), false}
+	Profile            = placeholder{i18n.G("profile"), false}
+	Project            = placeholder{i18n.G("project"), false}
+	Protocol           = placeholder{i18n.G("protocol"), false}
+	Query              = placeholder{i18n.G("query"), false}
+	Record             = placeholder{i18n.G("record"), false}
+	Remote             = placeholder{i18n.G("remote"), false}
+	RemoteColon        = remote{Remote, nil, false}
+	RemoteColonOpt     = remote{Remote, nil, true}
+	RemoteImage        = compound{":", []Atom{optional{Remote}, Image}}
+	Role               = placeholder{i18n.G("role"), false}
+	Snapshot           = placeholder{i18n.G("snapshot"), false}
+	StorageVolumeType  = hide{alternative{[]Atom{verbatim{"custom"}, verbatim{"image"}, verbatim{"container"}, verbatim{"virtual-machine"}}}, placeholder{i18n.G("type"), false}}
+	SymlinkTargetPath  = placeholder{i18n.G("symlink target path"), false}
+	Tarball            = placeholder{i18n.G("tarball"), false}
+	Template           = placeholder{i18n.G("template"), false}
+	Token              = placeholder{i18n.G("token"), false}
+	Type               = placeholder{i18n.G("type"), false}
+	URL                = placeholder{i18n.G("URL"), false}
+	Value              = placeholder{i18n.G("value"), true}
+	Variable           = placeholder{i18n.G("variable"), false}
+	Volume             = placeholder{i18n.G("volume"), false}
+	WarningUUID        = placeholder{i18n.G("warning UUID"), false}
+	Zone               = placeholder{i18n.G("zone"), false}
+)
+
+// Either builds an alternative atom from several atoms.
+func Either(atoms ...Atom) Atom {
+	return alternative{atoms}
+}
+
+// EitherVerbatim builds an alternative of verbatim atoms from several strings.
+func EitherVerbatim(elements ...string) Atom {
+	atoms := make([]Atom, len(elements))
+	for i, element := range elements {
+		atoms[i] = verbatim{element}
+	}
+
+	return alternative{atoms}
+}
+
+// EitherPlaceholder builds an alternative of placeholder atoms from several strings.
+func EitherPlaceholder(elements ...string) Atom {
+	atoms := make([]Atom, len(elements))
+	for i, element := range elements {
+		atoms[i] = placeholder{element, false}
+	}
+
+	return alternative{atoms}
+}
+
+// NewName transforms a placeholder (e.g. `<foo>`) into a placeholder suggesting that a new name is
+// requested (e.g. `<new foo name>`).
+func NewName(p placeholder) Atom {
+	return placeholder{fmt.Sprintf(i18n.G("new %s name"), p.element), p.allowEmpty}
+}
+
+// Target transforms a placeholder (e.g. `<foo>`) into a placeholder suggesting that the requested
+// object is the target of an operation (e.g. `<target foo>`).
+func Target(p placeholder) Atom {
+	return placeholder{fmt.Sprintf(i18n.G("target %s"), p.element), p.allowEmpty}
+}
+
+// Colon suffixes an atom with `:`.
+func Colon(a Atom) Atom {
+	return compound{":", []Atom{a, verbatim{""}}}
+}
+
+// MakePath builds an atom compound separated by `/`.
+func MakePath(atoms ...Atom) Atom {
+	return compound{"/", atoms}
+}
+
+// MakeKV builds an atom 2-compound separated by `=`.
+func MakeKV(k Atom, v Atom) Atom {
+	return compound{"=", []Atom{k, v}}
+}
+
+// Placeholder builds a placeholder atom from a string.
+func Placeholder(element string) placeholder {
+	return placeholder{element, false}
+}
+
+// Verbatim builds a verbatim atom from a string.
+func Verbatim(element string) verbatim {
+	return verbatim{element}
+}
+
+// Sequence builds a space-separated sequence of atoms.
+func Sequence(atoms ...Atom) Atom {
+	return compound{" ", atoms}
+}
+
+// Flag builds a flag atom from a string.
+func Flag(name string) Atom {
+	return flag{name}
+}
+
+// MakeRemote transforms an atom into a remote.
+func MakeRemote(atom Atom, optional bool) remote {
+	return remote{atom, nil, optional}
+}
+
+// Usage is the type of CLI usages.
+type Usage []Atom
+
+// HintMissingSpace prints a warning when the user may have missed a space after a remote.
+func HintMissingSpace(args []string, message string) {
+	if len(args) > 0 {
+		arg := args[0]
+		colons := strings.Count(arg, ":")
+		if colons > 1 || colons == 1 && !strings.HasSuffix(arg, ":") {
+			fmt.Fprintf(os.Stderr, cliColor.WarningPrefix+" "+i18n.G("%s; did you forget a space in %s?\n"), message, quote(arg))
+		}
+	}
+}

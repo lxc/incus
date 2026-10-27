@@ -1,0 +1,664 @@
+package device
+
+import (
+	"cmp"
+	"context"
+	"crypto/ecdsa"
+	"crypto/rsa"
+	"crypto/sha256"
+	"crypto/x509"
+	"encoding/json"
+	"encoding/pem"
+	"errors"
+	"fmt"
+	"io"
+	"io/fs"
+	"os"
+	"os/exec"
+	"path/filepath"
+	"slices"
+	"strings"
+	"time"
+
+	"golang.org/x/sys/unix"
+
+	"github.com/lxc/incus/v7/internal/linux"
+	deviceConfig "github.com/lxc/incus/v7/internal/server/device/config"
+	"github.com/lxc/incus/v7/internal/server/instance"
+	"github.com/lxc/incus/v7/internal/server/instance/instancetype"
+	"github.com/lxc/incus/v7/internal/server/mirror"
+	storagePools "github.com/lxc/incus/v7/internal/server/storage"
+	"github.com/lxc/incus/v7/shared/api"
+	"github.com/lxc/incus/v7/shared/logger"
+	"github.com/lxc/incus/v7/shared/revert"
+	"github.com/lxc/incus/v7/shared/subprocess"
+	"github.com/lxc/incus/v7/shared/util"
+	"github.com/lxc/incus/v7/shared/validate"
+)
+
+// tpmStateFile accepts swtpm state files, skipping its lock and temporary files.
+func tpmStateFile(name string) bool {
+	return !strings.HasPrefix(name, ".") && !strings.HasPrefix(name, "TMP")
+}
+
+type tpm struct {
+	deviceCommon
+}
+
+// liveMigrationReceiver is implemented by instance drivers whose start can be the target of a live migration.
+type liveMigrationReceiver interface {
+	IsLiveMigration() bool
+}
+
+// swtpmHasMigrationSupport checks whether swtpm supports the --migration option.
+func swtpmHasMigrationSupport() bool {
+	output, err := subprocess.RunCommand("swtpm", "socket", "--print-capabilities")
+	if err != nil {
+		return false
+	}
+
+	var caps struct {
+		Features []string `json:"features"`
+	}
+
+	err = json.Unmarshal([]byte(output), &caps)
+	if err != nil {
+		return false
+	}
+
+	return slices.Contains(caps.Features, "cmdarg-migration")
+}
+
+// CanMigrate returns whether the device can be migrated to any other cluster member.
+func (d *tpm) CanMigrate() bool {
+	return true
+}
+
+// statePath returns the persistent TPM state directory on the instance volume.
+func (d *tpm) statePath() string {
+	return filepath.Join(d.inst.Path(), fmt.Sprintf("tpm.%s", d.name))
+}
+
+// TPMState returns the state of the TPM device stored in the instance at instPath.
+func TPMState(instPath string, name string) (*api.InstanceStateTPM, error) {
+	state := api.InstanceStateTPM{EndorsementKeys: []api.InstanceStateTPMKey{}}
+
+	// The state directory lives on the instance volume, so never follow symlinks in it.
+	instRoot, err := os.OpenRoot(instPath)
+	if err != nil {
+		return nil, fmt.Errorf("Failed to open instance path %q: %w", instPath, err)
+	}
+
+	defer func() { _ = instRoot.Close() }()
+
+	stateDir := fmt.Sprintf("tpm.%s", name)
+	info, err := instRoot.Lstat(stateDir)
+	if err != nil {
+		if errors.Is(err, fs.ErrNotExist) {
+			return &state, nil
+		}
+
+		return nil, fmt.Errorf("Failed to stat TPM state directory %q: %w", stateDir, err)
+	}
+
+	if !info.IsDir() {
+		return nil, fmt.Errorf("TPM state path %q is not a directory", stateDir)
+	}
+
+	stateRoot, err := instRoot.OpenRoot(stateDir)
+	if err != nil {
+		return nil, fmt.Errorf("Failed to open TPM state directory %q: %w", stateDir, err)
+	}
+
+	defer func() { _ = stateRoot.Close() }()
+
+	dir, err := stateRoot.Open(".")
+	if err != nil {
+		return nil, fmt.Errorf("Failed to open TPM state directory %q: %w", stateDir, err)
+	}
+
+	entries, err := dir.ReadDir(-1)
+	_ = dir.Close()
+	if err != nil {
+		return nil, fmt.Errorf("Failed to read TPM state directory %q: %w", stateDir, err)
+	}
+
+	// The endorsement key certificates are written by swtpm_setup during provisioning.
+	for _, entry := range entries {
+		if !entry.Type().IsRegular() || !strings.HasPrefix(entry.Name(), "ek-") || !strings.HasSuffix(entry.Name(), ".crt") {
+			continue
+		}
+
+		// Refuse symlinks and special files, and bound the read to a sane certificate size.
+		f, err := stateRoot.OpenFile(entry.Name(), os.O_RDONLY|unix.O_NOFOLLOW|unix.O_NONBLOCK|unix.O_CLOEXEC, 0)
+		if err != nil {
+			return nil, fmt.Errorf("Failed to open %q: %w", entry.Name(), err)
+		}
+
+		info, err := f.Stat()
+		if err != nil {
+			_ = f.Close()
+			return nil, fmt.Errorf("Failed to stat %q: %w", entry.Name(), err)
+		}
+
+		if !info.Mode().IsRegular() || info.Size() > 64*1024 {
+			_ = f.Close()
+			return nil, fmt.Errorf("Unexpected file %q in TPM state directory", entry.Name())
+		}
+
+		der, err := io.ReadAll(io.LimitReader(f, info.Size()))
+		_ = f.Close()
+		if err != nil {
+			return nil, fmt.Errorf("Failed to read %q: %w", entry.Name(), err)
+		}
+
+		cert, err := x509.ParseCertificate(der)
+		if err != nil {
+			return nil, fmt.Errorf("Failed to parse %q: %w", entry.Name(), err)
+		}
+
+		key := api.InstanceStateTPMKey{}
+		switch pub := cert.PublicKey.(type) {
+		case *rsa.PublicKey:
+			key.Type = "rsa"
+			key.Size = pub.N.BitLen()
+		case *ecdsa.PublicKey:
+			key.Type = "ecc"
+			key.Size = pub.Curve.Params().BitSize
+		default:
+			continue
+		}
+
+		pub, err := x509.MarshalPKIXPublicKey(cert.PublicKey)
+		if err != nil {
+			return nil, fmt.Errorf("Failed to encode public key from %q: %w", entry.Name(), err)
+		}
+
+		key.Fingerprint = fmt.Sprintf("%x", sha256.Sum256(pub))
+		key.PublicKey = string(pem.EncodeToMemory(&pem.Block{Type: "PUBLIC KEY", Bytes: pub}))
+		state.EndorsementKeys = append(state.EndorsementKeys, key)
+	}
+
+	// Keep the output stable regardless of file order.
+	slices.SortFunc(state.EndorsementKeys, func(a, b api.InstanceStateTPMKey) int {
+		return cmp.Or(strings.Compare(a.Type, b.Type), cmp.Compare(a.Size, b.Size))
+	})
+
+	return &state, nil
+}
+
+// runPath returns the local TPM state directory used while a VM runs.
+func (d *tpm) runPath() string {
+	return filepath.Join(d.inst.RunPath(), fmt.Sprintf("tpm.%s", d.name))
+}
+
+// validateConfig checks the supplied config for correctness.
+func (d *tpm) validateConfig(instConf instance.ConfigReader, partialValidation bool) error {
+	if !instanceSupported(instConf.Type(), instancetype.Container, instancetype.VM) {
+		return ErrUnsupportedDevType
+	}
+
+	rules := map[string]func(string) error{}
+
+	if instConf.Type() == instancetype.Container {
+		// gendoc:generate(entity=devices, group=tpm, key=path)
+		//
+		// ---
+		//  type: string
+		//  default: -
+		//  required: for containers
+		//  shortdesc: Only for containers: path inside the instance (for example, `/dev/tpm0`)
+		rules["path"] = validate.IsNotEmpty
+
+		// gendoc:generate(entity=devices, group=tpm, key=pathrm)
+		//
+		// ---
+		//  type: string
+		//  default: -
+		//  required: for containers
+		//  shortdesc: Only for containers: resource manager path inside the instance (for example, `/dev/tpmrm0`)
+		rules["pathrm"] = validate.IsNotEmpty
+	} else {
+		rules["path"] = validate.Optional(validate.IsNotEmpty)
+		rules["pathrm"] = validate.Optional(validate.IsNotEmpty)
+	}
+
+	err := d.config.Validate(rules)
+	if err != nil {
+		return fmt.Errorf("Failed to validate config: %w", err)
+	}
+
+	return nil
+}
+
+// validateEnvironment checks if the TPM emulator is available.
+func (d *tpm) validateEnvironment() error {
+	// Validate the required binary.
+	_, err := exec.LookPath("swtpm")
+	if err != nil {
+		return fmt.Errorf("Required tool '%s' is missing", "swtpm")
+	}
+
+	if d.inst.Type() == instancetype.Container {
+		// Load module tpm_vtpm_proxy which creates the /dev/vtpmx device, required
+		// by the TPM emulator.
+		module := "tpm_vtpm_proxy"
+
+		err := linux.LoadModule(module)
+		if err != nil {
+			return fmt.Errorf("Failed to load kernel module %q: %w", module, err)
+		}
+	}
+
+	return nil
+}
+
+// Start is run when the device is added to the instance.
+func (d *tpm) Start() (*deviceConfig.RunConfig, error) {
+	err := d.validateEnvironment()
+	if err != nil {
+		return nil, fmt.Errorf("Failed to validate environment: %w", err)
+	}
+
+	tpmDevPath := d.statePath()
+
+	err = d.checkStatePath(true)
+	if err != nil {
+		return nil, err
+	}
+
+	err = d.maybeProvision(tpmDevPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if d.inst.Type() == instancetype.VM {
+		return d.startVM()
+	}
+
+	return d.startContainer()
+}
+
+// maybeProvision provisions the TPM with an Endorsement Key and a platform
+// certificate signed by the configured platform CA. Does nothing if the TPM
+// state directory is non-empty (already provisioned) or if no platform CA is
+// configured.
+func (d *tpm) maybeProvision(tpmDevPath string) error {
+	entries, err := os.ReadDir(tpmDevPath)
+	if err != nil {
+		return fmt.Errorf("Failed to read TPM state directory %q: %w", tpmDevPath, err)
+	}
+
+	if len(entries) > 0 {
+		return nil
+	}
+
+	platformCert, platformKey := d.state.GlobalConfig.InstancesTPMPlatformCert()
+	if platformCert == "" || platformKey == "" {
+		return nil
+	}
+
+	_, err = exec.LookPath("swtpm_setup")
+	if err != nil {
+		return fmt.Errorf("Required tool %q is missing", "swtpm_setup")
+	}
+
+	confDir, err := os.MkdirTemp("", "incus-tpm-setup-")
+	if err != nil {
+		return fmt.Errorf("Failed to create swtpm_setup config directory: %w", err)
+	}
+
+	defer logger.WarnOnError(func() error { return os.RemoveAll(confDir) }, "Failed to remove config directory")
+
+	issuerCertPath := filepath.Join(confDir, "issuercert.pem")
+	signingKeyPath := filepath.Join(confDir, "signkey.pem")
+	certSerialPath := filepath.Join(confDir, "certserial")
+	localCAConfPath := filepath.Join(confDir, "swtpm-localca.conf")
+	setupConfPath := filepath.Join(confDir, "swtpm_setup.conf")
+
+	err = os.WriteFile(issuerCertPath, []byte(platformCert), 0o600)
+	if err != nil {
+		return fmt.Errorf("Failed writing platform certificate: %w", err)
+	}
+
+	err = os.WriteFile(signingKeyPath, []byte(platformKey), 0o600)
+	if err != nil {
+		return fmt.Errorf("Failed writing platform key: %w", err)
+	}
+
+	localCAConf := fmt.Sprintf("statedir = %s\nsigningkey = %s\nissuercert = %s\ncertserial = %s\n", confDir, signingKeyPath, issuerCertPath, certSerialPath)
+	err = os.WriteFile(localCAConfPath, []byte(localCAConf), 0o600)
+	if err != nil {
+		return fmt.Errorf("Failed writing swtpm localca config: %w", err)
+	}
+
+	setupConf := fmt.Sprintf("create_certs_tool = swtpm_localca\ncreate_certs_tool_config = %s\nactive_pcr_banks = sha256\n", localCAConfPath)
+	err = os.WriteFile(setupConfPath, []byte(setupConf), 0o600)
+	if err != nil {
+		return fmt.Errorf("Failed writing swtpm_setup config: %w", err)
+	}
+
+	_, err = subprocess.RunCommand(
+		"swtpm_setup",
+		"--tpm2",
+		"--tpmstate", tpmDevPath,
+		"--create-ek-cert",
+		"--create-platform-cert",
+		"--lock-nvram",
+		"--config", setupConfPath,
+		"--write-ek-cert-files", tpmDevPath,
+	)
+	if err != nil {
+		return fmt.Errorf("Failed provisioning TPM: %w", err)
+	}
+
+	return nil
+}
+
+func (d *tpm) startContainer() (*deviceConfig.RunConfig, error) {
+	tpmDevPath := d.statePath()
+	logFileName := fmt.Sprintf("tpm.%s.log", d.name)
+	logPath := filepath.Join(d.inst.LogPath(), logFileName)
+
+	proc, err := subprocess.NewProcess("swtpm", []string{"chardev", "--tpm2", "--tpmstate", fmt.Sprintf("dir=%s", tpmDevPath), "--vtpm-proxy"}, logPath, "")
+	if err != nil {
+		return nil, fmt.Errorf("Failed to create new process: %w", err)
+	}
+
+	err = proc.Start(context.Background())
+	if err != nil {
+		return nil, fmt.Errorf("Failed to start process %q: %w", "swtpm", err)
+	}
+
+	reverter := revert.New()
+	defer reverter.Fail()
+
+	// Stop the TPM emulator if anything goes wrong.
+	reverter.Add(func() { _ = proc.Stop() })
+
+	pidPath := filepath.Join(d.inst.DevicesPath(), fmt.Sprintf("%s.pid", linux.PathNameEncode(d.name)))
+
+	err = proc.Save(pidPath)
+	if err != nil {
+		return nil, fmt.Errorf("Failed to save swtpm state for device %q: %w", d.name, err)
+	}
+
+	const TPM_MINOR = 244
+	const TPM_NUM_DEVICES = 65536
+	var major, minor, minorRM int
+
+	// We need to capture the output of the TPM emulator since it contains the device path. To do
+	// that, we wait until something has been written to the log file (stdout redirect), and then
+	// read it.
+	for range 20 {
+		fi, err := os.Stat(logPath)
+		if err != nil {
+			return nil, fmt.Errorf("Failed to stat %q: %w", logPath, err)
+		}
+
+		if fi.Size() > 0 {
+			break
+		}
+
+		time.Sleep(500 * time.Millisecond)
+	}
+
+	line, err := os.ReadFile(logPath)
+	if err != nil {
+		return nil, fmt.Errorf("Failed to read %q: %w", logPath, err)
+	}
+
+	// The output will be something like:
+	//   New TPM device: /dev/tpm1 (major/minor = 253/1)
+	// We just need the major/minor numbers.
+	fields := strings.Split(string(line), " ")
+
+	if len(fields) < 7 {
+		return nil, errors.New("Failed to get TPM device information")
+	}
+
+	_, err = fmt.Sscanf(fields[6], "%d/%d)", &major, &minor)
+	if err != nil {
+		return nil, fmt.Errorf("Failed to retrieve major/minor number: %w", err)
+	}
+
+	// Return error as we were unable to retrieve information regarding the TPM device.
+	if major == 0 && minor == 0 {
+		return nil, errors.New("Failed to get TPM device information")
+	}
+
+	if minor == TPM_MINOR {
+		minorRM = TPM_NUM_DEVICES
+	} else {
+		minorRM = TPM_NUM_DEVICES + minor
+	}
+
+	runConf := deviceConfig.RunConfig{}
+
+	err = unixDeviceSetupCharNum(d.state, d.inst.DevicesPath(), "unix", d.name, d.config, uint32(major), uint32(minor), d.config["path"], false, &runConf)
+	if err != nil {
+		return nil, fmt.Errorf("Failed to setup unix device: %w", err)
+	}
+
+	err = unixDeviceSetupCharNum(d.state, d.inst.DevicesPath(), "unix", d.name, d.config, uint32(major), uint32(minorRM), d.config["pathrm"], false, &runConf)
+	if err != nil {
+		return nil, fmt.Errorf("Failed to setup unix device: %w", err)
+	}
+
+	reverter.Success()
+
+	return &runConf, nil
+}
+
+func (d *tpm) startVM() (*deviceConfig.RunConfig, error) {
+	tpmDevPath := d.statePath()
+	runPath := d.runPath()
+
+	socketName := fmt.Sprintf("swtpm-%s.sock", linux.PathNameEncode(d.name))
+	socketPath := filepath.Join(d.inst.DevicesPath(), socketName)
+	runConf := deviceConfig.RunConfig{
+		TPMDevice: []deviceConfig.RunConfigItem{
+			{Key: "devName", Value: d.name},
+			{Key: "path", Value: socketPath},
+		},
+	}
+
+	reverter := revert.New()
+	defer reverter.Fail()
+
+	// Run swtpm on a local copy of the state so the instance volume sees no writes while running.
+	err := os.RemoveAll(runPath)
+	if err != nil {
+		return nil, fmt.Errorf("Failed to clear TPM run path %q: %w", runPath, err)
+	}
+
+	err = os.MkdirAll(runPath, 0o700)
+	if err != nil {
+		return nil, fmt.Errorf("Failed to create TPM run path %q: %w", runPath, err)
+	}
+
+	reverter.Add(func() { _ = os.RemoveAll(runPath) })
+
+	err = mirror.Seed(tpmDevPath, runPath, tpmStateFile)
+	if err != nil {
+		return nil, fmt.Errorf("Failed to load TPM state for device %q: %w", d.name, err)
+	}
+
+	err = mirror.Start(runPath, tpmDevPath, tpmStateFile)
+	if err != nil {
+		return nil, fmt.Errorf("Failed to mirror TPM state for device %q: %w", d.name, err)
+	}
+
+	reverter.Add(func() { _ = mirror.Stop(runPath) })
+
+	// Delete any leftover socket, including at the previous location.
+	_ = os.Remove(socketPath)
+	_ = os.Remove(filepath.Join(tpmDevPath, fmt.Sprintf("swtpm-%s.sock", d.name)))
+
+	args := []string{"socket", "--tpm2", "--tpmstate", fmt.Sprintf("dir=%s", runPath), "--ctrl", fmt.Sprintf("type=unixio,path=%s", socketName)}
+
+	// When starting from a live migration, the TPM state comes with the migration stream.
+	if swtpmHasMigrationSupport() {
+		migrationOpts := "release-lock-outgoing"
+
+		receiver, ok := d.inst.(liveMigrationReceiver)
+		if ok && receiver.IsLiveMigration() {
+			migrationOpts += ",incoming"
+		}
+
+		args = append(args, "--migration", migrationOpts)
+	}
+
+	logPath := filepath.Join(d.inst.LogPath(), fmt.Sprintf("tpm.%s.log", d.name))
+	proc, err := subprocess.NewProcess("swtpm", args, logPath, logPath)
+	if err != nil {
+		return nil, err
+	}
+
+	// Use a relative control socket path to stay under the unix socket path length limit.
+	proc.Cwd = d.inst.DevicesPath()
+
+	// Start the TPM emulator.
+	err = proc.Start(context.Background())
+	if err != nil {
+		return nil, fmt.Errorf("Failed to start swtpm for device %q: %w", d.name, err)
+	}
+
+	reverter.Add(func() { _ = proc.Stop() })
+
+	pidPath := filepath.Join(d.inst.DevicesPath(), fmt.Sprintf("%s.pid", linux.PathNameEncode(d.name)))
+
+	err = proc.Save(pidPath)
+	if err != nil {
+		return nil, fmt.Errorf("Failed to save swtpm state for device %q: %w", d.name, err)
+	}
+
+	// Wait for the socket to be available.
+	exists := false
+	for range 20 {
+		if util.PathExists(socketPath) {
+			exists = true
+			break
+		}
+
+		time.Sleep(100 * time.Millisecond)
+	}
+
+	if !exists {
+		return nil, errors.New("swtpm socket didn't appear within 2s")
+	}
+
+	reverter.Success()
+
+	return &runConf, nil
+}
+
+// Register re-attaches the state mirror of a running VM, e.g. after a daemon restart.
+func (d *tpm) Register() error {
+	if d.inst.Type() != instancetype.VM || !util.PathExists(d.runPath()) {
+		return nil
+	}
+
+	err := d.checkStatePath(false)
+	if err != nil {
+		return err
+	}
+
+	return mirror.Start(d.runPath(), d.statePath(), tpmStateFile)
+}
+
+// checkStatePath ensures the state directory on the instance volume is a real directory, creating it if allowed.
+func (d *tpm) checkStatePath(create bool) error {
+	tpmDevPath := d.statePath()
+
+	fi, err := os.Lstat(tpmDevPath)
+	if err != nil {
+		if !errors.Is(err, fs.ErrNotExist) {
+			return fmt.Errorf("Failed to stat device path %q: %w", tpmDevPath, err)
+		}
+
+		if !create {
+			return fmt.Errorf("Missing device path %q", tpmDevPath)
+		}
+
+		err := os.Mkdir(tpmDevPath, 0o700)
+		if err != nil {
+			return fmt.Errorf("Failed to create device path %q: %w", tpmDevPath, err)
+		}
+
+		return nil
+	}
+
+	// The instance volume may hold anything, don't follow a planted symlink.
+	if !fi.IsDir() {
+		return fmt.Errorf("Device path %q is not a directory", tpmDevPath)
+	}
+
+	return nil
+}
+
+// Stop terminates the TPM emulator.
+func (d *tpm) Stop() (*deviceConfig.RunConfig, error) {
+	pidPath := filepath.Join(d.inst.DevicesPath(), fmt.Sprintf("%s.pid", linux.PathNameEncode(d.name)))
+	runConf := deviceConfig.RunConfig{}
+
+	defer logger.WarnOnError(func() error { return os.Remove(pidPath) }, "Failed to remove PID file")
+
+	if util.PathExists(pidPath) {
+		proc, err := subprocess.ImportProcess(pidPath)
+		if err != nil {
+			return nil, fmt.Errorf("Failed to import process %q: %w", pidPath, err)
+		}
+
+		// The TPM emulator will usually exit automatically when the tpm device is no longer in use,
+		// i.e. the instance is stopped. Therefore, we only fail if the running process couldn't
+		// be stopped.
+		err = proc.Stop()
+		if err != nil && !errors.Is(err, subprocess.ErrNotRunning) {
+			return nil, fmt.Errorf("Failed to stop imported process %q: %w", pidPath, err)
+		}
+	}
+
+	runPath := d.runPath()
+	if d.inst.Type() == instancetype.VM && util.PathExists(runPath) {
+		// Write the final state back, unless the volume is already read-only (live migration hand-over).
+		err := mirror.Stop(runPath)
+		if err != nil && !errors.Is(err, unix.EROFS) {
+			return nil, fmt.Errorf("Failed to save TPM state for device %q: %w", d.name, err)
+		}
+
+		err = os.RemoveAll(runPath)
+		if err != nil {
+			return nil, fmt.Errorf("Failed to remove TPM run path %q: %w", runPath, err)
+		}
+	}
+
+	if d.inst.Type() == instancetype.Container {
+		err := unixDeviceRemove(d.inst.DevicesPath(), "unix", d.name, "", &runConf)
+		if err != nil {
+			return nil, fmt.Errorf("Failed to remove unix device: %w", err)
+		}
+	}
+
+	return &runConf, nil
+}
+
+// Remove removes the TPM state directory.
+func (d *tpm) Remove(cleanupDependencies bool) error {
+	// The state lives on the instance volume, which is unmounted while the instance is stopped.
+	pool, err := storagePools.LoadByInstance(d.state, d.inst)
+	if err != nil {
+		return err
+	}
+
+	_, err = pool.MountInstance(d.inst, nil)
+	if err != nil {
+		return err
+	}
+
+	defer logger.WarnOnError(func() error { return pool.UnmountInstance(d.inst, nil) }, "Failed to unmount instance")
+
+	_ = os.RemoveAll(d.runPath())
+
+	return os.RemoveAll(d.statePath())
+}

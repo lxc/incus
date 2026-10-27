@@ -1,0 +1,248 @@
+package device
+
+import (
+	"errors"
+	"fmt"
+	"maps"
+	"slices"
+	"strings"
+
+	deviceConfig "github.com/lxc/incus/v7/internal/server/device/config"
+	"github.com/lxc/incus/v7/internal/server/instance"
+	"github.com/lxc/incus/v7/internal/server/instance/instancetype"
+	"github.com/lxc/incus/v7/internal/server/network/acl"
+	"github.com/lxc/incus/v7/shared/util"
+	"github.com/lxc/incus/v7/shared/validate"
+)
+
+// nicValidationRules returns config validation rules for nic devices.
+func nicValidationRules(requiredFields []string, optionalFields []string, instConf instance.ConfigReader) map[string]func(value string) error {
+	// Define a set of default validators for each field name.
+	defaultValidators := map[string]func(value string) error{
+		"acceleration":                         validate.Optional(validate.IsOneOf("none", "sriov", "vdpa")),
+		"name":                                 validate.Optional(validate.IsInterfaceName, func(_ string) error { return nicCheckNamesUnique(instConf) }),
+		"parent":                               validate.IsAny,
+		"network":                              validate.IsAny,
+		"mtu":                                  validate.Optional(validate.IsNetworkMTU),
+		"vlan":                                 validate.IsNetworkVLAN,
+		"vlan.tagged":                          validate.IsAny,
+		"gvrp":                                 validate.Optional(validate.IsBool),
+		"hwaddr":                               validate.IsNetworkMAC,
+		"host_name":                            validate.IsAny,
+		"limits.ingress":                       validate.IsAny,
+		"limits.egress":                        validate.IsAny,
+		"limits.max":                           validate.IsAny,
+		"limits.ingress.burst":                 validate.IsAny,
+		"limits.egress.burst":                  validate.IsAny,
+		"limits.max.burst":                     validate.IsAny,
+		"limits.ingress.bucket":                validate.IsAny,
+		"limits.egress.bucket":                 validate.IsAny,
+		"limits.max.bucket":                    validate.IsAny,
+		"limits.priority":                      validate.Optional(validate.IsUint32),
+		"security.mac_filtering":               validate.IsAny,
+		"security.trusted":                     validate.Optional(validate.IsBool),
+		"security.ipv4_filtering":              validate.IsAny,
+		"security.ipv6_filtering":              validate.IsAny,
+		"security.port_isolation":              validate.Optional(validate.IsBool),
+		"ipv4.address":                         validate.Optional(validate.IsNetworkAddressV4),
+		"ipv6.address":                         validate.Optional(validate.IsNetworkAddressV6),
+		"ipv4.routes":                          validate.Optional(validate.IsListOf(validate.IsNetworkV4)),
+		"ipv6.routes":                          validate.Optional(validate.IsListOf(validate.IsNetworkV6)),
+		"boot.priority":                        validate.Optional(validate.Or(validate.IsUint32, validate.IsOneOf("skip"))),
+		"ipv4.gateway":                         networkValidGateway,
+		"ipv6.gateway":                         networkValidGateway,
+		"ipv4.host_address":                    validate.Optional(validate.IsNetworkAddressV4),
+		"ipv6.host_address":                    validate.Optional(validate.IsNetworkAddressV6),
+		"ipv4.host_table":                      validate.Optional(validate.IsUint32),
+		"ipv6.host_table":                      validate.Optional(validate.IsUint32),
+		"queue.discipline":                     validate.Optional(validate.IsOneOf("codel", "fq", "fq_codel", "pfifo", "pfifo_fast", "sfq")),
+		"queue.discipline.attach":              validate.Optional(validate.IsOneOf("root", "queue")),
+		"queue.tx.length":                      validate.Optional(validate.IsUint32),
+		"ipv4.routes.external":                 validate.Optional(validate.IsListOf(validate.IsNetworkV4)),
+		"ipv6.routes.external":                 validate.Optional(validate.IsListOf(validate.IsNetworkV6)),
+		"nested":                               validate.IsAny,
+		"security.acls":                        validate.IsAny,
+		"security.acls.default.ingress.action": validate.Optional(validate.IsOneOf(acl.ValidActions...)),
+		"security.acls.default.egress.action":  validate.Optional(validate.IsOneOf(acl.ValidActions...)),
+		"security.acls.default.ingress.logged": validate.Optional(validate.IsBool),
+		"security.acls.default.egress.logged":  validate.Optional(validate.IsBool),
+		"security.promiscuous":                 validate.Optional(validate.IsBool),
+		"mode":                                 validate.Optional(validate.IsOneOf("bridge", "vepa", "passthru", "private")),
+		"io.bus":                               validate.Optional(func(value string) error { return nicCheckIOBus(instConf, value) }),
+		"vendorid":                             validate.Optional(validate.IsDeviceID),
+		"productid":                            validate.Optional(validate.IsDeviceID),
+		"pci":                                  validate.IsPCIAddress,
+		"attached":                             validate.Optional(validate.IsBool),
+		"connected":                            validate.Optional(validate.IsBool),
+		"failover":                             validate.Optional(validate.IsInterfaceName),
+	}
+
+	validators := map[string]func(value string) error{}
+
+	for _, k := range optionalFields {
+		defaultValidator := defaultValidators[k]
+
+		// If field doesn't have a known validator, it is an unknown field, skip.
+		if defaultValidator == nil {
+			continue
+		}
+
+		// Wrap the default validator in an empty check as field is optional.
+		validators[k] = func(value string) error {
+			if value == "" {
+				return nil
+			}
+
+			return defaultValidator(value)
+		}
+	}
+
+	// Add required fields last, that way if they are specified in both required and optional
+	// field sets, the required one will overwrite the optional validators.
+	for _, k := range requiredFields {
+		defaultValidator := defaultValidators[k]
+
+		// If field doesn't have a known validator, it is an unknown field, skip.
+		if defaultValidator == nil {
+			continue
+		}
+
+		// Wrap the default validator in a not empty check as field is required.
+		validators[k] = func(value string) error {
+			err := validate.IsNotEmpty(value)
+			if err != nil {
+				return err
+			}
+
+			return defaultValidator(value)
+		}
+	}
+
+	return validators
+}
+
+// nicHasAutoGateway takes the value of the "ipv4.gateway" or "ipv6.gateway" config keys and returns whether they
+// specify whether the gateway mode is automatic or not.
+func nicHasAutoGateway(value string) bool {
+	if value == "" || value == "auto" {
+		return true
+	}
+
+	return false
+}
+
+// nicAddressIP returns the IP portion of an address that may be in CIDR form.
+func nicAddressIP(value string) string {
+	addr, _, found := strings.Cut(value, "/")
+	if !found {
+		return value
+	}
+
+	return addr
+}
+
+// nicCheckOCIStaticNetwork ensures that static OCI network configuration isn't used outside of OCI containers.
+func nicCheckOCIStaticNetwork(inst instance.Instance, config map[string]string) error {
+	if instanceIsOCI(inst) {
+		// A gateway can only be configured alongside a static (CIDR) address.
+		for _, key := range []string{"ipv4", "ipv6"} {
+			if !util.IsNoneOrEmpty(config[key+".gateway"]) && !strings.Contains(config[key+".address"], "/") {
+				return fmt.Errorf("%q requires %q to be set to a CIDR value", key+".gateway", key+".address")
+			}
+		}
+
+		return nil
+	}
+
+	for _, key := range []string{"ipv4.gateway", "ipv6.gateway"} {
+		if !util.IsNoneOrEmpty(config[key]) {
+			return fmt.Errorf("%q is only supported on OCI containers", key)
+		}
+	}
+
+	for _, key := range []string{"ipv4.address", "ipv6.address"} {
+		if strings.Contains(config[key], "/") {
+			return fmt.Errorf("A CIDR value for %q is only supported on OCI containers", key)
+		}
+	}
+
+	return nil
+}
+
+// nicOCIStaticNetworkConfig returns the LXC config items for an OCI NIC's static address and gateway (nil if not OCI).
+func nicOCIStaticNetworkConfig(inst instance.Instance, config map[string]string) []deviceConfig.RunConfigItem {
+	if !instanceIsOCI(inst) {
+		return nil
+	}
+
+	var items []deviceConfig.RunConfigItem
+
+	if strings.Contains(config["ipv4.address"], "/") {
+		items = append(items, deviceConfig.RunConfigItem{Key: "ipv4.address", Value: config["ipv4.address"]})
+	}
+
+	if !util.IsNoneOrEmpty(config["ipv4.gateway"]) {
+		items = append(items, deviceConfig.RunConfigItem{Key: "ipv4.gateway", Value: config["ipv4.gateway"]})
+	}
+
+	if strings.Contains(config["ipv6.address"], "/") {
+		items = append(items, deviceConfig.RunConfigItem{Key: "ipv6.address", Value: config["ipv6.address"]})
+	}
+
+	if !util.IsNoneOrEmpty(config["ipv6.gateway"]) {
+		items = append(items, deviceConfig.RunConfigItem{Key: "ipv6.gateway", Value: config["ipv6.gateway"]})
+	}
+
+	return items
+}
+
+// nicNormalizedAddressConfig returns a copy of the config with CIDR addresses reduced to plain IPs.
+func nicNormalizedAddressConfig(config deviceConfig.Device) deviceConfig.Device {
+	normalized := maps.Clone(config)
+	normalized["ipv4.address"] = nicAddressIP(config["ipv4.address"])
+	normalized["ipv6.address"] = nicAddressIP(config["ipv6.address"])
+
+	return normalized
+}
+
+// nicCheckNamesUnique checks that all the NICs in the instConf's expanded devices have a unique (or unset) name.
+func nicCheckNamesUnique(instConf instance.ConfigReader) error {
+	seenNICNames := []string{}
+
+	for _, devConfig := range instConf.ExpandedDevices() {
+		if devConfig["type"] != "nic" || devConfig["name"] == "" {
+			continue
+		}
+
+		if slices.Contains(seenNICNames, devConfig["name"]) {
+			return fmt.Errorf("Duplicate NIC name detected %q", devConfig["name"])
+		}
+
+		seenNICNames = append(seenNICNames, devConfig["name"])
+	}
+
+	return nil
+}
+
+// nicCheckDNSNameConflict returns if instNameA matches instNameB (case insensitive).
+func nicCheckDNSNameConflict(instNameA string, instNameB string) bool {
+	return strings.EqualFold(instNameA, instNameB)
+}
+
+// nicCheckIOBus validates the io.bus value.
+func nicCheckIOBus(instConf instance.ConfigReader, value string) error {
+	if instConf.Type() != instancetype.VM {
+		return errors.New("This option is only supported on virtual machines")
+	}
+
+	err := validate.IsOneOf("virtio", "usb")(value)
+	if err != nil {
+		return err
+	}
+
+	if value == "usb" && util.IsTrue(instConf.ExpandedConfig()["migration.stateful"]) {
+		return errors.New("USB devices cannot be used when migration.stateful is enabled")
+	}
+
+	return nil
+}

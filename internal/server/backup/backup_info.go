@@ -1,0 +1,160 @@
+package backup
+
+import (
+	"fmt"
+	"io"
+
+	"go.yaml.in/yaml/v4"
+
+	"github.com/lxc/incus/v7/internal/server/backup/config"
+	"github.com/lxc/incus/v7/internal/server/sys"
+	localUtil "github.com/lxc/incus/v7/internal/server/util"
+	"github.com/lxc/incus/v7/shared/api"
+)
+
+// Type indicates the type of backup.
+type Type string
+
+// TypeUnknown defines the backup type value for unknown backups.
+const TypeUnknown = Type("")
+
+// TypeContainer defines the backup type value for a container.
+const TypeContainer = Type("container")
+
+// TypeVM defines the backup type value for a virtual-machine.
+const TypeVM = Type("virtual-machine")
+
+// TypeCustom defines the backup type value for a custom volume.
+const TypeCustom = Type("custom")
+
+// TypeBucket defines the backup type value for a storage bucket.
+const TypeBucket = Type("bucket")
+
+// DefaultBackupPrefix is the default path prefix used for volume export/import.
+const DefaultBackupPrefix = "backup"
+
+const backupIndexPath = "backup/index.yaml"
+
+// InstanceTypeToBackupType converts instance type to backup type.
+func InstanceTypeToBackupType(instanceType api.InstanceType) Type {
+	switch instanceType {
+	case api.InstanceTypeContainer:
+		return TypeContainer
+	case api.InstanceTypeVM:
+		return TypeVM
+	}
+
+	return TypeUnknown
+}
+
+// Info represents exported backup information.
+type Info struct {
+	Project          string         `json:"-" yaml:"-"` // Project is set during import based on current project.
+	Name             string         `json:"name" yaml:"name"`
+	Backend          string         `json:"backend" yaml:"backend"`
+	Pool             string         `json:"pool" yaml:"pool"`
+	Snapshots        []string       `json:"snapshots,omitempty" yaml:"snapshots,omitempty"`
+	OptimizedStorage *bool          `json:"optimized,omitempty" yaml:"optimized,omitempty"`               // Optional field to handle older optimized backups that don't have this field.
+	OptimizedHeader  *bool          `json:"optimized_header,omitempty" yaml:"optimized_header,omitempty"` // Optional field to handle older optimized backups that don't have this field.
+	Type             Type           `json:"type,omitempty" yaml:"type,omitempty"`                         // Type of backup.
+	Config           *config.Config `json:"config,omitempty" yaml:"config,omitempty"`                     // Equivalent of backup.yaml but embedded in index for quick retrieval.
+}
+
+// GetInfo extracts backup information from a given ReadSeeker.
+func GetInfo(r io.ReadSeeker, sysOS *sys.OS, outputPath string) (*Info, error) {
+	result := Info{}
+	hasIndexFile := false
+	hasOptimizedHeader := false
+
+	// Define some bools used to create points for OptimizedStorage field.
+	optimizedStorageFalse := false
+	optimizedHeaderFalse := false
+
+	// Extract.
+	tr, cancelFunc, err := TarReader(r, sysOS, outputPath)
+	if err != nil {
+		return nil, err
+	}
+
+	defer cancelFunc()
+
+	for {
+		hdr, err := tr.Next()
+		if err == io.EOF {
+			break // End of archive.
+		}
+
+		if err != nil {
+			return nil, fmt.Errorf("Error reading backup file info: %w", err)
+		}
+
+		if hdr.Name == backupIndexPath {
+			loader, err := yaml.NewLoader(localUtil.MaxBytesReader(tr, 1024*1024))
+			if err != nil {
+				return nil, err
+			}
+
+			err = loader.Load(&result)
+			if err != nil {
+				return nil, err
+			}
+
+			hasIndexFile = true
+
+			// Default to container if index doesn't specify instance type.
+			if result.Type == TypeUnknown {
+				result.Type = TypeContainer
+			}
+
+			// Default to no optimized header if not specified.
+			if result.OptimizedHeader == nil {
+				result.OptimizedHeader = &optimizedHeaderFalse
+			}
+
+			if result.OptimizedStorage != nil {
+				hasOptimizedHeader = true
+			} else {
+				// Default to non-optimized if not specified and continue reading to see if
+				// optimized container.bin file present.
+				result.OptimizedStorage = &optimizedStorageFalse
+			}
+		}
+
+		// Load old backup data.
+		if result.Config == nil && hdr.Name == "backup/container/backup.yaml" {
+			loader, err := yaml.NewLoader(localUtil.MaxBytesReader(tr, 1024*1024))
+			if err != nil {
+				return nil, err
+			}
+
+			err = loader.Load(&result.Config)
+			if err != nil {
+				return nil, err
+			}
+		}
+
+		// If the tarball contains a binary dump of the container, then this is an optimized backup.
+		// This check is only for legacy backups before we introduced the Type and OptimizedStorage fields
+		// in index.yaml, so there is no need to perform this type of check for other types of backups that
+		// have always had these fields populated.
+		if hdr.Name == "backup/container.bin" {
+			optimizedStorageTrue := true
+			result.OptimizedStorage = &optimizedStorageTrue
+
+			hasOptimizedHeader = true
+		}
+
+		// Check if we're done processing what we need.
+		if hasIndexFile && hasOptimizedHeader && result.Config != nil {
+			break
+		}
+	}
+
+	cancelFunc() // Done reading archive.
+
+	if !hasIndexFile {
+		return nil, fmt.Errorf("Backup is missing at %q", backupIndexPath)
+	}
+
+	return &result, nil
+}

@@ -1,0 +1,1353 @@
+package drivers
+
+import (
+	"archive/tar"
+	"context"
+	"encoding/binary"
+	"errors"
+	"fmt"
+	"io"
+	"io/fs"
+	"os"
+	"os/exec"
+	"path/filepath"
+	"slices"
+	"sort"
+	"strconv"
+	"strings"
+	"time"
+	"unsafe"
+
+	"golang.org/x/sys/unix"
+
+	internalInstance "github.com/lxc/incus/v7/internal/instance"
+	"github.com/lxc/incus/v7/internal/instancewriter"
+	"github.com/lxc/incus/v7/internal/linux"
+	"github.com/lxc/incus/v7/internal/server/operations"
+	internalUtil "github.com/lxc/incus/v7/internal/util"
+	"github.com/lxc/incus/v7/shared/api"
+	"github.com/lxc/incus/v7/shared/archive"
+	"github.com/lxc/incus/v7/shared/idmap"
+	"github.com/lxc/incus/v7/shared/logger"
+	"github.com/lxc/incus/v7/shared/subprocess"
+	"github.com/lxc/incus/v7/shared/util"
+)
+
+// MinBlockBoundary minimum block boundary size to use.
+const MinBlockBoundary = 8192
+
+// MaxValue represents the maximum possible value.
+const MaxValue = "max"
+
+// blockBackedAllowedFilesystems allowed filesystems for block volumes.
+var blockBackedAllowedFilesystems = []string{"btrfs", "ext4", "xfs"}
+
+// wipeDirectory empties the contents of a directory, but leaves it in place.
+func wipeDirectory(path string) error {
+	// List all entries.
+	entries, err := os.ReadDir(path)
+	if err != nil {
+		if errors.Is(err, fs.ErrNotExist) {
+			return nil
+		}
+
+		return fmt.Errorf("Failed listing directory %q: %w", path, err)
+	}
+
+	// Individually wipe all entries.
+	for _, entry := range entries {
+		entryPath := filepath.Join(path, entry.Name())
+		err := os.RemoveAll(entryPath)
+		if err != nil && !errors.Is(err, fs.ErrNotExist) {
+			return fmt.Errorf("Failed removing %q: %w", entryPath, err)
+		}
+	}
+
+	return nil
+}
+
+// forceRemoveAll wipes a path including any immutable/non-append files.
+func forceRemoveAll(path string) error {
+	err := os.RemoveAll(path)
+	if err != nil {
+		_, _ = subprocess.RunCommand("chattr", "-ai", "-R", path)
+		err = os.RemoveAll(path)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// forceUnmount unmounts stacked mounts until no mountpoint remains.
+func forceUnmount(path string) (bool, error) {
+	unmounted := false
+
+	for {
+		// Check if already unmounted.
+		if !linux.IsMountPoint(path) {
+			return unmounted, nil
+		}
+
+		// Try a clean unmount first.
+		err := TryUnmount(path, 0)
+		if err != nil {
+			// Fallback to lazy unmounting.
+			err = unix.Unmount(path, unix.MNT_DETACH)
+			if err != nil {
+				return false, fmt.Errorf("Failed to unmount '%s': %w", path, err)
+			}
+		}
+
+		unmounted = true
+	}
+}
+
+// flushBlockDeviceCache flushes and invalidates the kernel buffer cache of a block device.
+// This is needed on devices whose content may have been modified through another node, as
+// the kernel may otherwise keep serving stale cached data.
+func flushBlockDeviceCache(devPath string) error {
+	f, err := os.Open(devPath)
+	if err != nil {
+		return err
+	}
+
+	defer func() { _ = f.Close() }()
+
+	_, err = unix.IoctlRetInt(int(f.Fd()), unix.BLKFLSBUF)
+	if err != nil {
+		return fmt.Errorf("Failed flushing block device %q: %w", devPath, err)
+	}
+
+	return nil
+}
+
+// mountReadOnly performs a read-only bind-mount.
+func mountReadOnly(srcPath string, dstPath string) (bool, error) {
+	// Check if already mounted.
+	if linux.IsMountPoint(dstPath) {
+		return false, nil
+	}
+
+	// Create a mount entry.
+	err := TryMount(srcPath, dstPath, "none", unix.MS_BIND, "")
+	if err != nil {
+		return false, err
+	}
+
+	// Make it read-only.
+	err = TryMount("", dstPath, "none", unix.MS_BIND|unix.MS_RDONLY|unix.MS_REMOUNT, "")
+	if err != nil {
+		_, _ = forceUnmount(dstPath)
+		return false, err
+	}
+
+	return true, nil
+}
+
+// sameMount checks if two paths are on the same mountpoint.
+func sameMount(srcPath string, dstPath string) bool {
+	// Get the source vfs path information
+	var srcFsStat unix.Statfs_t
+	err := unix.Statfs(srcPath, &srcFsStat)
+	if err != nil {
+		return false
+	}
+
+	// Get the destination vfs path information
+	var dstFsStat unix.Statfs_t
+	err = unix.Statfs(dstPath, &dstFsStat)
+	if err != nil {
+		return false
+	}
+
+	// Compare statfs
+	if srcFsStat.Type != dstFsStat.Type || srcFsStat.Fsid != dstFsStat.Fsid {
+		return false
+	}
+
+	// Get the source path information
+	var srcStat unix.Stat_t
+	err = unix.Stat(srcPath, &srcStat)
+	if err != nil {
+		return false
+	}
+
+	// Get the destination path information
+	var dstStat unix.Stat_t
+	err = unix.Stat(dstPath, &dstStat)
+	if err != nil {
+		return false
+	}
+
+	// Compare inode
+	if srcStat.Ino != dstStat.Ino {
+		return false
+	}
+
+	return true
+}
+
+// TryMount tries mounting a filesystem multiple times. This is useful for unreliable backends.
+func TryMount(src string, dst string, fsName string, flags uintptr, options string) error {
+	var err error
+
+	// Attempt 20 mounts over 10s
+	for range 20 {
+		err = unix.Mount(src, dst, fsName, flags, options)
+		if err == nil {
+			break
+		}
+
+		time.Sleep(500 * time.Millisecond)
+	}
+
+	if err != nil {
+		return fmt.Errorf("Failed to mount %q on %q using %q: %w", src, dst, fsName, err)
+	}
+
+	return nil
+}
+
+// TryUnmount tries unmounting a filesystem multiple times. This is useful for unreliable backends.
+func TryUnmount(path string, flags int) error {
+	var err error
+
+	for i := range 20 {
+		err = unix.Unmount(path, flags)
+		if err == nil {
+			break
+		}
+
+		logger.Debug("Failed to unmount", logger.Ctx{"path": path, "attempt": i, "err": err})
+		time.Sleep(500 * time.Millisecond)
+	}
+
+	if err != nil {
+		return fmt.Errorf("Failed to unmount %q: %w", path, err)
+	}
+
+	return nil
+}
+
+// tryExists waits up to 10s for a file to exist.
+func tryExists(path string) bool {
+	// Attempt 20 checks over 10s
+	for range 20 {
+		if util.PathExists(path) {
+			return true
+		}
+
+		time.Sleep(500 * time.Millisecond)
+	}
+
+	return false
+}
+
+// fsUUID returns the filesystem UUID for the given block path.
+func fsUUID(path string) (string, error) {
+	val, err := subprocess.RunCommand("blkid", "-s", "UUID", "-o", "value", path)
+	if err != nil {
+		return "", err
+	}
+
+	return strings.TrimSpace(val), nil
+}
+
+// fsProbe returns the filesystem type for the given block path.
+func fsProbe(path string) (string, error) {
+	val, err := subprocess.RunCommand("blkid", "-s", "TYPE", "-o", "value", path)
+	if err != nil {
+		return "", err
+	}
+
+	return strings.TrimSpace(val), nil
+}
+
+// GetPoolMountPath returns the mountpoint of the given pool.
+// {INCUS_DIR}/storage-pools/<pool>.
+func GetPoolMountPath(poolName string) string {
+	return internalUtil.VarPath("storage-pools", poolName)
+}
+
+// GetVolumeMountPath returns the mount path for a specific volume based on its pool and type and
+// whether it is a snapshot or not. For VolumeTypeImage the volName is the image fingerprint.
+func GetVolumeMountPath(poolName string, volType VolumeType, volName string) string {
+	if internalInstance.IsSnapshot(volName) {
+		return filepath.Join(GetVolumeTypeSnapshotsDir(poolName, volType), volName)
+	}
+
+	return internalUtil.VarPath("storage-pools", poolName, string(volType), volName)
+}
+
+// GetVolumeTypeSnapshotsDir gets the snapshot mount directory for a volume type on the pool.
+func GetVolumeTypeSnapshotsDir(poolName string, volType VolumeType) string {
+	return internalUtil.VarPath("storage-pools", poolName, fmt.Sprintf("%s-snapshots", string(volType)))
+}
+
+// GetVolumeSnapshotDir gets the snapshot mount directory for the parent volume.
+func GetVolumeSnapshotDir(poolName string, volType VolumeType, volName string) string {
+	parent, _, _ := api.GetParentAndSnapshotName(volName)
+	return filepath.Join(GetVolumeTypeSnapshotsDir(poolName, volType), parent)
+}
+
+// GetSnapshotVolumeName returns the full volume name for a parent volume and snapshot name.
+func GetSnapshotVolumeName(parentName, snapshotName string) string {
+	return fmt.Sprintf("%s%s%s", parentName, internalInstance.SnapshotDelimiter, snapshotName)
+}
+
+// CreateParentSnapshotDirIfMissing creates the parent directory for volume snapshots.
+func CreateParentSnapshotDirIfMissing(poolName string, volType VolumeType, volName string) error {
+	snapshotsPath := GetVolumeSnapshotDir(poolName, volType, volName)
+
+	// If it's missing, create it.
+	if !util.PathExists(snapshotsPath) {
+		err := os.Mkdir(snapshotsPath, 0o700)
+		if err != nil {
+			return fmt.Errorf("Failed to create parent snapshot directory %q: %w", snapshotsPath, err)
+		}
+
+		return nil
+	}
+
+	return nil
+}
+
+// deleteParentSnapshotDirIfEmpty removes the parent snapshot directory if it is empty.
+// It accepts the pool name, volume type and parent volume name.
+func deleteParentSnapshotDirIfEmpty(poolName string, volType VolumeType, volName string) error {
+	snapshotsPath := GetVolumeSnapshotDir(poolName, volType, volName)
+
+	// If it exists, try to delete it.
+	if util.PathExists(snapshotsPath) {
+		isEmpty, err := internalUtil.PathIsEmpty(snapshotsPath)
+		if err != nil {
+			return err
+		}
+
+		if isEmpty {
+			err := os.Remove(snapshotsPath)
+			if err != nil && !errors.Is(err, fs.ErrNotExist) {
+				return fmt.Errorf("Failed to remove '%s': %w", snapshotsPath, err)
+			}
+		}
+	}
+
+	return nil
+}
+
+// fsckIfErrors repairs an ext4 filesystem whose superblock records errors before it's mounted.
+func fsckIfErrors(devPath string, fsType string) {
+	if fsType != "ext4" {
+		return
+	}
+
+	f, err := os.Open(devPath)
+	if err != nil {
+		return
+	}
+
+	defer func() { _ = f.Close() }()
+
+	// Superblock s_state field, EXT2_ERROR_FS is bit 1.
+	state := make([]byte, 2)
+	_, err = f.ReadAt(state, 1024+58)
+	if err != nil || binary.LittleEndian.Uint16(state)&0x2 == 0 {
+		return
+	}
+
+	logger.Warn("Filesystem errors recorded, running e2fsck", logger.Ctx{"dev": devPath})
+
+	_, err = subprocess.RunCommand("e2fsck", "-f", "-p", devPath)
+	if err != nil {
+		// Exit codes 1 and 2 mean errors were corrected.
+		var exitErr *exec.ExitError
+		if errors.As(err, &exitErr) && exitErr.ExitCode() <= 2 {
+			logger.Info("Filesystem errors repaired", logger.Ctx{"dev": devPath})
+			return
+		}
+
+		logger.Error("Failed repairing filesystem", logger.Ctx{"dev": devPath, "err": err})
+	}
+}
+
+// ensureSparseFile creates a sparse empty file at specified location with specified size.
+// If the path already exists, the file is truncated to the requested size.
+func ensureSparseFile(filePath string, sizeBytes int64) error {
+	f, err := os.OpenFile(filePath, os.O_RDWR|os.O_CREATE, 0o600)
+	if err != nil {
+		return fmt.Errorf("Failed to open %s: %w", filePath, err)
+	}
+
+	defer logger.WarnOnErrorExcept(f.Close, []error{os.ErrClosed}, "Failed to close file")
+
+	err = f.Truncate(sizeBytes)
+	if err != nil {
+		return fmt.Errorf("Failed to create sparse file %s: %w", filePath, err)
+	}
+
+	return f.Close()
+}
+
+// ensureVolumeBlockFile creates new block file or enlarges the raw block file for a volume to the specified size.
+// Returns true if resize took place, false if not. Requested size is rounded to nearest block size using
+// roundVolumeBlockSizeBytes() before decision whether to resize is taken. Accepts unsupportedResizeTypes
+// list that indicates which volume types it should not attempt to resize (when allowUnsafeResize=false) and
+// instead return ErrNotSupported.
+func ensureVolumeBlockFile(vol Volume, path string, sizeBytes int64, allowUnsafeResize bool, unsupportedResizeTypes ...VolumeType) (bool, error) {
+	if sizeBytes <= 0 {
+		return false, errors.New("Size cannot be zero")
+	}
+
+	// Get rounded block size to avoid QEMU boundary issues.
+	var err error
+	sizeBytes, err = vol.driver.roundVolumeBlockSizeBytes(vol, sizeBytes)
+	if err != nil {
+		return false, err
+	}
+
+	if util.PathExists(path) {
+		fi, err := os.Stat(path)
+		if err != nil {
+			return false, err
+		}
+
+		oldSizeBytes := fi.Size()
+		if sizeBytes == oldSizeBytes {
+			return false, nil
+		}
+
+		// Only perform pre-resize checks if we are not in "unsafe" mode.
+		// In unsafe mode we expect the caller to know what they are doing and understand the risks.
+		if !allowUnsafeResize {
+			// Reject if would try and resize a volume type that is not supported.
+			// This needs to come before the ErrCannotBeShrunk check below so that any resize attempt
+			// is blocked with ErrNotSupported error.
+			if slices.Contains(unsupportedResizeTypes, vol.volType) {
+				return false, ErrNotSupported
+			}
+
+			if sizeBytes < oldSizeBytes {
+				return false, fmt.Errorf("Block volumes cannot be shrunk: %w", ErrCannotBeShrunk)
+			}
+
+			if vol.MountInUse() {
+				return false, ErrInUse // We don't allow online resizing of block volumes.
+			}
+		}
+
+		err = ensureSparseFile(path, sizeBytes)
+		if err != nil {
+			return false, fmt.Errorf("Failed resizing disk image %q to size %d: %w", path, sizeBytes, err)
+		}
+
+		return true, nil
+	}
+
+	// If path doesn't exist, then there has been no filler function supplied to create it from another source.
+	// So instead create an empty volume (use for PXE booting a VM).
+	err = ensureSparseFile(path, sizeBytes)
+	if err != nil {
+		return false, fmt.Errorf("Failed creating disk image %q as size %d: %w", path, sizeBytes, err)
+	}
+
+	return false, nil
+}
+
+// enlargeVolumeBlockFile enlarges the raw block file for a volume to the specified size.
+func enlargeVolumeBlockFile(path string, volSize int64) error {
+	if linux.IsBlockdevPath(path) {
+		return nil
+	}
+
+	actualSize, err := BlockDiskSizeBytes(path)
+	if err != nil {
+		return err
+	}
+
+	if volSize < actualSize {
+		return fmt.Errorf("Block volumes cannot be shrunk: %w", ErrCannotBeShrunk)
+	}
+
+	err = ensureSparseFile(path, volSize)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// mkfsOptions represents options for filesystem creation.
+type mkfsOptions struct {
+	Label     string
+	ExtraArgs string // Additional arguments passed verbatim to mkfs.
+}
+
+// makeFSType creates the provided filesystem.
+func makeFSType(path string, fsType string, options *mkfsOptions) (string, error) {
+	var err error
+	var msg string
+
+	fsOptions := options
+	if fsOptions == nil {
+		fsOptions = &mkfsOptions{}
+	}
+
+	cmd := []string{fmt.Sprintf("mkfs.%s", fsType)}
+	if fsOptions.Label != "" {
+		cmd = append(cmd, "-L", fsOptions.Label)
+	}
+
+	if fsType == "ext4" {
+		cmd = append(cmd, "-E", "nodiscard,lazy_itable_init=0,lazy_journal_init=0")
+	}
+
+	if fsOptions.ExtraArgs != "" {
+		cmd = append(cmd, strings.Fields(fsOptions.ExtraArgs)...)
+	}
+
+	// Always add the path to the device as the last argument for wider compatibility with versions of mkfs.
+	cmd = append(cmd, path)
+
+	msg, err = subprocess.TryRunCommand(cmd[0], cmd[1:]...)
+	if err != nil {
+		return msg, err
+	}
+
+	return "", nil
+}
+
+// filesystemTypeCanBeShrunk indicates if filesystems of fsType can be shrunk.
+func filesystemTypeCanBeShrunk(fsType string) bool {
+	if fsType == "" {
+		fsType = DefaultFilesystem
+	}
+
+	if slices.Contains([]string{"ext4", "btrfs"}, fsType) {
+		return true
+	}
+
+	return false
+}
+
+// shrinkFileSystem shrinks a filesystem if it is supported.
+// EXT4 volumes will be unmounted temporarily if needed.
+// BTRFS volumes will be mounted temporarily if needed.
+// Accepts a force argument that indicates whether to skip some safety checks when resizing the volume.
+// This should only be used if the volume will be deleted on resize error.
+func shrinkFileSystem(fsType string, devPath string, vol Volume, byteSize int64, force bool) error {
+	if fsType == "" {
+		fsType = DefaultFilesystem
+	}
+
+	if !filesystemTypeCanBeShrunk(fsType) {
+		return ErrCannotBeShrunk
+	}
+
+	// The smallest unit that resize2fs accepts in byte size (rather than blocks) is kilobytes.
+	strSize := fmt.Sprintf("%dK", byteSize/1024)
+
+	switch fsType {
+	case "ext4":
+		return vol.UnmountTask(func(op *operations.Operation) error {
+			output, err := subprocess.RunCommand("e2fsck", "-f", "-y", devPath)
+			if err != nil {
+				exitCodeFSModified := false
+
+				var exitError *exec.ExitError
+				ok := errors.As(err, &exitError)
+				if ok {
+					if exitError.ExitCode() == 1 {
+						exitCodeFSModified = true
+					}
+				}
+
+				// e2fsck can return non-zero exit code if it has modified the filesystem, but
+				// this isn't an error and we can proceed.
+				if !exitCodeFSModified {
+					// e2fsck provides some context to errors on stdout.
+					return fmt.Errorf("%s: %w", strings.TrimSpace(output), err)
+				}
+			}
+
+			var args []string
+			if force {
+				// Enable force mode if requested. Should only be done if volume will be deleted
+				// on error as this can result in corrupting the filesystem if fails during resize.
+				// This is useful because sometimes the pre-checks performed by resize2fs are not
+				// accurate and would prevent a successful filesystem shrink.
+				args = append(args, "-f")
+			}
+
+			args = append(args, devPath, strSize)
+			_, err = subprocess.RunCommand("resize2fs", args...)
+			if err != nil {
+				return err
+			}
+
+			return nil
+		}, true, nil)
+	case "btrfs":
+		return vol.MountTask(func(mountPath string, op *operations.Operation) error {
+			_, err := subprocess.RunCommand("btrfs", "filesystem", "resize", strSize, mountPath)
+			if err != nil {
+				return err
+			}
+
+			return nil
+		}, nil)
+	}
+
+	return fmt.Errorf("Unrecognised filesystem type %q", fsType)
+}
+
+// growFileSystem grows a filesystem if it is supported. The volume will be mounted temporarily if needed.
+func growFileSystem(fsType string, devPath string, vol Volume) error {
+	if fsType == "" {
+		fsType = DefaultFilesystem
+	}
+
+	return vol.MountTask(func(mountPath string, op *operations.Operation) error {
+		var err error
+		switch fsType {
+		case "ext4":
+			_, err = subprocess.TryRunCommand("resize2fs", devPath)
+		case "xfs":
+			_, err = subprocess.TryRunCommand("xfs_growfs", mountPath)
+		case "btrfs":
+			_, err = subprocess.TryRunCommand("btrfs", "filesystem", "resize", "max", mountPath)
+		default:
+			return fmt.Errorf("Unrecognised filesystem type %q", fsType)
+		}
+
+		if err != nil {
+			return fmt.Errorf("Could not grow underlying %q filesystem for %q: %w", fsType, devPath, err)
+		}
+
+		return nil
+	}, nil)
+}
+
+// renegerateFilesystemUUIDNeeded returns true if fsType requires UUID regeneration, false if not.
+func renegerateFilesystemUUIDNeeded(fsType string) bool {
+	switch fsType {
+	case "btrfs":
+		return true
+	case "xfs":
+		return true
+	}
+
+	return false
+}
+
+// regenerateFilesystemUUID changes the filesystem UUID to a new randomly generated one if the fsType requires it.
+// Otherwise this function does nothing.
+func regenerateFilesystemUUID(fsType string, devPath string) error {
+	switch fsType {
+	case "btrfs":
+		return regenerateFilesystemBTRFSUUID(devPath)
+	case "xfs":
+		return regenerateFilesystemXFSUUID(devPath)
+	}
+
+	return errors.New("Filesystem not supported")
+}
+
+// regenerateFilesystemBTRFSUUID changes the BTRFS filesystem UUID to a new randomly generated one.
+func regenerateFilesystemBTRFSUUID(devPath string) error {
+	// If the snapshot was taken whilst instance was running there may be outstanding transactions that will
+	// cause btrfstune to corrupt superblock, so ensure these are cleared out first.
+	_, err := subprocess.RunCommand("btrfs", "rescue", "zero-log", devPath)
+	if err != nil {
+		return err
+	}
+
+	_, err = subprocess.RunCommand("btrfstune", "-f", "-u", devPath)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// regenerateFilesystemXFSUUID changes the XFS filesystem UUID to a new randomly generated one.
+func regenerateFilesystemXFSUUID(devPath string) error {
+	// Attempt to generate a new UUID.
+	msg, err := subprocess.RunCommand("xfs_admin", "-U", "generate", devPath)
+	if err != nil {
+		return err
+	}
+
+	if msg != "" {
+		// Exit 0 with a msg usually means some log entry getting in the way.
+		_, err = subprocess.RunCommand("xfs_repair", "-o", "force_geometry", "-L", devPath)
+		if err != nil {
+			return err
+		}
+
+		// Attempt to generate a new UUID again.
+		_, err = subprocess.RunCommand("xfs_admin", "-U", "generate", devPath)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// copyDevice copies one device path to another using dd running at low priority.
+// It expects outputPath to exist already, so will not create it.
+func copyDevice(inputPath string, outputPath string) error {
+	cmd := []string{
+		"nice", "-n19", // Run dd with low priority to reduce CPU impact on other processes.
+		"dd", fmt.Sprintf("if=%s", inputPath), fmt.Sprintf("of=%s", outputPath),
+		"bs=16M",              // Use large buffer to reduce syscalls and speed up copy.
+		"conv=nocreat,sparse", // Don't create output file if missing (expect caller to have created output file), also attempt to make a sparse file.
+	}
+
+	// Check for Direct I/O support.
+	from, err := os.OpenFile(inputPath, unix.O_DIRECT|unix.O_RDONLY, 0)
+	if err == nil {
+		cmd = append(cmd, "iflag=direct")
+		_ = from.Close()
+	}
+
+	to, err := os.OpenFile(outputPath, unix.O_DIRECT|unix.O_RDONLY, 0)
+	if err == nil {
+		cmd = append(cmd, "oflag=direct")
+		_ = to.Close()
+	}
+
+	_, err = subprocess.RunCommand(cmd[0], cmd[1:]...)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// loopFilePath returns the loop file path for a storage pool.
+func loopFilePath(poolName string) string {
+	return filepath.Join(internalUtil.VarPath("disks"), fmt.Sprintf("%s.img", poolName))
+}
+
+// ShiftBtrfsRootfs shifts the BTRFS root filesystem.
+func ShiftBtrfsRootfs(path string, diskIdmap *idmap.Set) error {
+	return shiftBtrfsRootfs(path, diskIdmap, true)
+}
+
+// UnshiftBtrfsRootfs unshifts the BTRFS root filesystem.
+func UnshiftBtrfsRootfs(path string, diskIdmap *idmap.Set) error {
+	return shiftBtrfsRootfs(path, diskIdmap, false)
+}
+
+// shiftBtrfsRootfs shifts a filesystem that main include read-only subvolumes.
+func shiftBtrfsRootfs(path string, diskIdmap *idmap.Set, shift bool) error {
+	var err error
+	roSubvols := []string{}
+	subvols, _ := BTRFSSubVolumesGet(path)
+	sort.Strings(subvols)
+	for _, subvol := range subvols {
+		subvol = filepath.Join(path, subvol)
+
+		if !BTRFSSubVolumeIsRo(subvol) {
+			continue
+		}
+
+		roSubvols = append(roSubvols, subvol)
+		_ = BTRFSSubVolumeMakeRw(subvol)
+	}
+
+	if shift {
+		err = diskIdmap.ShiftPath(path, nil)
+	} else {
+		err = diskIdmap.UnshiftPath(path, nil)
+	}
+
+	for _, subvol := range roSubvols {
+		_ = BTRFSSubVolumeMakeRo(subvol)
+	}
+
+	return err
+}
+
+// BTRFSSubVolumesGet gets subvolumes.
+func BTRFSSubVolumesGet(path string) ([]string, error) {
+	result := []string{}
+
+	if !strings.HasSuffix(path, "/") {
+		path = path + "/"
+	}
+
+	// Unprivileged users can't get to fs internals.
+	_ = filepath.WalkDir(path, func(fpath string, entry fs.DirEntry, err error) error {
+		// Skip walk errors
+		if err != nil {
+			return nil
+		}
+
+		// Ignore the base path.
+		if strings.TrimRight(fpath, "/") == strings.TrimRight(path, "/") {
+			return nil
+		}
+
+		// Subvolumes can only be directories.
+		if !entry.IsDir() {
+			return nil
+		}
+
+		// Check if a btrfs subvolume.
+		if btrfsIsSubVolume(fpath) {
+			result = append(result, strings.TrimPrefix(fpath, path))
+		}
+
+		return nil
+	})
+
+	return result, nil
+}
+
+// Deprecated: Use IsSubvolume from the Btrfs driver instead.
+// btrfsIsSubvolume checks if a given path is a subvolume.
+func btrfsIsSubVolume(subvolPath string) bool {
+	stat := unix.Stat_t{}
+	err := unix.Lstat(subvolPath, &stat)
+	if err != nil {
+		return false
+	}
+
+	// Check if BTRFS_FIRST_FREE_OBJECTID
+	if stat.Ino != 256 {
+		return false
+	}
+
+	return true
+}
+
+// BTRFSSubVolumeIsRo returns if subvolume is read only.
+func BTRFSSubVolumeIsRo(path string) bool {
+	output, err := subprocess.RunCommand("btrfs", "property", "get", "-ts", path)
+	if err != nil {
+		return false
+	}
+
+	return strings.HasPrefix(string(output), "ro=true")
+}
+
+// BTRFSSubVolumeMakeRo makes a subvolume read only. Deprecated use btrfs.setSubvolumeReadonlyProperty().
+func BTRFSSubVolumeMakeRo(path string) error {
+	_, err := subprocess.RunCommand("btrfs", "property", "set", "-ts", path, "ro", "true")
+	return err
+}
+
+// BTRFSSubVolumeMakeRw makes a sub volume read/write. Deprecated use btrfs.setSubvolumeReadonlyProperty().
+func BTRFSSubVolumeMakeRw(path string) error {
+	_, err := subprocess.RunCommand("btrfs", "property", "set", "-ts", path, "ro", "false")
+	return err
+}
+
+// ShiftZFSSkipper indicates which files not to shift for ZFS.
+func ShiftZFSSkipper(dir string, absPath string, fi os.FileInfo, newuid int64, newgid int64) error {
+	strippedPath := absPath
+	if dir != "" {
+		strippedPath = absPath[len(dir):]
+	}
+
+	if fi.IsDir() && strippedPath == "/.zfs/snapshot" {
+		return filepath.SkipDir
+	}
+
+	return nil
+}
+
+// BlockDiskSizeBytes returns the size of a block disk (path can be either block device or raw file).
+func BlockDiskSizeBytes(blockDiskPath string) (int64, error) {
+	if linux.IsBlockdevPath(blockDiskPath) {
+		// Attempt to open the device path.
+		f, err := os.Open(blockDiskPath)
+		if err != nil {
+			return -1, err
+		}
+
+		defer logger.WarnOnError(f.Close, "Failed to close file")
+		fd := int(f.Fd())
+
+		// Retrieve the block device size.
+		res, err := unix.IoctlGetInt(fd, unix.BLKGETSIZE64)
+		if err != nil {
+			return -1, err
+		}
+
+		return int64(res), nil
+	}
+
+	// Block device is assumed to be a raw file.
+	fi, err := os.Lstat(blockDiskPath)
+	if err != nil {
+		return -1, err
+	}
+
+	return fi.Size(), nil
+}
+
+// GetPhysicalBlockSize returns the physical block size for the device.
+func GetPhysicalBlockSize(blockDiskPath string) (int, error) {
+	// Open the block device.
+	f, err := os.Open(blockDiskPath)
+	if err != nil {
+		return -1, err
+	}
+
+	defer logger.WarnOnError(f.Close, "Failed to close file")
+
+	// Query the physical block size.
+	var res int32
+	_, _, errno := unix.Syscall(unix.SYS_IOCTL, uintptr(f.Fd()), unix.BLKPBSZGET, uintptr(unsafe.Pointer(&res)))
+	if errno != 0 {
+		return -1, fmt.Errorf("Failed to BLKPBSZGET: %w", unix.Errno(errno))
+	}
+
+	return int(res), nil
+}
+
+// OperationLockName returns the storage specific lock name to use with locking package.
+func OperationLockName(operationName string, poolName string, volType VolumeType, contentType ContentType, volName string) string {
+	return fmt.Sprintf("%s/%s/%s/%s/%s", operationName, poolName, volType, contentType, volName)
+}
+
+// loopFileSizeDefault returns the size in GiB to use as the default size for a pool loop file.
+// This is based on the size of the filesystem of daemon's VarPath().
+func loopFileSizeDefault() (uint64, error) {
+	st := unix.Statfs_t{}
+	err := unix.Statfs(internalUtil.VarPath(), &st)
+	if err != nil {
+		return 0, fmt.Errorf("Failed getting free space of %q: %w", internalUtil.VarPath(), err)
+	}
+
+	gibAvailable := uint64(st.Frsize) * st.Bavail / (1024 * 1024 * 1024)
+	if gibAvailable > 30 {
+		return 30, nil // Default to no more than 30GiB.
+	} else if gibAvailable > 5 {
+		return gibAvailable / 5, nil // Use 20% of free space otherwise.
+	} else if gibAvailable == 5 {
+		return gibAvailable, nil // Need at least 5GiB free.
+	}
+
+	return 0, errors.New("Insufficient free space to create default sized 5GiB pool")
+}
+
+// loopFileSetup sets up a loop device for the provided sourcePath.
+// It tries to enable direct I/O if supported.
+func loopDeviceSetup(sourcePath string) (string, error) {
+	out, err := subprocess.RunCommand("losetup", "--find", "--nooverlap", "--direct-io=on", "--show", sourcePath)
+	if err != nil {
+		if !strings.Contains(err.Error(), "direct io") && !strings.Contains(err.Error(), "Invalid argument") {
+			return "", err
+		}
+
+		out, err = subprocess.RunCommand("losetup", "--find", "--nooverlap", "--show", sourcePath)
+		if err != nil {
+			return "", err
+		}
+	}
+
+	return strings.TrimSpace(out), nil
+}
+
+// loopDeviceSetupAlign creates a forced 512-byte aligned loop device.
+func loopDeviceSetupAlign(sourcePath string) (string, error) {
+	out, err := subprocess.RunCommand("losetup", "-b", "512", "--find", "--nooverlap", "--show", sourcePath)
+	if err != nil {
+		return "", err
+	}
+
+	return strings.TrimSpace(out), nil
+}
+
+// loopFileAutoDetach enables auto detach mode for a loop device.
+func loopDeviceAutoDetach(loopDevPath string) error {
+	_, err := subprocess.RunCommand("losetup", "--detach", loopDevPath)
+	return err
+}
+
+// loopDeviceSetCapacity forces the loop driver to reread the size of the file associated with the specified loop device.
+func loopDeviceSetCapacity(loopDevPath string) error {
+	_, err := subprocess.RunCommand("losetup", "--set-capacity", loopDevPath)
+	return err
+}
+
+// wipeBlockHeaders will wipe the first 4MB of a block device.
+func wipeBlockHeaders(path string) error {
+	// Open /dev/zero.
+	fdZero, err := os.Open("/dev/zero")
+	if err != nil {
+		return err
+	}
+
+	defer logger.WarnOnError(fdZero.Close, "Failed to close file")
+
+	// Open the target disk.
+	fdDisk, err := os.OpenFile(path, os.O_RDWR, 0o600)
+	if err != nil {
+		return err
+	}
+
+	defer logger.WarnOnError(fdDisk.Close, "Failed to close file")
+
+	// Wipe the 4MiB header.
+	_, err = io.CopyN(fdDisk, fdZero, 1024*1024*4)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// IsContentBlock returns true if the content type is either block or iso.
+func IsContentBlock(contentType ContentType) bool {
+	return contentType == ContentTypeBlock || contentType == ContentTypeISO
+}
+
+// sliceAny returns true when any element in a slice satisfy a predicate.
+func sliceAny[T any](slice []T, predicate func(T) bool) bool {
+	return slices.ContainsFunc(slice, predicate)
+}
+
+// RoundAbove returns the next multiple of `above` greater than `val`.
+func RoundAbove(above, val int64) int64 {
+	if val < above {
+		val = above
+	}
+
+	rounded := int64(val/above) * above
+
+	// Ensure the rounded size is at least x.
+	if rounded < val {
+		rounded += above
+	}
+
+	return rounded
+}
+
+// ValidateDependentConfigKey validates an enabled dependent configuration key.
+func ValidateDependentConfigKey(cfg map[string]string) error {
+	if util.IsTrue(cfg["security.shared"]) {
+		return fmt.Errorf("dependent and security.shared are mutually exclusive")
+	}
+
+	for k := range cfg {
+		if !strings.HasPrefix(k, "snapshots.") {
+			continue
+		}
+
+		return fmt.Errorf("Dependent disk may not have a %q config", k)
+	}
+
+	return nil
+}
+
+// BackupPrefix returns backup prefix based on volume type.
+func BackupPrefix(vol Volume) string {
+	backupPrefix := "container"
+	if vol.IsVMBlock() {
+		backupPrefix = "virtual-machine"
+	} else if vol.volType == VolumeTypeCustom {
+		backupPrefix = "volume"
+	}
+
+	return backupPrefix
+}
+
+// BackupSnapshotPrefix returns backup snapshot prefix based on volume type.
+func BackupSnapshotPrefix(vol Volume) string {
+	backupSnapshotsPrefix := "snapshots"
+	if vol.IsVMBlock() {
+		backupSnapshotsPrefix = "virtual-machine-snapshots"
+	} else if vol.volType == VolumeTypeCustom {
+		backupSnapshotsPrefix = "volume-snapshots"
+	}
+
+	return backupSnapshotsPrefix
+}
+
+// BackupVolume copy a volume into the backup target location.
+func BackupVolume(d Driver, v Volume, writer instancewriter.InstanceWriter, mountPath string, blockPath string, prefix string) error {
+	// Reset hard link cache as we are copying a new volume (instance or snapshot).
+	writer.ResetHardLinkMap()
+
+	if v.contentType == ContentTypeBlock || v.contentType == ContentTypeISO {
+		// Get size of disk block device for tarball header.
+		blockDiskSize, err := BlockDiskSizeBytes(blockPath)
+		if err != nil {
+			return fmt.Errorf("Error getting block device size %q: %w", blockPath, err)
+		}
+
+		var exclude []string // Files to exclude from filesystem volume backup.
+		if !linux.IsBlockdevPath(blockPath) {
+			// Exclude the volume root disk file from the filesystem volume backup.
+			// We will read it as a block device later instead.
+			exclude = append(exclude, blockPath)
+		}
+
+		if v.IsVMBlock() {
+			logMsg := "Copying virtual machine config volume"
+
+			d.Logger().Debug(logMsg, logger.Ctx{"sourcePath": mountPath, "prefix": prefix})
+			err = filepath.Walk(mountPath, func(srcPath string, fi os.FileInfo, err error) error {
+				if err != nil {
+					return err
+				}
+
+				// Skip any excluded files.
+				if util.StringHasPrefix(srcPath, exclude...) {
+					return nil
+				}
+
+				name := filepath.Join(prefix, strings.TrimPrefix(srcPath, mountPath))
+				err = writer.WriteFile(name, srcPath, fi, false)
+				if err != nil {
+					return fmt.Errorf("Error adding %q as %q to tarball: %w", srcPath, name, err)
+				}
+
+				return nil
+			})
+			if err != nil {
+				return err
+			}
+		}
+
+		name := fmt.Sprintf("%s.%s", prefix, genericVolumeBlockExtension)
+
+		logMsg := "Copying virtual machine block volume"
+		if v.volType == VolumeTypeCustom {
+			logMsg = "Copying custom block volume"
+		}
+
+		d.Logger().Debug(logMsg, logger.Ctx{"sourcePath": blockPath, "file": name, "size": blockDiskSize})
+		from, err := os.Open(blockPath)
+		if err != nil {
+			return fmt.Errorf("Error opening file for reading %q: %w", blockPath, err)
+		}
+
+		defer logger.WarnOnErrorExcept(from.Close, []error{os.ErrClosed}, "Failed to close file")
+
+		var fileSize int64
+		fileSize, err = strconv.ParseInt(v.config["size"], 10, 64)
+		if err != nil {
+			fileSize = blockDiskSize
+		}
+
+		fi := instancewriter.FileInfo{
+			FileName:    name,
+			FileSize:    fileSize,
+			FileMode:    0o600,
+			FileModTime: time.Now(),
+		}
+
+		err = writer.WriteFileFromReader(from, &fi)
+		if err != nil {
+			return fmt.Errorf("Error copying %q as %q to tarball: %w", blockPath, name, err)
+		}
+
+		err = from.Close()
+		if err != nil {
+			return fmt.Errorf("Failed to close file %q: %w", blockPath, err)
+		}
+
+		return nil
+	}
+
+	logMsg := "Copying container filesystem volume"
+	if v.volType == VolumeTypeCustom {
+		logMsg = "Copying custom filesystem volume"
+	}
+
+	d.Logger().Debug(logMsg, logger.Ctx{"sourcePath": mountPath, "prefix": prefix})
+
+	// Follow the target if mountPath is a symlink.
+	// Functions like filepath.Walk() won't list any directory content otherwise.
+	target, err := os.Readlink(mountPath)
+	if err == nil {
+		// Make sure the target is valid before return it.
+		_, err = os.Stat(target)
+		if err == nil {
+			mountPath = target
+		}
+	}
+
+	return filepath.Walk(mountPath, func(srcPath string, fi os.FileInfo, err error) error {
+		if err != nil {
+			if errors.Is(err, fs.ErrNotExist) {
+				logger.Warnf("File vanished during export: %q, skipping", srcPath)
+				return nil
+			}
+
+			return fmt.Errorf("Error walking file during export: %q: %w", srcPath, err)
+		}
+
+		name := filepath.Join(prefix, strings.TrimPrefix(srcPath, mountPath))
+
+		// Write the file to the tarball with ignoreGrowth enabled so that if the
+		// source file grows during copy we only copy up to the original size.
+		// This means that the file in the tarball may be inconsistent.
+		err = writer.WriteFile(name, srcPath, fi, true)
+		if err != nil {
+			return fmt.Errorf("Error adding %q as %q to tarball: %w", srcPath, name, err)
+		}
+
+		return nil
+	})
+}
+
+// UnpackVolume unpack a volume from a backup tarball file.
+func UnpackVolume(d Driver, vol Volume, r io.ReadSeeker, tarArgs []string, unpacker []string, srcPrefix string, mountPath string, targetPath string) error {
+	volTypeName := "container"
+	if vol.IsVMBlock() {
+		volTypeName = "virtual machine"
+	} else if vol.volType == VolumeTypeCustom {
+		volTypeName = "custom"
+	}
+
+	// Clear the volume ready for unpack.
+	err := wipeDirectory(mountPath)
+	if err != nil {
+		return fmt.Errorf("Error clearing volume before unpack: %w", err)
+	}
+
+	// Unpack the filesystem parts of the volume (for containers and custom filesystem volumes that is
+	// the respective root filesystem data or volume itself, and for VMs that is the config volume).
+	// Custom block volumes do not have a filesystem component to their volumes.
+	if !vol.IsCustomBlock() {
+		// Prepare tar arguments.
+		srcParts := strings.Split(srcPrefix, string(os.PathSeparator))
+		args := append(tarArgs, []string{
+			"-",
+			"--xattrs-include=*",
+			"--restrict",
+			"--force-local",
+			"--numeric-owner",
+			"-C", mountPath,
+		}...)
+
+		if vol.Type() == VolumeTypeCustom {
+			// If the volume type is custom, then we need to ensure that we restore the top level
+			// directory's ownership from the backup. We cannot use --strip-components flag because it
+			// removes the top level directory from the unpack list. Instead we use the --transform
+			// flag to remove the prefix path and transform it into the "." current unpack directory.
+			args = append(args, fmt.Sprintf("--transform=s/^%s/./", strings.ReplaceAll(srcPrefix, "/", `\/`)))
+		} else {
+			// For instance volumes, the user created files are stored in the rootfs sub-directory
+			// and so strip-components flag works fine.
+			args = append(args, fmt.Sprintf("--strip-components=%d", len(srcParts)))
+		}
+
+		// Directory to unpack comes after other options.
+		args = append(args, srcPrefix)
+
+		// Extract filesystem volume.
+		d.Logger().Debug(fmt.Sprintf("Unpacking %s filesystem volume", volTypeName), logger.Ctx{"source": srcPrefix, "target": mountPath, "args": fmt.Sprintf("%+v", args)})
+		_, err := r.Seek(0, io.SeekStart)
+		if err != nil {
+			return err
+		}
+
+		f, err := os.OpenFile(mountPath, os.O_RDONLY, 0)
+		if err != nil {
+			return fmt.Errorf("Error opening directory: %w", err)
+		}
+
+		defer logger.WarnOnError(f.Close, "Failed to close file")
+
+		allowedCmds := []string{}
+		if len(unpacker) > 0 {
+			allowedCmds = append(allowedCmds, unpacker[0])
+		}
+
+		err = archive.ExtractWithFds("tar", args, allowedCmds, io.NopCloser(r), f)
+		if err != nil {
+			return fmt.Errorf("Error starting unpack: %w", err)
+		}
+	}
+
+	// Extract block file to block volume.
+	if vol.contentType == ContentTypeBlock {
+		srcFile := fmt.Sprintf("%s.%s", srcPrefix, genericVolumeBlockExtension)
+
+		tr, cancelFunc, err := archive.CompressedTarReader(context.Background(), r, unpacker, mountPath)
+		if err != nil {
+			return err
+		}
+
+		defer cancelFunc()
+
+		unpackBlockVolume := func(hdr *tar.Header) error {
+			var allowUnsafeResize bool
+
+			// Reset the disk.
+			err = linux.ClearBlock(targetPath, 0)
+			if err != nil {
+				return err
+			}
+
+			// Open block file (use O_CREATE to support drivers that use image files).
+			to, err := os.OpenFile(targetPath, os.O_WRONLY|os.O_TRUNC|os.O_CREATE, 0o644)
+			if err != nil {
+				return fmt.Errorf("Error opening file for writing %q: %w", targetPath, err)
+			}
+
+			defer logger.WarnOnErrorExcept(to.Close, []error{os.ErrClosed}, "Failed to close file")
+
+			// Restore original size of volume from raw block backup file size.
+			d.Logger().Debug("Setting volume size from source", logger.Ctx{"source": srcFile, "target": targetPath, "size": hdr.Size})
+
+			// Allow potentially destructive resize of volume as we are going to be
+			// overwriting it entirely anyway. This allows shrinking of block volumes.
+			allowUnsafeResize = true
+			err = d.SetVolumeQuota(vol, fmt.Sprintf("%d", hdr.Size), allowUnsafeResize, nil)
+			if err != nil {
+				return err
+			}
+
+			logMsg := "Unpacking virtual machine block volume"
+			if vol.volType == VolumeTypeCustom {
+				logMsg = "Unpacking custom block volume"
+			}
+
+			// Copy the data.
+			toPipe := io.Writer(to)
+			if !d.Info().ZeroUnpack {
+				toPipe = linux.NewSparseFileWrapper(to)
+			}
+
+			d.Logger().Debug(logMsg, logger.Ctx{"source": srcFile, "target": targetPath})
+
+			_, err = util.SafeCopy(toPipe, tr)
+			if err != nil {
+				return err
+			}
+
+			cancelFunc()
+			return to.Close()
+		}
+
+		for {
+			hdr, err := tr.Next()
+			if err == io.EOF {
+				break // End of archive.
+			}
+
+			if err != nil {
+				return err
+			}
+
+			if hdr.Name == srcFile {
+				return unpackBlockVolume(hdr)
+			}
+		}
+
+		return fmt.Errorf("Could not find %q", srcFile)
+	}
+
+	return nil
+}

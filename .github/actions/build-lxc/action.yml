@@ -1,0 +1,56 @@
+name: Build LXC
+description: Build and install LXC from source, optionally with LXCFS
+
+inputs:
+  lxcfs:
+    description: Also build, install and start LXCFS
+    required: false
+    default: "false"
+
+runs:
+  using: composite
+  steps:
+    - name: Build LXC
+      shell: bash
+      run: |
+        set -eux
+
+        git clone --depth=1 https://github.com/lxc/lxc ~/lxc
+        cd ~/lxc
+        meson setup build \
+          --prefix=/usr \
+          -Dexamples=false \
+          -Dman=false \
+          -Dtests=false \
+          -Dmemfd-rexec=false \
+          -Dapparmor=true \
+          -Dseccomp=true \
+          -Dselinux=true \
+          -Dcapabilities=true \
+          -Dio-uring-event-loop=false
+        meson compile -C build
+        sudo meson install -C build
+        sudo ldconfig
+
+        # Load the AppArmor profiles that a package install would have loaded.
+        sudo apparmor_parser -r -T -W /etc/apparmor.d/lxc-containers /etc/apparmor.d/usr.bin.lxc-start /etc/apparmor.d/usr.bin.lxc-copy
+
+    - name: Build LXCFS
+      if: ${{ inputs.lxcfs == 'true' }}
+      shell: bash
+      run: |
+        set -eux
+
+        sudo apt-get install --no-install-recommends -y \
+          libfuse3-dev \
+          systemd-dev
+
+        git clone --depth=1 https://github.com/lxc/lxcfs ~/lxcfs
+        cd ~/lxcfs
+        meson setup build --prefix=/usr -Ddocs=false -Dtests=false
+        meson compile -C build
+        sudo meson install -C build
+
+        sudo systemctl daemon-reload
+        sudo systemctl enable --now lxcfs
+        lxcfs --version

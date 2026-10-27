@@ -1,0 +1,475 @@
+package storage
+
+import (
+	"io"
+	"net"
+	"net/url"
+	"time"
+
+	"github.com/lxc/incus/v7/internal/instancewriter"
+	"github.com/lxc/incus/v7/internal/server/backup"
+	backupConfig "github.com/lxc/incus/v7/internal/server/backup/config"
+	"github.com/lxc/incus/v7/internal/server/cluster/request"
+	"github.com/lxc/incus/v7/internal/server/instance"
+	"github.com/lxc/incus/v7/internal/server/migration"
+	"github.com/lxc/incus/v7/internal/server/operations"
+	"github.com/lxc/incus/v7/internal/server/state"
+	"github.com/lxc/incus/v7/internal/server/storage/drivers"
+	"github.com/lxc/incus/v7/shared/api"
+	"github.com/lxc/incus/v7/shared/logger"
+	"github.com/lxc/incus/v7/shared/revert"
+)
+
+type mockBackend struct {
+	name   string
+	state  *state.State
+	logger logger.Logger
+	driver drivers.Driver
+}
+
+// ID returns the storage pool ID.
+func (b *mockBackend) ID() int64 {
+	return 1 //  The tests expect the storage pool ID to be 1.
+}
+
+// Name returns the storage pool name.
+func (b *mockBackend) Name() string {
+	return b.name
+}
+
+// Description returns the storage pool description.
+func (b *mockBackend) Description() string {
+	return ""
+}
+
+// Validate checks that the supplied storage pool config is valid.
+func (b *mockBackend) Validate(config map[string]string) error {
+	return nil
+}
+
+// Status returns the storage pool status.
+func (b *mockBackend) Status() string {
+	return api.NetworkStatusUnknown
+}
+
+// LocalStatus returns the local member's storage pool status.
+func (b *mockBackend) LocalStatus() string {
+	return api.NetworkStatusUnknown
+}
+
+// ToAPI returns the storage pool as an API struct.
+func (b *mockBackend) ToAPI() api.StoragePool {
+	return api.StoragePool{}
+}
+
+// Driver returns the storage pool's driver.
+func (b *mockBackend) Driver() drivers.Driver {
+	return b.driver
+}
+
+// MigrationTypes returns the type of transfer methods to be used when doing migrations between pools in preference order.
+func (b *mockBackend) MigrationTypes(contentType drivers.ContentType, refresh bool, copySnapshots bool, clusterMove bool, storageMove bool) []migration.Type {
+	return []migration.Type{
+		{
+			FSType:   FallbackMigrationType(contentType),
+			Features: []string{"xattrs", "delete", "compress", "bidirectional"},
+		},
+	}
+}
+
+// GetResources returns the resource usage of the storage pool.
+func (b *mockBackend) GetResources() (*api.ResourcesStoragePool, error) {
+	return nil, nil
+}
+
+// IsUsed returns whether the storage pool is in use.
+func (b *mockBackend) IsUsed() (bool, error) {
+	return false, nil
+}
+
+// Delete removes the storage pool.
+func (b *mockBackend) Delete(clientType request.ClientType, op *operations.Operation) error {
+	return nil
+}
+
+// Update applies the supplied config to the storage pool.
+func (b *mockBackend) Update(clientType request.ClientType, newDescription string, newConfig map[string]string, op *operations.Operation) error {
+	return nil
+}
+
+// Create creates the storage pool.
+func (b *mockBackend) Create(clientType request.ClientType, op *operations.Operation) error {
+	return nil
+}
+
+// Mount mounts the storage pool.
+func (b *mockBackend) Mount() (bool, error) {
+	return true, nil
+}
+
+// Unmount unmounts the storage pool.
+func (b *mockBackend) Unmount() (bool, error) {
+	return true, nil
+}
+
+// ApplyPatch applies a storage pool patch.
+func (b *mockBackend) ApplyPatch(name string) error {
+	return nil
+}
+
+// GetVolume returns a drivers.Volume for the given parameters.
+func (b *mockBackend) GetVolume(volType drivers.VolumeType, contentType drivers.ContentType, volName string, volConfig map[string]string) drivers.Volume {
+	return drivers.Volume{}
+}
+
+// CreateInstance creates an empty instance volume.
+func (b *mockBackend) CreateInstance(inst instance.Instance, op *operations.Operation) error {
+	return nil
+}
+
+// CreateInstanceFromBackup creates an instance volume from a backup.
+func (b *mockBackend) CreateInstanceFromBackup(srcBackup backup.Info, srcData io.ReadSeeker, op *operations.Operation) (func(instance.Instance) error, revert.Hook, error) {
+	return nil, nil, nil
+}
+
+// CreateInstanceFromCopy creates an instance volume by copying another instance.
+func (b *mockBackend) CreateInstanceFromCopy(inst instance.Instance, src instance.Instance, snapshots bool, allowInconsistent bool, op *operations.Operation) error {
+	return nil
+}
+
+// CreateInstanceFromImage creates an instance volume from an image.
+func (b *mockBackend) CreateInstanceFromImage(inst instance.Instance, fingerprint string, op *operations.Operation) error {
+	return nil
+}
+
+// CreateInstanceFromMigration creates an instance volume from a migration stream.
+func (b *mockBackend) CreateInstanceFromMigration(inst instance.Instance, conn io.ReadWriteCloser, args migration.VolumeTargetArgs, op *operations.Operation) error {
+	return nil
+}
+
+// RenameInstance renames an instance volume.
+func (b *mockBackend) RenameInstance(inst instance.Instance, newName string, op *operations.Operation) error {
+	return nil
+}
+
+// DeleteInstance removes an instance volume.
+func (b *mockBackend) DeleteInstance(inst instance.Instance, op *operations.Operation) error {
+	return nil
+}
+
+// UpdateInstance applies new config to an instance volume.
+func (b *mockBackend) UpdateInstance(inst instance.Instance, newDesc string, newConfig map[string]string, op *operations.Operation) error {
+	return nil
+}
+
+// GenerateCustomVolumeBackupConfig returns the backup config entry for a custom volume.
+func (b *mockBackend) GenerateCustomVolumeBackupConfig(projectName string, volName string, snapshots bool, op *operations.Operation) (*backupConfig.Config, error) {
+	return nil, nil
+}
+
+// GenerateInstanceBackupConfig returns the backup config entry for this instance.
+func (b *mockBackend) GenerateInstanceBackupConfig(inst instance.Instance, snapshots bool, dependentVolumes bool, op *operations.Operation) (*backupConfig.Config, error) {
+	return nil, nil
+}
+
+// UpdateInstanceBackupFile updates the backup file for an instance volume.
+func (b *mockBackend) UpdateInstanceBackupFile(inst instance.Instance, snapshot bool, op *operations.Operation) error {
+	return nil
+}
+
+// CheckInstanceBackupFileSnapshots checks the snapshots in an instance backup file.
+func (b *mockBackend) CheckInstanceBackupFileSnapshots(backupConf *backupConfig.Config, projectName string, deleteMissing bool, op *operations.Operation) ([]*api.InstanceSnapshot, error) {
+	return nil, nil
+}
+
+// ListUnknownVolumes returns the volumes on the pool that are not known to the database.
+func (b *mockBackend) ListUnknownVolumes(op *operations.Operation) (map[string][]*backupConfig.Config, error) {
+	return nil, nil
+}
+
+// ImportInstance imports an existing instance volume into the database.
+func (b *mockBackend) ImportInstance(inst instance.Instance, poolVol *backupConfig.Config, op *operations.Operation) (revert.Hook, error) {
+	return nil, nil
+}
+
+// MigrateInstance migrates an instance volume to another member.
+func (b *mockBackend) MigrateInstance(inst instance.Instance, conn io.ReadWriteCloser, args *migration.VolumeSourceArgs, op *operations.Operation) error {
+	return nil
+}
+
+// CleanupInstancePaths removes leftover instance volume paths.
+func (b *mockBackend) CleanupInstancePaths(inst instance.Instance, op *operations.Operation) error {
+	return nil
+}
+
+// RefreshCustomVolume refresh a custom volume.
+func (b *mockBackend) RefreshCustomVolume(projectName string, srcProjectName string, volName string, desc string, config map[string]string, srcPoolName, srcVolName string, srcVolOnly bool, excludeOlder bool, op *operations.Operation) error {
+	return nil
+}
+
+// RefreshInstance refreshes an instance volume from a source instance.
+func (b *mockBackend) RefreshInstance(inst instance.Instance, src instance.Instance, srcSnapshots []instance.Instance, allowInconsistent bool, op *operations.Operation) error {
+	return nil
+}
+
+// BackupInstance creates an instance backup.
+func (b *mockBackend) BackupInstance(inst instance.Instance, tarWriter *instancewriter.InstanceTarWriter, optimized bool, snapshots bool, dependentVolumes bool, op *operations.Operation) error {
+	return nil
+}
+
+// GetInstanceUsage returns the disk usage of an instance volume.
+func (b *mockBackend) GetInstanceUsage(inst instance.Instance) (*VolumeUsage, error) {
+	return nil, nil
+}
+
+// SetInstanceQuota sets the size quota on an instance volume.
+func (b *mockBackend) SetInstanceQuota(inst instance.Instance, size string, vmStateSize string, op *operations.Operation) error {
+	return nil
+}
+
+// MountInstance mounts an instance volume.
+func (b *mockBackend) MountInstance(inst instance.Instance, op *operations.Operation) (*MountInfo, error) {
+	return &MountInfo{}, nil
+}
+
+// UnmountInstance unmounts an instance volume.
+func (b *mockBackend) UnmountInstance(inst instance.Instance, op *operations.Operation) error {
+	return nil
+}
+
+// CreateInstanceSnapshot creates a snapshot of an instance volume.
+func (b *mockBackend) CreateInstanceSnapshot(i instance.Instance, src instance.Instance, op *operations.Operation) error {
+	return nil
+}
+
+// RenameInstanceSnapshot renames an instance volume snapshot.
+func (b *mockBackend) RenameInstanceSnapshot(inst instance.Instance, newName string, op *operations.Operation) error {
+	return nil
+}
+
+// DeleteInstanceSnapshot removes an instance volume snapshot.
+func (b *mockBackend) DeleteInstanceSnapshot(inst instance.Instance, cleanupDependencies bool, op *operations.Operation) error {
+	return nil
+}
+
+// CanRestoreInstanceSnapshot checks if an instance snapshot can be restored.
+func (b *mockBackend) CanRestoreInstanceSnapshot(inst instance.Instance, src instance.Instance) error {
+	return nil
+}
+
+// RestoreInstanceSnapshot restores an instance volume from a snapshot.
+func (b *mockBackend) RestoreInstanceSnapshot(inst instance.Instance, src instance.Instance, op *operations.Operation) error {
+	return nil
+}
+
+// MountInstanceSnapshot mounts an instance volume snapshot.
+func (b *mockBackend) MountInstanceSnapshot(inst instance.Instance, op *operations.Operation) (*MountInfo, error) {
+	return &MountInfo{}, nil
+}
+
+// UnmountInstanceSnapshot unmounts an instance volume snapshot.
+func (b *mockBackend) UnmountInstanceSnapshot(inst instance.Instance, op *operations.Operation) error {
+	return nil
+}
+
+// UpdateInstanceSnapshot applies new config to an instance volume snapshot.
+func (b *mockBackend) UpdateInstanceSnapshot(inst instance.Instance, newDesc string, newConfig map[string]string, op *operations.Operation) error {
+	return nil
+}
+
+// EnsureImage ensures an image volume exists on the pool.
+func (b *mockBackend) EnsureImage(fingerprint string, op *operations.Operation) error {
+	return nil
+}
+
+// DeleteImage removes an image volume from the pool.
+func (b *mockBackend) DeleteImage(fingerprint string, op *operations.Operation) error {
+	return nil
+}
+
+// UpdateImage applies new config to an image volume.
+func (b *mockBackend) UpdateImage(fingerprint, newDesc string, newConfig map[string]string, op *operations.Operation) error {
+	return nil
+}
+
+// CreateBucket creates a storage bucket.
+func (b *mockBackend) CreateBucket(projectName string, bucket api.StorageBucketsPost, op *operations.Operation) error {
+	return nil
+}
+
+// UpdateBucket applies new config to a storage bucket.
+func (b *mockBackend) UpdateBucket(projectName string, bucketName string, bucket api.StorageBucketPut, op *operations.Operation) error {
+	return nil
+}
+
+// DeleteBucket removes a storage bucket.
+func (b *mockBackend) DeleteBucket(projectName string, bucketName string, op *operations.Operation) error {
+	return nil
+}
+
+// ImportBucket imports an existing storage bucket into the database.
+func (b *mockBackend) ImportBucket(projectName string, poolVol *backupConfig.Config, op *operations.Operation) (revert.Hook, error) {
+	return nil, nil
+}
+
+// CreateBucketKey creates a key on a storage bucket.
+func (b *mockBackend) CreateBucketKey(projectName string, bucketName string, key api.StorageBucketKeysPost, op *operations.Operation) (*api.StorageBucketKey, error) {
+	return nil, nil
+}
+
+// UpdateBucketKey applies new config to a storage bucket key.
+func (b *mockBackend) UpdateBucketKey(projectName string, bucketName string, keyName string, key api.StorageBucketKeyPut, op *operations.Operation) error {
+	return nil
+}
+
+// DeleteBucketKey removes a key from a storage bucket.
+func (b *mockBackend) DeleteBucketKey(projectName string, bucketName string, keyName string, op *operations.Operation) error {
+	return nil
+}
+
+// MountLocalBucket mounts the local bucket volume and returns its mount path
+// along with an unmount function that the caller must invoke when finished.
+func (b *mockBackend) MountLocalBucket(projectName string, bucketName string, op *operations.Operation) (string, func() error, error) {
+	return "", func() error { return nil }, nil
+}
+
+// GetBucketURL returns the URL of a storage bucket.
+func (b *mockBackend) GetBucketURL(bucketName string) *url.URL {
+	return nil
+}
+
+// CreateCustomVolume creates an empty custom volume.
+func (b *mockBackend) CreateCustomVolume(projectName string, volName string, desc string, config map[string]string, contentType drivers.ContentType, op *operations.Operation) error {
+	return nil
+}
+
+// CreateCustomVolumeFromCopy creates a custom volume by copying another volume.
+func (b *mockBackend) CreateCustomVolumeFromCopy(projectName string, srcProjectName string, volName string, desc string, config map[string]string, srcPoolName string, srcVolName string, srcVolOnly bool, op *operations.Operation) error {
+	return nil
+}
+
+// RenameCustomVolume renames a custom volume.
+func (b *mockBackend) RenameCustomVolume(projectName string, volName string, newName string, op *operations.Operation) error {
+	return nil
+}
+
+// UpdateCustomVolume applies new config to a custom volume.
+func (b *mockBackend) UpdateCustomVolume(projectName string, volName string, newDesc string, newConfig map[string]string, op *operations.Operation) error {
+	return nil
+}
+
+// DeleteCustomVolume removes a custom volume.
+func (b *mockBackend) DeleteCustomVolume(projectName string, volName string, op *operations.Operation) error {
+	return nil
+}
+
+// RebuildCustomVolume wipes a custom volume and re-creates an empty one with the same configuration.
+// It is only allowed when the volume has no snapshots and is not used by any running instance.
+func (b *mockBackend) RebuildCustomVolume(projectName string, volName string, op *operations.Operation) error {
+	return nil
+}
+
+// MigrateCustomVolume migrates a custom volume to another member.
+func (b *mockBackend) MigrateCustomVolume(projectName string, conn io.ReadWriteCloser, args *migration.VolumeSourceArgs, op *operations.Operation) error {
+	return nil
+}
+
+// CreateCustomVolumeFromMigration creates a custom volume from a migration stream.
+func (b *mockBackend) CreateCustomVolumeFromMigration(projectName string, conn io.ReadWriteCloser, args migration.VolumeTargetArgs, op *operations.Operation) error {
+	return nil
+}
+
+// GetCustomVolumeDisk returns the disk path of a custom volume.
+func (b *mockBackend) GetCustomVolumeDisk(projectName string, volName string) (string, error) {
+	return "", nil
+}
+
+// GetCustomVolumeUsage returns the disk usage of a custom volume.
+func (b *mockBackend) GetCustomVolumeUsage(projectName string, volName string) (*VolumeUsage, error) {
+	return nil, nil
+}
+
+// MountCustomVolume mounts a custom volume.
+func (b *mockBackend) MountCustomVolume(projectName string, volName string, op *operations.Operation) (*MountInfo, error) {
+	return nil, nil
+}
+
+// UnmountCustomVolume unmounts a custom volume.
+func (b *mockBackend) UnmountCustomVolume(projectName string, volName string, op *operations.Operation) (bool, error) {
+	return true, nil
+}
+
+// ImportCustomVolume imports an existing custom volume into the database.
+func (b *mockBackend) ImportCustomVolume(projectName string, poolVol *backupConfig.Config, op *operations.Operation) (revert.Hook, error) {
+	return nil, nil
+}
+
+// CreateCustomVolumeSnapshot creates a snapshot of a custom volume.
+func (b *mockBackend) CreateCustomVolumeSnapshot(projectName string, volName string, newSnapshotName string, expiryDate time.Time, instanceStateful bool, op *operations.Operation) error {
+	return nil
+}
+
+// RenameCustomVolumeSnapshot renames a custom volume snapshot.
+func (b *mockBackend) RenameCustomVolumeSnapshot(projectName string, volName string, newName string, op *operations.Operation) error {
+	return nil
+}
+
+// DeleteCustomVolumeSnapshot removes a custom volume snapshot.
+func (b *mockBackend) DeleteCustomVolumeSnapshot(projectName string, volName string, op *operations.Operation) error {
+	return nil
+}
+
+// UpdateCustomVolumeSnapshot applies new config to a custom volume snapshot.
+func (b *mockBackend) UpdateCustomVolumeSnapshot(projectName string, volName string, newDesc string, newConfig map[string]string, expiryDate time.Time, op *operations.Operation) error {
+	return nil
+}
+
+// RestoreCustomVolume restores a custom volume from a snapshot.
+func (b *mockBackend) RestoreCustomVolume(projectName string, volName string, snapshotName string, op *operations.Operation) error {
+	return nil
+}
+
+// BackupCustomVolume creates a custom volume backup.
+func (b *mockBackend) BackupCustomVolume(projectName string, volName string, writer instancewriter.InstanceWriter, basePrefix string, optimized bool, snapshots bool, op *operations.Operation) error {
+	return nil
+}
+
+// CreateCustomVolumeFromBackup creates a custom volume from a backup.
+func (b *mockBackend) CreateCustomVolumeFromBackup(srcBackup backup.Info, srcData io.ReadSeeker, basePrefix string, op *operations.Operation) error {
+	return nil
+}
+
+// CreateCustomVolumeFromISO creates a custom volume from an ISO image.
+func (b *mockBackend) CreateCustomVolumeFromISO(projectName string, volName string, srcData io.ReadSeeker, size int64, op *operations.Operation) error {
+	return nil
+}
+
+// GenerateBucketBackupConfig returns the backup config entry for this bucket.
+func (b *mockBackend) GenerateBucketBackupConfig(projectName string, bucketName string, op *operations.Operation) (*backupConfig.Config, error) {
+	return nil, nil
+}
+
+// BackupBucket backups up a bucket to a tarball.
+func (b *mockBackend) BackupBucket(projectName string, bucketName string, tarWriter *instancewriter.InstanceTarWriter, op *operations.Operation) error {
+	return nil
+}
+
+// CreateBucketFromBackup creates a bucket from a tarball.
+func (b *mockBackend) CreateBucketFromBackup(srcBackup backup.Info, srcData io.ReadSeeker, op *operations.Operation) error {
+	return nil
+}
+
+// GetInstanceNBD returns an NBD connection to the VM's root disk.
+func (b *mockBackend) GetInstanceNBD(inst instance.Instance, writable bool) (net.Conn, func(), error) {
+	return nil, nil, nil
+}
+
+// GetInstanceAllDisksNBD returns a single NBD connection exporting all of the instance's disks.
+func (b *mockBackend) GetInstanceAllDisksNBD(inst instance.Instance, reuse bool) (net.Conn, func(), error) {
+	return nil, nil, nil
+}
+
+// GetCustomVolumeNBD returns an NBD connection to a VM's additional disk.
+func (b *mockBackend) GetCustomVolumeNBD(projectName string, volName string, writable bool) (net.Conn, func(), error) {
+	return nil, nil, nil
+}

@@ -1,0 +1,1023 @@
+package drivers
+
+import (
+	"bytes"
+	"context"
+	"errors"
+	"fmt"
+	"net"
+	"os"
+	"os/exec"
+	"path/filepath"
+	"slices"
+	"strconv"
+	"strings"
+	"syscall"
+
+	"github.com/pkg/sftp"
+	"golang.org/x/sys/unix"
+
+	internalInstance "github.com/lxc/incus/v7/internal/instance"
+	"github.com/lxc/incus/v7/internal/server/locking"
+	"github.com/lxc/incus/v7/internal/server/operations"
+	"github.com/lxc/incus/v7/internal/server/refcount"
+	"github.com/lxc/incus/v7/internal/server/state"
+	internalUtil "github.com/lxc/incus/v7/internal/util"
+	"github.com/lxc/incus/v7/shared/api"
+	"github.com/lxc/incus/v7/shared/idmap"
+	"github.com/lxc/incus/v7/shared/logger"
+	"github.com/lxc/incus/v7/shared/revert"
+	"github.com/lxc/incus/v7/shared/units"
+	"github.com/lxc/incus/v7/shared/util"
+)
+
+// tmpVolSuffix Suffix to use for any temporary volumes created by Incus.
+const tmpVolSuffix = ".incustmp"
+
+// isoVolSuffix suffix used for iso content type volumes.
+const isoVolSuffix = ".iso"
+
+// DefaultBlockSize is the default size of block volumes.
+const DefaultBlockSize = "10GiB"
+
+// DefaultFilesystem filesystem to use for block devices by default.
+const DefaultFilesystem = "ext4"
+
+// defaultFilesystemMountOpts mount options to use for filesystem block devices by default.
+const defaultFilesystemMountOptions = "discard"
+
+// volIDQuotaSkip is used to indicate to drivers that quotas should not be setup, used during backup import.
+const volIDQuotaSkip = int64(-1)
+
+// VolumeType represents a storage volume type.
+type VolumeType string
+
+// IsInstance indicates if the VolumeType represents an instance type.
+func (t VolumeType) IsInstance() bool {
+	if t == VolumeTypeContainer || t == VolumeTypeVM {
+		return true
+	}
+
+	return false
+}
+
+// Singular returns the singular version of the type name.
+func (t VolumeType) Singular() string {
+	return strings.TrimSuffix(string(t), "s")
+}
+
+// VolumeTypeBucket represents a bucket storage volume.
+const VolumeTypeBucket = VolumeType("buckets")
+
+// VolumeTypeImage represents an image storage volume.
+const VolumeTypeImage = VolumeType("images")
+
+// VolumeTypeCustom represents a custom storage volume.
+const VolumeTypeCustom = VolumeType("custom")
+
+// VolumeTypeContainer represents a container storage volume.
+const VolumeTypeContainer = VolumeType("containers")
+
+// VolumeTypeVM represents a virtual-machine storage volume.
+const VolumeTypeVM = VolumeType("virtual-machines")
+
+// ContentType indicates the format of the volume.
+type ContentType string
+
+// ContentTypeFS indicates the volume will be populated with a mountable filesystem.
+const ContentTypeFS = ContentType("filesystem")
+
+// ContentTypeBlock indicates the volume will be a block device and its contents and we do not
+// know which filesystem(s) (if any) are in use.
+const ContentTypeBlock = ContentType("block")
+
+// ContentTypeISO indicates the volume will be an ISO which is read-only, and uses the ISO 9660 filesystem.
+const ContentTypeISO = ContentType("iso")
+
+// VolumePostHook function returned from a storage action that should be run later to complete the action.
+type VolumePostHook func(vol Volume) error
+
+type baseDirectory struct {
+	Paths []string
+	Mode  os.FileMode
+}
+
+// BaseDirectories maps volume types to the expected directories.
+var BaseDirectories = map[VolumeType]baseDirectory{
+	VolumeTypeBucket:    {Paths: []string{"buckets"}, Mode: 0o711},
+	VolumeTypeContainer: {Paths: []string{"containers", "containers-snapshots"}, Mode: 0o711},
+	VolumeTypeCustom:    {Paths: []string{"custom", "custom-snapshots"}, Mode: 0o700},
+	VolumeTypeImage:     {Paths: []string{"images"}, Mode: 0o700},
+	VolumeTypeVM:        {Paths: []string{"virtual-machines", "virtual-machines-snapshots"}, Mode: 0o700},
+}
+
+// Volume represents a storage volume, and provides functions to mount and unmount it.
+type Volume struct {
+	name                 string
+	pool                 string
+	poolConfig           map[string]string
+	volType              VolumeType
+	contentType          ContentType
+	config               map[string]string
+	driver               Driver
+	mountCustomPath      string // Mount the filesystem volume at a custom location.
+	mountFilesystemProbe bool   // Probe filesystem type when mounting volume (when needed).
+	mountFullFilesystem  bool   // Whether the whole volume, including snapshots data, should be mounted. It is used by the VM config filesystem.
+	hasSource            bool   // Whether the volume is created from a source volume.
+	isDeleted            bool   // Whether we're dealing with a hidden volume (kept until all references are gone).
+}
+
+// NewVolume instantiates a new Volume struct.
+func NewVolume(driver Driver, poolName string, volType VolumeType, contentType ContentType, volName string, volConfig map[string]string, poolConfig map[string]string) Volume {
+	return Volume{
+		name:        volName,
+		pool:        poolName,
+		poolConfig:  poolConfig,
+		volType:     volType,
+		contentType: contentType,
+		config:      volConfig,
+		driver:      driver,
+	}
+}
+
+// Name returns volume's name.
+func (v Volume) Name() string {
+	return v.name
+}
+
+// Pool returns the volume's pool name.
+func (v Volume) Pool() string {
+	return v.pool
+}
+
+// Config returns the volume's (unexpanded) config.
+func (v Volume) Config() map[string]string {
+	return v.config
+}
+
+// ExpandedConfig returns either the value of the volume's config key or the pool's config "volume.{key}" value.
+func (v Volume) ExpandedConfig(key string) string {
+	volVal, ok := v.config[key]
+	if ok {
+		return volVal
+	}
+
+	return v.poolConfig[fmt.Sprintf("volume.%s", key)]
+}
+
+// NewSnapshot instantiates a new Volume struct representing a snapshot of the parent volume.
+func (v Volume) NewSnapshot(snapshotName string) (Volume, error) {
+	if v.IsSnapshot() {
+		return Volume{}, errors.New("Cannot create a snapshot volume from a snapshot")
+	}
+
+	fullSnapName := GetSnapshotVolumeName(v.name, snapshotName)
+	vol := NewVolume(v.driver, v.pool, v.volType, v.contentType, fullSnapName, v.config, v.poolConfig)
+
+	// Propagate filesystem probe mode of parent volume.
+	vol.SetMountFilesystemProbe(v.mountFilesystemProbe)
+
+	return vol, nil
+}
+
+// IsSnapshot indicates if volume is a snapshot.
+func (v Volume) IsSnapshot() bool {
+	return internalInstance.IsSnapshot(v.name)
+}
+
+// MountPath returns the path where the volume will be mounted.
+func (v Volume) MountPath() string {
+	if v.mountCustomPath != "" {
+		return v.mountCustomPath
+	}
+
+	volName := v.name
+
+	if v.volType == VolumeTypeCustom && v.contentType == ContentTypeISO {
+		volName = fmt.Sprintf("%s%s", volName, isoVolSuffix)
+	}
+
+	return GetVolumeMountPath(v.pool, v.volType, volName)
+}
+
+// mountLockName returns the lock name to use for mount/unmount operations on a volume.
+func (v Volume) mountLockName() string {
+	return OperationLockName("Mount", v.pool, v.volType, v.contentType, v.name)
+}
+
+// MountLock attempts to lock the mount lock for the volume and returns the UnlockFunc.
+func (v Volume) MountLock() (locking.UnlockFunc, error) {
+	return locking.Lock(context.TODO(), v.mountLockName())
+}
+
+// MountRefCountIncrement increments the mount ref counter for the volume and returns the new value.
+func (v Volume) MountRefCountIncrement() uint {
+	return refcount.Increment(v.mountLockName(), 1)
+}
+
+// MountRefCountDecrement decrements the mount ref counter for the volume and returns the new value.
+func (v Volume) MountRefCountDecrement() uint {
+	return refcount.Decrement(v.mountLockName(), 1)
+}
+
+// MountInUse returns whether the volume has a mount ref counter >0.
+func (v Volume) MountInUse() bool {
+	return refcount.Get(v.mountLockName()) > 0
+}
+
+// EnsureMountPath creates the volume's mount path if missing, then sets the correct permission for the type.
+// If permission setting fails and the volume is a snapshot then the error is ignored as snapshots are read only.
+// The boolean flag indicates whether this is being called during volume creation.
+func (v Volume) EnsureMountPath(creation bool) error {
+	volPath := v.MountPath()
+
+	reverter := revert.New()
+	defer reverter.Fail()
+
+	// Create volume's mount path if missing, with any created directories set to 0711.
+	if !util.PathExists(volPath) {
+		if v.IsSnapshot() {
+			// Create the parent directory if needed.
+			parentName, _, _ := api.GetParentAndSnapshotName(v.name)
+			err := CreateParentSnapshotDirIfMissing(v.pool, v.volType, parentName)
+			if err != nil {
+				return err
+			}
+		}
+
+		err := os.Mkdir(volPath, 0o711)
+		if err != nil {
+			return fmt.Errorf("Failed to create mount directory %q: %w", volPath, err)
+		}
+
+		reverter.Add(func() { _ = os.Remove(volPath) })
+	}
+
+	// If dealing with a custom volume and part of volume creation, apply initial mode and owner.
+	if v.volType == VolumeTypeCustom && v.contentType == ContentTypeFS && creation {
+		initialMode := v.ExpandedConfig("initial.mode")
+		mode := os.FileMode(0o711)
+		if initialMode != "" {
+			m, err := strconv.ParseInt(initialMode, 8, 0)
+			if err != nil {
+				return err
+			}
+
+			mode = os.FileMode(m)
+		}
+
+		err := os.Chmod(volPath, mode)
+		if err != nil {
+			return err
+		}
+
+		uid, gid := 0, 0
+		initialUID := v.ExpandedConfig("initial.uid")
+		if initialUID != "" {
+			uid, err = strconv.Atoi(initialUID)
+			if err != nil {
+				return err
+			}
+		}
+
+		initialGID := v.ExpandedConfig("initial.gid")
+		if initialGID != "" {
+			gid, err = strconv.Atoi(initialGID)
+			if err != nil {
+				return err
+			}
+		}
+
+		// Set the owner of a custom volume if uid or gid have been set.
+		if uid != 0 || gid != 0 {
+			err = os.Chown(volPath, uid, gid)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	// Set very restrictive mode 0100 for non-custom, non-bucket and non-image volumes.
+	if v.volType != VolumeTypeCustom && v.volType != VolumeTypeImage && v.volType != VolumeTypeBucket {
+		mode := os.FileMode(0o100)
+
+		fInfo, err := os.Lstat(volPath)
+		if err != nil {
+			return fmt.Errorf("Error getting mount directory info %q: %w", volPath, err)
+		}
+
+		// We expect the mount path to be a directory, so use this for comparison.
+		compareMode := os.ModeDir | mode
+
+		// Set mode of actual volume's mount path if needed.
+		if fInfo.Mode() != compareMode {
+			err = os.Chmod(volPath, mode)
+
+			// If the chmod failed, return the error as long as the volume is not a snapshot.
+			// If the volume is a snapshot, we must ignore the error as snapshots are readonly and cannot be
+			// modified after they are taken, such that any permission error is not fixable at mount time.
+			if err != nil && !v.IsSnapshot() {
+				return fmt.Errorf("Failed to chmod mount directory %q (%04o): %w", volPath, mode, err)
+			}
+		}
+	}
+
+	reverter.Success()
+	return nil
+}
+
+// MountTask runs the supplied task after mounting the volume if needed. If the volume was mounted
+// for this then it is unmounted when the task finishes.
+func (v Volume) MountTask(task func(mountPath string, op *operations.Operation) error, op *operations.Operation) error {
+	// If the volume is a snapshot then call the snapshot specific mount/unmount functions as
+	// these will mount the snapshot read only.
+	var err error
+
+	if v.IsSnapshot() {
+		err = v.driver.MountVolumeSnapshot(v, op)
+	} else {
+		err = v.driver.MountVolume(v, op)
+	}
+
+	if err != nil {
+		return err
+	}
+
+	taskErr := task(v.MountPath(), op)
+
+	// Try and unmount, even on task error.
+	if v.IsSnapshot() {
+		_, err = v.driver.UnmountVolumeSnapshot(v, op)
+	} else {
+		_, err = v.driver.UnmountVolume(v, false, op)
+	}
+
+	// Return task error if failed.
+	if taskErr != nil {
+		return taskErr
+	}
+
+	// Return unmount error if failed.
+	if err != nil && !errors.Is(err, ErrInUse) {
+		return err
+	}
+
+	return nil
+}
+
+// MountWithSnapshotsTask runs the supplied task after mounting the volume with its snapshots if needed. If the volume was mounted
+// for this then it is unmounted when the task finishes.
+func (v Volume) MountWithSnapshotsTask(task func(parentMountPath string, snapshotMountPaths map[string]string, op *operations.Operation) error, op *operations.Operation) error {
+	var err error
+
+	if v.IsSnapshot() {
+		return fmt.Errorf("Volume cannot be snapshot")
+	}
+
+	err = v.driver.MountVolume(v, op)
+	if err != nil {
+		return err
+	}
+
+	defer func() { _, _ = v.driver.UnmountVolume(v, false, op) }()
+
+	snapshots, err := v.Snapshots(op)
+	if err != nil {
+		return err
+	}
+
+	unmountSnapshots := func(snapshots []Volume) {
+		for _, s := range snapshots {
+			_, _ = v.driver.UnmountVolumeSnapshot(s, op)
+		}
+	}
+
+	mounted := []Volume{}
+
+	for _, s := range snapshots {
+		err = v.driver.MountVolumeSnapshot(s, op)
+		if err != nil {
+			unmountSnapshots(mounted)
+			return err
+		}
+
+		mounted = append(mounted, s)
+	}
+
+	defer unmountSnapshots(mounted)
+
+	snapshotMountPaths := map[string]string{}
+	for _, s := range snapshots {
+		snapDiskPath, err := v.driver.GetVolumeDiskPath(s)
+		if err != nil {
+			return err
+		}
+
+		backingPath, err := v.driver.GetQcow2BackingFilePath(s)
+		if err != nil {
+			return err
+		}
+
+		// Check whether the backing path and the LVM volume resolve to the same /dev/dm-X device.
+		target, err := filepath.EvalSymlinks(backingPath)
+		if err != nil {
+			return err
+		}
+
+		if target != snapDiskPath {
+			return fmt.Errorf("/dev symlinks are in an inconsistent state")
+		}
+
+		snapshotMountPaths[s.Name()] = s.MountPath()
+	}
+
+	taskErr := task(v.MountPath(), snapshotMountPaths, op)
+
+	// Return task error if failed.
+	if taskErr != nil {
+		return taskErr
+	}
+
+	return nil
+}
+
+// UnmountTask runs the supplied task after unmounting the volume if needed.
+// If the volume was unmounted for this then it is mounted when the task finishes.
+// keepBlockDev indicates if backing block device should be not be deactivated if volume is unmounted.
+func (v Volume) UnmountTask(task func(op *operations.Operation) error, keepBlockDev bool, op *operations.Operation) error {
+	// If the volume is a snapshot then call the snapshot specific mount/unmount functions as
+	// these will mount the snapshot read only.
+	if v.IsSnapshot() {
+		ourUnmount, err := v.driver.UnmountVolumeSnapshot(v, op)
+		if err != nil {
+			return err
+		}
+
+		if ourUnmount {
+			defer logger.WarnOnError(func() error { return v.driver.MountVolumeSnapshot(v, op) }, "Failed to mount volume snapshot")
+		}
+	} else {
+		ourUnmount, err := v.driver.UnmountVolume(v, keepBlockDev, op)
+		if err != nil {
+			return err
+		}
+
+		if ourUnmount {
+			defer logger.WarnOnError(func() error { return v.driver.MountVolume(v, op) }, "Failed to mount volume")
+		}
+	}
+
+	return task(op)
+}
+
+// Snapshots returns a list of snapshots for the volume (in no particular order).
+func (v Volume) Snapshots(op *operations.Operation) ([]Volume, error) {
+	if v.IsSnapshot() {
+		return nil, errors.New("Volume is a snapshot")
+	}
+
+	snapshots, err := v.driver.VolumeSnapshots(v, op)
+	if err != nil {
+		return nil, err
+	}
+
+	snapVols := make([]Volume, 0, len(snapshots))
+	for _, snapName := range snapshots {
+		snapshot, err := v.NewSnapshot(snapName)
+		if err != nil {
+			return nil, err
+		}
+
+		snapVols = append(snapVols, snapshot)
+	}
+
+	return snapVols, nil
+}
+
+// SnapshotsMatch checks that the snapshots, according to the storage driver, match those provided (although not
+// necessarily in the same order).
+func (v Volume) SnapshotsMatch(snapNames []string, op *operations.Operation) error {
+	if v.IsSnapshot() {
+		return errors.New("Volume is a snapshot")
+	}
+
+	snapshots, err := v.driver.VolumeSnapshots(v, op)
+	if err != nil {
+		return err
+	}
+
+	for _, snapName := range snapNames {
+		if !slices.Contains(snapshots, snapName) {
+			return fmt.Errorf("Snapshot %q expected but not in storage", snapName)
+		}
+	}
+
+	for _, snapshot := range snapshots {
+		if !slices.Contains(snapNames, snapshot) {
+			return fmt.Errorf("Snapshot %q in storage but not expected", snapshot)
+		}
+	}
+
+	return nil
+}
+
+// IsBlockBacked indicates whether storage device is block backed.
+func (v Volume) IsBlockBacked() bool {
+	return v.driver.isBlockBacked(v) || v.mountFilesystemProbe
+}
+
+// Type returns the volume type.
+func (v Volume) Type() VolumeType {
+	return v.volType
+}
+
+// ContentType returns the content type.
+func (v Volume) ContentType() ContentType {
+	return v.contentType
+}
+
+// IsVMBlock returns true if volume is a block volume for virtual machines or associated images.
+func (v Volume) IsVMBlock() bool {
+	return (v.volType == VolumeTypeVM || v.volType == VolumeTypeImage) && v.contentType == ContentTypeBlock
+}
+
+// IsCustomBlock returns true if volume is a custom block volume.
+func (v Volume) IsCustomBlock() bool {
+	return (v.volType == VolumeTypeCustom && v.contentType == ContentTypeBlock)
+}
+
+// NewVMBlockFilesystemVolume returns a copy of the volume with the content type set to ContentTypeFS and the
+// config "size" property set to "size.state" or DefaultVMBlockFilesystemSize if not set.
+func (v Volume) NewVMBlockFilesystemVolume() Volume {
+	// Copy volume config so modifications don't affect original volume.
+	newConf := make(map[string]string, len(v.config))
+	for k, v := range v.config {
+		if k == "zfs.block_mode" {
+			continue // VM filesystem volumes never use ZFS block mode.
+		}
+
+		newConf[k] = v
+	}
+
+	if v.config["size.state"] != "" {
+		newConf["size"] = v.config["size.state"]
+	} else {
+		// Fallback to the default VM filesystem size.
+		newConf["size"] = v.driver.Info().DefaultVMBlockFilesystemSize
+	}
+
+	vol := NewVolume(v.driver, v.pool, v.volType, ContentTypeFS, v.name, newConf, v.poolConfig)
+
+	// Propagate filesystem probe mode of parent volume.
+	vol.SetMountFilesystemProbe(v.mountFilesystemProbe)
+
+	return vol
+}
+
+// SetQuota calls SetVolumeQuota on the Volume's driver.
+func (v Volume) SetQuota(size string, allowUnsafeResize bool, op *operations.Operation) error {
+	return v.driver.SetVolumeQuota(v, size, allowUnsafeResize, op)
+}
+
+// SetConfigSize sets the size config property on the Volume (does not resize volume).
+func (v Volume) SetConfigSize(size string) {
+	v.config["size"] = size
+}
+
+// SetConfigStateSize sets the size.state config property on the Volume (does not resize volume).
+func (v Volume) SetConfigStateSize(size string) {
+	v.config["size.state"] = size
+}
+
+// ConfigBlockFilesystem returns the filesystem to use for block volumes. Returns config value "block.filesystem"
+// if defined in volume or pool's volume config, otherwise the DefaultFilesystem.
+func (v Volume) ConfigBlockFilesystem() string {
+	blockType := v.ExpandedConfig("block.type")
+	if blockType != "" && blockType == BlockVolumeTypeQcow2 && v.contentType == ContentTypeFS {
+		return "btrfs"
+	}
+
+	fs := v.ExpandedConfig("block.filesystem")
+	if fs != "" {
+		return fs
+	}
+
+	return DefaultFilesystem
+}
+
+// ConfigBlockMountOptions returns the filesystem mount options to use for block volumes. Returns config value
+// "block.mount_options" if defined in volume or pool's volume config, otherwise defaultFilesystemMountOptions.
+func (v Volume) ConfigBlockMountOptions() string {
+	if v.ExpandedConfig("block.type") == BlockVolumeTypeQcow2 && !v.mountFullFilesystem {
+		_, snapName, isSnap := api.GetParentAndSnapshotName(v.name)
+		subvol := Qcow2ConfigVolumeBase
+		if isSnap {
+			subvol = fmt.Sprintf("%s-%s", Qcow2ConfigVolumeBase, snapName)
+		}
+
+		return fmt.Sprintf("subvol=%s", subvol)
+	}
+
+	fs := v.ExpandedConfig("block.mount_options")
+	if fs != "" {
+		return fs
+	}
+
+	// Use some special options if the filesystem for the volume is BTRFS.
+	if v.ConfigBlockFilesystem() == "btrfs" {
+		return "user_subvol_rm_allowed,discard"
+	}
+
+	return defaultFilesystemMountOptions
+}
+
+// ConfigSize returns the size to use when creating new a volume. Returns config value "size" if defined in volume
+// or pool's volume config, otherwise for block volumes and block-backed volumes the defaultBlockSize. For other
+// volumes an empty string is returned if no size is defined.
+func (v Volume) ConfigSize() string {
+	size := v.ExpandedConfig("size")
+
+	// If volume size isn't defined in either volume or pool config, then for block volumes or block-backed
+	// volumes return the defaultBlockSize.
+	if (size == "" || size == "0") && (v.contentType == ContentTypeBlock || v.IsBlockBacked()) {
+		return DefaultBlockSize
+	}
+
+	// Return defined size or empty string if not defined.
+	return size
+}
+
+// ConfigSizeFromSource derives the volume size to use for a new volume when copying from a source volume.
+// Where possible (if the source volume has a volatile.rootfs.size property), it checks that the source volume
+// isn't larger than the volume's "size" setting and the pool's "volume.size" setting.
+func (v Volume) ConfigSizeFromSource(srcVol Volume) (string, error) {
+	// If source is not an image, then only use volume specified size. This is so the pool volume size isn't
+	// taken into account for non-image volume copies.
+	if srcVol.volType != VolumeTypeImage {
+		return v.config["size"], nil
+	}
+
+	// VM config filesystem volumes should always have a fixed specified size, so just return volume size.
+	if v.volType == VolumeTypeVM && v.contentType == ContentTypeFS {
+		return v.config["size"], nil
+	}
+
+	// If the source image doesn't have any size information, then use volume/pool/default size in that order.
+	if srcVol.config["volatile.rootfs.size"] == "" {
+		return v.ConfigSize(), nil
+	}
+
+	imgSizeBytes, err := units.ParseByteSizeString(srcVol.config["volatile.rootfs.size"])
+	if err != nil {
+		return "", err
+	}
+
+	// If volume/pool size is specified (excluding default size), then check it against the image minimum size.
+	volSize := v.ExpandedConfig("size")
+	if volSize != "" && volSize != "0" {
+		volSizeBytes, err := units.ParseByteSizeString(volSize)
+		if err != nil {
+			return volSize, err
+		}
+
+		// Round the vol size (for comparison only) because some storage drivers round volumes they create,
+		// and so the published images created from those volumes will also be rounded and will not be
+		// directly usable with the same size setting without also rounding for this check.
+		// Because we are not altering the actual size returned to use for the new volume, this will not
+		// affect storage drivers that do not use rounding.
+		volSizeBytes, err = v.driver.roundVolumeBlockSizeBytes(v, volSizeBytes)
+		if err != nil {
+			return volSize, err
+		}
+
+		if volSizeBytes < imgSizeBytes {
+			// The shared cached image volume must be large enough to hold the image. Grow it to
+			// the image size rather than failing, so instances with a sufficciently sized root
+			// disk can be created even when the pool's volume.size is smaller than the image.
+			// Instance volumes keep the strict check below (their root disk size is honored
+			// separately).
+			if v.volType == VolumeTypeImage {
+				return srcVol.config["volatile.rootfs.size"], nil
+			}
+
+			// The volume/pool specified size is smaller than image minimum size. We must not
+			// continue as these specified sizes provide protection against unpacking a massive
+			// image and filling the pool.
+			return "", fmt.Errorf("Source image size (%d) exceeds specified volume size (%d)", imgSizeBytes, volSizeBytes)
+		}
+
+		// Use the specified volume size.
+		return volSize, nil
+	}
+
+	// If volume/pool size not specified above, then fallback to default volume size (if relevant) and compare.
+	volSize = v.ConfigSize()
+	if volSize != "" && volSize != "0" {
+		volSizeBytes, err := units.ParseByteSizeString(volSize)
+		if err != nil {
+			return "", err
+		}
+
+		// Use image minimum size as volSize if the default volume size is smaller.
+		if volSizeBytes < imgSizeBytes {
+			return srcVol.config["volatile.rootfs.size"], nil
+		}
+	}
+
+	// Use the default volume size.
+	return volSize, nil
+}
+
+// SetMountFilesystemProbe enables or disables the probing mode when mounting the filesystem volume.
+func (v *Volume) SetMountFilesystemProbe(probe bool) {
+	v.mountFilesystemProbe = probe
+}
+
+// SetHasSource indicates whether the Volume is created from a source.
+func (v *Volume) SetHasSource(hasSource bool) {
+	v.hasSource = hasSource
+}
+
+// Clone returns a copy of the volume.
+func (v Volume) Clone() Volume {
+	// Copy the config map to avoid internal modifications affecting external state.
+	newConfig := util.CloneMap(v.config)
+
+	// Copy the pool config map to avoid internal modifications affecting external state.
+	newPoolConfig := util.CloneMap(v.poolConfig)
+
+	return NewVolume(v.driver, v.pool, v.volType, v.contentType, v.name, newConfig, newPoolConfig)
+}
+
+// forkfileLockName returns the forkfile lock name.
+func (v Volume) forkfileLockName() string {
+	return fmt.Sprintf("forkfile_%s_%s_%s", v.Pool(), v.Type(), v.Name())
+}
+
+// forkfileRunningLockName returns the forkfile-running lock name.
+func (v Volume) forkfileRunningLockName() string {
+	return fmt.Sprintf("forkfile-running_%s_%s_%s", v.Pool(), v.Type(), v.Name())
+}
+
+// forkfileRunPath returns the forkfile running path.
+func (v Volume) forkfileRunPath() string {
+	name := fmt.Sprintf("%s.%s.%s", v.Pool(), v.Type(), v.Name())
+	return internalUtil.RunPath(name)
+}
+
+// StopForkfile attempts to send SIGKILL to forkfile then waits for it to exit.
+func (v Volume) StopForkfile() {
+	// Make sure that when the function exits, no forkfile is running by acquiring the lock (which indicates
+	// that forkfile isn't running and holding the lock) and then releasing it.
+	defer func() {
+		unlock, err := locking.Lock(context.TODO(), v.forkfileRunningLockName())
+		if err != nil {
+			return
+		}
+
+		unlock()
+	}()
+
+	content, err := os.ReadFile(filepath.Join(v.forkfileRunPath(), "forkfile.pid"))
+	if err != nil {
+		return
+	}
+
+	pid, err := strconv.ParseInt(strings.TrimSpace(string(content)), 10, 64)
+	if err != nil {
+		return
+	}
+
+	// Forcefully kill the running process.
+	_ = unix.Kill(int(pid), unix.SIGKILL)
+}
+
+// FileSFTPConn returns a connection to the forkfile handler.
+func (v Volume) FileSFTPConn(s *state.State) (net.Conn, error) {
+	// Lock to avoid concurrent spawning.
+	spawnUnlock, err := locking.Lock(context.TODO(), v.forkfileLockName())
+	if err != nil {
+		return nil, err
+	}
+
+	defer spawnUnlock()
+
+	// Create any missing directories in case the instance has never been started before.
+	err = os.MkdirAll(v.forkfileRunPath(), 0o700)
+	if err != nil {
+		return nil, err
+	}
+
+	// Trickery to handle paths > 108 chars.
+	dirFile, err := os.Open(v.forkfileRunPath())
+	if err != nil {
+		return nil, err
+	}
+
+	defer logger.WarnOnError(dirFile.Close, "Failed to close file")
+
+	forkfileAddr, err := net.ResolveUnixAddr("unix", fmt.Sprintf("/proc/self/fd/%d/forkfile.sock", dirFile.Fd()))
+	if err != nil {
+		return nil, err
+	}
+
+	// Attempt to connect on existing socket.
+	forkfilePath := filepath.Join(v.forkfileRunPath(), "forkfile.sock")
+	forkfileConn, err := net.DialUnix("unix", nil, forkfileAddr)
+	if err == nil {
+		// Found an existing server.
+		return forkfileConn, nil
+	}
+
+	// Setup reverter.
+	reverter := revert.New()
+	defer reverter.Fail()
+
+	// Create the listener.
+	_ = os.Remove(forkfilePath)
+	forkfileListener, err := net.ListenUnix("unix", forkfileAddr)
+	if err != nil {
+		return nil, err
+	}
+
+	// Record the socket file identity so cleanup doesn't remove a newer socket.
+	forkfileInfo, err := os.Stat(forkfilePath)
+	if err != nil {
+		_ = forkfileListener.Close()
+		return nil, err
+	}
+
+	removeForkfileSocket := func() {
+		info, err := os.Stat(forkfilePath)
+		if err == nil && os.SameFile(info, forkfileInfo) {
+			_ = os.Remove(forkfilePath)
+		}
+	}
+
+	reverter.Add(func() {
+		_ = forkfileListener.Close()
+		removeForkfileSocket()
+	})
+
+	// Spawn forkfile in a Go routine.
+	chReady := make(chan error)
+	go func() {
+		// Lock to avoid concurrent running forkfile.
+		runUnlock, err := locking.Lock(context.TODO(), v.forkfileRunningLockName())
+		if err != nil {
+			chReady <- err
+			return
+		}
+
+		defer runUnlock()
+
+		err = v.MountTask(func(mountPath string, _ *operations.Operation) error {
+			// Start building the command.
+			args := []string{
+				s.OS.ExecPath,
+				"forkfile",
+				"--",
+			}
+
+			extraFiles := []*os.File{}
+
+			// Get the listener file.
+			forkfileFile, err := forkfileListener.File()
+			if err != nil {
+				return err
+			}
+
+			defer logger.WarnOnError(forkfileFile.Close, "Failed to close file")
+
+			args = append(args, "3")
+			extraFiles = append(extraFiles, forkfileFile)
+
+			// Get the rootfs.
+			rootfsFile, err := os.Open(v.MountPath())
+			if err != nil {
+				return err
+			}
+
+			defer logger.WarnOnError(rootfsFile.Close, "Failed to close file")
+
+			args = append(args, "4")
+			extraFiles = append(extraFiles, rootfsFile)
+
+			// Get the pidfd, omitting it in case of a storage volume.
+			args = append(args, "-1")
+
+			// Finalize the args.
+			args = append(args, "0")
+
+			// Prepare sftp server.
+			forkfile := exec.Cmd{
+				Path:       s.OS.ExecPath,
+				Args:       args,
+				ExtraFiles: extraFiles,
+			}
+
+			var stderr bytes.Buffer
+			forkfile.Stderr = &stderr
+
+			// Get the disk idmap.
+			var idmapset *idmap.Set
+			jsonIdmap, ok := v.config["volatile.idmap.last"]
+			if ok {
+				idmapset, err = idmap.NewSetFromJSON(jsonIdmap)
+				if err != nil {
+					return err
+				}
+			}
+
+			if idmapset != nil {
+				forkfile.SysProcAttr = &syscall.SysProcAttr{
+					Cloneflags: syscall.CLONE_NEWUSER,
+					Credential: &syscall.Credential{
+						Uid: uint32(0),
+						Gid: uint32(0),
+					},
+					UidMappings: idmapset.ToUIDMappings(),
+					GidMappings: idmapset.ToGIDMappings(),
+				}
+			}
+
+			// Start the server.
+			err = forkfile.Start()
+			if err != nil {
+				return fmt.Errorf("Failed to run forkfile: %w: %s", err, strings.TrimSpace(stderr.String()))
+			}
+
+			// Write PID file.
+			pidFile := filepath.Join(v.forkfileRunPath(), "forkfile.pid")
+			err = os.WriteFile(pidFile, fmt.Appendf(nil, "%d\n", forkfile.Process.Pid), 0o600)
+			if err != nil {
+				return fmt.Errorf("Failed to write forkfile PID: %w", err)
+			}
+
+			// Close the listener and delete the socket immediately after forkfile exits to avoid clients
+			// thinking a listener is available while other deferred calls are being processed.
+			defer func() {
+				_ = forkfileListener.Close()
+				removeForkfileSocket()
+				_ = os.Remove(pidFile)
+			}()
+
+			// Indicate the process was spawned without error.
+			close(chReady)
+
+			// Wait for completion.
+			err = forkfile.Wait()
+			if err != nil {
+				logger.Error("SFTP server stopped with error", logger.Ctx{"err": err, "stderr": strings.TrimSpace(stderr.String())})
+				// Don't return an error as channel is already closed.
+				return nil
+			}
+
+			return nil
+		}, nil)
+		if err != nil {
+			chReady <- err
+		}
+	}()
+
+	// Wait for forkfile to have been spawned.
+	err = <-chReady
+	if err != nil {
+		return nil, err
+	}
+
+	// Connect to the new server.
+	forkfileConn, err = net.DialUnix("unix", nil, forkfileAddr)
+	if err != nil {
+		return nil, err
+	}
+
+	// All done.
+	reverter.Success()
+
+	return forkfileConn, nil
+}
+
+// FileSFTP returns an SFTP connection to the forkfile handler.
+func (v Volume) FileSFTP(s *state.State) (*sftp.Client, error) {
+	// Connect to the forkfile daemon.
+	conn, err := v.FileSFTPConn(s)
+	if err != nil {
+		return nil, err
+	}
+
+	// Get a SFTP client.
+	client, err := sftp.NewClientPipe(conn, conn)
+	if err != nil {
+		_ = conn.Close()
+		return nil, err
+	}
+
+	go func() {
+		// Wait for the client to be done before closing the connection.
+		_ = client.Wait()
+		_ = conn.Close()
+	}()
+
+	return client, nil
+}

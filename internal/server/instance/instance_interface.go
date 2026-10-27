@@ -1,0 +1,288 @@
+package instance
+
+import (
+	"context"
+	"crypto/x509"
+	"io"
+	"net"
+	"os"
+	"time"
+
+	liblxc "github.com/lxc/go-lxc"
+	"github.com/pkg/sftp"
+	"google.golang.org/protobuf/proto"
+
+	"github.com/lxc/incus/v7/internal/server/backup"
+	"github.com/lxc/incus/v7/internal/server/cgroup"
+	"github.com/lxc/incus/v7/internal/server/db"
+	deviceConfig "github.com/lxc/incus/v7/internal/server/device/config"
+	"github.com/lxc/incus/v7/internal/server/instance/instancetype"
+	"github.com/lxc/incus/v7/internal/server/instance/operationlock"
+	"github.com/lxc/incus/v7/internal/server/metrics"
+	"github.com/lxc/incus/v7/internal/server/operations"
+	"github.com/lxc/incus/v7/shared/api"
+	"github.com/lxc/incus/v7/shared/idmap"
+	"github.com/lxc/incus/v7/shared/ioprogress"
+	"github.com/lxc/incus/v7/shared/osinfo"
+	"github.com/lxc/incus/v7/shared/uefi"
+)
+
+// HookStart hook used when instance has started.
+const HookStart = "onstart"
+
+// HookStopNS hook used when instance has stopped but before namespaces have been destroyed.
+const HookStopNS = "onstopns"
+
+// HookStop hook used when instance has stopped.
+const HookStop = "onstop"
+
+// Possible values for the protocol argument of the Instance.Console() method.
+const (
+	ConsoleTypeConsole = "console"
+	ConsoleTypeVGA     = "vga"
+)
+
+// TemplateTrigger trigger name.
+type TemplateTrigger string
+
+// TemplateTriggerCreate for when an instance is created.
+const TemplateTriggerCreate TemplateTrigger = "create"
+
+// TemplateTriggerCopy for when an instance is copied.
+const TemplateTriggerCopy TemplateTrigger = "copy"
+
+// TemplateTriggerRename for when an instance is renamed.
+const TemplateTriggerRename TemplateTrigger = "rename"
+
+// PowerStateRunning represents the power state stored when an instance is running.
+const PowerStateRunning = "RUNNING"
+
+// PowerStateStopped represents the power state stored when an instance is stopped.
+const PowerStateStopped = "STOPPED"
+
+// AgentStateStarted represents the agent state stored when an instance agent is running.
+const AgentStateStarted = "STARTED"
+
+// AgentStateStopped represents the agent state stored when an instance agent is stopped.
+const AgentStateStopped = "STOPPED"
+
+// ConfigReader is used to read instance config.
+type ConfigReader interface {
+	Project() api.Project
+	Type() instancetype.Type
+	Architecture() int
+	ID() int
+	Name() string
+
+	ExpandedConfig() map[string]string
+	ExpandedDevices() deviceConfig.Devices
+	LocalConfig() map[string]string
+	LocalDevices() deviceConfig.Devices
+}
+
+// Instance interface.
+type Instance interface {
+	ConfigReader
+
+	// Instance actions.
+	Freeze() error
+	Shutdown(timeout time.Duration) error
+	Start(stateful bool) error
+	Stop(stateful bool) error
+	Restart(timeout time.Duration) error
+	Rebuild(img *api.Image, op *operations.Operation) error
+	Unfreeze() error
+
+	ReloadDevice(devName string) error
+	RegisterDevices()
+
+	Info() Info
+	IsPrivileged() bool
+
+	// Dependent volumes
+	HasDependentDisk() bool
+	ForEachDependentDiskType(diskAction func(dev deviceConfig.DeviceNamed) error) error
+
+	// Snapshots & migration & backups.
+	Restore(source Instance, stateful bool, diskOnly bool) error
+	Snapshot(name string, expiry time.Time, stateful bool) error
+	Snapshots() ([]Instance, error)
+	Backups() ([]backup.InstanceBackup, error)
+	UpdateBackupFile() error
+	CanLiveMigrate() bool
+	CreateQcow2Snapshot(diskPath string, devName string, snapshotName string, backingFilename string, stateful bool) error
+	DeleteQcow2Snapshot(devName string, snapshotIndex int, backingFilename string) error
+	ExportQcow2Block(diskName string, blockIndex int) (func(), string, error)
+	ConnectNBD(diskName string, diskSize int64, writable bool) (net.Conn, func(), error)
+	ConnectNBDAllDisks(reuse bool) (net.Conn, func(), error)
+
+	// Config handling.
+	Rename(newName string, applyTemplateTrigger bool) error
+	Update(newConfig db.InstanceArgs, userRequested bool) error
+	UpdateDevices(devices deviceConfig.Devices) error
+
+	Delete(force bool, cleanupDependencies bool) error
+	Export(meta io.Writer, roofs io.Writer, properties map[string]string, expiration time.Time, tracker *ioprogress.ProgressTracker) (*api.ImageMetadata, error)
+
+	// Live configuration.
+	CGroup() (*cgroup.CGroup, error)
+	VolatileSet(changes map[string]string) error
+
+	// File handling.
+	FileSFTPConn() (net.Conn, error)
+	FileSFTP() (*sftp.Client, error)
+
+	// Network connectivity.
+	PortForwardConn(address string, port int) (net.Conn, error)
+
+	// Console - Allocate and run a console tty or a spice Unix socket.
+	Console(protocol string) (*os.File, chan struct{}, error)
+	Exec(req api.InstanceExecPost, stdin *os.File, stdout *os.File, stderr *os.File) (Cmd, error)
+
+	// Status
+	Render() (any, any, error)
+	RenderWithUsage() (any, any, error)
+	RenderFull() (*api.InstanceFull, any, error)
+	RenderState() (*api.InstanceState, error)
+	IsRunning() bool
+	IsFrozen() bool
+	IsEphemeral() bool
+	IsSnapshot() bool
+	IsStateful() bool
+	LockExclusive() (*operationlock.InstanceOperation, error)
+
+	// Hooks.
+	DeviceEventHandler(*deviceConfig.RunConfig) error
+	OnHook(hookName string, args map[string]string) error
+
+	// Properties.
+	Location() string
+	CloudInitID() string
+	Description() string
+	CreationDate() time.Time
+	LastUsedDate() time.Time
+	GuestOS() osinfo.OSType
+
+	Profiles() []api.Profile
+	InitPID() int
+	State() string
+	ExpiryDate() time.Time
+	FillNetworkDevice(name string, m deviceConfig.Device) (deviceConfig.Device, error)
+
+	ETag() []any
+	MACPattern() string
+
+	// Paths.
+	Path() string
+	ExecOutputPath() string
+	RootfsPath() string
+	TemplatesPath() string
+	StatePath() string
+	LogFilePath() string
+	ConsoleBufferLogPath() string
+	LogPath() string
+	RunPath() string
+	DevicesPath() string
+
+	// Storage.
+	StoragePool() (string, error)
+
+	// Migration.
+	CanMigrate() string
+	MigrateSend(args MigrateSendArgs) error
+	MigrateReceive(args MigrateReceiveArgs) error
+
+	// Progress reporting.
+	SetOperation(op *operations.Operation)
+	Operation() *operations.Operation
+
+	DeferTemplateApply(trigger TemplateTrigger) error
+
+	Metrics() (*metrics.MetricSet, error)
+
+	// Bitmaps.
+	CreateBitmap(deviceNames []string, data api.StorageVolumeBitmapsPost) error
+	DeleteBitmap(deviceName string, bitmapName string) error
+	GetBitmaps(deviceName string) ([]api.StorageVolumeBitmap, error)
+}
+
+// Container interface is for container specific functions.
+type Container interface {
+	Instance
+
+	CurrentIdmap() (*idmap.Set, error)
+	DiskIdmap() (*idmap.Set, error)
+	NextIdmap() (*idmap.Set, error)
+	ConsoleLog(opts liblxc.ConsoleLogOptions) (string, error)
+	InsertSeccompUnixDevice(prefix string, m deviceConfig.Device, pid int) error
+	DevptsFd() (*os.File, error)
+	IdmappedStorage(path string, fstype string) idmap.StorageType
+}
+
+// VM interface is for VM specific functions.
+type VM interface {
+	Instance
+
+	AgentCertificate() *x509.Certificate
+	ConsoleLog() (string, error)
+	ConsoleScreenshot(screenshotFile *os.File) error
+	DumpGuestMemory(w *os.File, format string) error
+	GetNVRAM() (*uefi.Store, error)
+	SetNVRAM(store *uefi.Store) error
+	ResetNVRAM() error
+	QemuArchConfig() (string, string, error)
+}
+
+// CriuMigrationArgs arguments for CRIU migration.
+type CriuMigrationArgs struct {
+	Cmd          uint
+	StateDir     string
+	Function     string
+	Stop         bool
+	ActionScript bool
+	DumpDir      string
+	PreDumpDir   string
+	Features     liblxc.CriuFeatures
+	Op           *operationlock.InstanceOperation
+}
+
+// Info represents information about an instance driver.
+type Info struct {
+	Name     string            // Name of an instance driver, e.g. "lxc"
+	Version  string            // Version number of a loaded instance driver
+	Error    error             // Whether there is an operational impediment.
+	Type     instancetype.Type // Instance type that the driver provides support for.
+	Features map[string]any    // Map of supported features.
+}
+
+// MigrateArgs represent arguments for instance migration send and receive.
+type MigrateArgs struct {
+	ControlSend           func(m proto.Message) error
+	ControlReceive        func(m proto.Message, handshake bool) error
+	StateConn             func(ctx context.Context) (io.ReadWriteCloser, error)
+	StateConnExtra        func(ctx context.Context, count int) ([]io.ReadWriteCloser, error) // Extra state connections, nil when this side can't provide them.
+	FilesystemConn        func(ctx context.Context) (io.ReadWriteCloser, error)
+	Snapshots             bool
+	Live                  bool
+	Disconnect            func()
+	ClusterMoveSourceName string // Will be empty if not a cluster move, othwise indicates the source instance.
+	StoragePool           string
+}
+
+// MigrateSendArgs represent arguments for instance migration send.
+type MigrateSendArgs struct {
+	MigrateArgs
+
+	AllowInconsistent    bool
+	Devices              api.DevicesMap
+	SkipDependentVolumes []string
+}
+
+// MigrateReceiveArgs represent arguments for instance migration receive.
+type MigrateReceiveArgs struct {
+	MigrateArgs
+
+	InstanceOperation   *operationlock.InstanceOperation
+	Refresh             bool
+	RefreshExcludeOlder bool
+}

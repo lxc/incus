@@ -1,0 +1,69 @@
+name: Commits
+on:
+  - pull_request
+
+permissions:
+  contents: read
+
+jobs:
+  dco-check:
+    permissions:
+      pull-requests: read  # for tim-actions/get-pr-commits to get list of commits from the PR
+    name: Signed-off-by (DCO)
+    runs-on: ubuntu-24.04
+    steps:
+    - name: Check that all commits are signed-off
+      uses: KineticCafe/actions-dco@v3.2.0
+
+  llm-commit-policy:
+    permissions:
+      contents: none
+    name: LLM commit policy
+    runs-on: ubuntu-24.04
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v7
+      with:
+        ref: ${{ github.event.pull_request.head.sha }}
+        fetch-depth: 0
+
+    - name: Check LLM commit policy
+      run: |
+        set -eu
+
+        # Inspired by https://github.com/yaml/go-yaml/pull/340
+        agents="(aider|anthropic|claude|codex|copilot|devin|gemini|grok|openai)"
+
+        commits=$(git rev-list ${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }})
+        for commit in $commits; do
+            if git log -n 1 "$commit" | tr '[:upper:]' '[:lower:]' | grep -qE "(author|assisted-by|co-authored-by|signed-off-by):.*$agents"; then
+                echo "Error: The following commit appears to violate this repo's LLM/AI contribution policy:"
+                echo ""
+                git log -n 1 "$commit"
+
+                exit 1
+            fi
+        done
+
+  target-branch:
+    permissions:
+      contents: none
+    name: Branch target
+    runs-on: ubuntu-24.04
+    steps:
+    - name: Check branch target
+      env:
+        TARGET: ${{ github.event.pull_request.base.ref }}
+        TITLE: ${{ github.event.pull_request.title }}
+      run: |
+        set -eux
+        TARGET_FROM_PR_TITLE="$(echo "${TITLE}" | sed -n 's/.*(\(stable-[0-9]\.[0-9]\))$/\1/p')"
+        if [ -z "${TARGET_FROM_PR_TITLE}" ]; then
+          TARGET_FROM_PR_TITLE="main"
+        else
+          echo "Branch target overridden from PR title"
+        fi
+        [ "${TARGET}" = "${TARGET_FROM_PR_TITLE}" ] && exit 0
+
+        echo "Invalid branch target: ${TARGET} != ${TARGET_FROM_PR_TITLE}"
+        exit 1

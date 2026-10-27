@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<installer-gui-script minSpecVersion="2">
+    <title>Incus</title>
+    <license file="LICENSE.txt" />
+    <options customize="never" require-scripts="false" hostArchitectures="x86_64,arm64" />
+    <choices-outline>
+        <line choice="default">
+            <line choice="org.linuxcontainers.incus" />
+        </line>
+    </choices-outline>
+    <choice id="default" />
+    <choice id="org.linuxcontainers.incus" visible="false">
+        <pkg-ref id="org.linuxcontainers.incus" />
+    </choice>
+    <pkg-ref id="org.linuxcontainers.incus" version="0" onConclusion="none">incus-component.pkg</pkg-ref>
+</installer-gui-script>

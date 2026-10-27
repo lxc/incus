@@ -1,0 +1,793 @@
+package main
+
+import (
+	"bytes"
+	"context"
+	"encoding/json"
+	"errors"
+	"fmt"
+	"net/http"
+	"time"
+
+	"github.com/lxc/incus/v7/internal/filter"
+	"github.com/lxc/incus/v7/internal/server/auth"
+	clusterRequest "github.com/lxc/incus/v7/internal/server/cluster/request"
+	"github.com/lxc/incus/v7/internal/server/db"
+	dbCluster "github.com/lxc/incus/v7/internal/server/db/cluster"
+	"github.com/lxc/incus/v7/internal/server/lifecycle"
+	"github.com/lxc/incus/v7/internal/server/network/acl"
+	"github.com/lxc/incus/v7/internal/server/project"
+	"github.com/lxc/incus/v7/internal/server/request"
+	"github.com/lxc/incus/v7/internal/server/response"
+	localUtil "github.com/lxc/incus/v7/internal/server/util"
+	"github.com/lxc/incus/v7/internal/version"
+	"github.com/lxc/incus/v7/shared/api"
+	"github.com/lxc/incus/v7/shared/logger"
+	"github.com/lxc/incus/v7/shared/util"
+)
+
+var networkACLsCmd = APIEndpoint{
+	Path: "network-acls",
+
+	Get:  APIEndpointAction{Handler: networkACLsGet, AccessHandler: allowAuthenticated},
+	Post: APIEndpointAction{Handler: networkACLsPost, AccessHandler: allowPermission(auth.ObjectTypeProject, auth.EntitlementCanCreateNetworkACLs)},
+}
+
+var networkACLCmd = APIEndpoint{
+	Path: "network-acls/{name}",
+
+	Delete: APIEndpointAction{Handler: networkACLDelete, AccessHandler: allowPermission(auth.ObjectTypeNetworkACL, auth.EntitlementCanEdit, "name")},
+	Get:    APIEndpointAction{Handler: networkACLGet, AccessHandler: allowPermission(auth.ObjectTypeNetworkACL, auth.EntitlementCanView, "name")},
+	Put:    APIEndpointAction{Handler: networkACLPut, AccessHandler: allowPermission(auth.ObjectTypeNetworkACL, auth.EntitlementCanEdit, "name")},
+	Patch:  APIEndpointAction{Handler: networkACLPut, AccessHandler: allowPermission(auth.ObjectTypeNetworkACL, auth.EntitlementCanEdit, "name")},
+	Post:   APIEndpointAction{Handler: networkACLPost, AccessHandler: allowPermission(auth.ObjectTypeNetworkACL, auth.EntitlementCanEdit, "name")},
+}
+
+var networkACLLogCmd = APIEndpoint{
+	Path: "network-acls/{name}/log",
+
+	Get: APIEndpointAction{Handler: networkACLLogGet, AccessHandler: allowPermission(auth.ObjectTypeNetworkACL, auth.EntitlementCanView, "name")},
+}
+
+// API endpoints.
+
+// swagger:operation GET /1.0/network-acls network-acls network_acls_get
+//
+//  Get the network ACLs
+//
+//  Returns a list of network ACLs (URLs).
+//
+//  ---
+//  produces:
+//    - application/json
+//  parameters:
+//    - in: query
+//      name: project
+//      description: Project name
+//      type: string
+//      x-example: default
+//    - in: query
+//      name: all-projects
+//      description: Retrieve network ACLs from all projects
+//      type: boolean
+//      x-example: true
+//    - in: query
+//      name: filter
+//      description: Collection filter
+//      type: string
+//      x-example: default
+//  responses:
+//    "200":
+//      description: API endpoints
+//      schema:
+//        type: object
+//        description: Sync response
+//        properties:
+//          type:
+//            type: string
+//            description: Response type
+//            example: sync
+//          status:
+//            type: string
+//            description: Status description
+//            example: Success
+//          status_code:
+//            type: integer
+//            description: Status code
+//            example: 200
+//          metadata:
+//            type: array
+//            description: List of endpoints
+//            items:
+//              type: string
+//            example:
+//              - /1.0/network-acls/foo
+//              - /1.0/network-acls/bar
+//    "400":
+//      $ref: "#/responses/BadRequest"
+//    "403":
+//      $ref: "#/responses/Forbidden"
+//    "404":
+//      $ref: "#/responses/NotFound"
+//    "409":
+//      $ref: "#/responses/Conflict"
+//    "500":
+//      $ref: "#/responses/InternalServerError"
+
+// swagger:operation GET /1.0/network-acls?recursion=1 network-acls network_acls_get_recursion1
+//
+//  Get the network ACLs
+//
+//  Returns a list of network ACLs (structs).
+//
+//  ---
+//  produces:
+//    - application/json
+//  parameters:
+//    - in: query
+//      name: project
+//      description: Project name
+//      type: string
+//      x-example: default
+//    - in: query
+//      name: all-projects
+//      description: Retrieve network ACLs from all projects
+//      type: boolean
+//      x-example: true
+//    - in: query
+//      name: filter
+//      description: Collection filter
+//      type: string
+//      x-example: default
+//  responses:
+//    "200":
+//      description: API endpoints
+//      schema:
+//        type: object
+//        description: Sync response
+//        properties:
+//          type:
+//            type: string
+//            description: Response type
+//            example: sync
+//          status:
+//            type: string
+//            description: Status description
+//            example: Success
+//          status_code:
+//            type: integer
+//            description: Status code
+//            example: 200
+//          metadata:
+//            type: array
+//            description: List of network ACLs
+//            items:
+//              $ref: "#/definitions/NetworkACL"
+//    "400":
+//      $ref: "#/responses/BadRequest"
+//    "403":
+//      $ref: "#/responses/Forbidden"
+//    "404":
+//      $ref: "#/responses/NotFound"
+//    "409":
+//      $ref: "#/responses/Conflict"
+//    "500":
+//      $ref: "#/responses/InternalServerError"
+
+func networkACLsGet(d *Daemon, r *http.Request) response.Response {
+	s := d.State()
+
+	projectName, _, err := project.NetworkProject(s.DB.Cluster, request.ProjectParam(r))
+	if err != nil {
+		return response.SmartError(err)
+	}
+
+	recursion := localUtil.IsRecursionRequest(r)
+	allProjects := util.IsTrue(r.FormValue("all-projects"))
+
+	// Parse filter value.
+	filterStr := r.FormValue("filter")
+	clauses, err := filter.Parse(filterStr, filter.QueryOperatorSet())
+	if err != nil {
+		return response.BadRequest(fmt.Errorf("Invalid filter: %w", err))
+	}
+
+	mustLoadObjects := recursion || (clauses != nil && len(clauses.Clauses) > 0)
+
+	aclNames := map[string][]string{}
+
+	err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
+		var acls []dbCluster.NetworkACL
+
+		// Get list of Network ACLs.
+		if allProjects {
+			acls, err = dbCluster.GetNetworkACLs(ctx, tx.Tx())
+			if err != nil {
+				return err
+			}
+		} else {
+			acls, err = dbCluster.GetNetworkACLs(ctx, tx.Tx(), dbCluster.NetworkACLFilter{Project: &projectName})
+			if err != nil {
+				return err
+			}
+		}
+
+		for _, acl := range acls {
+			if aclNames[acl.Project] == nil {
+				aclNames[acl.Project] = []string{}
+			}
+
+			aclNames[acl.Project] = append(aclNames[acl.Project], acl.Name)
+		}
+
+		return nil
+	})
+	if err != nil {
+		return response.InternalError(err)
+	}
+
+	userHasPermission, err := s.Authorizer.GetPermissionChecker(r.Context(), r, auth.EntitlementCanView, auth.ObjectTypeNetworkACL)
+	if err != nil {
+		return response.SmartError(err)
+	}
+
+	linkResults := make([]string, 0)
+	fullResults := make([]api.NetworkACL, 0)
+	for projectName, acls := range aclNames {
+		for _, aclName := range acls {
+			if !userHasPermission(auth.ObjectNetworkACL(projectName, aclName)) {
+				continue
+			}
+
+			if mustLoadObjects {
+				netACL, err := acl.LoadByName(s, projectName, aclName)
+				if err != nil {
+					continue
+				}
+
+				netACLInfo := netACL.Info()
+				netACLInfo.UsedBy, _ = netACL.UsedBy() // Ignore errors in UsedBy, will return nil.
+
+				if clauses != nil && len(clauses.Clauses) > 0 {
+					match, err := filter.Match(*netACLInfo, *clauses)
+					if err != nil {
+						return response.SmartError(err)
+					}
+
+					if !match {
+						continue
+					}
+				}
+
+				fullResults = append(fullResults, *netACLInfo)
+			}
+
+			linkResults = append(linkResults, fmt.Sprintf("/%s/network-acls/%s", version.APIVersion, aclName))
+		}
+	}
+
+	if !recursion {
+		return response.SyncResponse(true, linkResults)
+	}
+
+	return response.SyncResponse(true, fullResults)
+}
+
+// swagger:operation POST /1.0/network-acls network-acls network_acls_post
+//
+//	Add a network ACL
+//
+//	Creates a new network ACL.
+//
+//	---
+//	consumes:
+//	  - application/json
+//	produces:
+//	  - application/json
+//	parameters:
+//	  - in: query
+//	    name: project
+//	    description: Project name
+//	    type: string
+//	    x-example: default
+//	  - in: body
+//	    name: acl
+//	    description: ACL
+//	    required: true
+//	    schema:
+//	      $ref: "#/definitions/NetworkACLsPost"
+//	responses:
+//	  "201":
+//	    $ref: "#/responses/EmptySyncResponse"
+//	  "400":
+//	    $ref: "#/responses/BadRequest"
+//	  "403":
+//	    $ref: "#/responses/Forbidden"
+//	  "404":
+//	    $ref: "#/responses/NotFound"
+//	  "409":
+//	    $ref: "#/responses/Conflict"
+//	  "500":
+//	    $ref: "#/responses/InternalServerError"
+func networkACLsPost(d *Daemon, r *http.Request) response.Response {
+	s := d.State()
+
+	projectName, _, err := project.NetworkProject(s.DB.Cluster, request.ProjectParam(r))
+	if err != nil {
+		return response.SmartError(err)
+	}
+
+	req := api.NetworkACLsPost{}
+
+	// Parse the request into a record.
+	err = json.NewDecoder(r.Body).Decode(&req)
+	if err != nil {
+		return response.BadRequest(err)
+	}
+
+	_, err = acl.LoadByName(s, projectName, req.Name)
+	if err == nil {
+		return response.BadRequest(errors.New("The network ACL already exists"))
+	}
+
+	err = acl.Create(s, projectName, &req)
+	if err != nil {
+		return response.SmartError(err)
+	}
+
+	netACL, err := acl.LoadByName(s, projectName, req.Name)
+	if err != nil {
+		return response.BadRequest(err)
+	}
+
+	err = s.Authorizer.AddNetworkACL(r.Context(), projectName, req.Name)
+	if err != nil {
+		logger.Error("Failed to add network ACL to authorizer", logger.Ctx{"name": req.Name, "project": projectName, "error": err})
+	}
+
+	lc := lifecycle.NetworkACLCreated.Event(netACL, request.CreateRequestor(r), nil)
+	s.Events.SendLifecycle(projectName, lc)
+
+	return response.SyncResponseLocation(true, nil, lc.Source)
+}
+
+// swagger:operation DELETE /1.0/network-acls/{name} network-acls network_acl_delete
+//
+//	Delete the network ACL
+//
+//	Removes the network ACL.
+//
+//	---
+//	produces:
+//	  - application/json
+//	parameters:
+//	  - in: path
+//	    name: name
+//	    description: ACL name
+//	    type: string
+//	    required: true
+//	  - in: query
+//	    name: project
+//	    description: Project name
+//	    type: string
+//	    x-example: default
+//	responses:
+//	  "200":
+//	    $ref: "#/responses/EmptySyncResponse"
+//	  "400":
+//	    $ref: "#/responses/BadRequest"
+//	  "403":
+//	    $ref: "#/responses/Forbidden"
+//	  "404":
+//	    $ref: "#/responses/NotFound"
+//	  "409":
+//	    $ref: "#/responses/Conflict"
+//	  "500":
+//	    $ref: "#/responses/InternalServerError"
+func networkACLDelete(d *Daemon, r *http.Request) response.Response {
+	s := d.State()
+
+	projectName, _, err := project.NetworkProject(s.DB.Cluster, request.ProjectParam(r))
+	if err != nil {
+		return response.SmartError(err)
+	}
+
+	aclName, err := pathVar(r, "name")
+	if err != nil {
+		return response.SmartError(err)
+	}
+
+	netACL, err := acl.LoadByName(s, projectName, aclName)
+	if err != nil {
+		return response.SmartError(err)
+	}
+
+	err = netACL.Delete()
+	if err != nil {
+		return response.SmartError(err)
+	}
+
+	err = s.Authorizer.DeleteNetworkACL(r.Context(), projectName, aclName)
+	if err != nil {
+		logger.Error("Failed to remove network ACL from authorizer", logger.Ctx{"name": aclName, "project": projectName, "error": err})
+	}
+
+	s.Events.SendLifecycle(projectName, lifecycle.NetworkACLDeleted.Event(netACL, request.CreateRequestor(r), nil))
+
+	return response.EmptySyncResponse
+}
+
+// swagger:operation GET /1.0/network-acls/{name} network-acls network_acl_get
+//
+//	Get the network ACL
+//
+//	Gets a specific network ACL.
+//
+//	---
+//	produces:
+//	  - application/json
+//	parameters:
+//	  - in: path
+//	    name: name
+//	    description: ACL name
+//	    type: string
+//	    required: true
+//	  - in: query
+//	    name: project
+//	    description: Project name
+//	    type: string
+//	    x-example: default
+//	responses:
+//	  "200":
+//	    description: ACL
+//	    schema:
+//	      type: object
+//	      description: Sync response
+//	      properties:
+//	        type:
+//	          type: string
+//	          description: Response type
+//	          example: sync
+//	        status:
+//	          type: string
+//	          description: Status description
+//	          example: Success
+//	        status_code:
+//	          type: integer
+//	          description: Status code
+//	          example: 200
+//	        metadata:
+//	          $ref: "#/definitions/NetworkACL"
+//	  "400":
+//	    $ref: "#/responses/BadRequest"
+//	  "403":
+//	    $ref: "#/responses/Forbidden"
+//	  "404":
+//	    $ref: "#/responses/NotFound"
+//	  "409":
+//	    $ref: "#/responses/Conflict"
+//	  "500":
+//	    $ref: "#/responses/InternalServerError"
+func networkACLGet(d *Daemon, r *http.Request) response.Response {
+	s := d.State()
+
+	projectName, _, err := project.NetworkProject(s.DB.Cluster, request.ProjectParam(r))
+	if err != nil {
+		return response.SmartError(err)
+	}
+
+	aclName, err := pathVar(r, "name")
+	if err != nil {
+		return response.SmartError(err)
+	}
+
+	netACL, err := acl.LoadByName(s, projectName, aclName)
+	if err != nil {
+		return response.SmartError(err)
+	}
+
+	info := netACL.Info()
+	info.UsedBy, err = netACL.UsedBy()
+	if err != nil {
+		return response.SmartError(err)
+	}
+
+	return response.SyncResponseETag(true, info, netACL.Etag())
+}
+
+// swagger:operation PATCH /1.0/network-acls/{name} network-acls network_acl_patch
+//
+//  Partially update the network ACL
+//
+//  Updates a subset of the network ACL configuration.
+//
+//  ---
+//  consumes:
+//    - application/json
+//  produces:
+//    - application/json
+//  parameters:
+//    - in: path
+//      name: name
+//      description: ACL name
+//      type: string
+//      required: true
+//    - in: query
+//      name: project
+//      description: Project name
+//      type: string
+//      x-example: default
+//    - in: body
+//      name: acl
+//      description: ACL configuration
+//      required: true
+//      schema:
+//        $ref: "#/definitions/NetworkACLPut"
+//  responses:
+//    "200":
+//      $ref: "#/responses/EmptySyncResponse"
+//    "400":
+//      $ref: "#/responses/BadRequest"
+//    "403":
+//      $ref: "#/responses/Forbidden"
+//    "404":
+//      $ref: "#/responses/NotFound"
+//    "409":
+//      $ref: "#/responses/Conflict"
+//    "412":
+//      $ref: "#/responses/PreconditionFailed"
+//    "500":
+//      $ref: "#/responses/InternalServerError"
+
+// swagger:operation PUT /1.0/network-acls/{name} network-acls network_acl_put
+//
+//	Update the network ACL
+//
+//	Updates the entire network ACL configuration.
+//
+//	---
+//	consumes:
+//	  - application/json
+//	produces:
+//	  - application/json
+//	parameters:
+//	  - in: path
+//	    name: name
+//	    description: ACL name
+//	    type: string
+//	    required: true
+//	  - in: query
+//	    name: project
+//	    description: Project name
+//	    type: string
+//	    x-example: default
+//	  - in: body
+//	    name: acl
+//	    description: ACL configuration
+//	    required: true
+//	    schema:
+//	      $ref: "#/definitions/NetworkACLPut"
+//	responses:
+//	  "200":
+//	    $ref: "#/responses/EmptySyncResponse"
+//	  "400":
+//	    $ref: "#/responses/BadRequest"
+//	  "403":
+//	    $ref: "#/responses/Forbidden"
+//	  "404":
+//	    $ref: "#/responses/NotFound"
+//	  "409":
+//	    $ref: "#/responses/Conflict"
+//	  "412":
+//	    $ref: "#/responses/PreconditionFailed"
+//	  "500":
+//	    $ref: "#/responses/InternalServerError"
+func networkACLPut(d *Daemon, r *http.Request) response.Response {
+	s := d.State()
+
+	projectName, _, err := project.NetworkProject(s.DB.Cluster, request.ProjectParam(r))
+	if err != nil {
+		return response.SmartError(err)
+	}
+
+	aclName, err := pathVar(r, "name")
+	if err != nil {
+		return response.SmartError(err)
+	}
+
+	// Get the existing Network ACL.
+	netACL, err := acl.LoadByName(s, projectName, aclName)
+	if err != nil {
+		return response.SmartError(err)
+	}
+
+	// Validate the ETag.
+	err = localUtil.EtagCheck(r, netACL.Etag())
+	if err != nil {
+		return response.PreconditionFailed(err)
+	}
+
+	req := api.NetworkACLPut{}
+
+	// Decode the request.
+	err = json.NewDecoder(r.Body).Decode(&req)
+	if err != nil {
+		return response.BadRequest(err)
+	}
+
+	if r.Method == http.MethodPatch {
+		// If config being updated via "patch" method, then merge all existing config with the keys that
+		// are present in the request config.
+		for k, v := range netACL.Info().Config {
+			_, ok := req.Config[k]
+			if !ok {
+				req.Config[k] = v
+			}
+		}
+	}
+
+	clientType := clusterRequest.UserAgentClientType(r.Header.Get("User-Agent"))
+
+	err = netACL.Update(&req, clientType)
+	if err != nil {
+		return response.SmartError(err)
+	}
+
+	s.Events.SendLifecycle(projectName, lifecycle.NetworkACLUpdated.Event(netACL, request.CreateRequestor(r), nil))
+
+	return response.EmptySyncResponse
+}
+
+// swagger:operation POST /1.0/network-acls/{name} network-acls network_acl_post
+//
+//	Rename the network ACL
+//
+//	Renames an existing network ACL.
+//
+//	---
+//	consumes:
+//	  - application/json
+//	produces:
+//	  - application/json
+//	parameters:
+//	  - in: path
+//	    name: name
+//	    description: ACL name
+//	    type: string
+//	    required: true
+//	  - in: query
+//	    name: project
+//	    description: Project name
+//	    type: string
+//	    x-example: default
+//	  - in: body
+//	    name: acl
+//	    description: ACL rename request
+//	    required: true
+//	    schema:
+//	      $ref: "#/definitions/NetworkACLPost"
+//	responses:
+//	  "201":
+//	    $ref: "#/responses/EmptySyncResponse"
+//	  "400":
+//	    $ref: "#/responses/BadRequest"
+//	  "403":
+//	    $ref: "#/responses/Forbidden"
+//	  "404":
+//	    $ref: "#/responses/NotFound"
+//	  "409":
+//	    $ref: "#/responses/Conflict"
+//	  "500":
+//	    $ref: "#/responses/InternalServerError"
+func networkACLPost(d *Daemon, r *http.Request) response.Response {
+	s := d.State()
+
+	aclName, err := pathVar(r, "name")
+	if err != nil {
+		return response.SmartError(err)
+	}
+
+	projectName, _, err := project.NetworkProject(s.DB.Cluster, request.ProjectParam(r))
+	if err != nil {
+		return response.SmartError(err)
+	}
+
+	req := api.NetworkACLPost{}
+
+	// Parse the request.
+	err = json.NewDecoder(r.Body).Decode(&req)
+	if err != nil {
+		return response.BadRequest(err)
+	}
+
+	// Get the existing Network ACL.
+	netACL, err := acl.LoadByName(s, projectName, aclName)
+	if err != nil {
+		return response.SmartError(err)
+	}
+
+	err = netACL.Rename(req.Name)
+	if err != nil {
+		return response.SmartError(err)
+	}
+
+	err = s.Authorizer.RenameNetworkACL(r.Context(), projectName, aclName, req.Name)
+	if err != nil {
+		logger.Error("Failed to rename network ACL in authorizer", logger.Ctx{"old_name": aclName, "new_name": req.Name, "project": projectName, "error": err})
+	}
+
+	lc := lifecycle.NetworkACLRenamed.Event(netACL, request.CreateRequestor(r), logger.Ctx{"old_name": aclName})
+	s.Events.SendLifecycle(projectName, lc)
+
+	return response.SyncResponseLocation(true, nil, lc.Source)
+}
+
+// swagger:operation GET /1.0/network-acls/{name}/log network-acls network_acl_log_get
+//
+//	Get the network ACL log
+//
+//	Gets a specific network ACL log entries.
+//
+//	---
+//	produces:
+//	  - application/octet-stream
+//	parameters:
+//	  - in: path
+//	    name: name
+//	    description: ACL name
+//	    type: string
+//	    required: true
+//	  - in: query
+//	    name: project
+//	    description: Project name
+//	    type: string
+//	    x-example: default
+//	responses:
+//	  "200":
+//	     description: Raw log file
+//	     content:
+//	       application/octet-stream:
+//	         schema:
+//	           type: string
+//	           example: LOG-ENTRY
+//	  "400":
+//	    $ref: "#/responses/BadRequest"
+//	  "403":
+//	    $ref: "#/responses/Forbidden"
+//	  "404":
+//	    $ref: "#/responses/NotFound"
+//	  "409":
+//	    $ref: "#/responses/Conflict"
+//	  "500":
+//	    $ref: "#/responses/InternalServerError"
+func networkACLLogGet(d *Daemon, r *http.Request) response.Response {
+	s := d.State()
+
+	projectName, _, err := project.NetworkProject(s.DB.Cluster, request.ProjectParam(r))
+	if err != nil {
+		return response.SmartError(err)
+	}
+
+	aclName, err := pathVar(r, "name")
+	if err != nil {
+		return response.SmartError(err)
+	}
+
+	netACL, err := acl.LoadByName(s, projectName, aclName)
+	if err != nil {
+		return response.SmartError(err)
+	}
+
+	clientType := clusterRequest.UserAgentClientType(r.Header.Get("User-Agent"))
+	log, err := netACL.GetLog(clientType)
+	if err != nil {
+		return response.SmartError(err)
+	}
+
+	ent := response.FileResponseEntry{}
+	ent.File = bytes.NewReader([]byte(log))
+	ent.FileModified = time.Now()
+	ent.FileSize = int64(len(log))
+
+	return response.FileResponse(r, []response.FileResponseEntry{ent}, nil)
+}

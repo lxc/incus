@@ -1,0 +1,72 @@
+(devices-proxy)=
+# Type: `proxy`
+
+```{note}
+The `proxy` device type is supported for both containers (NAT and non-NAT modes) and VMs (NAT mode only).
+It supports hotplugging for both containers and VMs.
+```
+
+Proxy devices allow forwarding network connections between host and instance.
+This method makes it possible to forward traffic hitting one of the host's addresses to an address inside the instance, or to do the reverse and have an address in the instance connect through the host.
+
+In {ref}`devices-proxy-nat-mode`, a proxy device can be used for TCP and UDP proxying.
+In non-NAT mode, you can also proxy traffic between Unix sockets (which can be useful to, for example, forward graphical GUI or audio traffic from the container to the host system) or even across protocols (for example, you can have a TCP listener on the host system and forward its traffic to a Unix socket inside a container).
+
+The supported connection types are:
+
+- `tcp <-> tcp`
+- `udp <-> udp`
+- `unix <-> unix`
+- `tcp <-> unix`
+- `unix <-> tcp`
+- `udp <-> tcp`
+- `tcp <-> udp`
+- `udp <-> unix`
+- `unix <-> udp`
+
+To add a `proxy` device, use the following command:
+
+    incus config device add <instance_name> <device_name> proxy listen=<type>:<addr>:<port>[-<port>][,<port>] connect=<type>:<addr>:<port> bind=<host/instance>
+
+(devices-proxy-nat-mode)=
+## NAT mode
+
+The proxy device also supports a NAT mode (`nat=true`), where packets are forwarded using NAT rather than being proxied through a separate connection.
+This mode has the benefit that the client address is maintained without the need for the target destination to support the HAProxy PROXY protocol (which is the only way to pass the client address through when using the proxy device in non-NAT mode).
+
+However, NAT mode is supported only if the host that the instance is running on is the gateway (which is the case if you're using `incusbr0`, for example).
+
+In NAT mode, the supported connection types are:
+
+- `tcp <-> tcp`
+- `udp <-> udp`
+
+When configuring a proxy device with `nat=true`, the target instance's NIC can either have a static IP configured or rely on a dynamic (DHCP) address.
+When no static IP is set, the wildcard connect address (`0.0.0.0` for IPv4 and `[::]` for IPv6) is used to automatically detect the instance's current address from the bridge's neighbor table and the NAT rules are updated whenever it changes.
+
+## Specifying IP addresses
+
+Use the following command to configure a static IP for an instance NIC:
+
+    incus config device set <instance_name> <nic_name> ipv4.address=<ipv4_address> ipv6.address=<ipv6_address>
+
+To define a static IPv6 address, the parent managed network must have `ipv6.dhcp.stateful` enabled.
+
+When defining IPv6 addresses, use the square bracket notation, for example:
+
+    connect=tcp:[2001:db8::1]:80
+
+You can specify that the connect address should be the IP of the instance by setting the connect IP to the wildcard address (`0.0.0.0` for IPv4 and `[::]` for IPv6).
+
+The listen address can also use wildcard addresses (`0.0.0.0` for IPv4 and `[::]` for IPv6) in both NAT and non-NAT mode.
+In NAT mode a wildcard listen address forwards traffic to the instance regardless of the destination address used on the Incus host.
+
+## Device options
+
+`proxy` devices have the following device options:
+
+% Include content from [config_options.txt](../config_options.txt)
+```{include} ../config_options.txt
+    :start-after: <!-- config group devices-proxy start -->
+    :end-before: <!-- config group devices-proxy end -->
+```

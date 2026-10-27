@@ -1,0 +1,167 @@
+package dns
+
+import (
+	"fmt"
+	"net"
+	"strings"
+	"time"
+
+	"github.com/miekg/dns"
+
+	"github.com/lxc/incus/v7/shared/api"
+	"github.com/lxc/incus/v7/shared/logger"
+)
+
+type dnsHandler struct {
+	server *Server
+}
+
+// ServeDNS handles an incoming DNS query and writes the response.
+func (d dnsHandler) ServeDNS(w dns.ResponseWriter, r *dns.Msg) {
+	// Don't allow concurrent queries.
+	d.server.mu.Lock()
+	defer d.server.mu.Unlock()
+
+	// Check if we're ready to serve queries.
+	if d.server.zoneRetriever == nil {
+		m := &dns.Msg{}
+		m.SetRcode(r, dns.RcodeServerFailure)
+		err := w.WriteMsg(m)
+		if err != nil {
+			logger.Error("Unable to write message", logger.Ctx{"err": err})
+		}
+
+		return
+	}
+
+	// Only allow a single request.
+	if len(r.Question) != 1 {
+		m := &dns.Msg{}
+		m.SetRcode(r, dns.RcodeServerFailure)
+		err := w.WriteMsg(m)
+		if err != nil {
+			logger.Error("Unable to write message", logger.Ctx{"err": err})
+		}
+
+		return
+	}
+
+	// Check that it's a supported request type.
+	if r.Question[0].Qtype != dns.TypeAXFR && r.Question[0].Qtype != dns.TypeIXFR && r.Question[0].Qtype != dns.TypeSOA {
+		m := &dns.Msg{}
+		m.SetRcode(r, dns.RcodeNotImplemented)
+		err := w.WriteMsg(m)
+		if err != nil {
+			logger.Error("Unable to write message", logger.Ctx{"err": err})
+		}
+
+		return
+	}
+
+	// Extract the request information.
+	name := strings.TrimSuffix(r.Question[0].Name, ".")
+	ip, _, err := net.SplitHostPort(w.RemoteAddr().String())
+	if err != nil {
+		m := &dns.Msg{}
+		m.SetRcode(r, dns.RcodeServerFailure)
+		err := w.WriteMsg(m)
+		if err != nil {
+			logger.Error("Unable to write message", logger.Ctx{"err": err})
+		}
+
+		return
+	}
+
+	// Prepare the response.
+	m := &dns.Msg{}
+	m.SetReply(r)
+	m.Authoritative = true
+
+	// Load the zone.
+	zone, err := d.server.zoneRetriever(name, r.Question[0].Qtype != dns.TypeSOA)
+	if err != nil {
+		// On failure, return NXDOMAIN.
+		m := &dns.Msg{}
+		m.SetRcode(r, dns.RcodeNameError)
+		err := w.WriteMsg(m)
+		if err != nil {
+			logger.Error("Unable to write message", logger.Ctx{"err": err})
+		}
+
+		return
+	}
+
+	// Check access.
+	if !isAllowed(zone.Info, ip, r.IsTsig(), w.TsigStatus() == nil) {
+		// On auth failure, return NXDOMAIN to avoid information leaks.
+		m := &dns.Msg{}
+		m.SetRcode(r, dns.RcodeNameError)
+		err := w.WriteMsg(m)
+		if err != nil {
+			logger.Error("Unable to write message", logger.Ctx{"err": err})
+		}
+
+		return
+	}
+
+	zoneRR := dns.NewZoneParser(strings.NewReader(zone.Content), "", "")
+	for {
+		rr, ok := zoneRR.Next()
+		if !ok {
+			err := zoneRR.Err()
+			if err != nil {
+				logger.Errorf("Bad DNS record in zone %q: %v", name, err)
+
+				m := &dns.Msg{}
+				m.SetRcode(r, dns.RcodeFormatError)
+				err := w.WriteMsg(m)
+				if err != nil {
+					logger.Error("Unable to write message", logger.Ctx{"err": err})
+				}
+
+				return
+			}
+
+			break
+		}
+
+		m.Answer = append(m.Answer, rr)
+	}
+
+	tsig := r.IsTsig()
+	if tsig != nil && w.TsigStatus() == nil {
+		m.SetTsig(tsig.Hdr.Name, tsig.Algorithm, 300, time.Now().Unix())
+	}
+
+	err = w.WriteMsg(m)
+	if err != nil {
+		logger.Error("Unable to write message", logger.Ctx{"err": err})
+	}
+}
+
+func isAllowed(zone api.NetworkZone, ip string, tsig *dns.TSIG, tsigStatus bool) bool {
+	// Validate access.
+	for peerName, peer := range zonePeers(zone) {
+		peerKeyName := fmt.Sprintf("%s_%s.", zone.Name, peerName)
+
+		if peer.address != "" && ip != peer.address {
+			// Bad IP address.
+			continue
+		}
+
+		if peer.key != "" && (tsig == nil || !tsigStatus) {
+			// Missing or invalid TSIG.
+			continue
+		}
+
+		if peer.key != "" && tsig.Hdr.Name != peerKeyName {
+			// Bad key name (valid TSIG but potentially for another domain).
+			continue
+		}
+
+		// We have a trusted peer.
+		return true
+	}
+
+	return false
+}

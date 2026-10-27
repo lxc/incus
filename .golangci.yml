@@ -1,0 +1,117 @@
+version: "2"
+linters:
+  enable:
+    - godot
+    - misspell
+    - revive
+    - whitespace
+  settings:
+    errcheck:
+      exclude-functions:
+        - (io.ReadCloser).Close
+        - (io.WriteCloser).Close
+        - (io.ReadWriteCloser).Close
+        - (*os.File).Close
+        - (*github.com/gorilla/websocket.Conn).Close
+        - (*github.com/mdlayher/vsock.Listener).Close
+        - os.Remove
+        - (*compress/gzip.Writer).Close
+        - (*github.com/fatih/color.Color).Printf
+        - (*github.com/fatih/color.Color).Println
+    revive:
+      rules:
+        - name: exported
+          arguments:
+            - checkPrivateReceivers
+            - disableStutteringCheck
+        - name: import-shadowing
+        - name: unchecked-type-assertion
+        - name: var-naming
+          arguments:
+            - []
+            - []
+            - - upperCaseConst: true
+        - name: early-return
+        - name: redundant-import-alias
+        - name: redefines-builtin-id
+        - name: struct-tag
+        - name: receiver-naming
+        - name: deep-exit
+        - name: defer
+        - name: bool-literal-in-expr
+        - name: comment-spacings
+        - name: use-any
+        - name: bare-return
+        - name: empty-block
+        - name: range-val-address
+        - name: range-val-in-closure
+        - name: var-declaration
+        - name: useless-break
+        - name: error-naming
+        - name: indent-error-flow
+        - name: datarace
+        - name: modifies-value-receiver
+        - name: empty-lines
+        - name: duplicated-imports
+        - name: error-return
+    staticcheck:
+      checks:
+        - all
+        - -SA4023 # Hangs and produces false positives as of staticcheck 2026.1 rc.
+        - -ST1000
+        - -ST1003
+        - -ST1005 # Error strings should not be capitalized.
+        - -ST1016
+        - -ST1020
+        - -ST1021
+        - -ST1022
+  exclusions:
+    generated: lax
+    rules:
+      - linters:
+          - revive
+        source: '^//generate-database:mapper '
+      - linters:
+          - revive
+        text: "avoid package names that conflict with Go standard library package names"
+        path: "^internal/io/"
+      - linters:
+          - revive
+          - godot
+        path: "^test/mini-oidc/storage/"
+      - linters:
+          - godot
+        text: "Comment should end in a period"
+        source: '^// Example:'
+      - path: internal/util/
+        text: "avoid meaningless package names"
+      - path: internal/server/util/
+        text: "avoid meaningless package names"
+      - path: shared/uefi/guid.go
+        linters:
+          - revive
+        text: '^(var-naming|exported):'
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
+formatters:
+  enable:
+    - gci
+    - gofumpt
+    - goimports
+  settings:
+    gci:
+      sections:
+        - standard
+        - default
+        - prefix(github.com/lxc/incus)
+    goimports:
+      local-prefixes:
+        - github.com/lxc/incus
+  exclusions:
+    generated: lax
+    paths:
+      - third_party$
+      - builtin$
+      - examples$

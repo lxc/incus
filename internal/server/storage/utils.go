@@ -1,0 +1,1694 @@
+package storage
+
+import (
+	"context"
+	"encoding/json"
+	"errors"
+	"fmt"
+	"io/fs"
+	"os"
+	"path/filepath"
+	"slices"
+	"strings"
+	"time"
+
+	"golang.org/x/sys/unix"
+
+	internalInstance "github.com/lxc/incus/v7/internal/instance"
+	"github.com/lxc/incus/v7/internal/linux"
+	"github.com/lxc/incus/v7/internal/migration"
+	"github.com/lxc/incus/v7/internal/rsync"
+	"github.com/lxc/incus/v7/internal/server/apparmor"
+	backupConfig "github.com/lxc/incus/v7/internal/server/backup/config"
+	"github.com/lxc/incus/v7/internal/server/db"
+	"github.com/lxc/incus/v7/internal/server/db/cluster"
+	"github.com/lxc/incus/v7/internal/server/instance"
+	"github.com/lxc/incus/v7/internal/server/instance/instancetype"
+	"github.com/lxc/incus/v7/internal/server/locking"
+	localMigration "github.com/lxc/incus/v7/internal/server/migration"
+	"github.com/lxc/incus/v7/internal/server/node"
+	"github.com/lxc/incus/v7/internal/server/operations"
+	"github.com/lxc/incus/v7/internal/server/project"
+	"github.com/lxc/incus/v7/internal/server/response"
+	"github.com/lxc/incus/v7/internal/server/state"
+	"github.com/lxc/incus/v7/internal/server/storage/drivers"
+	"github.com/lxc/incus/v7/internal/server/sys"
+	internalUtil "github.com/lxc/incus/v7/internal/util"
+	"github.com/lxc/incus/v7/shared/api"
+	"github.com/lxc/incus/v7/shared/archive"
+	"github.com/lxc/incus/v7/shared/ioprogress"
+	"github.com/lxc/incus/v7/shared/logger"
+	"github.com/lxc/incus/v7/shared/util"
+	"github.com/lxc/incus/v7/shared/validate"
+)
+
+// ConfigDiff returns a diff of the provided configs. Additionally, it returns whether or not
+// only user properties have been changed.
+func ConfigDiff(oldConfig map[string]string, newConfig map[string]string) ([]string, bool) {
+	changedConfig := []string{}
+	userOnly := true
+	for key := range oldConfig {
+		if oldConfig[key] != newConfig[key] {
+			if !strings.HasPrefix(key, "user.") {
+				userOnly = false
+			}
+
+			if !slices.Contains(changedConfig, key) {
+				changedConfig = append(changedConfig, key)
+			}
+		}
+	}
+
+	for key := range newConfig {
+		if oldConfig[key] != newConfig[key] {
+			if !strings.HasPrefix(key, "user.") {
+				userOnly = false
+			}
+
+			if !slices.Contains(changedConfig, key) {
+				changedConfig = append(changedConfig, key)
+			}
+		}
+	}
+
+	// Skip on no change
+	if len(changedConfig) == 0 {
+		return nil, false
+	}
+
+	return changedConfig, userOnly
+}
+
+// VolumeTypeNameToDBType converts a volume type string to internal volume type DB code.
+func VolumeTypeNameToDBType(volumeTypeName string) (int, error) {
+	switch volumeTypeName {
+	case db.StoragePoolVolumeTypeNameContainer:
+		return db.StoragePoolVolumeTypeContainer, nil
+	case db.StoragePoolVolumeTypeNameVM:
+		return db.StoragePoolVolumeTypeVM, nil
+	case db.StoragePoolVolumeTypeNameImage:
+		return db.StoragePoolVolumeTypeImage, nil
+	case db.StoragePoolVolumeTypeNameCustom:
+		return db.StoragePoolVolumeTypeCustom, nil
+	}
+
+	return -1, errors.New("Invalid storage volume type name")
+}
+
+// VolumeTypeToDBType converts volume type to internal volume type DB code.
+func VolumeTypeToDBType(volType drivers.VolumeType) (int, error) {
+	switch volType {
+	case drivers.VolumeTypeContainer:
+		return db.StoragePoolVolumeTypeContainer, nil
+	case drivers.VolumeTypeVM:
+		return db.StoragePoolVolumeTypeVM, nil
+	case drivers.VolumeTypeImage:
+		return db.StoragePoolVolumeTypeImage, nil
+	case drivers.VolumeTypeCustom:
+		return db.StoragePoolVolumeTypeCustom, nil
+	}
+
+	return -1, fmt.Errorf("Invalid storage volume type: %q", volType)
+}
+
+// VolumeDBTypeToType converts internal volume type DB code to storage driver volume type.
+func VolumeDBTypeToType(volDBType int) (drivers.VolumeType, error) {
+	switch volDBType {
+	case db.StoragePoolVolumeTypeContainer:
+		return drivers.VolumeTypeContainer, nil
+	case db.StoragePoolVolumeTypeVM:
+		return drivers.VolumeTypeVM, nil
+	case db.StoragePoolVolumeTypeImage:
+		return drivers.VolumeTypeImage, nil
+	case db.StoragePoolVolumeTypeCustom:
+		return drivers.VolumeTypeCustom, nil
+	}
+
+	return "", fmt.Errorf("Invalid storage volume DB type: %d", volDBType)
+}
+
+// InstanceTypeToVolumeType converts instance type to storage driver volume type.
+func InstanceTypeToVolumeType(instType instancetype.Type) (drivers.VolumeType, error) {
+	switch instType {
+	case instancetype.Container:
+		return drivers.VolumeTypeContainer, nil
+	case instancetype.VM:
+		return drivers.VolumeTypeVM, nil
+	}
+
+	return "", errors.New("Invalid instance type")
+}
+
+// VolumeTypeToAPIInstanceType converts storage driver volume type to API instance type type.
+func VolumeTypeToAPIInstanceType(volType drivers.VolumeType) (api.InstanceType, error) {
+	switch volType {
+	case drivers.VolumeTypeContainer:
+		return api.InstanceTypeContainer, nil
+	case drivers.VolumeTypeVM:
+		return api.InstanceTypeVM, nil
+	}
+
+	return api.InstanceTypeAny, errors.New("Volume type doesn't have equivalent instance type")
+}
+
+// VolumeContentTypeToDBContentType converts volume type to internal code.
+func VolumeContentTypeToDBContentType(contentType drivers.ContentType) (int, error) {
+	switch contentType {
+	case drivers.ContentTypeBlock:
+		return db.StoragePoolVolumeContentTypeBlock, nil
+	case drivers.ContentTypeFS:
+		return db.StoragePoolVolumeContentTypeFS, nil
+	case drivers.ContentTypeISO:
+		return db.StoragePoolVolumeContentTypeISO, nil
+	}
+
+	return -1, errors.New("Invalid volume content type")
+}
+
+// VolumeDBContentTypeToContentType converts internal content type DB code to driver representation.
+func VolumeDBContentTypeToContentType(volDBType int) (drivers.ContentType, error) {
+	switch volDBType {
+	case db.StoragePoolVolumeContentTypeBlock:
+		return drivers.ContentTypeBlock, nil
+	case db.StoragePoolVolumeContentTypeFS:
+		return drivers.ContentTypeFS, nil
+	case db.StoragePoolVolumeContentTypeISO:
+		return drivers.ContentTypeISO, nil
+	}
+
+	return "", errors.New("Invalid volume content type")
+}
+
+// VolumeContentTypeNameToContentType converts volume content type string internal code.
+func VolumeContentTypeNameToContentType(contentTypeName string) (int, error) {
+	switch contentTypeName {
+	case db.StoragePoolVolumeContentTypeNameFS:
+		return db.StoragePoolVolumeContentTypeFS, nil
+	case db.StoragePoolVolumeContentTypeNameBlock:
+		return db.StoragePoolVolumeContentTypeBlock, nil
+	case db.StoragePoolVolumeContentTypeNameISO:
+		return db.StoragePoolVolumeContentTypeISO, nil
+	}
+
+	return -1, errors.New("Invalid volume content type name")
+}
+
+// VolumeDBGet loads a volume from the database.
+func VolumeDBGet(pool Pool, projectName string, volumeName string, volumeType drivers.VolumeType) (*db.StorageVolume, error) {
+	p, ok := pool.(*backend)
+	if !ok {
+		return nil, errors.New("Pool is not a backend")
+	}
+
+	volDBType, err := VolumeTypeToDBType(volumeType)
+	if err != nil {
+		return nil, err
+	}
+
+	// Get the storage volume.
+	var dbVolume *db.StorageVolume
+	err = p.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		dbVolume, err = tx.GetStoragePoolVolume(ctx, pool.ID(), projectName, volDBType, volumeName, true)
+		if err != nil {
+			if response.IsNotFoundError(err) {
+				return fmt.Errorf("Storage volume %q in project %q of type %q does not exist on pool %q: %w", volumeName, projectName, volumeType, pool.Name(), err)
+			}
+
+			return err
+		}
+
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return dbVolume, nil
+}
+
+// VolumeDBCreate creates a volume in the database.
+// If volumeConfig is supplied, it is modified with any driver level default config options (if not set).
+// If removeUnknownKeys is true, any unknown config keys are removed from volumeConfig rather than failing.
+func VolumeDBCreate(pool Pool, projectName string, volumeName string, volumeDescription string, volumeType drivers.VolumeType, snapshot bool, volumeConfig map[string]string, creationDate time.Time, expiryDate time.Time, contentType drivers.ContentType, removeUnknownKeys bool, hasSource bool) error {
+	p, ok := pool.(*backend)
+	if !ok {
+		return errors.New("Pool is not a backend")
+	}
+
+	// Prevent using this function to create storage volume bucket records.
+	if volumeType == drivers.VolumeTypeBucket {
+		return errors.New("Cannot store volume using bucket type")
+	}
+
+	// If the volumeType represents an instance type then check that the volumeConfig doesn't contain any of
+	// the instance disk effective override fields (which should not be stored in the database).
+	if volumeType.IsInstance() {
+		for _, k := range instanceDiskVolumeEffectiveFields {
+			_, found := volumeConfig[k]
+			if found {
+				return fmt.Errorf("Instance disk effective override field %q should not be stored in volume config", k)
+			}
+		}
+	}
+
+	// Convert the volume type to our internal integer representation.
+	volDBType, err := VolumeTypeToDBType(volumeType)
+	if err != nil {
+		return err
+	}
+
+	volDBContentType, err := VolumeContentTypeToDBContentType(contentType)
+	if err != nil {
+		return err
+	}
+
+	// Make sure that we don't pass a nil to the next function.
+	if volumeConfig == nil {
+		volumeConfig = map[string]string{}
+	}
+
+	volType, err := VolumeDBTypeToType(volDBType)
+	if err != nil {
+		return err
+	}
+
+	vol := drivers.NewVolume(pool.Driver(), pool.Name(), volType, contentType, volumeName, volumeConfig, pool.Driver().Config())
+
+	// Set source indicator.
+	vol.SetHasSource(hasSource)
+
+	// For new volumes, fill default config.
+	if !snapshot {
+		err = pool.Driver().FillVolumeConfig(vol)
+		if err != nil {
+			return err
+		}
+	}
+
+	// Validate config.
+	err = pool.Driver().ValidateVolume(vol, removeUnknownKeys)
+	if err != nil {
+		return err
+	}
+
+	err = p.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		// Create the database entry for the storage volume.
+		if snapshot {
+			_, err = tx.CreateStorageVolumeSnapshot(ctx, projectName, volumeName, volumeDescription, volDBType, pool.ID(), vol.Config(), creationDate, expiryDate)
+			return err
+		}
+
+		_, err = tx.CreateStoragePoolVolume(ctx, projectName, volumeName, volumeDescription, volDBType, pool.ID(), vol.Config(), volDBContentType, creationDate)
+		if err != nil {
+			return err
+		}
+
+		// Re-check project limits now that the volume is recorded, so concurrent creations
+		// can't all pass the earlier check.
+		if volumeType == drivers.VolumeTypeCustom {
+			return project.CheckLimits(tx, projectName)
+		}
+
+		return nil
+	})
+	if err != nil {
+		return fmt.Errorf("Error inserting volume %q for project %q in pool %q of type %q into database: %w", volumeName, projectName, pool.Name(), volumeType, err)
+	}
+
+	return nil
+}
+
+// VolumeDBDelete deletes a volume from the database.
+func VolumeDBDelete(pool Pool, projectName string, volumeName string, volumeType drivers.VolumeType) error {
+	p, ok := pool.(*backend)
+	if !ok {
+		return errors.New("Pool is not a backend")
+	}
+
+	// Convert the volume type to our internal integer representation.
+	volDBType, err := VolumeTypeToDBType(volumeType)
+	if err != nil {
+		return err
+	}
+
+	err = p.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		return tx.RemoveStoragePoolVolume(ctx, projectName, volumeName, volDBType, pool.ID())
+	})
+	if err != nil && !response.IsNotFoundError(err) {
+		return fmt.Errorf("Error deleting storage volume from database: %w", err)
+	}
+
+	return nil
+}
+
+// VolumeDBSnapshotsGet loads a list of snapshots volumes from the database.
+func VolumeDBSnapshotsGet(pool Pool, projectName string, volume string, volumeType drivers.VolumeType) ([]db.StorageVolumeArgs, error) {
+	p, ok := pool.(*backend)
+	if !ok {
+		return nil, errors.New("Pool is not a backend")
+	}
+
+	volDBType, err := VolumeTypeToDBType(volumeType)
+	if err != nil {
+		return nil, err
+	}
+
+	var snapshots []db.StorageVolumeArgs
+
+	err = p.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		snapshots, err = tx.GetLocalStoragePoolVolumeSnapshotsWithType(ctx, projectName, volume, volDBType, pool.ID())
+
+		return err
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return snapshots, nil
+}
+
+// BucketDBGet loads a bucket from the database.
+func BucketDBGet(pool Pool, projectName string, bucketName string, memberSpecific bool) (*db.StorageBucket, error) {
+	p, ok := pool.(*backend)
+	if !ok {
+		return nil, errors.New("Pool is not a backend")
+	}
+
+	var err error
+	var bucket *db.StorageBucket
+
+	// Get the storage bucket.
+	err = p.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		bucket, err = tx.GetStoragePoolBucket(ctx, pool.ID(), projectName, memberSpecific, bucketName)
+		if err != nil {
+			if response.IsNotFoundError(err) {
+				return fmt.Errorf("Storage bucket %q in project %q does not exist on pool %q: %w", bucketName, projectName, pool.Name(), err)
+			}
+
+			return err
+		}
+
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return bucket, nil
+}
+
+// BucketDBCreate creates a bucket in the database.
+// The supplied bucket's config may be modified with defaults for the storage pool being used.
+// Returns bucket DB record ID.
+func BucketDBCreate(ctx context.Context, pool Pool, projectName string, memberSpecific bool, bucket *api.StorageBucketsPost) (int64, error) {
+	p, ok := pool.(*backend)
+	if !ok {
+		return -1, errors.New("Pool is not a backend")
+	}
+
+	// Make sure that we don't pass a nil to the next function.
+	if bucket.Config == nil {
+		bucket.Config = map[string]string{}
+	}
+
+	bucketVolName := project.StorageVolume(projectName, bucket.Name)
+	bucketVol := drivers.NewVolume(pool.Driver(), pool.Name(), drivers.VolumeTypeBucket, drivers.ContentTypeFS, bucketVolName, bucket.Config, pool.Driver().Config())
+
+	// Fill default config.
+	err := pool.Driver().FillVolumeConfig(bucketVol)
+	if err != nil {
+		return -1, err
+	}
+
+	// Validate bucket name.
+	err = pool.Driver().ValidateBucket(bucketVol)
+	if err != nil {
+		return -1, err
+	}
+
+	// Validate bucket volume config.
+	err = pool.Driver().ValidateVolume(bucketVol, false)
+	if err != nil {
+		return -1, err
+	}
+
+	var bucketID int64
+
+	err = p.state.DB.Cluster.Transaction(ctx, func(ctx context.Context, tx *db.ClusterTx) error {
+		// Create the database entry for the storage bucket.
+		bucketID, err = tx.CreateStoragePoolBucket(ctx, p.ID(), projectName, memberSpecific, *bucket)
+
+		return err
+	})
+	if err != nil {
+		return -1, fmt.Errorf("Failed inserting storage bucket %q for project %q in pool %q into database: %w", bucket.Name, projectName, pool.Name(), err)
+	}
+
+	return bucketID, nil
+}
+
+// BucketDBDelete deletes a bucket from the database.
+func BucketDBDelete(ctx context.Context, pool Pool, bucketID int64) error {
+	p, ok := pool.(*backend)
+	if !ok {
+		return errors.New("Pool is not a backend")
+	}
+
+	err := p.state.DB.Cluster.Transaction(ctx, func(ctx context.Context, tx *db.ClusterTx) error {
+		return tx.DeleteStoragePoolBucket(ctx, p.ID(), bucketID)
+	})
+	if err != nil && !response.IsNotFoundError(err) {
+		return fmt.Errorf("Failed deleting storage bucket from database: %w", err)
+	}
+
+	return nil
+}
+
+// BucketKeysDBGet loads the keys for a bucket from the database.
+func BucketKeysDBGet(pool Pool, bucketID int64) ([]*db.StorageBucketKey, error) {
+	p, ok := pool.(*backend)
+	if !ok {
+		return nil, errors.New("Pool is not a backend")
+	}
+
+	var err error
+	var keys []*db.StorageBucketKey
+
+	// Get the storage bucket keys.
+	err = p.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		keys, err = tx.GetStoragePoolBucketKeys(ctx, bucketID)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return keys, nil
+}
+
+// poolAndVolumeCommonRules returns a map of pool and volume config common rules common to all drivers.
+// When vol argument is nil function returns pool specific rules.
+func poolAndVolumeCommonRules(vol *drivers.Volume) map[string]func(string) error {
+	rules := map[string]func(string) error{
+		// Note: size should not be modifiable for non-custom volumes and should be checked
+		// in the relevant volume update functions.
+		"size": validate.Optional(validate.IsSize),
+		"snapshots.expiry": func(value string) error {
+			// Validate expression
+			_, err := internalInstance.GetExpiry(time.Time{}, value)
+			return err
+		},
+		"snapshots.expiry.manual": func(value string) error {
+			// Validate expression
+			_, err := internalInstance.GetExpiry(time.Time{}, value)
+			return err
+		},
+		"snapshots.schedule": validate.Optional(validate.IsCron([]string{"@hourly", "@daily", "@midnight", "@weekly", "@monthly", "@annually", "@yearly"})),
+		"snapshots.pattern":  validate.IsAny,
+	}
+
+	// Options relevant for custom filesystem volumes.
+	if (vol == nil) || (vol != nil && vol.Type() == drivers.VolumeTypeCustom && vol.ContentType() == drivers.ContentTypeFS) {
+		rules["security.shifted"] = validate.Optional(validate.IsBool)
+		rules["security.unmapped"] = validate.Optional(validate.IsBool)
+		rules["initial.uid"] = validate.Optional(validate.IsInt64)
+		rules["initial.gid"] = validate.Optional(validate.IsInt64)
+		rules["initial.mode"] = validate.Optional(validate.IsInt64)
+	}
+
+	// security.shared is only relevant for custom block volumes.
+	if (vol == nil) || (vol != nil && vol.Type() == drivers.VolumeTypeCustom && vol.ContentType() == drivers.ContentTypeBlock) {
+		rules["security.shared"] = validate.Optional(validate.IsBool)
+	}
+
+	return rules
+}
+
+// validatePoolCommonRules returns a map of pool config rules common to all drivers.
+func validatePoolCommonRules() map[string]func(string) error {
+	rules := map[string]func(string) error{
+		"source":                  validate.IsAny,
+		"source.wipe":             validate.Optional(validate.IsBool),
+		"volatile.initial_source": validate.IsAny,
+		"rsync.bwlimit":           validate.Optional(validate.IsSize),
+		"rsync.compression":       validate.Optional(validate.IsBool),
+	}
+
+	// Add to pool config rules (prefixed with volume.*) which are common for pool and volume.
+	for volRule, volValidator := range poolAndVolumeCommonRules(nil) {
+		rules[fmt.Sprintf("volume.%s", volRule)] = volValidator
+	}
+
+	return rules
+}
+
+// validateVolumeCommonRules returns a map of volume config rules common to all drivers.
+func validateVolumeCommonRules(vol drivers.Volume) map[string]func(string) error {
+	rules := poolAndVolumeCommonRules(&vol)
+
+	// volatile.idmap settings only make sense for filesystem volumes.
+	if vol.ContentType() == drivers.ContentTypeFS {
+		rules["volatile.idmap.last"] = validate.IsAny
+		rules["volatile.idmap.next"] = validate.IsAny
+		rules["volatile.initial.copied"] = validate.Optional(validate.IsBool)
+	}
+
+	// block.mount_options and block.filesystem settings are only relevant for drivers that are block backed
+	// and when there is a filesystem to actually mount. This includes filesystem volumes and VM Block volumes,
+	// as they have an associated config filesystem volume that shares the config.
+	if vol.IsBlockBacked() && (vol.ContentType() == drivers.ContentTypeFS || vol.IsVMBlock()) {
+		rules["block.mount_options"] = validate.IsAny
+
+		// Note: block.filesystem should not be modifiable after volume created.
+		// This should be checked in the relevant volume update functions.
+		rules["block.filesystem"] = validate.IsAny
+	}
+
+	// volatile.rootfs.size is only used for image volumes.
+	if vol.Type() == drivers.VolumeTypeImage {
+		rules["volatile.rootfs.size"] = validate.Optional(validate.IsInt64)
+	}
+
+	if vol.Type() == drivers.VolumeTypeCustom {
+		rules["dependent"] = validate.Optional(validate.IsBool)
+	}
+
+	return rules
+}
+
+// ImageUnpack unpacks a filesystem image into the destination path.
+// There are several formats that images can come in:
+// Container Format A: Separate metadata tarball and root squashfs file.
+//   - Unpack metadata tarball into mountPath.
+//   - Unpack root squashfs file into mountPath/rootfs.
+//
+// Container Format B: Combined tarball containing metadata files and root squashfs.
+//   - Unpack combined tarball into mountPath.
+//
+// VM Format A: Separate metadata tarball and root qcow2 file.
+//   - Unpack metadata tarball into mountPath.
+//   - Check rootBlockPath is a file and convert qcow2 file into raw format in rootBlockPath.
+func ImageUnpack(imageFile string, vol drivers.Volume, destBlockFile string, sysOS *sys.OS, allowUnsafeResize bool, targetIsZero bool, tracker *ioprogress.ProgressTracker, targetFormat string) (int64, error) {
+	l := logger.Log.AddContext(logger.Ctx{"imageFile": imageFile, "volName": vol.Name()})
+	l.Info("Image unpack started")
+	defer l.Info("Image unpack stopped")
+
+	// Check available memory.
+	maxMemory, err := linux.DeviceTotalMemory()
+	if err == nil {
+		// Cap the memory to 10%.
+		maxMemory = maxMemory / 10
+	} else {
+		maxMemory = 0
+	}
+
+	// For all formats, first unpack the metadata (or combined) tarball into destPath.
+	imageRootfsFile := imageFile + ".rootfs"
+	destPath := vol.MountPath()
+
+	// If no destBlockFile supplied then this is a container image unpack.
+	if destBlockFile == "" {
+		rootfsPath := filepath.Join(destPath, "rootfs")
+
+		// Unpack the main image file.
+		err := archive.Unpack(imageFile, destPath, vol.IsBlockBacked(), maxMemory, tracker)
+		if err != nil {
+			return -1, err
+		}
+
+		// Reject a rootfs symlink which could redirect writes to the host filesystem.
+		rootfsInfo, err := os.Lstat(rootfsPath)
+		if err == nil && !rootfsInfo.IsDir() {
+			return -1, fmt.Errorf("Image rootfs isn't a regular directory: %s", imageFile)
+		}
+
+		// Check for separate root file.
+		if util.PathExists(imageRootfsFile) {
+			err = os.MkdirAll(rootfsPath, 0o755)
+			if err != nil {
+				return -1, errors.New("Error creating rootfs directory")
+			}
+
+			err = archive.Unpack(imageRootfsFile, rootfsPath, vol.IsBlockBacked(), maxMemory, tracker)
+			if err != nil {
+				return -1, err
+			}
+		}
+
+		// Check that the container image unpack has resulted in a rootfs dir.
+		rootfsInfo, err = os.Lstat(rootfsPath)
+		if err != nil || !rootfsInfo.IsDir() {
+			return -1, fmt.Errorf("Image is missing a rootfs: %s", imageFile)
+		}
+
+		// Done with this.
+		return 0, nil
+	}
+
+	// If a rootBlockPath is supplied then this is a VM image unpack.
+
+	// Validate the target.
+	fileInfo, err := os.Stat(destBlockFile)
+	if err != nil && !errors.Is(err, fs.ErrNotExist) {
+		return -1, err
+	}
+
+	if fileInfo != nil && fileInfo.IsDir() {
+		// If the dest block file exists, and it is a directory, fail.
+		return -1, fmt.Errorf("Root block path isn't a file: %s", destBlockFile)
+	}
+
+	// convertBlockImage converts the qcow2 block image file into a raw block device. If needed it will attempt
+	// to enlarge the destination volume to accommodate the unpacked qcow2 image file.
+	convertBlockImage := func(v drivers.Volume, imgPath string, dstPath string, tracker *ioprogress.ProgressTracker) (int64, error) {
+		// Get info about qcow2 file. Force input format to qcow2 so we don't rely on qemu-img's detection
+		// logic as that has been known to have vulnerabilities and we only support qcow2 images anyway.
+		// Use prlimit because qemu-img can consume considerable RAM & CPU time if fed a maliciously
+		// crafted disk image. Since cloud tenants are not to be trusted, ensure QEMU is limits to 1 GiB
+		// address space and 2 seconds CPU time, which ought to be more than enough for real world images.
+		cmd := []string{"prlimit", "--cpu=2", "--as=1073741824", "qemu-img", "info", "-f", "qcow2", "--output=json", imgPath}
+		imgJSON, err := apparmor.QemuImg(sysOS, cmd, imgPath, dstPath, tracker)
+		if err != nil {
+			return -1, fmt.Errorf("Failed reading image info %q: %w", imgPath, err)
+		}
+
+		imgInfo := struct {
+			Format      string `json:"format"`
+			VirtualSize int64  `json:"virtual-size"`
+		}{}
+
+		err = json.Unmarshal([]byte(imgJSON), &imgInfo)
+		if err != nil {
+			return -1, fmt.Errorf("Failed unmarshalling image info %q: %w (%q)", imgPath, err, imgJSON)
+		}
+
+		// Belt and braces qcow2 check.
+		if imgInfo.Format != drivers.BlockVolumeTypeQcow2 {
+			return -1, fmt.Errorf("Unexpected image format %q", imgInfo.Format)
+		}
+
+		// Check whether image is allowed to be unpacked into pool volume. Create a partial image volume
+		// struct and then use it to check that target volume size can be set as needed.
+		imgVolConfig := map[string]string{
+			"volatile.rootfs.size": fmt.Sprintf("%d", imgInfo.VirtualSize),
+		}
+
+		imgVol := drivers.NewVolume(nil, "", drivers.VolumeTypeImage, drivers.ContentTypeBlock, "", imgVolConfig, nil)
+
+		l.Debug("Checking image unpack size")
+		newVolSize, err := vol.ConfigSizeFromSource(imgVol)
+		if err != nil {
+			return -1, err
+		}
+
+		if util.PathExists(dstPath) {
+			volSizeBytes, err := drivers.BlockDiskSizeBytes(dstPath)
+			if err != nil {
+				return -1, fmt.Errorf("Error getting current size of %q: %w", dstPath, err)
+			}
+
+			// If the target volume's size is smaller than the image unpack size, then we need to
+			// increase the target volume's size.
+			if volSizeBytes < imgInfo.VirtualSize {
+				l.Debug("Increasing volume size", logger.Ctx{"imgPath": imgPath, "dstPath": dstPath, "oldSize": volSizeBytes, "newSize": newVolSize, "allowUnsafeResize": allowUnsafeResize})
+				err = vol.SetQuota(newVolSize, allowUnsafeResize, nil)
+				if err != nil {
+					return -1, fmt.Errorf("Error increasing volume size: %w", err)
+				}
+			}
+		}
+
+		if targetFormat == drivers.BlockVolumeTypeQcow2 {
+			l.Debug("Writing qcow2 image to disk", logger.Ctx{"imgPath": imgPath, "dstPath": dstPath})
+
+			// Attempt to deref all paths.
+			imgFullPath, err := filepath.EvalSymlinks(imgPath)
+			if err == nil {
+				imgPath = imgFullPath
+			}
+
+			if dstPath != "" {
+				dstFullPath, err := filepath.EvalSymlinks(dstPath)
+				if err == nil {
+					dstPath = dstFullPath
+				}
+			}
+
+			from, err := os.OpenFile(imgPath, unix.O_RDONLY, 0)
+			if err != nil {
+				return -1, err
+			}
+
+			defer logger.WarnOnError(from.Close, "Failed to close source file")
+
+			to, err := os.OpenFile(dstPath, unix.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0)
+			if err != nil {
+				return -1, err
+			}
+
+			defer logger.WarnOnError(to.Close, "Failed to close destination file")
+
+			_, err = util.SafeCopy(to, from)
+			if err != nil {
+				return -1, err
+			}
+
+			return imgInfo.VirtualSize, nil
+		}
+
+		// Convert the qcow2 format to a raw block device.
+		l.Debug("Converting qcow2 image to raw disk", logger.Ctx{"imgPath": imgPath, "dstPath": dstPath})
+
+		cmd = []string{
+			"nice", "-n19", // Run with low priority to reduce CPU impact on other processes.
+			"qemu-img", "convert", "-p", "-f", "qcow2", "-O", "raw", "-t", "writeback",
+		}
+
+		// Check for Direct I/O support.
+		from, err := os.OpenFile(imgPath, unix.O_DIRECT|unix.O_RDONLY, 0)
+		if err == nil {
+			cmd = append(cmd, "-T", "none")
+			_ = from.Close()
+		}
+
+		to, err := os.OpenFile(dstPath, unix.O_DIRECT|unix.O_RDONLY, 0)
+		if err == nil {
+			cmd = append(cmd, "-t", "none")
+			_ = to.Close()
+		}
+
+		// Extra options when dealing with block devices.
+		if linux.IsBlockdevPath(dstPath) {
+			// Parallel unpacking.
+			cmd = append(cmd, "-W")
+
+			if targetIsZero {
+				// Our block devices are clean, so skip zeroes.
+				cmd = append(cmd, "-n", "--target-is-zero")
+			}
+		}
+
+		cmd = append(cmd, imgPath, dstPath)
+
+		_, err = apparmor.QemuImg(sysOS, cmd, imgPath, dstPath, tracker)
+		if err != nil {
+			return -1, fmt.Errorf("Failed converting image to raw at %q: %w", dstPath, err)
+		}
+
+		return imgInfo.VirtualSize, nil
+	}
+
+	var imgSize int64
+
+	if util.PathExists(imageRootfsFile) {
+		// Unpack the main image file.
+		err := archive.Unpack(imageFile, destPath, vol.IsBlockBacked(), maxMemory, tracker)
+		if err != nil {
+			return -1, err
+		}
+
+		// Convert the qcow2 format to a raw block device.
+		imgSize, err = convertBlockImage(vol, imageRootfsFile, destBlockFile, tracker)
+		if err != nil {
+			return -1, err
+		}
+	} else {
+		// Dealing with unified tarballs require an initial unpack to a temporary directory.
+		tempDir, err := os.MkdirTemp(internalUtil.VarPath("images"), "incus_image_unpack_")
+		if err != nil {
+			return -1, err
+		}
+
+		defer logger.WarnOnError(func() error { return os.RemoveAll(tempDir) }, "Failed to remove temporary directory")
+
+		// Unpack the whole image.
+		err = archive.Unpack(imageFile, tempDir, vol.IsBlockBacked(), maxMemory, tracker)
+		if err != nil {
+			return -1, err
+		}
+
+		imgPath := filepath.Join(tempDir, "rootfs.img")
+
+		// Convert the qcow2 format to a raw block device.
+		imgSize, err = convertBlockImage(vol, imgPath, destBlockFile, tracker)
+		if err != nil {
+			return -1, err
+		}
+
+		// Delete the qcow2.
+		err = os.Remove(imgPath)
+		if err != nil {
+			return -1, fmt.Errorf("Failed to remove %q: %w", imgPath, err)
+		}
+
+		// Transfer the content excluding the destBlockFile name so that we don't delete the block file
+		// created above if the storage driver stores image files in the same directory as destPath.
+		_, err = rsync.LocalCopy(tempDir, destPath, "", true, "--exclude", filepath.Base(destBlockFile))
+		if err != nil {
+			return -1, err
+		}
+	}
+
+	return imgSize, nil
+}
+
+// InstanceContentType returns the instance's content type.
+func InstanceContentType(inst instance.ConfigReader) drivers.ContentType {
+	contentType := drivers.ContentTypeFS
+	if inst.Type() == instancetype.VM {
+		contentType = drivers.ContentTypeBlock
+	}
+
+	return contentType
+}
+
+// VolumeUsedByProfileDevices finds profiles using a volume and passes them to profileFunc for evaluation.
+// The profileFunc is provided with a profile config, project config and a list of device names that are using
+// the volume.
+func VolumeUsedByProfileDevices(s *state.State, poolName string, projectName string, vol *api.StorageVolume, profileFunc func(profileID int64, profile api.Profile, p api.Project, usedByDevices []string) error) error {
+	// Convert the volume type name to our internal integer representation.
+	volumeType, err := VolumeTypeNameToDBType(vol.Type)
+	if err != nil {
+		return err
+	}
+
+	var profiles []api.Profile
+	var profileIDs []int64
+	var profileProjects []*api.Project
+	// Retrieve required info from the database in single transaction for performance.
+	err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		projects, err := cluster.GetProjects(ctx, tx.Tx())
+		if err != nil {
+			return fmt.Errorf("Failed loading projects: %w", err)
+		}
+
+		// Index of all projects by name.
+		projectMap := make(map[string]*api.Project, len(projects))
+		for _, project := range projects {
+			projectMap[project.Name], err = project.ToAPI(ctx, tx.Tx())
+			if err != nil {
+				return fmt.Errorf("Failed loading config for project %q: %w", project.Name, err)
+			}
+		}
+
+		dbProfiles, err := cluster.GetProfiles(ctx, tx.Tx())
+		if err != nil {
+			return fmt.Errorf("Failed loading profiles: %w", err)
+		}
+
+		// Get all the profile configs.
+		profileConfigs, err := cluster.GetAllProfileConfigs(ctx, tx.Tx())
+		if err != nil {
+			return fmt.Errorf("Failed loading profile configs: %w", err)
+		}
+
+		// Get all the profile devices.
+		profileDevices, err := cluster.GetAllProfileDevices(ctx, tx.Tx())
+		if err != nil {
+			return fmt.Errorf("Failed loading profile devices: %w", err)
+		}
+
+		for _, profile := range dbProfiles {
+			apiProfile, err := profile.ToAPI(ctx, tx.Tx(), profileConfigs, profileDevices)
+			if err != nil {
+				return fmt.Errorf("Failed getting API Profile %q: %w", profile.Name, err)
+			}
+
+			profileIDs = append(profileIDs, int64(profile.ID))
+			profiles = append(profiles, *apiProfile)
+		}
+
+		profileProjects = make([]*api.Project, len(dbProfiles))
+		for i, p := range dbProfiles {
+			profileProjects[i] = projectMap[p.Project]
+		}
+
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+
+	// Iterate all profiles, consider only those which belong to a project that has the same effective
+	// storage project as volume.
+	for i, profile := range profiles {
+		profileStorageProject := project.StorageVolumeProjectFromRecord(profileProjects[i], volumeType)
+		if err != nil {
+			return err
+		}
+
+		// Check profile's storage project is the same as the volume's project.
+		// If not then the volume names mentioned in the profile's config cannot be referring to volumes
+		// in the volume's project we are trying to match, and this profile cannot possibly be using it.
+		if projectName != profileStorageProject {
+			continue
+		}
+
+		var usedByDevices []string
+
+		// Iterate through each of the profiles's devices, looking for disks in the same pool as volume.
+		// Then try and match the volume name against the profile device's "source" property.
+		for name, dev := range profile.Devices {
+			if dev["type"] != cluster.TypeDisk.String() {
+				continue
+			}
+
+			if dev["pool"] != poolName {
+				continue
+			}
+
+			if strings.Split(dev["source"], "/")[0] == vol.Name {
+				usedByDevices = append(usedByDevices, name)
+			}
+		}
+
+		if len(usedByDevices) > 0 {
+			err = profileFunc(profileIDs[i], profile, *profileProjects[i], usedByDevices)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
+// VolumeUsedByInstanceDevices finds instances using a volume (either directly or via their expanded profiles if
+// expandDevices is true) and passes them to instanceFunc for evaluation. If instanceFunc returns an error then it
+// is returned immediately. The instanceFunc is executed during a DB transaction, so DB queries are not permitted.
+// The instanceFunc is provided with a instance config, project config, instance's profiles and a list of device
+// names that are using the volume.
+func VolumeUsedByInstanceDevices(s *state.State, poolName string, projectName string, vol *api.StorageVolume, expandDevices bool, instanceFunc func(inst db.InstanceArgs, p api.Project, usedByDevices []string) error) error {
+	// Convert the volume type name to our internal integer representation.
+	volumeType, err := VolumeTypeNameToDBType(vol.Type)
+	if err != nil {
+		return err
+	}
+
+	return s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		return tx.InstanceList(ctx, func(inst db.InstanceArgs, p api.Project) error {
+			// If the volume has a specific cluster member which is different than the instance then skip as
+			// instance cannot be using this volume.
+			if vol.Location != "" && inst.Node != vol.Location {
+				return nil
+			}
+
+			instStorageProject := project.StorageVolumeProjectFromRecord(&p, volumeType)
+			if err != nil {
+				return err
+			}
+
+			// Check instance's storage project is the same as the volume's project.
+			// If not then the volume names mentioned in the instance's config cannot be referring to volumes
+			// in the volume's project we are trying to match, and this instance cannot possibly be using it.
+			if projectName != instStorageProject {
+				return nil
+			}
+
+			// Use local devices for usage check by if expandDevices is false (but don't modify instance).
+			devices := inst.Devices
+
+			// Expand devices for usage check if expandDevices is true.
+			if expandDevices {
+				devices = db.ExpandInstanceDevices(devices.Clone(), inst.Profiles)
+			}
+
+			var usedByDevices []string
+
+			// Iterate through each of the instance's devices, looking for disks in the same pool as volume.
+			// Then try and match the volume name against the instance device's "source" property.
+			for devName, dev := range devices {
+				if dev["type"] != "disk" {
+					continue
+				}
+
+				if dev["pool"] != poolName {
+					continue
+				}
+
+				if strings.Split(dev["source"], "/")[0] == vol.Name {
+					usedByDevices = append(usedByDevices, devName)
+				}
+			}
+
+			if len(usedByDevices) > 0 {
+				err = instanceFunc(inst, p, usedByDevices)
+				if err != nil {
+					return err
+				}
+			}
+
+			return nil
+		})
+	})
+}
+
+// VolumeUsedByExclusiveRemoteInstancesWithProfiles checks if custom volume is exclusively attached to a remote
+// instance. Returns the remote instance that has the volume exclusively attached. Returns nil if volume available.
+func VolumeUsedByExclusiveRemoteInstancesWithProfiles(s *state.State, poolName string, projectName string, vol *api.StorageVolume) (*db.InstanceArgs, error) {
+	pool, err := LoadByName(s, poolName)
+	if err != nil {
+		return nil, fmt.Errorf("Failed loading storage pool %q: %w", poolName, err)
+	}
+
+	info := pool.Driver().Info()
+
+	// Always return nil if the storage driver supports mounting volumes
+	// on multiple nodes at once and we're not dealing with a filesystem volume
+	// on top of a block device.
+	if info.VolumeMultiNode && (!info.BlockBacking || vol.ContentType != "filesystem") {
+		return nil, nil
+	}
+
+	// Find if volume is attached to a remote instance.
+	var remoteInstance *db.InstanceArgs
+	err = VolumeUsedByInstanceDevices(s, poolName, projectName, vol, true, func(dbInst db.InstanceArgs, project api.Project, usedByDevices []string) error {
+		if dbInst.Node != s.ServerName {
+			remoteInstance = &dbInst
+			return db.ErrInstanceListStop // Stop the search, this volume is attached to a remote instance.
+		}
+
+		return nil
+	})
+	if err != nil && !errors.Is(err, db.ErrInstanceListStop) {
+		return nil, err
+	}
+
+	return remoteInstance, nil
+}
+
+// VolumeUsedByDaemon indicates whether the volume is used by daemon storage, by returning a
+// configuration fragment.
+func VolumeUsedByDaemon(s *state.State, poolName string, volumeName string) (string, error) {
+	daemonVolumes := make(map[string]string, 3)
+	err := s.DB.Node.Transaction(context.TODO(), func(ctx context.Context, tx *db.NodeTx) error {
+		nodeConfig, err := node.ConfigLoad(ctx, tx)
+		if err != nil {
+			return err
+		}
+
+		daemonVolumes[nodeConfig.StorageBackupsVolume()] = "storage.backups_volume"
+		daemonVolumes[nodeConfig.StorageImagesVolume()] = "storage.images_volume"
+		daemonVolumes[nodeConfig.StorageLogsVolume()] = "storage.logs_volume"
+		return nil
+	})
+	if err != nil {
+		return "", err
+	}
+
+	return daemonVolumes[fmt.Sprintf("%s/%s", poolName, volumeName)], nil
+}
+
+// FallbackMigrationType returns the fallback migration transport to use based on volume content type.
+func FallbackMigrationType(contentType drivers.ContentType) migration.MigrationFSType {
+	if drivers.IsContentBlock(contentType) {
+		return migration.MigrationFSType_BLOCK_AND_RSYNC
+	}
+
+	return migration.MigrationFSType_RSYNC
+}
+
+// InstanceMount mounts an instance's storage volume (if not already mounted).
+// Please call InstanceUnmount when finished.
+func InstanceMount(pool Pool, inst instance.Instance, op *operations.Operation) (*MountInfo, error) {
+	var err error
+	var mountInfo *MountInfo
+
+	if inst.IsSnapshot() {
+		mountInfo, err = pool.MountInstanceSnapshot(inst, op)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		mountInfo, err = pool.MountInstance(inst, op)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return mountInfo, nil
+}
+
+// InstanceUnmount unmounts an instance's storage volume (if not in use).
+func InstanceUnmount(pool Pool, inst instance.Instance, op *operations.Operation) error {
+	var err error
+
+	if inst.IsSnapshot() {
+		err = pool.UnmountInstanceSnapshot(inst, op)
+	} else {
+		err = pool.UnmountInstance(inst, op)
+	}
+
+	return err
+}
+
+// InstanceDiskBlockSize returns the block device size for the instance's disk.
+// This will mount the instance if not already mounted and will unmount at the end if needed.
+func InstanceDiskBlockSize(pool Pool, inst instance.Instance, op *operations.Operation) (int64, error) {
+	mountInfo, err := InstanceMount(pool, inst, op)
+	if err != nil {
+		return -1, err
+	}
+
+	defer logger.WarnOnError(func() error { return InstanceUnmount(pool, inst, op) }, "Failed to unmount instance")
+
+	if mountInfo.DiskPath == "" {
+		return -1, errors.New("No disk path available from mount")
+	}
+
+	volType, err := InstanceTypeToVolumeType(inst.Type())
+	if err != nil {
+		return -1, err
+	}
+
+	dbVol, err := VolumeDBGet(pool, inst.Project().Name, inst.Name(), volType)
+	if err != nil {
+		return -1, err
+	}
+
+	vol := pool.GetVolume(volType, InstanceContentType(inst), project.Instance(inst.Project().Name, inst.Name()), dbVol.Config)
+
+	blockDiskSize, err := drivers.VolumeBlockSizeBytes(vol, mountInfo.DiskPath)
+	if err != nil {
+		return -1, fmt.Errorf("Error getting block disk size %q: %w", mountInfo.DiskPath, err)
+	}
+
+	return blockDiskSize, nil
+}
+
+// ComparableSnapshot is used when comparing snapshots on different pools to see whether they differ.
+type ComparableSnapshot struct {
+	// Name of the snapshot (without the parent name).
+	Name string
+
+	// Identifier of the snapshot (that remains the same when copied between pools).
+	ID string
+
+	// Creation date time of the snapshot.
+	CreationDate time.Time
+}
+
+// CompareSnapshots returns a list of snapshot indexes (from the associated input slices) to sync from the source
+// and to delete from the target respectively.
+// A snapshot will be added to "to sync from source" slice if it either doesn't exist in the target or its ID or
+// creation date is different to the source. When excludeOlder is true, source snapshots earlier than
+// latest target snapshot are excluded.
+// A snapshot will be added to the "to delete from target" slice if it doesn't exist in the source or its ID or
+// creation date is different to the source.
+func CompareSnapshots(sourceSnapshots []ComparableSnapshot, targetSnapshots []ComparableSnapshot, excludeOlder bool) ([]int, []int) {
+	// Compare source and target.
+	sourceSnapshotsByName := make(map[string]*ComparableSnapshot, len(sourceSnapshots))
+	targetSnapshotsByName := make(map[string]*ComparableSnapshot, len(targetSnapshots))
+
+	var syncFromSource, deleteFromTarget []int
+
+	// Generate a list of source snapshots by name.
+	for sourceSnapIndex := range sourceSnapshots {
+		sourceSnapshotsByName[sourceSnapshots[sourceSnapIndex].Name] = &sourceSnapshots[sourceSnapIndex]
+	}
+
+	// Find the latest creation date among target snapshots.
+	var latestTargetSnapshotTime time.Time
+
+	// Creation dates are compared at second precision, which is all the migration protocol carries.
+	// If target snapshot doesn't exist in source, or its creation date or ID differ,
+	// then mark it for deletion on target.
+	for targetSnapIndex := range targetSnapshots {
+		// Generate a list of target snapshots by name for later comparison.
+		targetSnapshotsByName[targetSnapshots[targetSnapIndex].Name] = &targetSnapshots[targetSnapIndex]
+
+		sourceSnap, sourceSnapExists := sourceSnapshotsByName[targetSnapshots[targetSnapIndex].Name]
+		if !sourceSnapExists || sourceSnap.CreationDate.Unix() != targetSnapshots[targetSnapIndex].CreationDate.Unix() || sourceSnap.ID != targetSnapshots[targetSnapIndex].ID {
+			deleteFromTarget = append(deleteFromTarget, targetSnapIndex)
+		} else if targetSnapshots[targetSnapIndex].CreationDate.After(latestTargetSnapshotTime) {
+			latestTargetSnapshotTime = targetSnapshots[targetSnapIndex].CreationDate
+		}
+	}
+
+	// If source snapshot doesn't exist in target, or its creation date or ID differ,
+	// then mark it for syncing to target.
+	for sourceSnapIndex := range sourceSnapshots {
+		targetSnap, targetSnapExists := targetSnapshotsByName[sourceSnapshots[sourceSnapIndex].Name]
+		if (!targetSnapExists && (!excludeOlder || sourceSnapshots[sourceSnapIndex].CreationDate.After(latestTargetSnapshotTime))) || (targetSnapExists && (targetSnap.CreationDate.Unix() != sourceSnapshots[sourceSnapIndex].CreationDate.Unix() || targetSnap.ID != sourceSnapshots[sourceSnapIndex].ID)) {
+			syncFromSource = append(syncFromSource, sourceSnapIndex)
+		}
+	}
+
+	return syncFromSource, deleteFromTarget
+}
+
+// CalculateVolumeSnapshotSize returns the size of a volume snapshot in bytes.
+func CalculateVolumeSnapshotSize(projectName string, pool Pool, contentType drivers.ContentType, volumeType drivers.VolumeType, volName string, snapName string) (int64, error) {
+	if contentType != drivers.ContentTypeBlock {
+		return 0, nil
+	}
+
+	var volSize int64
+
+	snapVolumeName := drivers.GetSnapshotVolumeName(volName, snapName)
+	var fullSnapVolName string
+	if volumeType == drivers.VolumeTypeCustom {
+		fullSnapVolName = project.StorageVolume(projectName, snapVolumeName)
+	} else {
+		fullSnapVolName = project.Instance(projectName, snapVolumeName)
+	}
+
+	dbSnapVol, err := VolumeDBGet(pool, projectName, snapVolumeName, volumeType)
+	if err != nil {
+		return 0, err
+	}
+
+	snapVol := pool.GetVolume(volumeType, contentType, fullSnapVolName, dbSnapVol.Config)
+
+	// Ask the driver first as mounting a snapshot can be slow.
+	volSize, err = pool.Driver().GetVolumeDiskSize(snapVol)
+	if err == nil {
+		return volSize, nil
+	}
+
+	if !errors.Is(err, drivers.ErrNotSupported) {
+		return 0, err
+	}
+
+	err = snapVol.MountTask(func(mountPath string, op *operations.Operation) error {
+		poolBackend, ok := pool.(*backend)
+		if !ok {
+			return errors.New("Pool is not a backend")
+		}
+
+		volDiskPath, err := poolBackend.driver.GetVolumeDiskPath(snapVol)
+		if err != nil {
+			return err
+		}
+
+		volSize, err = drivers.VolumeBlockSizeBytes(snapVol, volDiskPath)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	}, nil)
+	if err != nil {
+		return 0, err
+	}
+
+	return volSize, nil
+}
+
+// VolumeSnapshotsToMigrationSnapshots converts a *api.StorageVolumeSnapshot to a *migration.Snapshot.
+func VolumeSnapshotsToMigrationSnapshots(snapshots []*api.StorageVolumeSnapshot, projectName string, pool Pool, contentType drivers.ContentType, volumeType drivers.VolumeType, volName string) ([]*migration.Snapshot, error) {
+	migrationSnapshots := make([]*migration.Snapshot, 0, len(snapshots))
+	for _, snap := range snapshots {
+		mSnapshot := &migration.Snapshot{Name: &snap.Name}
+
+		volSize, err := CalculateVolumeSnapshotSize(projectName, pool, contentType, volumeType, volName, snap.Name)
+		if err != nil {
+			return nil, err
+		}
+
+		migration.SetSnapshotConfigValue(mSnapshot, "size", fmt.Sprintf("%d", volSize))
+		migrationSnapshots = append(migrationSnapshots, mSnapshot)
+	}
+
+	return migrationSnapshots, nil
+}
+
+// ProjectVolume returns a project scoped volume identifier.
+// It applies the appropriate '<project>_' prefix based on the volume type.
+func ProjectVolume(projectName string, volName string, volType drivers.VolumeType) string {
+	if volType == drivers.VolumeTypeContainer || volType == drivers.VolumeTypeVM {
+		return project.Instance(projectName, volName)
+	}
+
+	return project.StorageVolume(projectName, volName)
+}
+
+// DisallowedStorageConfigForCreation returns a list of keys that cannot be specified
+// during pool creation.
+func DisallowedStorageConfigForCreation(driverName string) []string {
+	if driverName == "lvmcluster" {
+		return []string{"size"}
+	}
+
+	return []string{}
+}
+
+// ClusterWideStorageConfig returns a list of keys that are cluster wide.
+func ClusterWideStorageConfig(driverName string) []string {
+	if driverName == "lvmcluster" {
+		return []string{"size"}
+	}
+
+	return []string{}
+}
+
+// GenerateDependentVolumesOffer creates an offer header containing
+// all information required for dependent volume migration.
+func GenerateDependentVolumesOffer(s *state.State, config *backupConfig.Config, srcDevices map[string]map[string]string, projectName string, snapshots bool, devices api.DevicesMap, skipDisks []string, clusterMove bool) ([]*migration.DependentVolume, error) {
+	result := make([]*migration.DependentVolume, 0, len(config.DependentVolumes))
+	if len(config.DependentVolumes) == 0 {
+		return result, nil
+	}
+
+	storageProjectName, err := project.StorageVolumeProject(s.DB.Cluster, projectName, db.StoragePoolVolumeTypeCustom)
+	if err != nil {
+		return nil, err
+	}
+
+	// The config of a snapshot has no instance section, use the source devices instead.
+	devicesMap := DevicesMapFromBackupConfig(config)
+	if config.Container == nil {
+		devicesMap = DevicesMapFromDevices(srcDevices)
+	}
+
+	for _, volConfig := range config.DependentVolumes {
+		poolName := volConfig.Pool.Name
+		contentType := volConfig.Volume.ContentType
+		volName := volConfig.Volume.Name
+
+		pool, err := LoadByName(s, poolName)
+		if err != nil {
+			return nil, fmt.Errorf("Failed loading pool: %w", err)
+		}
+
+		deviceName := DeviceByPoolAndVolume(devicesMap, poolName, volName)
+		if deviceName == "" {
+			return nil, fmt.Errorf("Device for volume %s/%s not found", poolName, volName)
+		}
+
+		if slices.Contains(skipDisks, deviceName) {
+			continue
+		}
+
+		shouldMigrate, err := ShouldMigrateDependentVolume(s, poolName, volName, devices[deviceName], clusterMove)
+		if err != nil {
+			return nil, err
+		}
+
+		if !shouldMigrate {
+			continue
+		}
+
+		volStorageName := project.StorageVolume(storageProjectName, volName)
+		vol := pool.GetVolume(drivers.VolumeTypeCustom, drivers.ContentType(contentType), volStorageName, volConfig.Volume.Config)
+
+		// The volume changes pool when the device override points it elsewhere.
+		storageMove := devices[deviceName]["pool"] != "" && devices[deviceName]["pool"] != poolName
+
+		poolMigrationTypes := pool.MigrationTypes(drivers.ContentType(contentType), false, snapshots, clusterMove, storageMove)
+		if len(poolMigrationTypes) == 0 {
+			return nil, fmt.Errorf("No migration types available")
+		}
+
+		header := localMigration.TypesToHeader(poolMigrationTypes...)
+
+		var volSize int64
+
+		if drivers.ContentType(contentType) == drivers.ContentTypeBlock {
+			err = vol.MountTask(func(mountPath string, op *operations.Operation) error {
+				volDiskPath, err := pool.Driver().GetVolumeDiskPath(vol)
+				if err != nil {
+					return err
+				}
+
+				volSize, err = drivers.VolumeBlockSizeBytes(vol, volDiskPath)
+				if err != nil {
+					return err
+				}
+
+				return nil
+			}, nil)
+			if err != nil {
+				return nil, err
+			}
+		}
+
+		dependentVolume := localMigration.DependentVolumeFromHeader(header, volName, poolName, contentType, volSize, deviceName)
+		dependentVolume.Snapshots = make([]*migration.Snapshot, 0, len(volConfig.VolumeSnapshots))
+
+		for _, volSnap := range volConfig.VolumeSnapshots {
+			// Set size for snapshot volume
+			snapSize, err := CalculateVolumeSnapshotSize(projectName, pool, drivers.ContentType(contentType), drivers.VolumeTypeCustom, volName, volSnap.Name)
+			if err != nil {
+				return nil, err
+			}
+
+			volSnap.Config["size"] = fmt.Sprintf("%d", snapSize)
+			dependentVolume.Snapshots = append(dependentVolume.Snapshots, localMigration.VolumeSnapshotToProtobuf(volSnap))
+		}
+
+		result = append(result, dependentVolume)
+	}
+
+	return result, nil
+}
+
+// DependentVolumeWithType represents a volume and its supported migration types.
+type DependentVolumeWithType struct {
+	Volume      *migration.DependentVolume
+	VolumeTypes []localMigration.Type
+}
+
+// DependentVolumesMatchMigrationType returns the transport type matching the header's dependent volumes.
+func DependentVolumesMatchMigrationType(s *state.State, header *migration.MigrationHeader, snapshots bool, overrides api.DevicesMap, source bool, clusterMove bool) ([]DependentVolumeWithType, error) {
+	dependentVolumes := []DependentVolumeWithType{}
+	for _, vol := range header.DependentVolumes {
+		contentType := drivers.ContentType(*vol.ContentType)
+		poolName := *vol.Pool
+		storageMove := false
+
+		if overrides != nil && overrides[*vol.DeviceName] != nil {
+			newPoolName, ok := overrides[*vol.DeviceName]["pool"]
+			if ok {
+				storageMove = newPoolName != poolName
+				poolName = newPoolName
+			}
+		}
+
+		pool, err := LoadByName(s, poolName)
+		if err != nil {
+			return nil, fmt.Errorf("Failed loading storage pool: %w", err)
+		}
+
+		poolMigrationTypes := pool.MigrationTypes(drivers.ContentType(contentType), false, snapshots, clusterMove, storageMove)
+		if len(poolMigrationTypes) == 0 {
+			return nil, errors.New("No migration types available")
+		}
+
+		// Older targets echo the offered block features back, only trust them from targets reporting their own.
+		if source && header.BlockFeatures == nil {
+			vol.BlockFeatures = nil
+		}
+
+		migrationTypes, err := localMigration.MatchTypes(localMigration.HeaderFromDependentVolume(vol), FallbackMigrationType(contentType), poolMigrationTypes)
+		if err != nil {
+			return nil, fmt.Errorf("Failed to negotiate migration type: %w", err)
+		}
+
+		// Build a fresh header on the target rather than echoing the offered one back.
+		if !source {
+			respVol := localMigration.DependentVolumeFromHeader(localMigration.TypesToHeader(migrationTypes...), *vol.Name, *vol.Pool, *vol.ContentType, vol.GetVolumeSize(), vol.GetDeviceName())
+			respVol.Snapshots = vol.Snapshots
+			vol = respVol
+		}
+
+		dependentVolumes = append(dependentVolumes, DependentVolumeWithType{Volume: vol, VolumeTypes: migrationTypes})
+	}
+
+	return dependentVolumes, nil
+}
+
+// ShouldMigrateDependentVolume returns true if the dependent volume
+// needs to be migrated for this instance. Returns false if migration
+// can be skipped (e.g., on shared storage within the same cluster).
+func ShouldMigrateDependentVolume(s *state.State, poolName string, volumeName string, overrides map[string]string, clusterMove bool) (bool, error) {
+	if overrides != nil {
+		overrideVolName, _ := internalInstance.SplitVolumeSource(overrides["source"])
+		if (overrides["source"] != "" && volumeName != overrideVolName) || (overrides["pool"] != "" && poolName != overrides["pool"]) {
+			return true, nil
+		}
+	}
+
+	diskPool, err := LoadByName(s, poolName)
+	if err != nil {
+		return false, fmt.Errorf("Failed loading storage pool: %w", err)
+	}
+
+	if diskPool.Driver().Info().Remote && clusterMove {
+		return false, nil
+	}
+
+	return true, nil
+}
+
+// InstanceByVolumeName returns the instance associated with the given volume name.
+func InstanceByVolumeName(s *state.State, poolName string, projectName string, volumeName string, volumeDBType int) (instance.Instance, string, error) {
+	if volumeDBType == db.StoragePoolVolumeTypeVM {
+		inst, err := instance.LoadByProjectAndName(s, projectName, volumeName)
+		if err != nil {
+			return nil, "", err
+		}
+
+		instanceDeviceName, _, err := internalInstance.GetRootDiskDevice(inst.ExpandedDevices().CloneNative())
+		if err != nil {
+			return nil, "", err
+		}
+
+		return inst, instanceDeviceName, nil
+	}
+
+	var instanceArgs *db.InstanceArgs
+	var instanceDeviceName string
+
+	pool, err := LoadByName(s, poolName)
+	if err != nil {
+		return nil, "", err
+	}
+
+	volumeType, err := VolumeDBTypeToType(volumeDBType)
+	if err != nil {
+		return nil, "", err
+	}
+
+	// Get the volume.
+	dbVol, err := VolumeDBGet(pool, projectName, volumeName, volumeType)
+	if err != nil {
+		return nil, "", err
+	}
+
+	// Track down the instance.
+	err = VolumeUsedByInstanceDevices(s, pool.Name(), projectName, &dbVol.StorageVolume, true, func(dbInst db.InstanceArgs, project api.Project, usedByDevices []string) error {
+		if dbInst.Type != instancetype.VM {
+			return fmt.Errorf("Volume is attached to a container")
+		}
+
+		if instanceArgs != nil && instanceArgs.Name != dbInst.Name {
+			return fmt.Errorf("Volume is attached to multiple instances")
+		}
+
+		instanceArgs = &dbInst
+		instanceDeviceName = usedByDevices[0]
+
+		return nil
+	})
+	if err != nil {
+		return nil, "", err
+	}
+
+	if instanceArgs == nil {
+		return nil, "", ErrVolumeNotAttachedToRunningInstance
+	}
+
+	// Load the instance.
+	inst, err := instance.LoadByProjectAndName(s, instanceArgs.Project, instanceArgs.Name)
+	if err != nil {
+		return nil, "", err
+	}
+
+	return inst, instanceDeviceName, nil
+}
+
+// DeviceByPoolAndVolume returns a device from the devices map for the given pool and volume name.
+func DeviceByPoolAndVolume(deviceMap map[string]map[string]string, poolName string, volumeName string) string {
+	inner, ok := deviceMap[poolName]
+	if !ok {
+		return ""
+	}
+
+	v, ok := inner[volumeName]
+	if !ok {
+		return ""
+	}
+
+	return v
+}
+
+// DevicesMapFromBackupConfig builds a map of instance devices indexed by pool and volume name.
+func DevicesMapFromBackupConfig(config *backupConfig.Config) map[string]map[string]string {
+	if config.Container == nil {
+		return map[string]map[string]string{}
+	}
+
+	return DevicesMapFromDevices(config.Container.ExpandedDevices)
+}
+
+// DevicesMapFromDevices builds a map of the given devices indexed by pool and volume name.
+func DevicesMapFromDevices(devices map[string]map[string]string) map[string]map[string]string {
+	devicesMap := map[string]map[string]string{}
+	for devName, dev := range devices {
+		_, hasPool := devicesMap[dev["pool"]]
+		if !hasPool {
+			devicesMap[dev["pool"]] = map[string]string{}
+		}
+
+		volName, _ := internalInstance.SplitVolumeSource(dev["source"])
+		devicesMap[dev["pool"]][volName] = devName
+	}
+
+	return devicesMap
+}
+
+// nbdOperationLock acquires a lock for NBD operations on an instance and
+// returns an unlock function.
+func nbdOperationLock(projectName string, instanceName string) (locking.UnlockFunc, error) {
+	l := logger.AddContext(logger.Ctx{"project": projectName, "instance": instanceName})
+	l.Debug("Acquiring NBD lock for instance")
+	defer l.Debug("NBD lock acquired for instance")
+
+	unlock, _ := locking.TryLock(fmt.Sprintf("NBDInstanceOperation_%s", project.Instance(projectName, instanceName)))
+	if unlock == nil {
+		return nil, fmt.Errorf("NBD operation for instance %s already in progress", instanceName)
+	}
+
+	return unlock, nil
+}
+
+// UnmountStaleSnapshots unmounts snapshot mount paths left behind on the pool, typically by an
+// operation interrupted by a daemon restart. It must only run while no snapshot can be in use.
+func UnmountStaleSnapshots(pool Pool) error {
+	for _, volType := range pool.Driver().Info().VolumeTypes {
+		snapshotsDir := drivers.GetVolumeTypeSnapshotsDir(pool.Name(), volType)
+
+		volumes, err := os.ReadDir(snapshotsDir)
+		if err != nil {
+			if errors.Is(err, fs.ErrNotExist) {
+				continue
+			}
+
+			return err
+		}
+
+		for _, volume := range volumes {
+			volumeDir := filepath.Join(snapshotsDir, volume.Name())
+
+			snapshots, err := os.ReadDir(volumeDir)
+			if err != nil {
+				if errors.Is(err, fs.ErrNotExist) {
+					continue
+				}
+
+				return err
+			}
+
+			for _, snapshot := range snapshots {
+				mountPath := filepath.Join(volumeDir, snapshot.Name())
+				if !linux.IsMountPoint(mountPath) {
+					continue
+				}
+
+				err = drivers.TryUnmount(mountPath, 0)
+				if err != nil {
+					return err
+				}
+
+				logger.Warn("Unmounted stale snapshot", logger.Ctx{"pool": pool.Name(), "path": mountPath})
+			}
+		}
+	}
+
+	return nil
+}

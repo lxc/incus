@@ -1,0 +1,19 @@
+.swagger-ui {
+    background-color: white;
+}
+
+.swagger-ui .markdown p, .swagger-ui .markdown pre, .swagger-ui .renderedMarkdown p, .swagger-ui .renderedMarkdown pre {
+    margin-left: 0em;
+}
+
+.swagger-ui, .swagger-ui textarea, .swagger-ui .info li, .swagger-ui .info a, .swagger-ui .info p, .swagger-ui .info table, .swagger-ui .info .title .swagger-ui .opblock-tag, .swagger-ui .opblock .opblock-summary-description, .swagger-ui .opblock-description-wrapper p, .swagger-ui .opblock-external-docs-wrapper p, .swagger-ui .opblock-title_normal p, .swagger-ui .opblock .opblock-section-header h4, .swagger-ui .opblock-tag:hover, .swagger-ui .opblock-tag small, .swagger-ui .opblock .opblock-section-header>label, .swagger-ui .opblock .opblock-summary-method, .swagger-ui .tab li, .swagger-ui .opblock-description-wrapper,.swagger-ui .opblock-external-docs-wrapper,.swagger-ui .opblock-title_normal, .swagger-ui .opblock-description-wrapper h4,.swagger-ui .opblock-external-docs-wrapper h4,.swagger-ui .opblock-title_normal h4, .swagger-ui .responses-inner h4,.swagger-ui .responses-inner h5, .swagger-ui .response-col_status, .swagger-ui .response-col_links, .swagger-ui .download-contents, .swagger-ui .scheme-container .schemes>label, .swagger-ui .loading-container .loading:after, .swagger-ui section h3, .swagger-ui .btn, .swagger-ui .btn.cancel, .swagger-ui select, .swagger-ui label, .swagger-ui .dialog-ux .modal-ux-content p, .swagger-ui .dialog-ux .modal-ux-content p, .swagger-ui .dialog-ux .modal-ux-content h4, .swagger-ui .dialog-ux .modal-ux-header h3, .swagger-ui section.models h4, .swagger-ui section.models h5, .swagger-ui .model-title, .swagger-ui .servers>label, .swagger-ui .model-deprecated-warning, .swagger-ui table thead tr td,.swagger-ui table thead tr th, .swagger-ui .parameter__name, .swagger-ui .topbar a, .swagger-ui .topbar .download-url-wrapper .download-url-button, .swagger-ui .info h1,.swagger-ui .info h2,.swagger-ui .info h3,.swagger-ui .info h4,.swagger-ui .info h5, .swagger-ui .info .title small pre, .swagger-ui .errors-wrapper hgroup h4 {
+    font-family: "Ubuntu", -apple-system, "Segoe UI", "Roboto", "Oxygen", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif;
+}
+
+.swagger-ui .response-col_description, .swagger-ui .parameters-col_description {
+    width: 85%
+}
+
+.swagger-ui .information-container .url {
+    display: none;
+}

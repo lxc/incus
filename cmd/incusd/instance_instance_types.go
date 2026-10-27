@@ -1,0 +1,297 @@
+package main
+
+import (
+	"context"
+	"errors"
+	"fmt"
+	"io"
+	"net/http"
+	"os"
+	"strconv"
+	"strings"
+
+	"go.yaml.in/yaml/v4"
+
+	"github.com/lxc/incus/v7/internal/server/db/operationtype"
+	"github.com/lxc/incus/v7/internal/server/operations"
+	"github.com/lxc/incus/v7/internal/server/state"
+	"github.com/lxc/incus/v7/internal/server/task"
+	localUtil "github.com/lxc/incus/v7/internal/server/util"
+	internalUtil "github.com/lxc/incus/v7/internal/util"
+	"github.com/lxc/incus/v7/internal/version"
+	"github.com/lxc/incus/v7/shared/logger"
+	"github.com/lxc/incus/v7/shared/util"
+)
+
+type instanceType struct {
+	// Amount of CPUs (can be a fraction)
+	CPU float32 `yaml:"cpu"`
+
+	// Amount of memory in GiB
+	Memory float32 `yaml:"mem"`
+
+	// Amount of local disk in bytes
+	Disk int64 `yaml:"disk"`
+}
+
+var instanceTypes map[string]map[string]*instanceType
+
+func instanceSaveCache() error {
+	if instanceTypes == nil {
+		return nil
+	}
+
+	data, err := yaml.Dump(&instanceTypes, yaml.WithV2Defaults())
+	if err != nil {
+		return err
+	}
+
+	err = os.WriteFile(internalUtil.CachePath("instance_types.yaml"), data, 0o600)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func instanceLoadCache() error {
+	if !util.PathExists(internalUtil.CachePath("instance_types.yaml")) {
+		return nil
+	}
+
+	content, err := os.ReadFile(internalUtil.CachePath("instance_types.yaml"))
+	if err != nil {
+		return err
+	}
+
+	err = yaml.Load(content, &instanceTypes)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func instanceRefreshTypesTask(d *Daemon) (task.Func, task.Schedule) {
+	f := func(ctx context.Context) {
+		s := d.State()
+
+		opRun := func(op *operations.Operation) error {
+			return instanceRefreshTypes(ctx, s)
+		}
+
+		op, err := operations.OperationCreate(s, "", operations.OperationClassTask, operationtype.InstanceTypesUpdate, nil, nil, opRun, nil, nil, nil)
+		if err != nil {
+			logger.Error("Failed creating instance types update operation", logger.Ctx{"err": err})
+			return
+		}
+
+		logger.Info("Updating instance types")
+		err = op.Start()
+		if err != nil {
+			logger.Error("Failed starting instance types update operation", logger.Ctx{"err": err})
+			return
+		}
+
+		err = op.Wait(ctx)
+		if err != nil {
+			logger.Error("Failed updating instance types", logger.Ctx{"err": err})
+			return
+		}
+
+		logger.Info("Done updating instance types")
+	}
+
+	return f, task.Daily()
+}
+
+func instanceRefreshTypes(ctx context.Context, s *state.State) error {
+	// Attempt to download the new definitions
+	downloadParse := func(filename string, target any) error {
+		url := fmt.Sprintf("https://images.linuxcontainers.org/meta/instance-types/%s", filename)
+
+		httpClient, err := localUtil.HTTPClient("", s.Proxy)
+		if err != nil {
+			return err
+		}
+
+		httpReq, err := http.NewRequest("GET", url, nil)
+		if err != nil {
+			return err
+		}
+
+		httpReq.Header.Set("User-Agent", version.UserAgent)
+
+		cancelableRequest, ok := any(httpReq).(localUtil.ContextAwareRequest)
+		if ok {
+			httpReq = cancelableRequest.WithContext(ctx)
+		}
+
+		resp, err := httpClient.Do(httpReq)
+		if err != nil {
+			return err
+		}
+
+		if ctx.Err() != nil {
+			return ctx.Err()
+		}
+
+		defer logger.WarnOnError(resp.Body.Close, "Failed to close response body")
+
+		if resp.StatusCode != http.StatusOK {
+			return fmt.Errorf("Failed to get %s", url)
+		}
+
+		content, err := io.ReadAll(resp.Body)
+		if err != nil {
+			return err
+		}
+
+		err = yaml.Load(content, target)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	}
+
+	// Set an initial value from the cache
+	if instanceTypes == nil {
+		instanceTypes = map[string]map[string]*instanceType{}
+	}
+
+	if len(instanceTypes) == 0 {
+		err := instanceLoadCache()
+		if err != nil {
+			return err
+		}
+	}
+
+	// Allow disabling instance type download.
+	if util.IsTrue(os.Getenv("INCUS_SKIP_INSTANCE_TYPES")) {
+		return nil
+	}
+
+	// Get the list of clouds
+	clouds := map[string]map[string]string{}
+	err := downloadParse("clouds.yaml", &clouds)
+	if err != nil {
+		if !errors.Is(err, ctx.Err()) {
+			logger.Warnf("Failed to update instance types: %v", err)
+		}
+
+		return err
+	}
+
+	// Parse the individual files
+	newInstanceTypes := map[string]map[string]*instanceType{}
+	for name := range clouds {
+		types := map[string]*instanceType{}
+		err = downloadParse(fmt.Sprintf("%s.yaml", name), &types)
+		if err != nil {
+			logger.Warnf("Failed to update instance types: %v", err)
+			return err
+		}
+
+		newInstanceTypes[name] = types
+	}
+
+	// Update the global map
+	instanceTypes = newInstanceTypes
+
+	// And save in the cache
+	err = instanceSaveCache()
+	if err != nil {
+		logger.Warnf("Failed to update instance types cache: %v", err)
+		return err
+	}
+
+	return nil
+}
+
+func instanceParseType(value string) (map[string]string, int64, error) {
+	sourceName := ""
+	sourceType := ""
+	fields := strings.SplitN(value, ":", 2)
+
+	// Check if the name of the source was provided
+	if len(fields) != 2 {
+		sourceType = value
+	} else {
+		sourceName = fields[0]
+		sourceType = fields[1]
+	}
+
+	// If not, lets go look for a match
+	if instanceTypes != nil && sourceName == "" {
+		for name, types := range instanceTypes {
+			_, ok := types[sourceType]
+			if ok {
+				if sourceName != "" {
+					return nil, 0, fmt.Errorf("Ambiguous instance type provided: %s", value)
+				}
+
+				sourceName = name
+			}
+		}
+	}
+
+	// Check if we have a limit for the provided value
+	limits, ok := instanceTypes[sourceName][sourceType]
+	if !ok {
+		// Check if it's maybe just a resource limit
+		if sourceName == "" && value != "" {
+			newLimits := instanceType{}
+			fields := strings.SplitSeq(value, "-")
+			for field := range fields {
+				if len(field) < 2 || (field[0] != 'c' && field[0] != 'm' && field[0] != 'd') {
+					return nil, 0, fmt.Errorf("Provided instance type doesn't exist: %s", value)
+				}
+
+				floatValue, err := strconv.ParseFloat(field[1:], 32)
+				if err != nil {
+					return nil, 0, fmt.Errorf("Bad custom instance type: %s", value)
+				}
+
+				switch field[0] {
+				case 'c':
+					newLimits.CPU = float32(floatValue)
+				case 'm':
+					newLimits.Memory = float32(floatValue)
+				case 'd':
+					newLimits.Disk = int64(floatValue * 1024 * 1024 * 1024)
+				}
+			}
+
+			limits = &newLimits
+		}
+
+		if limits == nil {
+			return nil, 0, fmt.Errorf("Provided instance type doesn't exist: %s", value)
+		}
+	}
+	out := map[string]string{}
+
+	// Handle CPU
+	if limits.CPU > 0 {
+		cpuCores := int(limits.CPU)
+		if float32(cpuCores) < limits.CPU {
+			cpuCores++
+		}
+
+		cpuTime := int(limits.CPU / float32(cpuCores) * 100.0)
+
+		out["limits.cpu"] = fmt.Sprintf("%d", cpuCores)
+		if cpuTime < 100 {
+			out["limits.cpu.allowance"] = fmt.Sprintf("%d%%", cpuTime)
+		}
+	}
+
+	// Handle memory
+	if limits.Memory > 0 {
+		rawLimit := int64(limits.Memory * 1024)
+		out["limits.memory"] = fmt.Sprintf("%dMiB", rawLimit)
+	}
+
+	return out, limits.Disk, nil
+}

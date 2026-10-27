@@ -1,0 +1,37 @@
+package cluster
+
+import (
+	"context"
+	"net/http"
+
+	"github.com/lxc/incus/v7/internal/server/db"
+	"github.com/lxc/incus/v7/internal/server/state"
+	"github.com/lxc/incus/v7/shared/api"
+)
+
+// ResolveTarget is a convenience for resolving a target member name to address.
+// It returns the address of the given member, or the empty string if the given member is the local one.
+func ResolveTarget(ctx context.Context, s *state.State, targetMember string) (string, error) {
+	// Avoid starting a transaction if the requested target is this local server.
+	if targetMember == s.ServerName {
+		return "", nil
+	}
+
+	var memberAddress string
+	err := s.DB.Cluster.Transaction(ctx, func(ctx context.Context, tx *db.ClusterTx) error {
+		member, err := tx.GetNodeByName(ctx, targetMember)
+		if err != nil {
+			return err
+		}
+
+		if member.IsOffline(s.GlobalConfig.OfflineThreshold()) {
+			return api.StatusErrorf(http.StatusServiceUnavailable, "Cluster member %q is offline", targetMember)
+		}
+
+		memberAddress = member.Address
+
+		return nil
+	})
+
+	return memberAddress, err
+}

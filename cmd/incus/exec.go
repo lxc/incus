@@ -1,0 +1,230 @@
+package main
+
+import (
+	"bytes"
+	"errors"
+	"io"
+	"os"
+	"strconv"
+	"strings"
+
+	"github.com/gorilla/websocket"
+	"github.com/spf13/cobra"
+
+	incus "github.com/lxc/incus/v7/client"
+	"github.com/lxc/incus/v7/cmd/incus/color"
+	u "github.com/lxc/incus/v7/cmd/incus/usage"
+	"github.com/lxc/incus/v7/internal/i18n"
+	"github.com/lxc/incus/v7/shared/api"
+	cli "github.com/lxc/incus/v7/shared/cmd"
+	"github.com/lxc/incus/v7/shared/logger"
+	"github.com/lxc/incus/v7/shared/termios"
+)
+
+type cmdExec struct {
+	global *cmdGlobal
+
+	flagMode                string
+	flagEnvironment         []string
+	flagForceInteractive    bool
+	flagForceNonInteractive bool
+	flagDisableStdin        bool
+	flagUser                uint32
+	flagGroup               uint32
+	flagCwd                 string
+
+	interactive bool
+}
+
+var cmdExecUsage = u.Usage{u.Instance.Remote(), u.EndOfFlags, u.CommandLine}
+
+func (c *cmdExec) command() *cobra.Command {
+	cmd := &cobra.Command{}
+	cmd.Use = cli.U("exec", cmdExecUsage...)
+	cmd.Short = i18n.G("Execute commands in instances")
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
+		`Execute commands in instances
+
+The command is executed directly using exec, so there is no shell and
+shell patterns (variables, file redirects, ...) won't be understood.
+If you need a shell environment you need to execute the shell
+executable, passing the shell commands as arguments, for example:
+
+  incus exec <instance> -- sh -c "cd /tmp && pwd"
+
+Mode defaults to non-interactive, interactive mode is selected if both stdin AND stdout are terminals (stderr is ignored).`,
+	))
+	cmd.Example = cli.FormatSection("", i18n.G(`incus exec c1 bash
+	Run the "bash" command in instance "c1"
+
+incus exec c1 -- ls -lh /
+	Run the "ls -lh /" command in instance "c1"`))
+
+	cmd.RunE = c.run
+	cli.AddStringArrayFlag(cmd.Flags(), &c.flagEnvironment, "env", i18n.G("Environment variable to set (e.g. HOME=/home/foo) (may be passed multiple times)"))
+	cli.AddStringFlag(cmd.Flags(), &c.flagMode, "mode", "auto", "", i18n.G("Override the terminal mode (auto, interactive or non-interactive)"))
+	cli.AddBoolFlag(cmd.Flags(), &c.flagForceInteractive, "force-interactive|t", i18n.G("Force pseudo-terminal allocation"))
+	cli.AddBoolFlag(cmd.Flags(), &c.flagForceNonInteractive, "force-noninteractive|T", i18n.G("Disable pseudo-terminal allocation"))
+	cli.AddBoolFlag(cmd.Flags(), &c.flagDisableStdin, "disable-stdin|n", i18n.G("Disable stdin (reads from /dev/null)"))
+	cli.AddUint32Flag(cmd.Flags(), &c.flagUser, "user", i18n.G("User ID to run the command as (default 0)"))
+	cli.AddUint32Flag(cmd.Flags(), &c.flagGroup, "group", i18n.G("Group ID to run the command as (default 0)"))
+	cli.AddStringFlag(cmd.Flags(), &c.flagCwd, "cwd", "", "", i18n.G("Directory to run the command in (default /root)"))
+
+	cmd.ValidArgsFunction = func(_ *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+		if len(args) == 0 {
+			return c.global.cmpInstances(toComplete)
+		}
+
+		return nil, cobra.ShellCompDirectiveNoFileComp
+	}
+
+	return cmd
+}
+
+func (c *cmdExec) sendTermSize(control *websocket.Conn) error {
+	width, height, err := termios.GetSize(getStdoutFd())
+	if err != nil {
+		return err
+	}
+
+	logger.Debugf("Window size is now: %dx%d", width, height)
+
+	msg := api.InstanceExecControl{}
+	msg.Command = "window-resize"
+	msg.Args = make(map[string]string)
+	msg.Args["width"] = strconv.Itoa(width)
+	msg.Args["height"] = strconv.Itoa(height)
+
+	return control.WriteJSON(msg)
+}
+
+func (c *cmdExec) run(cmd *cobra.Command, args []string) error {
+	parsed, err := c.global.Parse(cmdExecUsage, cmd, args)
+	if err != nil {
+		return err
+	}
+
+	d := parsed[0].RemoteServer
+	instanceName := parsed[0].RemoteObject.String
+	command := parsed[2].StringList
+
+	if c.flagForceInteractive && c.flagForceNonInteractive {
+		return errors.New(i18n.G("You can't pass -t and -T at the same time"))
+	}
+
+	if c.flagMode != "auto" && (c.flagForceInteractive || c.flagForceNonInteractive) {
+		return errors.New(i18n.G("You can't pass -t or -T at the same time as --mode"))
+	}
+
+	// Set the environment
+	env := map[string]string{}
+	myTerm, ok := c.getTERM()
+	if ok {
+		env["TERM"] = myTerm
+	}
+
+	for _, arg := range c.flagEnvironment {
+		pieces := strings.SplitN(arg, "=", 2)
+		value := ""
+		if len(pieces) > 1 {
+			value = pieces[1]
+		}
+
+		env[pieces[0]] = value
+	}
+
+	// Configure the terminal
+	stdinFd := getStdinFd()
+	stdoutFd := getStdoutFd()
+
+	stdinTerminal := termios.IsTerminal(stdinFd)
+	stdoutTerminal := termios.IsTerminal(stdoutFd)
+
+	// Determine interaction mode
+	if c.flagDisableStdin {
+		c.interactive = false
+	} else if c.flagMode == "interactive" || c.flagForceInteractive {
+		c.interactive = true
+	} else if c.flagMode == "non-interactive" || c.flagForceNonInteractive {
+		c.interactive = false
+	} else {
+		c.interactive = stdinTerminal && stdoutTerminal
+	}
+
+	// Record terminal state
+	var oldttystate *termios.State
+	if c.interactive && stdinTerminal {
+		oldttystate, err = termios.MakeRaw(stdinFd)
+		if err != nil {
+			return err
+		}
+
+		defer logger.WarnOnError(func() error { return termios.Restore(stdinFd, oldttystate) }, "Failed to restore terminal")
+	}
+
+	// Setup interactive console handler
+	handler := c.controlSocketHandler
+
+	// Grab current terminal dimensions
+	var width, height int
+	if stdoutTerminal {
+		width, height, err = termios.GetSize(getStdoutFd())
+		if err != nil {
+			return err
+		}
+	}
+
+	var stdin io.Reader
+	stdin = os.Stdin
+	if c.flagDisableStdin {
+		stdin = bytes.NewReader(nil)
+	}
+
+	stdout := getStdout()
+
+	// Prepare the command
+	req := api.InstanceExecPost{
+		Command:     command,
+		WaitForWS:   true,
+		Interactive: c.interactive,
+		Environment: env,
+		Width:       width,
+		Height:      height,
+		User:        c.flagUser,
+		Group:       c.flagGroup,
+		Cwd:         c.flagCwd,
+	}
+
+	execArgs := incus.InstanceExecArgs{
+		Stdin:    stdin,
+		Stdout:   stdout,
+		Stderr:   os.Stderr,
+		Control:  handler,
+		DataDone: make(chan bool),
+	}
+
+	// Run the command in the instance
+	op, err := d.ExecInstance(instanceName, req, &execArgs)
+	if err != nil {
+		return err
+	}
+
+	// Wait for the operation to complete
+	err = op.Wait()
+	opAPI := op.Get()
+	if opAPI.Metadata != nil {
+		exitStatusRaw, ok := opAPI.Metadata["return"].(float64)
+		if ok {
+			c.global.ret = int(exitStatusRaw)
+		}
+	}
+
+	if err != nil {
+		return err
+	}
+
+	// Wait for any remaining I/O to be flushed
+	<-execArgs.DataDone
+
+	return nil
+}

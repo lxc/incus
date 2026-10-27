@@ -1,0 +1,25 @@
+name: Feature request
+description: File a feature request.
+type: feature
+body:
+- type: checkboxes
+  attributes:
+    label: Is there an existing issue for this?
+    description: Please search to see if an issue already exists for the feature you'd like to see added.
+    options:
+    - label: There is no existing issue for this feature
+      required: true
+
+- type: textarea
+  attributes:
+    label: What are you currently unable to do
+    description: A concise description of the problem you're trying to solve.
+  validations:
+    required: true
+
+- type: textarea
+  attributes:
+    label: What do you think would need to be added
+    description: A concise description of what you think should be added to Incus.
+  validations:
+    required: false

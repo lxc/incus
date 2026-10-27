@@ -1,0 +1,725 @@
+package main
+
+import (
+	"bufio"
+	"errors"
+	"fmt"
+	"math/rand"
+	"os"
+	"os/user"
+	"path/filepath"
+	"slices"
+
+	"github.com/kballard/go-shellquote"
+	"github.com/spf13/cobra"
+
+	incus "github.com/lxc/incus/v7/client"
+	"github.com/lxc/incus/v7/cmd/incus/color"
+	u "github.com/lxc/incus/v7/cmd/incus/usage"
+	"github.com/lxc/incus/v7/internal/i18n"
+	internalUtil "github.com/lxc/incus/v7/internal/util"
+	"github.com/lxc/incus/v7/internal/version"
+	"github.com/lxc/incus/v7/shared/api"
+	"github.com/lxc/incus/v7/shared/ask"
+	config "github.com/lxc/incus/v7/shared/cliconfig"
+	cli "github.com/lxc/incus/v7/shared/cmd"
+	"github.com/lxc/incus/v7/shared/logger"
+	"github.com/lxc/incus/v7/shared/termios"
+	"github.com/lxc/incus/v7/shared/util"
+)
+
+type cmdGlobal struct {
+	asker ask.Asker
+
+	conf     *config.Config
+	confPath string
+	cmd      *cobra.Command
+	ret      int
+
+	flagExplain    bool
+	flagForceLocal bool
+	flagHelp       bool
+	flagHelpAll    bool
+	flagLogDebug   bool
+	flagLogVerbose bool
+	flagProject    string
+	flagQuiet      bool
+	flagVersion    bool
+	flagSubCmds    bool
+}
+
+// Parse configures the parser and calls it on the given arguments.
+func (c *cmdGlobal) Parse(usage u.Usage, cmd *cobra.Command, args []string, rtl ...bool) ([]*u.Parsed, error) {
+	conf := u.Config{CLIConfig: c.conf, CLIConfigPath: c.confPath, Command: cmd, ExplainOnly: c.flagExplain}
+	if len(rtl) > 0 {
+		conf.RTL = rtl[0]
+	}
+
+	return usage.Parse(conf, args)
+}
+
+var commandFooter = i18n.G(`Use "{{.CommandPath}} [<command>] --help" for more information about a command.`)
+
+func usageTemplate() string {
+	return color.UsagePrefix + `{{if .Runnable}}
+  {{.UseLine}}{{end}}{{if .HasAvailableSubCommands}}
+  {{.CommandPath}} [command]{{end}}{{if gt (len .Aliases) 0}}
+
+` + color.AliasesPrefix + `
+  {{.NameAndAliases}}{{end}}{{if .HasExample}}
+
+` + color.ExamplesPrefix + `
+{{.Example}}{{end}}{{if .HasAvailableSubCommands}}
+
+` + color.AvailableCommandsPrefix + `{{range .Commands}}{{if (or .IsAvailableCommand (eq .Name "help"))}}
+  {{rpad .Name .NamePadding }} {{.Short}}{{end}}{{end}}{{end}}{{if .HasAvailableLocalFlags}}
+
+` + color.FlagsPrefix + `
+{{.LocalFlags.FlagUsages | trimTrailingWhitespaces}}{{end}}{{if .HasAvailableInheritedFlags}}
+
+` + color.GlobalFlagsPrefix + `
+{{.InheritedFlags.FlagUsages | trimTrailingWhitespaces}}{{end}}{{if .HasHelpSubCommands}}
+
+` + color.AdditionalHelpTopicsPrefix + `{{range .Commands}}{{if .IsAdditionalHelpTopicCommand}}
+  {{rpad .CommandPath .CommandPathPadding}} {{.Short}}{{end}}{{end}}{{end}}{{if .HasAvailableSubCommands}}
+
+` + commandFooter + `{{end}}
+`
+}
+
+func usageTemplateSubCmds() string {
+	return color.UsagePrefix + `{{if .Runnable}}
+  {{.UseLine}}{{end}}{{if .HasAvailableSubCommands}}
+  {{.CommandPath}} [command]{{end}}{{if gt (len .Aliases) 0}}
+` + color.AliasesPrefix + `
+  {{.NameAndAliases}}{{end}}{{if .HasExample}}
+
+` + color.ExamplesPrefix + `
+{{.Example}}{{end}}{{if .HasAvailableSubCommands}}
+
+` + color.AvailableCommandsPrefix + `{{range .Commands}}{{if (or .IsAvailableCommand (eq .Name "help"))}}
+  {{rpad .Name .NamePadding }}  {{.Short}}{{if .HasSubCommands}}{{range .Commands}}{{if (or .IsAvailableCommand (eq .Name "help"))}}
+    {{rpad .Name .NamePadding }}  {{.Short}}{{if .HasSubCommands}}{{range .Commands}}{{if (or .IsAvailableCommand (eq .Name "help"))}}
+      {{rpad .Name .NamePadding }}  {{.Short}}{{if .HasSubCommands}}{{range .Commands}}{{if (or .IsAvailableCommand (eq .Name "help"))}}
+        {{rpad .Name .NamePadding }}  {{.Short}}{{end}}{{end}}{{end}}{{end}}{{end}}{{end}}{{end}}{{end}}{{end}}{{end}}{{end}}{{end}}{{if .HasAvailableLocalFlags}}
+
+` + color.FlagsPrefix + `
+{{.LocalFlags.FlagUsages | trimTrailingWhitespaces}}{{end}}{{if .HasAvailableInheritedFlags}}
+
+` + color.GlobalFlagsPrefix + `
+{{.InheritedFlags.FlagUsages | trimTrailingWhitespaces}}{{end}}{{if .HasHelpSubCommands}}
+
+` + color.AdditionalHelpTopicsPrefix + `{{range .Commands}}{{if .IsAdditionalHelpTopicCommand}}
+  {{rpad .CommandPath .CommandPathPadding}} {{.Short}}{{end}}{{end}}{{end}}{{if .HasAvailableSubCommands}}
+
+` + commandFooter + `{{end}}
+`
+}
+
+func aliases() []string {
+	c, err := config.LoadConfig("")
+	if err != nil {
+		return nil
+	}
+
+	aliases := make([]string, 0, len(defaultAliases)+len(c.Aliases))
+
+	// Add default aliases
+	for alias := range defaultAliases {
+		aliases = append(aliases, alias)
+	}
+
+	// Add user-defined aliases
+	for alias := range c.Aliases {
+		aliases = append(aliases, alias)
+	}
+
+	return aliases
+}
+
+func createApp() (*cobra.Command, *cmdGlobal, error) {
+	// Run persistent hooks from the root command to the selected command.
+	cobra.EnableTraverseRunHooks = true
+
+	// Load config.
+	conf, err := config.LoadConfig("")
+	if err != nil {
+		return nil, nil, fmt.Errorf(i18n.G("Failed to load configuration: %s"), err)
+	}
+
+	// Initialize colors.
+	color.Init(conf.Defaults.NoColor)
+
+	// Setup the parser.
+	app := &cobra.Command{}
+	app.Use = "incus"
+	app.Short = i18n.G("Command line client for Incus")
+	app.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
+		`Command line client for Incus
+
+All of Incus's features can be driven through the various commands below.
+For help with any of those, simply call them with --help.
+
+Custom commands can be defined through aliases, use "incus alias" to control those.`,
+	))
+	app.SilenceUsage = true
+	app.SilenceErrors = true
+	app.CompletionOptions = cobra.CompletionOptions{HiddenDefaultCmd: true}
+	app.ValidArgs = aliases()
+
+	// Global struct.
+	globalCmd := cmdGlobal{cmd: app, asker: ask.NewAsker(bufio.NewReader(os.Stdin)), conf: conf}
+
+	// Global flags.
+	app.PersistentFlags().BoolVar(&globalCmd.flagVersion, "version", false, i18n.G("Print version number"))
+	app.PersistentFlags().BoolVarP(&globalCmd.flagHelp, "help", "h", false, i18n.G("Print help"))
+	app.PersistentFlags().BoolVar(&globalCmd.flagForceLocal, "force-local", false, i18n.G("Force using the local unix socket"))
+	app.PersistentFlags().StringVar(&globalCmd.flagProject, "project", "", i18n.G("Override the source project")+"``")
+	app.PersistentFlags().BoolVar(&globalCmd.flagLogDebug, "debug", false, i18n.G("Show all debug messages"))
+	app.PersistentFlags().BoolVarP(&globalCmd.flagLogVerbose, "verbose", "v", false, i18n.G("Show all information messages"))
+	app.PersistentFlags().BoolVarP(&globalCmd.flagQuiet, "quiet", "q", false, i18n.G("Don't show progress information"))
+	app.PersistentFlags().BoolVar(&globalCmd.flagSubCmds, "sub-commands", false, i18n.G("Use with help or --help to view sub-commands"))
+	app.PersistentFlags().BoolVar(&globalCmd.flagExplain, "explain", false, i18n.G("If the command is valid, explain its parsed arguments instead of running it"))
+
+	_ = app.RegisterFlagCompletionFunc("project", func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+		remoteArg := ""
+		if len(args) > 0 {
+			remoteArg = args[0]
+		}
+
+		return globalCmd.cmpProjectNames(remoteArg)
+	})
+
+	// Wrappers
+	app.PersistentPreRunE = globalCmd.preRun
+	app.PersistentPostRunE = globalCmd.postRun
+
+	// Version handling
+	app.SetVersionTemplate("{{.Version}}\n")
+	app.Version = version.Version
+
+	// alias sub-command
+	aliasCmd := cmdAlias{global: &globalCmd}
+	app.AddCommand(aliasCmd.command())
+
+	// admin sub-command
+	adminCmd := cmdAdmin{global: &globalCmd}
+	app.AddCommand(adminCmd.command())
+
+	// cluster sub-command
+	clusterCmd := cmdCluster{global: &globalCmd}
+	app.AddCommand(clusterCmd.command())
+
+	// config sub-command
+	configCmd := cmdConfig{global: &globalCmd}
+	app.AddCommand(configCmd.command())
+
+	// console sub-command
+	consoleCmd := cmdConsole{global: &globalCmd}
+	app.AddCommand(consoleCmd.command())
+
+	// create sub-command
+	createCmd := cmdCreate{global: &globalCmd}
+	app.AddCommand(createCmd.command())
+
+	// copy sub-command
+	copyCmd := cmdCopy{global: &globalCmd}
+	app.AddCommand(copyCmd.command())
+
+	// default sub-command
+	defaultCmd := cmdDefault{global: &globalCmd}
+	app.AddCommand(defaultCmd.command())
+
+	// delete sub-command
+	deleteCmd := cmdDelete{global: &globalCmd}
+	app.AddCommand(deleteCmd.command())
+
+	// exec sub-command
+	execCmd := cmdExec{global: &globalCmd}
+	app.AddCommand(execCmd.command())
+
+	// export sub-command
+	exportCmd := cmdExport{global: &globalCmd}
+	app.AddCommand(exportCmd.command())
+
+	// file sub-command
+	fileCmd := cmdFile{global: &globalCmd}
+	app.AddCommand(fileCmd.command())
+
+	// import sub-command
+	importCmd := cmdImport{global: &globalCmd}
+	app.AddCommand(importCmd.command())
+
+	// info sub-command
+	infoCmd := cmdInfo{global: &globalCmd}
+	app.AddCommand(infoCmd.command())
+
+	// image sub-command
+	imageCmd := cmdImage{global: &globalCmd}
+	app.AddCommand(imageCmd.command())
+
+	// launch sub-command
+	launchCmd := cmdLaunch{global: &globalCmd, init: &createCmd}
+	app.AddCommand(launchCmd.command())
+
+	// list sub-command
+	listCmd := cmdList{global: &globalCmd}
+	app.AddCommand(listCmd.command())
+
+	// manpage sub-command
+	manpageCmd := cmdManpage{global: &globalCmd}
+	app.AddCommand(manpageCmd.command())
+
+	// monitor sub-command
+	monitorCmd := cmdMonitor{global: &globalCmd}
+	app.AddCommand(monitorCmd.command())
+
+	// move sub-command
+	moveCmd := cmdMove{global: &globalCmd}
+	app.AddCommand(moveCmd.command())
+
+	// network sub-command
+	networkCmd := cmdNetwork{global: &globalCmd}
+	app.AddCommand(networkCmd.command())
+
+	// operation sub-command
+	operationCmd := cmdOperation{global: &globalCmd}
+	app.AddCommand(operationCmd.command())
+
+	// pause sub-command
+	pauseCmd := cmdPause{global: &globalCmd}
+	app.AddCommand(pauseCmd.command())
+
+	// port-forward sub-command
+	portForwardCmd := cmdPortForward{global: &globalCmd}
+	app.AddCommand(portForwardCmd.command())
+
+	// publish sub-command
+	publishCmd := cmdPublish{global: &globalCmd}
+	app.AddCommand(publishCmd.command())
+
+	// profile sub-command
+	profileCmd := cmdProfile{global: &globalCmd}
+	app.AddCommand(profileCmd.command())
+
+	// project sub-command
+	projectCmd := cmdProject{global: &globalCmd}
+	app.AddCommand(projectCmd.command())
+
+	// query sub-command
+	queryCmd := cmdQuery{global: &globalCmd}
+	app.AddCommand(queryCmd.command())
+
+	// rebuild sub-command
+	rebuildCmd := cmdRebuild{global: &globalCmd}
+	app.AddCommand(rebuildCmd.command())
+
+	// rename sub-command
+	renameCmd := cmdRename{global: &globalCmd}
+	app.AddCommand(renameCmd.command())
+
+	// restart sub-command
+	restartCmd := cmdRestart{global: &globalCmd}
+	app.AddCommand(restartCmd.command())
+
+	// remote sub-command
+	remoteCmd := cmdRemote{global: &globalCmd}
+	app.AddCommand(remoteCmd.command())
+
+	// resume sub-command
+	resumeCmd := cmdResume{global: &globalCmd}
+	app.AddCommand(resumeCmd.command())
+
+	// snapshot sub-command
+	snapshotCmd := cmdSnapshot{global: &globalCmd}
+	app.AddCommand(snapshotCmd.command())
+
+	// storage sub-command
+	storageCmd := cmdStorage{global: &globalCmd}
+	app.AddCommand(storageCmd.command())
+
+	// start sub-command
+	startCmd := cmdStart{global: &globalCmd}
+	app.AddCommand(startCmd.command())
+
+	// stop sub-command
+	stopCmd := cmdStop{global: &globalCmd}
+	app.AddCommand(stopCmd.command())
+
+	// version sub-command
+	versionCmd := cmdVersion{global: &globalCmd}
+	app.AddCommand(versionCmd.command())
+
+	// top sub-command
+	topCmd := cmdTop{global: &globalCmd}
+	app.AddCommand(topCmd.command())
+
+	// warning sub-command
+	warningCmd := cmdWarning{global: &globalCmd}
+	app.AddCommand(warningCmd.command())
+
+	// webui sub-command
+	webuiCmd := cmdWebui{global: &globalCmd}
+	app.AddCommand(webuiCmd.command())
+
+	// low-level sub-command
+	lowLevelCmd := cmdLowLevel{global: &globalCmd}
+	app.AddCommand(lowLevelCmd.command())
+
+	// wait sub-command
+	waitCmd := cmdWait{global: &globalCmd}
+	app.AddCommand(waitCmd.command())
+
+	// Get help command
+	app.InitDefaultHelpCmd()
+	var help *cobra.Command
+	for _, cmd := range app.Commands() {
+		if cmd.Name() == "help" {
+			help = cmd
+			break
+		}
+	}
+
+	// Help flags
+	cli.AddBoolFlag(app.Flags(), &globalCmd.flagHelpAll, "all|a", i18n.G("Show less common commands"))
+	cli.AddBoolFlag(help.Flags(), &globalCmd.flagHelpAll, "all|a", i18n.G("Show less common commands"))
+
+	return app, &globalCmd, nil
+}
+
+func main() {
+	app, globalCmd, err := createApp()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "%s: %v\n", color.ErrorPrefix, err)
+		os.Exit(1)
+	}
+
+	// Deal with --all and --sub-commands flags as well as process aliases.
+	err = app.ParseFlags(os.Args[1:])
+	if err == nil {
+		if globalCmd.flagHelpAll {
+			// Show all commands
+			for _, cmd := range app.Commands() {
+				if cmd.Name() == "completion" {
+					continue
+				}
+
+				cmd.Hidden = false
+			}
+		}
+
+		if globalCmd.flagSubCmds {
+			app.SetUsageTemplate(usageTemplateSubCmds())
+		} else {
+			app.SetUsageTemplate(usageTemplate())
+		}
+	}
+
+	// Process aliases
+	err = execIfAliases(app)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "%s: %v\n", color.ErrorPrefix, err)
+		os.Exit(1)
+	}
+
+	// Run the main command and handle errors
+	err = app.Execute()
+	if err != nil {
+		// Handle --explain.
+		if errors.Is(err, u.ErrExplainOnly) {
+			fmt.Println(err.Error())
+			os.Exit(0)
+		}
+
+		// Handle non-Linux systems
+		if errors.Is(err, config.ErrNotLinux) {
+			fmt.Fprintf(os.Stderr, "%s", i18n.G(`This client hasn't been configured to use a remote server yet.
+As your platform can't run native Linux instances, you must connect to a remote server.
+
+If you already added a remote server, make it the default with "incus remote switch NAME".`)+"\n")
+			os.Exit(1)
+		}
+
+		// Default error handling
+		if os.Getenv("INCUS_ALIASES") == "1" {
+			fmt.Fprintf(os.Stderr, i18n.G("Error while executing alias expansion: %s\n"), shellquote.Join(os.Args...))
+		}
+
+		fmt.Fprintf(os.Stderr, "%s %v\n", color.ErrorPrefix, err)
+
+		// If custom exit status not set, use default error status.
+		if globalCmd.ret == 0 {
+			globalCmd.ret = 1
+		}
+	}
+
+	if globalCmd.ret != 0 {
+		os.Exit(globalCmd.ret)
+	}
+}
+
+func getCachePath() (string, error) {
+	// Honor an explicit override.
+	if os.Getenv("INCUS_CACHE") != "" {
+		return os.Getenv("INCUS_CACHE"), nil
+	}
+
+	// Use the platform-specific user cache directory.
+	// (~/.cache on Linux, ~/Library/Caches on macOS, %LocalAppData% on Windows)
+	baseDir, err := os.UserCacheDir()
+	if err != nil || baseDir == "" {
+		// Fall back to the current user's home directory.
+		currentUser, err := user.Current()
+		if err != nil {
+			return "", err
+		}
+
+		if currentUser.HomeDir == "" {
+			return "", nil
+		}
+
+		baseDir = filepath.Join(currentUser.HomeDir, ".cache")
+	}
+
+	return filepath.Join(baseDir, "incus"), nil
+}
+
+// migrateCacheDir moves the cache from the legacy ~/.cache/incus location to
+// the platform-specific directory on first use.
+func migrateCacheDir(cacheDir string) {
+	// Nothing to migrate if the target already exists or an override is set.
+	if util.PathExists(cacheDir) || os.Getenv("INCUS_CACHE") != "" {
+		return
+	}
+
+	home, err := os.UserHomeDir()
+	if err != nil || home == "" {
+		return
+	}
+
+	legacyDir := filepath.Join(home, ".cache", "incus")
+	if legacyDir == cacheDir || !util.PathExists(legacyDir) {
+		return
+	}
+
+	// Make sure the parent of the target exists, then move the data over.
+	err = os.MkdirAll(filepath.Dir(cacheDir), 0o700)
+	if err != nil {
+		return
+	}
+
+	_ = os.Rename(legacyDir, cacheDir)
+}
+
+func isAdminCommand(cmd *cobra.Command) bool {
+	for current := cmd; current != nil; current = current.Parent() {
+		if current.Name() == "admin" {
+			return true
+		}
+	}
+
+	return false
+}
+
+func (c *cmdGlobal) preRun(cmd *cobra.Command, _ []string) error {
+	var err error
+
+	// If calling the help, skip pre-run
+	if cmd.Name() == "help" {
+		return nil
+	}
+
+	// Figure out a potential cache path.
+	cachePath, err := getCachePath()
+	if err != nil {
+		return err
+	}
+
+	if cachePath != "" {
+		// Migrate any cache from the legacy location.
+		migrateCacheDir(cachePath)
+
+		err := os.MkdirAll(cachePath, 0o700)
+		if err != nil && !os.IsExist(err) {
+			cachePath = ""
+		}
+	}
+
+	// If no config dir could be found, treat as if --force-local was passed.
+	if c.conf.ConfigDir == "" {
+		c.flagForceLocal = true
+	}
+
+	c.confPath = c.conf.ConfigPath("config.yml")
+
+	// Set cache directory in config.
+	c.conf.CacheDir = cachePath
+
+	// Override the project
+	if c.flagProject != "" {
+		c.conf.ProjectOverride = c.flagProject
+	} else {
+		c.conf.ProjectOverride = os.Getenv("INCUS_PROJECT")
+	}
+
+	// Setup password helper
+	if termios.IsTerminal(getStdinFd()) {
+		c.conf.PromptPassword = func(filename string) (string, error) {
+			return c.asker.AskPasswordOnce(fmt.Sprintf(i18n.G("Password for %s: "), filename))
+		}
+	}
+
+	// If the user is running a command that may attempt to connect to the local daemon
+	// and this is the first time the client has been run by the user, then check to see
+	// if the server has been properly configured.  Don't display the message if the var path
+	// does not exist (server missing), as the user may be targeting a remote daemon.
+	if !c.flagForceLocal && !util.PathExists(c.confPath) {
+		// Create the config dir so that we don't get in here again for this user.
+		err = os.MkdirAll(c.conf.ConfigDir, 0o750)
+		if err != nil {
+			return err
+		}
+
+		// Handle local servers.
+		if util.PathExists(internalUtil.VarPath("")) {
+			// Attempt to connect to the local server
+			runInit := true
+			d, err := incus.ConnectIncusUnix("", nil)
+			if err == nil {
+				// Check if server is initialized.
+				info, _, err := d.GetServer()
+				if err == nil && info.Environment.Storage != "" {
+					runInit = false
+				}
+
+				// Detect usable project.
+				names, err := d.GetProjectNames()
+				if err == nil {
+					if len(names) == 1 && names[0] != api.ProjectDefaultName {
+						remote := c.conf.Remotes["local"]
+						remote.Project = names[0]
+						c.conf.Remotes["local"] = remote
+					}
+				}
+			}
+
+			flush := false
+			if runInit && (cmd.Name() != "init" || cmd.Parent() == nil || cmd.Parent().Name() != "admin") {
+				fmt.Fprint(os.Stderr, i18n.G("If this is your first time running Incus on this machine, you should also run: incus admin init")+"\n")
+				flush = true
+			}
+
+			if !isAdminCommand(cmd) && !slices.Contains([]string{"create", "launch"}, cmd.Name()) {
+				images := []string{"debian/12", "fedora/42", "opensuse/tumbleweed", "ubuntu/24.04"}
+				image := images[rand.Intn(len(images))]
+
+				fmt.Fprintf(os.Stderr, i18n.G(`To start your first container, try: incus launch images:%s
+Or for a virtual machine: incus launch images:%s --vm`)+"\n", image, image)
+				flush = true
+			}
+
+			if flush {
+				fmt.Fprint(os.Stderr, "\n")
+			}
+		}
+
+		// And save the initial configuration
+		err = c.conf.SaveConfig(c.confPath)
+		if err != nil {
+			return err
+		}
+	}
+
+	// Set the user agent
+	c.conf.UserAgent = version.UserAgent
+
+	// Setup the logger
+	err = logger.InitLogger("", "", c.flagLogVerbose, c.flagLogDebug, nil)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (c *cmdGlobal) postRun(_ *cobra.Command, _ []string) error {
+	if c.conf != nil && util.PathExists(c.confPath) {
+		// Save OIDC tokens on exit
+		c.conf.SaveOIDCTokens()
+	}
+
+	return nil
+}
+
+type remoteResource struct {
+	remote string
+	server incus.InstanceServer
+	name   string
+}
+
+func (c *cmdGlobal) parseServers(remotes ...string) ([]remoteResource, error) {
+	servers := map[string]incus.InstanceServer{}
+	resources := []remoteResource{}
+
+	for _, remote := range remotes {
+		// Parse the remote
+		remoteName, name, err := c.conf.ParseRemote(remote)
+		if err != nil {
+			return nil, err
+		}
+
+		// Setup the struct
+		resource := remoteResource{
+			remote: remoteName,
+			name:   name,
+		}
+
+		// Look at our cache
+		_, ok := servers[remoteName]
+		if ok {
+			resource.server = servers[remoteName]
+			resources = append(resources, resource)
+			continue
+		}
+
+		// New connection
+		d, err := c.conf.GetInstanceServer(remoteName)
+		if err != nil {
+			return nil, err
+		}
+
+		resource.server = d
+		servers[remoteName] = d
+		resources = append(resources, resource)
+	}
+
+	return resources, nil
+}
+
+// Return the default list format if the user configured it, otherwise just return "table".
+func (c *cmdGlobal) defaultListFormat() string {
+	if c.conf == nil || c.conf.Defaults.ListFormat == "" {
+		return "table"
+	}
+
+	return c.conf.Defaults.ListFormat
+}
+
+// Return "vga" if preferred console type is VGA, otherwise return "console".
+func (c *cmdGlobal) defaultConsoleType() string {
+	if c.conf == nil || c.conf.Defaults.ConsoleType == "" {
+		return "console"
+	}
+
+	return c.conf.Defaults.ConsoleType
+}
+
+// Return the default console type if the user configured it, otherwise just return "".
+func (c *cmdGlobal) defaultConsoleSpiceCommand() string {
+	// Alternative SPICE command.
+	if c.conf == nil || c.conf.Defaults.ConsoleSpiceCommand == "" {
+		return ""
+	}
+
+	return c.conf.Defaults.ConsoleSpiceCommand
+}

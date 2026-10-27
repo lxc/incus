@@ -1,0 +1,74 @@
+package main
+
+import (
+	"os"
+	"sort"
+
+	"github.com/spf13/cobra"
+
+	cli "github.com/lxc/incus/v7/shared/cmd"
+	"github.com/lxc/incus/v7/shared/simplestreams"
+)
+
+type cmdList struct {
+	global *cmdGlobal
+
+	flagFormat string
+}
+
+func (c *cmdList) command() *cobra.Command {
+	cmd := &cobra.Command{}
+	cmd.Use = "list"
+	cmd.Short = "List all images on the server"
+	cmd.Long = cli.FormatSection("Description:",
+		`List all image on the server
+
+This renders a table with all images currently published on the server.
+`)
+	cmd.RunE = c.run
+	cmd.Flags().StringVarP(&c.flagFormat, "format", "f", "table", `Format (csv|json|table|yaml|compact|markdown), use suffix ",noheader" to disable headers and ",header" to enable it if missing, e.g. csv,header`+"``")
+
+	cmd.PreRunE = func(cmd *cobra.Command, _ []string) error {
+		return cli.ValidateFlagFormatForListOutput(cmd.Flag("format").Value.String())
+	}
+
+	return cmd
+}
+
+func (c *cmdList) run(cmd *cobra.Command, args []string) error {
+	// Quick checks.
+	exit, err := cli.CheckArgs(cmd, args, 0, 0)
+	if exit {
+		return err
+	}
+
+	// Get a simplestreams client.
+	ss := simplestreams.NewLocalClient("")
+
+	// Get all the images.
+	images, err := ss.ListImages()
+	if err != nil {
+		return err
+	}
+
+	// Generate the table.
+	data := [][]string{}
+	for _, image := range images {
+		data = append(data, []string{image.Fingerprint, image.Properties["description"], image.Properties["os"], image.Properties["release"], image.Properties["variant"], image.Architecture, image.Type, image.CreatedAt.Format("2006/01/02 15:04 MST")})
+	}
+
+	sort.Sort(cli.SortColumnsNaturally(data))
+
+	header := []string{
+		"FINGERPRINT",
+		"DESCRIPTION",
+		"OS",
+		"RELEASE",
+		"VARIANT",
+		"ARCHITECTURE",
+		"TYPE",
+		"CREATED",
+	}
+
+	return cli.RenderTable(os.Stdout, c.flagFormat, header, data, images)
+}

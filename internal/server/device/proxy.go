@@ -1,0 +1,780 @@
+package device
+
+import (
+	"bufio"
+	"context"
+	"errors"
+	"fmt"
+	"net"
+	"os"
+	"path/filepath"
+	"slices"
+	"strconv"
+	"strings"
+	"time"
+
+	liblxc "github.com/lxc/go-lxc"
+
+	"github.com/lxc/incus/v7/internal/linux"
+	"github.com/lxc/incus/v7/internal/server/apparmor"
+	"github.com/lxc/incus/v7/internal/server/db"
+	"github.com/lxc/incus/v7/internal/server/db/cluster"
+	"github.com/lxc/incus/v7/internal/server/db/warningtype"
+	deviceConfig "github.com/lxc/incus/v7/internal/server/device/config"
+	"github.com/lxc/incus/v7/internal/server/device/nictype"
+	firewallDrivers "github.com/lxc/incus/v7/internal/server/firewall/drivers"
+	"github.com/lxc/incus/v7/internal/server/instance"
+	"github.com/lxc/incus/v7/internal/server/instance/instancetype"
+	"github.com/lxc/incus/v7/internal/server/ip"
+	"github.com/lxc/incus/v7/internal/server/network"
+	"github.com/lxc/incus/v7/internal/server/project"
+	"github.com/lxc/incus/v7/internal/server/warnings"
+	"github.com/lxc/incus/v7/shared/api"
+	"github.com/lxc/incus/v7/shared/logger"
+	"github.com/lxc/incus/v7/shared/subprocess"
+	"github.com/lxc/incus/v7/shared/util"
+	"github.com/lxc/incus/v7/shared/validate"
+)
+
+type proxy struct {
+	deviceCommon
+}
+
+type proxyProcInfo struct {
+	listenPid      string
+	listenPidFd    string
+	connectPid     string
+	connectPidFd   string
+	connectAddr    string
+	listenAddr     string
+	listenAddrGID  string
+	listenAddrUID  string
+	listenAddrMode string
+	securityUID    string
+	securityGID    string
+	proxyProtocol  string
+	inheritFds     []*os.File
+}
+
+// CanHotPlug returns whether the device can be managed whilst the instance is running.
+func (d *proxy) CanHotPlug() bool {
+	return true
+}
+
+// validateConfig checks the supplied config for correctness.
+func (d *proxy) validateConfig(instConf instance.ConfigReader, partialValidation bool) error {
+	if !instanceSupported(instConf.Type(), instancetype.Container, instancetype.VM) {
+		return ErrUnsupportedDevType
+	}
+
+	validateAddr := func(input string) error {
+		_, err := network.ProxyParseAddr(input)
+		return err
+	}
+
+	// Supported bind types are: "host" or "instance" (or "guest" or "container", legacy options equivalent to "instance").
+	// If an empty value is supplied the default behavior is to assume "host" bind mode.
+	validateBind := func(input string) error {
+		if !slices.Contains([]string{"host", "instance", "guest", "container"}, d.config["bind"]) {
+			return errors.New("Invalid binding side given. Must be \"host\" or \"instance\"")
+		}
+
+		return nil
+	}
+
+	rules := map[string]func(string) error{
+		// gendoc:generate(entity=devices, group=proxy, key=listen)
+		//
+		// ---
+		// type: string
+		// required: yes
+		// shortdesc: The address and port to bind and listen (`<type>:<addr>:<port>[-<port>][,<port>]`)
+		"listen": validate.Required(validateAddr),
+
+		// gendoc:generate(entity=devices, group=proxy, key=connect)
+		//
+		// ---
+		// type: string
+		// required: yes
+		// shortdesc: The address and port to connect to (`<type>:<addr>:<port>[-<port>][,<port>]`)
+		"connect": validate.Required(validateAddr),
+
+		// gendoc:generate(entity=devices, group=proxy, key=bind)
+		//
+		// ---
+		// type: string
+		// required: no
+		// default: `host`
+		// shortdesc: Which side to bind on (`host`/`instance`)
+		"bind": validate.Optional(validateBind),
+
+		// gendoc:generate(entity=devices, group=proxy, key=mode)
+		//
+		// ---
+		// type: int
+		// required: no
+		// default: `0644`
+		// shortdesc: Mode for the listening Unix socket
+		"mode": validate.Optional(unixValidOctalFileMode),
+
+		// gendoc:generate(entity=devices, group=proxy, key=nat)
+		//
+		// ---
+		// type: bool
+		// required: no
+		// default: `false`
+		// shortdesc: Whether to optimize proxying via NAT
+		"nat": validate.Optional(validate.IsBool),
+
+		// gendoc:generate(entity=devices, group=proxy, key=gid)
+		//
+		// ---
+		// type: int
+		// required: no
+		// default: `0`
+		// shortdesc: GID of the owner of the listening Unix socket
+		"gid": validate.Optional(unixValidUserID),
+
+		// gendoc:generate(entity=devices, group=proxy, key=uid)
+		//
+		// ---
+		// type: int
+		// required: no
+		// default: `0`
+		// shortdesc: UID of the owner of the listening Unix socket
+		"uid": validate.Optional(unixValidUserID),
+
+		// gendoc:generate(entity=devices, group=proxy, key=security.uid)
+		//
+		// ---
+		// type: int
+		// required: no
+		// default: `0`
+		// shortdesc: What UID to drop privilege to
+		"security.uid": validate.Optional(unixValidUserID),
+
+		// gendoc:generate(entity=devices, group=proxy, key=security.gid)
+		//
+		// ---
+		// type: int
+		// required: no
+		// default: `0`
+		// shortdesc: What GID to drop privilege to
+		"security.gid": validate.Optional(unixValidUserID),
+
+		// gendoc:generate(entity=devices, group=proxy, key=proxy_protocol)
+		//
+		// ---
+		// type: bool
+		// required: no
+		// default: `false`
+		// shortdesc: Whether to use the HAProxy PROXY protocol to transmit sender information
+		"proxy_protocol": validate.Optional(validate.IsBool),
+	}
+
+	err := d.config.Validate(rules)
+	if err != nil {
+		return err
+	}
+
+	if instConf.Type() == instancetype.VM && util.IsFalseOrEmpty(d.config["nat"]) {
+		return errors.New("Only NAT mode is supported for proxies on VM instances")
+	}
+
+	listenAddr, err := network.ProxyParseAddr(d.config["listen"])
+	if err != nil {
+		return err
+	}
+
+	connectAddr, err := network.ProxyParseAddr(d.config["connect"])
+	if err != nil {
+		return err
+	}
+
+	err = d.validateListenAddressConflicts(net.ParseIP(listenAddr.Address))
+	if err != nil {
+		return err
+	}
+
+	if (listenAddr.ConnType != "unix" && len(connectAddr.Ports) > len(listenAddr.Ports)) || (listenAddr.ConnType == "unix" && len(connectAddr.Ports) > 1) {
+		// Cannot support single address (or port) -> multiple port.
+		return errors.New("Mismatch between listen port(s) and connect port(s) count")
+	}
+
+	if util.IsTrue(d.config["proxy_protocol"]) && (!strings.HasPrefix(d.config["connect"], "tcp") || util.IsTrue(d.config["nat"])) {
+		return errors.New("The PROXY header can only be sent to tcp servers in non-nat mode")
+	}
+
+	if (!strings.HasPrefix(d.config["listen"], "unix:") || strings.HasPrefix(d.config["listen"], "unix:@")) &&
+		(d.config["uid"] != "" || d.config["gid"] != "" || d.config["mode"] != "") {
+		return errors.New("Only proxy devices for non-abstract unix sockets can carry uid, gid, or mode properties")
+	}
+
+	if util.IsTrue(d.config["nat"]) {
+		if d.inst != nil {
+			// Default project always has networks feature so don't bother loading the project config
+			// in that case.
+			instProject := d.inst.Project()
+			if instProject.Name != api.ProjectDefaultName && util.IsTrue(instProject.Config["features.networks"]) {
+				// Prevent use of NAT mode on non-default projects with networks feature.
+				// This is because OVN networks don't allow the host to communicate directly with
+				// instance NICs and so DNAT rules on the host won't work.
+				return errors.New("NAT mode cannot be used in projects that have the networks feature")
+			}
+		}
+
+		if d.config["bind"] != "" && d.config["bind"] != "host" {
+			return errors.New("Only host-bound proxies can use NAT")
+		}
+
+		// Support TCP <-> TCP and UDP <-> UDP only.
+		if listenAddr.ConnType == "unix" || connectAddr.ConnType == "unix" || listenAddr.ConnType != connectAddr.ConnType {
+			return fmt.Errorf("Proxying %s <-> %s is not supported when using NAT", listenAddr.ConnType, connectAddr.ConnType)
+		}
+
+		listenAddress := net.ParseIP(listenAddr.Address)
+
+		// Records which listen address IP version, as these cannot be mixed in NAT mode.
+		listenIPVersion := uint(4)
+		if listenAddress.To4() == nil {
+			listenIPVersion = 6
+		}
+
+		// Check connect address against the listen address IP version and check they match.
+		connectAddress := net.ParseIP(connectAddr.Address)
+		connectIPVersion := uint(4)
+		if connectAddress.To4() == nil {
+			connectIPVersion = 6
+		}
+
+		if listenIPVersion != connectIPVersion {
+			return errors.New("Cannot mix IP versions between listen and connect in nat mode")
+		}
+	}
+
+	return nil
+}
+
+// validateEnvironment checks the runtime environment for correctness.
+func (d *proxy) validateEnvironment() error {
+	if d.name == "" {
+		return errors.New("Device name cannot be empty")
+	}
+
+	return nil
+}
+
+// validateListenAddressConflicts checks that the proxy device about to be created does not
+// overlap on existing network forward (both entities can't have the same listening address with
+// the same port number).
+func (d *proxy) validateListenAddressConflicts(proxyListenAddr net.IP) error {
+	return d.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		var projectNetworksForwardsOnUplink map[string]map[int64][]string
+
+		networksByProjects, err := tx.GetNetworksAllProjects(ctx)
+		if err != nil {
+			return fmt.Errorf("Failed loading network forward listen addresses: %w", err)
+		}
+
+		for projectName, networks := range networksByProjects {
+			for _, networkName := range networks {
+				networkID, err := tx.GetNetworkID(ctx, projectName, networkName)
+				if err != nil {
+					return fmt.Errorf("Failed loading network forward listen addresses: %w", err)
+				}
+
+				// Get all network forward listen addresses for all networks (of any type) connected to our uplink.
+				networkForwards, err := cluster.GetNetworkForwards(ctx, tx.Tx(), cluster.NetworkForwardFilter{
+					NetworkID: &networkID,
+				})
+				if err != nil {
+					return fmt.Errorf("Failed loading network forward listen addresses: %w", err)
+				}
+
+				projectNetworksForwardsOnUplink = make(map[string]map[int64][]string)
+				for _, forward := range networkForwards {
+					// Filter network forwards that belong to this specific cluster member
+					if forward.NodeID.Valid && (forward.NodeID.Int64 == tx.GetNodeID()) {
+						if projectNetworksForwardsOnUplink[projectName] == nil {
+							projectNetworksForwardsOnUplink[projectName] = make(map[int64][]string)
+						}
+
+						projectNetworksForwardsOnUplink[projectName][networkID] = append(projectNetworksForwardsOnUplink[projectName][networkID], forward.ListenAddress)
+					}
+				}
+			}
+		}
+
+		for _, networks := range projectNetworksForwardsOnUplink {
+			for _, listenAddresses := range networks {
+				for _, netFwdAddr := range listenAddresses {
+					if proxyListenAddr.Equal(net.ParseIP(netFwdAddr)) {
+						return fmt.Errorf("Listen address %q conflicts with existing network forward", netFwdAddr)
+					}
+				}
+			}
+		}
+
+		return nil
+	})
+}
+
+// Start is run when the device is added to the instance.
+func (d *proxy) Start() (*deviceConfig.RunConfig, error) {
+	err := d.validateEnvironment()
+	if err != nil {
+		return nil, err
+	}
+
+	// Proxy devices have to be setup once the instance is running.
+	runConf := deviceConfig.RunConfig{}
+	runConf.PostHooks = []func() error{
+		func() error {
+			if util.IsTrue(d.config["nat"]) {
+				err = d.setupNAT()
+				if err != nil {
+					return fmt.Errorf("Failed to start device %q: %w", d.name, err)
+				}
+
+				return nil // Don't proceed with forkproxy setup.
+			}
+
+			proxyValues, err := d.setupProxyProcInfo()
+			if err != nil {
+				return err
+			}
+
+			devFileName := fmt.Sprintf("proxy.%s", linux.PathNameEncode(d.name))
+			pidPath := filepath.Join(d.inst.DevicesPath(), devFileName)
+			logFileName := fmt.Sprintf("proxy.%s.log", d.name)
+			logPath := filepath.Join(d.inst.LogPath(), logFileName)
+
+			// Load the apparmor profile
+			err = apparmor.ForkproxyLoad(d.state.OS, d.inst, d)
+			if err != nil {
+				return fmt.Errorf("Failed to start device %q: %w", d.name, err)
+			}
+
+			// Spawn the daemon using subprocess
+			command := d.state.OS.ExecPath
+			forkproxyargs := []string{
+				"forkproxy",
+				"--",
+				proxyValues.listenPid,
+				proxyValues.listenPidFd,
+				proxyValues.listenAddr,
+				proxyValues.connectPid,
+				proxyValues.connectPidFd,
+				proxyValues.connectAddr,
+				proxyValues.listenAddrGID,
+				proxyValues.listenAddrUID,
+				proxyValues.listenAddrMode,
+				proxyValues.securityGID,
+				proxyValues.securityUID,
+				proxyValues.proxyProtocol,
+			}
+
+			p, err := subprocess.NewProcess(command, forkproxyargs, logPath, logPath)
+			if err != nil {
+				return fmt.Errorf("Failed to start device %q: Failed to creating subprocess: %w", d.name, err)
+			}
+
+			p.SetApparmor(apparmor.ForkproxyProfileName(d.inst, d))
+
+			err = p.StartWithFiles(context.Background(), proxyValues.inheritFds)
+			if err != nil {
+				return fmt.Errorf("Failed to start device %q: Failed running: %s %s: %w", d.name, command, strings.Join(forkproxyargs, " "), err)
+			}
+
+			for _, file := range proxyValues.inheritFds {
+				_ = file.Close()
+			}
+
+			// Poll log file a few times until we see "Started" to indicate successful start.
+			for range 10 {
+				started, err := d.checkProcStarted(logPath)
+				if err != nil {
+					_ = p.Stop()
+					return fmt.Errorf("Error occurred when starting proxy device: %s", err)
+				}
+
+				if started {
+					err = p.Save(pidPath)
+					if err != nil {
+						// Kill Process if started, but could not save the file
+						err2 := p.Stop()
+						if err != nil {
+							return fmt.Errorf("Could not kill subprocess while handling saving error: %s: %s", err, err2)
+						}
+
+						return fmt.Errorf("Failed to start device %q: Failed saving subprocess details: %w", d.name, err)
+					}
+
+					return nil
+				}
+
+				time.Sleep(time.Second)
+			}
+
+			_ = p.Stop()
+			return fmt.Errorf("Failed to start device %q: Please look in %s", d.name, logPath)
+		},
+	}
+
+	return &runConf, nil
+}
+
+// checkProcStarted checks for the "Started" line in the log file. Returns true if found, false
+// if not, and error if any other error occurs.
+func (d *proxy) checkProcStarted(logPath string) (bool, error) {
+	file, err := os.Open(logPath)
+	if err != nil {
+		return false, err
+	}
+
+	defer logger.WarnOnError(file.Close, "Failed to close file")
+
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		line := strings.TrimSpace(scanner.Text())
+
+		if line == "Status: Started" {
+			return true, nil
+		}
+
+		if strings.HasPrefix(line, "Error:") {
+			return false, fmt.Errorf("%s", line)
+		}
+	}
+
+	err = scanner.Err()
+	if err != nil {
+		return false, err
+	}
+
+	return false, nil
+}
+
+// Stop is run when the device is removed from the instance.
+func (d *proxy) Stop() (*deviceConfig.RunConfig, error) {
+	// Stop any background NAT address monitor before clearing the firewall entries.
+	d.stopNATMonitor()
+
+	// Remove possible firewall entries.
+	err := d.state.Firewall.InstanceClearProxyNAT(d.inst.Project().Name, d.inst.Name(), d.name)
+	if err != nil {
+		logger.Errorf("Failed to remove proxy NAT filters: %v", err)
+	}
+
+	devFileName := fmt.Sprintf("proxy.%s", linux.PathNameEncode(d.name))
+	devPath := filepath.Join(d.inst.DevicesPath(), devFileName)
+
+	if !util.PathExists(devPath) {
+		// There's no proxy process if NAT is enabled
+		return nil, nil
+	}
+
+	err = d.killProxyProc(devPath)
+	if err != nil {
+		return nil, err
+	}
+
+	// Unload apparmor profile.
+	err = apparmor.ForkproxyUnload(d.state.OS, d.inst, d)
+	if err != nil {
+		return nil, err
+	}
+
+	return nil, nil
+}
+
+func (d *proxy) setupNAT() error {
+	listenAddr, err := network.ProxyParseAddr(d.config["listen"])
+	if err != nil {
+		return err
+	}
+
+	connectAddr, err := network.ProxyParseAddr(d.config["connect"])
+	if err != nil {
+		return err
+	}
+
+	ipVersion := uint(4)
+	if strings.Contains(listenAddr.Address, ":") {
+		ipVersion = 6
+	}
+
+	connectWildcard := connectAddr.Address == "0.0.0.0" || connectAddr.Address == "::"
+
+	var connectIP net.IP
+	var hostName string
+	var dynamicNICName string
+	var dynamicNICConfig deviceConfig.Device
+
+	for devName, devConfig := range d.inst.ExpandedDevices() {
+		if devConfig["type"] != "nic" {
+			continue
+		}
+
+		nicType, err := nictype.NICType(d.state, d.inst.Project().Name, devConfig)
+		if err != nil {
+			return err
+		}
+
+		// Check if the instance has a NIC that is reachable from the host.
+		if !slices.Contains([]string{"bridged", "routed"}, nicType) {
+			continue
+		}
+
+		// Ensure the connect IP matches one of the NIC's static IPs otherwise we could mess with other
+		// instance's network traffic. If the wildcard address is supplied as the connect host then the
+		// first bridged NIC which has a static IP address defined is selected as the connect host IP.
+		if ipVersion == 4 && devConfig["ipv4.address"] != "" {
+			nicIP := nicAddressIP(devConfig["ipv4.address"])
+			if connectAddr.Address == nicIP || connectWildcard {
+				connectIP = net.ParseIP(nicIP)
+			}
+		} else if ipVersion == 6 && devConfig["ipv6.address"] != "" {
+			nicIP := nicAddressIP(devConfig["ipv6.address"])
+			if connectAddr.Address == nicIP || connectWildcard {
+				connectIP = net.ParseIP(nicIP)
+			}
+		} else if nicType == "bridged" && connectWildcard && dynamicNICName == "" {
+			// No static IP defined on a bridged NIC. Remember it as a candidate for dynamic
+			// (DHCP) address detection from the neighbor table (ARP/NDP).
+			dynamicNICName = devName
+			dynamicNICConfig = devConfig
+		}
+
+		if connectIP != nil {
+			// Get host_name of device so we can enable hairpin mode on bridge port.
+			hostName = d.inst.ExpandedConfig()[fmt.Sprintf("volatile.%s.host_name", devName)]
+			break // Found a match, stop searching.
+		}
+	}
+
+	// When no static IP was found, fall back to detecting the instance's dynamic address.
+	dynamic := connectIP == nil && dynamicNICName != ""
+	if dynamic {
+		hostName = d.inst.ExpandedConfig()[fmt.Sprintf("volatile.%s.host_name", dynamicNICName)]
+	}
+
+	if connectIP == nil && !dynamic {
+		if connectWildcard {
+			return fmt.Errorf("Instance has no IPv%d address assigned to be used as the connect IP", ipVersion)
+		}
+
+		return fmt.Errorf("Connect IP %q must be one of the instance's static IPv%d addresses", connectAddr.Address, ipVersion)
+	}
+
+	// IncusOS doesn't load br_netfilter as it breaks routed proxy traffic, so skip the related
+	// hairpin handling and warning there.
+	if d.state.OS.IncusOS == nil {
+		err = network.BridgeNetfilterEnabled(ipVersion)
+		if err != nil {
+			msg := fmt.Sprintf("IPv%d bridge netfilter not enabled. Instances using the bridge will not be able to connect to the proxy listen IP", ipVersion)
+			d.logger.Warn(msg, logger.Ctx{"err": err})
+			err := d.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+				return tx.UpsertWarning(ctx, d.state.ServerName, d.inst.Project().Name, cluster.TypeInstance, d.inst.ID(), warningtype.ProxyBridgeNetfilterNotEnabled, fmt.Sprintf("%s: %v", msg, err))
+			})
+			if err != nil {
+				logger.Warn("Failed to create warning", logger.Ctx{"err": err})
+			}
+		} else {
+			err = warnings.ResolveWarningsByNodeAndProjectAndTypeAndEntity(d.state.DB.Cluster, d.state.ServerName, d.inst.Project().Name, warningtype.ProxyBridgeNetfilterNotEnabled, cluster.TypeInstance, d.inst.ID())
+			if err != nil {
+				logger.Warn("Failed to resolve warning", logger.Ctx{"err": err})
+			}
+
+			if hostName == "" {
+				return errors.New("Proxy cannot find bridge port host_name to enable hairpin mode")
+			}
+
+			// br_netfilter is enabled, so we need to enable hairpin mode on instance's bridge port otherwise
+			// the instances on the bridge will not be able to connect to the proxy device's listen IP and the
+			// NAT rule added by the firewall below to allow instance <-> instance traffic will also not work.
+			link := &ip.Link{Name: hostName}
+			err = link.BridgeLinkSetHairpin(true)
+			if err != nil {
+				return fmt.Errorf("Error enabling hairpin mode on bridge port %q: %w", hostName, err)
+			}
+		}
+	}
+
+	// For a dynamically addressed NIC, start a background monitor that detects the instance's
+	// address from the neighbor table and (re)applies the NAT rule whenever it changes.
+	if dynamic {
+		bridgeName := dynamicNICConfig["network"]
+		if bridgeName == "" {
+			bridgeName = dynamicNICConfig["parent"]
+		}
+
+		hwaddrStr := dynamicNICConfig["hwaddr"]
+		if hwaddrStr == "" {
+			hwaddrStr = d.inst.ExpandedConfig()[fmt.Sprintf("volatile.%s.hwaddr", dynamicNICName)]
+		}
+
+		hwAddr, err := net.ParseMAC(hwaddrStr)
+		if err != nil {
+			return fmt.Errorf("Invalid hardware address for NIC %q: %w", dynamicNICName, err)
+		}
+
+		d.startNATMonitor(bridgeName, hwAddr, ipVersion, listenAddr, connectAddr)
+
+		return nil
+	}
+
+	return d.applyNAT(listenAddr, connectAddr, connectIP)
+}
+
+func (d *proxy) natMonitorOwner() string {
+	return fmt.Sprintf("proxy_%d_%s", d.inst.ID(), d.name)
+}
+
+// applyNAT installs the proxy NAT rules using connectIP as the target address.
+func (d *proxy) applyNAT(listenAddr *deviceConfig.ProxyAddress, connectAddr *deviceConfig.ProxyAddress, connectIP net.IP) error {
+	addressForward := firewallDrivers.AddressForward{
+		Protocol:      listenAddr.ConnType,
+		ListenAddress: net.ParseIP(listenAddr.Address),
+		ListenPorts:   listenAddr.Ports,
+		TargetAddress: connectIP,
+		TargetPorts:   connectAddr.Ports,
+	}
+
+	return d.state.Firewall.InstanceSetupProxyNAT(d.inst.Project().Name, d.inst.Name(), d.name, &addressForward)
+}
+
+// startNATMonitor runs a background neighbor scan that applies the proxy NAT rules once the
+// instance's dynamic address is detected and re-applies them whenever the address changes.
+func (d *proxy) startNATMonitor(bridgeName string, hwAddr net.HardwareAddr, ipVersion uint, listenAddr *deviceConfig.ProxyAddress, connectAddr *deviceConfig.ProxyAddress) {
+	var lastIP net.IP
+
+	startInstanceNeighborScan(d.natMonitorOwner(), bridgeName, hwAddr, []uint{ipVersion}, 5*time.Second, 0, func(addrs []net.IP) {
+		connectIP := addrs[0]
+		if connectIP.Equal(lastIP) {
+			return
+		}
+
+		err := d.applyNAT(listenAddr, connectAddr, connectIP)
+		if err != nil {
+			d.logger.Warn("Failed to setup proxy NAT for detected instance address", logger.Ctx{"address": connectIP.String(), "err": err})
+			return
+		}
+
+		lastIP = connectIP
+	})
+}
+
+// stopNATMonitor cancels and deregisters any running NAT monitor for the device.
+func (d *proxy) stopNATMonitor() {
+	stopInstanceNeighborScan(d.natMonitorOwner())
+}
+
+func (d *proxy) setupProxyProcInfo() (*proxyProcInfo, error) {
+	cname := project.Instance(d.inst.Project().Name, d.inst.Name())
+	cc, err := liblxc.NewContainer(cname, d.state.OS.LxcPath)
+	if err != nil {
+		return nil, err
+	}
+
+	defer logger.WarnOnError(cc.Release, "Failed to release container")
+
+	containerPid := strconv.Itoa(cc.InitPid())
+	daemonPid := strconv.Itoa(os.Getpid())
+
+	cPidFd, err := cc.InitPidFd()
+	if err != nil {
+		return nil, err
+	}
+
+	dPidFd, err := linux.PidFdOpen(os.Getpid(), 0)
+	if err != nil {
+		_ = cPidFd.Close()
+		return nil, err
+	}
+
+	inheritFd := []*os.File{cPidFd, dPidFd}
+	containerPidFd := 3
+	daemonPidFd := 4
+
+	var listenPid, listenPidFd, connectPid, connectPidFd string
+
+	connectAddr := d.config["connect"]
+	listenAddr := d.config["listen"]
+
+	switch d.config["bind"] {
+	case "host", "":
+		listenPid = daemonPid
+		listenPidFd = fmt.Sprintf("%d", daemonPidFd)
+
+		connectPid = containerPid
+		connectPidFd = fmt.Sprintf("%d", containerPidFd)
+	case "instance", "guest", "container":
+		listenPid = containerPid
+		listenPidFd = fmt.Sprintf("%d", containerPidFd)
+
+		connectPid = daemonPid
+		connectPidFd = fmt.Sprintf("%d", daemonPidFd)
+	default:
+		return nil, errors.New("Invalid binding side given. Must be \"host\" or \"instance\"")
+	}
+
+	listenAddrMode := "0644"
+	if d.config["mode"] != "" {
+		listenAddrMode = d.config["mode"]
+	}
+
+	p := &proxyProcInfo{
+		listenPid:      listenPid,
+		listenPidFd:    listenPidFd,
+		connectPid:     connectPid,
+		connectPidFd:   connectPidFd,
+		connectAddr:    connectAddr,
+		listenAddr:     listenAddr,
+		listenAddrGID:  d.config["gid"],
+		listenAddrUID:  d.config["uid"],
+		listenAddrMode: listenAddrMode,
+		securityGID:    d.config["security.gid"],
+		securityUID:    d.config["security.uid"],
+		proxyProtocol:  d.config["proxy_protocol"],
+		inheritFds:     inheritFd,
+	}
+
+	return p, nil
+}
+
+func (d *proxy) killProxyProc(pidPath string) error {
+	// If the pid file doesn't exist, there is no process to kill.
+	if !util.PathExists(pidPath) {
+		return nil
+	}
+
+	p, err := subprocess.ImportProcess(pidPath)
+	if err != nil {
+		return fmt.Errorf("Could not read pid file: %s", err)
+	}
+
+	err = p.Stop()
+	if err != nil && !errors.Is(err, subprocess.ErrNotRunning) {
+		return fmt.Errorf("Unable to kill forkproxy: %s", err)
+	}
+
+	_ = os.Remove(pidPath)
+	return nil
+}
+
+// Remove cleans up the device when it is removed from an instance.
+func (d *proxy) Remove(cleanupDependencies bool) error {
+	err := warnings.DeleteWarningsByNodeAndProjectAndTypeAndEntity(d.state.DB.Cluster, d.state.ServerName, d.inst.Project().Name, warningtype.ProxyBridgeNetfilterNotEnabled, cluster.TypeInstance, d.inst.ID())
+	if err != nil {
+		logger.Warn("Failed to delete warning", logger.Ctx{"err": err})
+	}
+
+	// Delete apparmor profile.
+	err = apparmor.ForkproxyDelete(d.state.OS, d.inst, d)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}

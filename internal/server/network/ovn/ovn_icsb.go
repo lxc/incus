@@ -1,0 +1,156 @@
+package ovn
+
+import (
+	"context"
+	"crypto/tls"
+	"crypto/x509"
+	"errors"
+	"runtime"
+	"strings"
+	"time"
+
+	"github.com/cenkalti/backoff/v7"
+	"github.com/go-logr/logr"
+	ovsdbClient "github.com/ovn-kubernetes/libovsdb/client"
+	ovsdbModel "github.com/ovn-kubernetes/libovsdb/model"
+
+	ovnICSB "github.com/lxc/incus/v7/internal/server/network/ovn/schema/ovn-ic-sb"
+)
+
+// ICSB client.
+type ICSB struct {
+	client ovsdbClient.Client
+	cookie ovsdbClient.MonitorCookie
+}
+
+// NewICSB initializes new OVN client for Southbound IC operations.
+func NewICSB(dbAddr string, sslCACert string, sslClientCert string, sslClientKey string) (*ICSB, error) {
+	// Create the SB struct.
+	client := &ICSB{}
+
+	// Prepare the OVSDB client.
+	dbSchema, err := ovnICSB.FullDatabaseModel()
+	if err != nil {
+		return nil, err
+	}
+
+	// Add some missing indexes.
+	dbSchema.SetIndexes(map[string][]ovsdbModel.ClientIndex{
+		"Gateway": {{Columns: []ovsdbModel.ColumnKey{{Column: "availability_zone"}}}},
+	})
+
+	discard := logr.Discard()
+
+	options := []ovsdbClient.Option{ovsdbClient.WithLogger(&discard), ovsdbClient.WithInactivityCheck(20*time.Second, 5*time.Second, &backoff.ZeroBackOff{})}
+	for entry := range strings.SplitSeq(dbAddr, ",") {
+		options = append(options, ovsdbClient.WithEndpoint(entry))
+	}
+
+	// Handle SSL.
+	if strings.Contains(dbAddr, "ssl:") {
+		// Validation.
+		if sslClientCert == "" {
+			return nil, errors.New("OVN IC Southbound database is configured to use SSL but no client certificate was found")
+		}
+
+		if sslClientKey == "" {
+			return nil, errors.New("OVN IC Southbound database is configured to use SSL but no client key was found")
+		}
+
+		// Prepare the client.
+		clientCert, err := tls.X509KeyPair([]byte(sslClientCert), []byte(sslClientKey))
+		if err != nil {
+			return nil, err
+		}
+
+		tlsConfig := &tls.Config{
+			Certificates:       []tls.Certificate{clientCert},
+			InsecureSkipVerify: true,
+		}
+
+		// Add CA check if provided.
+		if sslCACert != "" {
+			clientCAPool := x509.NewCertPool()
+			ok := clientCAPool.AppendCertsFromPEM([]byte(sslCACert))
+			if !ok {
+				return nil, errors.New("Invalid CA")
+			}
+
+			tlsConfig.VerifyPeerCertificate = func(rawCerts [][]byte, chains [][]*x509.Certificate) error {
+				if len(rawCerts) < 1 {
+					return errors.New("Missing server certificate")
+				}
+
+				// Load the chain.
+				intermediates := x509.NewCertPool()
+				if len(rawCerts) > 1 {
+					for _, rawCert := range rawCerts[1:] {
+						cert, _ := x509.ParseCertificate(rawCert)
+						if cert != nil {
+							intermediates.AddCert(cert)
+						}
+					}
+				}
+
+				// Load the main server certificate.
+				cert, _ := x509.ParseCertificate(rawCerts[0])
+				if cert == nil {
+					return errors.New("Bad server certificate")
+				}
+
+				// Validate.
+				opts := x509.VerifyOptions{
+					Roots:         clientCAPool,
+					Intermediates: intermediates,
+				}
+
+				_, err := cert.Verify(opts)
+				return err
+			}
+		}
+
+		// Add the TLS config to the client.
+		options = append(options, ovsdbClient.WithTLSConfig(tlsConfig))
+	}
+
+	// Connect to OVSDB.
+	ovn, err := ovsdbClient.NewOVSDBClient(dbSchema, options...)
+	if err != nil {
+		return nil, err
+	}
+
+	// Bound the initial connection and monitor setup.
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	err = ovn.Connect(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	err = ovn.Echo(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	// Only monitor what we use; OVN 26.03 indexes a column our model lacks.
+	monitorCookie, err := ovn.Monitor(ctx, ovn.NewMonitor(
+		ovsdbClient.WithTable(&ovnICSB.AvailabilityZone{}),
+		ovsdbClient.WithTable(&ovnICSB.Gateway{}),
+	))
+	if err != nil {
+		return nil, err
+	}
+
+	// Add the client to the struct.
+	client.client = &timeoutClient{Client: ovn, name: "interconnect southbound"}
+	client.cookie = monitorCookie
+
+	// Set finalizer to stop the monitor.
+	runtime.SetFinalizer(client, func(o *ICSB) {
+		_ = ovn.MonitorCancel(context.Background(), o.cookie)
+		ovn.Close()
+	})
+
+	return client, nil
+}

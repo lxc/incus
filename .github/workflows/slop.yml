@@ -1,0 +1,32 @@
+name: Cleanup slop
+
+on:
+  issues:
+    types:
+      - opened
+
+permissions:
+  issues: write
+
+jobs:
+  close-untyped:
+    name: Close issue if type is missing
+    if: ${{ !github.event.issue.pull_request && !github.event.issue.type && github.event.issue.author_association != 'MEMBER' && github.event.issue.author_association != 'OWNER' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Close issue
+        uses: actions/github-script@v9
+        with:
+          script: |
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: "Issues must be created through the [GitHub web interface](https://github.com/lxc/incus/issues/new/choose). Closing automatically."
+            });
+            await github.rest.issues.update({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              state: "closed",
+            });

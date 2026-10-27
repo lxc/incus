@@ -1,0 +1,43 @@
+//go:build linux
+
+package main
+
+import (
+	"fmt"
+	"io"
+	"os"
+
+	"go.yaml.in/yaml/v4"
+
+	u "github.com/lxc/incus/v7/cmd/incus/usage"
+	"github.com/lxc/incus/v7/internal/i18n"
+	"github.com/lxc/incus/v7/shared/api"
+)
+
+func (c *cmdAdminInit) runPreseed(p *u.Parsed) (*api.InitPreseed, error) {
+	// Read the YAML
+	var bytes []byte
+	var err error
+
+	if p.Skipped || p.String == "-" {
+		bytes, err = io.ReadAll(os.Stdin)
+		if err != nil {
+			return nil, fmt.Errorf(i18n.G("Failed to read from stdin: %w"), err)
+		}
+	} else {
+		bytes, err = os.ReadFile(p.String)
+		if err != nil {
+			return nil, fmt.Errorf(i18n.G("Failed to read from file: %w"), err)
+		}
+	}
+
+	// Parse the YAML
+	config := api.InitPreseed{}
+	// Use strict checking to notify about unknown keys.
+	err = yaml.Load(bytes, &config, yaml.WithKnownFields())
+	if err != nil {
+		return nil, fmt.Errorf(i18n.G("Failed to parse the preseed: %w"), err)
+	}
+
+	return &config, nil
+}
