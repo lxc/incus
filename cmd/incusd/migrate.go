@@ -149,7 +149,7 @@ func (c *migrationFields) sendControl(err error) {
 }
 
 func (c *migrationFields) controlChannel() <-chan *localMigration.ControlResponse {
-	ch := make(chan *localMigration.ControlResponse)
+	ch := make(chan *localMigration.ControlResponse, 1)
 	go func() {
 		resp := localMigration.ControlResponse{}
 		err := c.recv(&resp.MigrationControl, false)
