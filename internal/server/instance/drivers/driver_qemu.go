@@ -1129,18 +1129,54 @@ func (d *qemu) socketsPath() string {
 	return filepath.Join(d.RunPath(), "sockets")
 }
 
-// openSocketsDir hands the sockets directory to QEMU as an fd and returns the path QEMU reaches it through.
-// The run directory stays root only, QEMU gets to the directory through /proc/self/fd rather than by path.
-func (d *qemu) openSocketsDir(monitor *qmp.Monitor, name string) (string, func(), error) {
+// ensureSocketsDir creates the sockets directory, owned by root and only traversable by QEMU.
+// Keeping it root owned means QEMU can't swap entries under us while we create or connect to sockets in it.
+func (d *qemu) ensureSocketsDir() error {
 	path := d.socketsPath()
 
-	err := os.MkdirAll(path, 0o700)
+	err := os.MkdirAll(path, 0o711)
 	if err != nil {
-		return "", nil, fmt.Errorf("Failed creating sockets directory: %w", err)
+		return fmt.Errorf("Failed creating sockets directory: %w", err)
 	}
 
-	if d.state.OS.UnprivUser != "" {
-		err = os.Chown(path, int(d.state.OS.UnprivUID), -1)
+	// Reset ownership and mode as QEMU may have been handed the directory by an earlier migration.
+	err = os.Chown(path, 0, 0)
+	if err != nil {
+		return fmt.Errorf("Failed to chown sockets directory: %w", err)
+	}
+
+	err = os.Chmod(path, 0o711)
+	if err != nil {
+		return fmt.Errorf("Failed to chmod sockets directory: %w", err)
+	}
+
+	return nil
+}
+
+// openSocketsDir hands the sockets directory to QEMU as an fd and returns the path QEMU reaches it through.
+// The run directory stays root only, QEMU gets to the directory through /proc/self/fd rather than by path.
+// When writable, the directory is handed over to QEMU so it can bind its own sockets in it.
+func (d *qemu) openSocketsDir(monitor *qmp.Monitor, name string, writable bool) (string, func(), error) {
+	path := d.socketsPath()
+
+	err := d.ensureSocketsDir()
+	if err != nil {
+		return "", nil, err
+	}
+
+	if writable {
+		// Hand the directory over to QEMU and close it to everyone else.
+		err = os.Chmod(path, 0o700)
+		if err != nil {
+			return "", nil, fmt.Errorf("Failed to chmod sockets directory: %w", err)
+		}
+
+		uid, err := d.qemuUID()
+		if err != nil {
+			return "", nil, err
+		}
+
+		err = os.Chown(path, int(uid), -1)
 		if err != nil {
 			return "", nil, fmt.Errorf("Failed to chown sockets directory: %w", err)
 		}
@@ -1165,9 +1201,41 @@ func (d *qemu) openSocketsDir(monitor *qmp.Monitor, name string) (string, func()
 	return fmt.Sprintf("/proc/self/fd/%d", info.FD), cleanup, nil
 }
 
+// dialQemuSocket connects to a socket QEMU bound in the sockets directory.
+// The directory belongs to QEMU at that point, so pin the entry first and check it really is QEMU's socket.
+func (d *qemu) dialQemuSocket(sockPath string) (net.Conn, error) {
+	fd, err := unix.Open(sockPath, unix.O_PATH|unix.O_NOFOLLOW|unix.O_CLOEXEC, 0)
+	if err != nil {
+		return nil, fmt.Errorf("Failed opening %q: %w", sockPath, err)
+	}
+
+	defer func() { _ = unix.Close(fd) }()
+
+	var st unix.Stat_t
+	err = unix.Fstat(fd, &st)
+	if err != nil {
+		return nil, fmt.Errorf("Failed to stat %q: %w", sockPath, err)
+	}
+
+	if st.Mode&unix.S_IFMT != unix.S_IFSOCK {
+		return nil, fmt.Errorf("%q isn't a socket", sockPath)
+	}
+
+	uid, err := d.qemuUID()
+	if err != nil {
+		return nil, err
+	}
+
+	if st.Uid != uid {
+		return nil, fmt.Errorf("%q isn't owned by QEMU", sockPath)
+	}
+
+	return net.Dial("unix", fmt.Sprintf("/proc/self/fd/%d", fd))
+}
+
 // restoreStateMultifd receives the VM state over several connections, each fed to QEMU through a unix socket.
 func (d *qemu) restoreStateMultifd(ctx context.Context, monitor *qmp.Monitor, conns []io.ReadWriteCloser) error {
-	qemuDir, cleanup, err := d.openSocketsDir(monitor, "migration")
+	qemuDir, cleanup, err := d.openSocketsDir(monitor, "migration", true)
 	if err != nil {
 		return err
 	}
@@ -1182,6 +1250,10 @@ func (d *qemu) restoreStateMultifd(ctx context.Context, monitor *qmp.Monitor, co
 	}
 
 	defer func() { _ = os.Remove(sockPath) }()
+
+	// A channel failing to reach QEMU would otherwise stall the transfer until the source gives up.
+	ctx, cancel := context.WithCancelCause(ctx)
+	defer cancel(nil)
 
 	err = monitor.MigrateSetCapabilities(map[string]bool{"multifd": true})
 	if err != nil {
@@ -1204,12 +1276,13 @@ func (d *qemu) restoreStateMultifd(ctx context.Context, monitor *qmp.Monitor, co
 			buf := make([]byte, 64*1024)
 			n, err := conn.Read(buf)
 			if err != nil {
+				cancel(fmt.Errorf("Failed reading from migration channel: %w", err))
 				return
 			}
 
-			qemuConn, err := net.Dial("unix", sockPath)
+			qemuConn, err := d.dialQemuSocket(sockPath)
 			if err != nil {
-				d.logger.Error("Failed connecting to the migration socket", logger.Ctx{"err": err})
+				cancel(fmt.Errorf("Failed connecting to the migration socket: %w", err))
 				return
 			}
 
@@ -1229,6 +1302,11 @@ func (d *qemu) restoreStateMultifd(ctx context.Context, monitor *qmp.Monitor, co
 func (d *qemu) restoreStateWait(ctx context.Context, monitor *qmp.Monitor) error {
 	err := monitor.MigrateIncomingWait(ctx)
 	if err != nil {
+		// Report what cancelled the wait rather than the bare cancellation.
+		if errors.Is(err, context.Canceled) && context.Cause(ctx) != nil {
+			return context.Cause(ctx)
+		}
+
 		if errors.Is(err, qmp.ErrMonitorDisconnect) {
 			// Crash output goes to stderr (early log), -D only captures QEMU's internal logging.
 			qemuError, readErr := os.ReadFile(d.EarlyLogFilePath())
@@ -1445,7 +1523,8 @@ func (d *qemu) saveStateMultifd(monitor *qmp.Monitor, conns []io.ReadWriteCloser
 		return nil, err
 	}
 
-	qemuDir, cleanupDir, err := d.openSocketsDir(monitor, "migration")
+	// Create the socket before QEMU gets the directory so nothing can be swapped under us.
+	err = d.ensureSocketsDir()
 	if err != nil {
 		return nil, err
 	}
@@ -1454,28 +1533,36 @@ func (d *qemu) saveStateMultifd(monitor *qmp.Monitor, conns []io.ReadWriteCloser
 
 	err = os.Remove(sockPath)
 	if err != nil && !errors.Is(err, fs.ErrNotExist) {
-		cleanupDir()
 		return nil, fmt.Errorf("Failed to remove stale socket %q: %w", sockPath, err)
 	}
 
 	listener, err := net.ListenUnix("unix", &net.UnixAddr{Name: sockPath, Net: "unix"})
 	if err != nil {
-		cleanupDir()
 		return nil, fmt.Errorf("Failed listening on the migration socket: %w", err)
+	}
+
+	// Let QEMU connect to the root created socket.
+	uid, err := d.qemuUID()
+	if err != nil {
+		_ = listener.Close()
+		return nil, err
+	}
+
+	err = os.Lchown(sockPath, int(uid), -1)
+	if err != nil {
+		_ = listener.Close()
+		return nil, fmt.Errorf("Failed to chown migration socket: %w", err)
+	}
+
+	qemuDir, cleanupDir, err := d.openSocketsDir(monitor, "migration", false)
+	if err != nil {
+		_ = listener.Close()
+		return nil, err
 	}
 
 	cleanup := func() {
 		_ = listener.Close()
 		cleanupDir()
-	}
-
-	// Let the unprivileged QEMU connect to the root owned socket.
-	if d.state.OS.UnprivUser != "" {
-		err = os.Chown(sockPath, int(d.state.OS.UnprivUID), -1)
-		if err != nil {
-			cleanup()
-			return nil, fmt.Errorf("Failed to chown migration socket: %w", err)
-		}
 	}
 
 	// Pair each QEMU connection with one of the websockets, the target tells them apart by their content.
@@ -7089,6 +7176,40 @@ func (d *qemu) pid() (int, error) {
 	}
 
 	return pid, nil
+}
+
+// qemuUID returns the uid the QEMU process runs as.
+// QEMU only drops privileges on a fresh start, it stays root when restoring state.
+func (d *qemu) qemuUID() (uint32, error) {
+	pid, err := d.pid()
+	if err != nil {
+		return 0, err
+	}
+
+	if pid <= 0 {
+		return 0, errors.New("QEMU process not found")
+	}
+
+	content, err := os.ReadFile(fmt.Sprintf("/proc/%d/status", pid))
+	if err != nil {
+		return 0, fmt.Errorf("Failed reading QEMU process status: %w", err)
+	}
+
+	for line := range strings.Lines(string(content)) {
+		fields := strings.Fields(line)
+		if len(fields) < 3 || fields[0] != "Uid:" {
+			continue
+		}
+
+		uid, err := strconv.ParseUint(fields[2], 10, 32)
+		if err != nil {
+			return 0, fmt.Errorf("Failed parsing QEMU process uid: %w", err)
+		}
+
+		return uint32(uid), nil
+	}
+
+	return 0, errors.New("QEMU process uid not found")
 }
 
 // qemuProcessMatches reports whether a process command line is this instance's QEMU.
