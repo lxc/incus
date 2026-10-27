@@ -999,12 +999,44 @@ func (d *qemu) restoreState(monitor *qmp.Monitor) error {
 		// Perform non-shared storage transfer if requested.
 		filesystemConn := d.migrationReceiveStateful[api.SecretNameFilesystem]
 		if filesystemConn != nil {
-			nbdConn, err := monitor.NBDServerStart()
+			sockPath := d.nbdPath()
+
+			err := os.Remove(sockPath)
+			if err != nil && !errors.Is(err, fs.ErrNotExist) {
+				return fmt.Errorf("Failed to remove stale socket %q: %w", sockPath, err)
+			}
+
+			listener, err := net.ListenUnix("unix", &net.UnixAddr{Name: sockPath, Net: "unix"})
+			if err != nil {
+				return fmt.Errorf("Failed creating NBD unix listener: %w", err)
+			}
+
+			listener.SetUnlinkOnClose(false)
+
+			listenerFile, err := listener.File()
+			_ = listener.Close()
+			if err != nil {
+				return fmt.Errorf("Failed getting NBD listener file descriptor: %w", err)
+			}
+
+			defer func() { _ = listenerFile.Close() }()
+
+			err = monitor.SendFile(sockPath, listenerFile)
+			if err != nil {
+				return fmt.Errorf("Failed sending NBD listener file descriptor: %w", err)
+			}
+
+			err = monitor.NBDUnixServerStart(sockPath)
 			if err != nil {
 				return fmt.Errorf("Failed starting NBD server: %w", err)
 			}
 
 			d.logger.Debug("Migration NBD server started")
+
+			nbdConn, err := net.Dial("unix", sockPath)
+			if err != nil {
+				return fmt.Errorf("Failed connecting to NBD server: %w", err)
+			}
 
 			defer func() {
 				_ = nbdConn.Close()
@@ -3079,6 +3111,50 @@ func (d *qemu) spicePath() string {
 
 func (d *qemu) migrateSockPath() string {
 	return filepath.Join(d.RunPath(), "migrate.sock")
+}
+
+func (d *qemu) nbdPath() string {
+	return filepath.Join(d.RunPath(), "qemu.nbd")
+}
+
+func (d *qemu) socketsPath() string {
+	return filepath.Join(d.RunPath(), "sockets")
+}
+
+// openSocketsDir passes a QEMU accessible sockets directory to the monitor and returns the path
+// QEMU should use to reach it along with a cleanup function.
+func (d *qemu) openSocketsDir(monitor *qmp.Monitor, name string) (string, func(), error) {
+	path := d.socketsPath()
+
+	err := os.MkdirAll(path, 0o700)
+	if err != nil {
+		return "", nil, fmt.Errorf("Failed creating sockets directory: %w", err)
+	}
+
+	if d.state.OS.UnprivUser != "" {
+		err = os.Chown(path, int(d.state.OS.UnprivUID), -1)
+		if err != nil {
+			return "", nil, fmt.Errorf("Failed to chown sockets directory: %w", err)
+		}
+	}
+
+	dir, err := os.Open(path)
+	if err != nil {
+		return "", nil, fmt.Errorf("Failed opening sockets directory: %w", err)
+	}
+
+	defer func() { _ = dir.Close() }()
+
+	info, err := monitor.SendFileWithFDSet(name, dir, false)
+	if err != nil {
+		return "", nil, fmt.Errorf("Failed sending sockets directory: %w", err)
+	}
+
+	cleanup := func() {
+		_ = monitor.RemoveFDFromFDSet(name)
+	}
+
+	return fmt.Sprintf("/proc/self/fd/%d", info.FD), cleanup, nil
 }
 
 func (d *qemu) spiceCmdlineConfig() string {
@@ -7995,19 +8071,62 @@ func (d *qemu) migrateSendLive(ctx context.Context, pool storagePools.Pool, clus
 
 	// Non-shared storage snapshot transfer.
 	if !sameSharedStorage {
-		listener, err := net.Listen("unix", "")
+		pid, err := d.pid()
+		if err != nil {
+			return err
+		}
+
+		qemuDir, cleanupDir, err := d.openSocketsDir(monitor, "nbd-migration")
+		if err != nil {
+			return err
+		}
+
+		defer cleanupDir()
+
+		sockPath := filepath.Join(d.socketsPath(), "nbd-migration.sock")
+
+		err = os.Remove(sockPath)
+		if err != nil && !errors.Is(err, fs.ErrNotExist) {
+			return fmt.Errorf("Failed to remove stale socket %q: %w", sockPath, err)
+		}
+
+		listener, err := net.ListenUnix("unix", &net.UnixAddr{Name: sockPath, Net: "unix"})
 		if err != nil {
 			return fmt.Errorf("Failed creating NBD unix listener: %w", err)
 		}
 
 		defer func() { _ = listener.Close() }()
 
+		// Let the unprivileged QEMU connect to the root owned socket.
+		if d.state.OS.UnprivUser != "" {
+			err = os.Chown(sockPath, int(d.state.OS.UnprivUID), -1)
+			if err != nil {
+				return fmt.Errorf("Failed to chown NBD socket: %w", err)
+			}
+		}
+
 		go func() {
 			d.logger.Debug("NBD listener waiting for accept")
-			nbdConn, err := listener.Accept()
-			if err != nil {
-				d.logger.Error("Failed accepting connection to NBD client unix listener", logger.Ctx{"err": err})
-				return
+
+			var nbdConn *net.UnixConn
+
+			for {
+				conn, err := listener.AcceptUnix()
+				if err != nil {
+					d.logger.Error("Failed accepting connection to NBD client unix listener", logger.Ctx{"err": err})
+					return
+				}
+
+				// Only our QEMU process may connect to the migration NBD socket.
+				cred, err := linux.GetUcred(conn)
+				if err != nil || int(cred.Pid) != pid {
+					d.logger.Warn("Rejected foreign connection on the migration NBD socket", logger.Ctx{"err": err})
+					_ = conn.Close()
+					continue
+				}
+
+				nbdConn = conn
+				break
 			}
 
 			defer func() { _ = nbdConn.Close() }()
@@ -8028,9 +8147,8 @@ func (d *qemu) migrateSendLive(ctx context.Context, pool storagePools.Pool, clus
 				"driver": "nbd",
 				"export": qemuMigrationNBDExportName,
 				"server": map[string]any{
-					"type":     "unix",
-					"abstract": true,
-					"path":     strings.TrimPrefix(listener.Addr().String(), "@"),
+					"type": "unix",
+					"path": filepath.Join(qemuDir, "nbd-migration.sock"),
 				},
 			},
 		}, nil, false)
