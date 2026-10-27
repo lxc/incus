@@ -610,6 +610,37 @@ func validateDependentVolumes(s *state.State, source instance.Instance, targetPr
 // ErrPoolNotRemote indicates the pool is not remote.
 var ErrPoolNotRemote = errors.New("Pool is not remote")
 
+// instanceRunningOnMember asks the member hosting the instance whether it's running, an offline member counts as stopped.
+func instanceRunningOnMember(r *http.Request, s *state.State, inst instance.Instance) (bool, error) {
+	var member db.NodeInfo
+	err := s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
+		var err error
+
+		member, err = tx.GetNodeByName(ctx, inst.Location())
+
+		return err
+	})
+	if err != nil {
+		return false, fmt.Errorf("Failed loading instance's member: %w", err)
+	}
+
+	if member.IsOffline(s.GlobalConfig.OfflineThreshold()) {
+		return false, nil
+	}
+
+	client, err := cluster.Connect(member.Address, s.Endpoints.NetworkCert(), s.ServerCert(), r, false)
+	if err != nil {
+		return false, err
+	}
+
+	instState, _, err := client.UseProject(inst.Project().Name).GetInstanceState(inst.Name())
+	if err != nil {
+		return false, err
+	}
+
+	return instState.StatusCode != api.Stopped, nil
+}
+
 // checkVolumesOnRemoteStorage checks whether root and dependent disks are located on remote storage.
 func checkVolumesOnRemoteStorage(s *state.State, pool *api.StoragePool, inst instance.Instance) error {
 	if !slices.Contains(db.StorageRemoteDriverNames(), pool.Driver) {
@@ -737,6 +768,19 @@ func createFromCopy(ctx context.Context, s *state.State, r *http.Request, projec
 				}
 
 				return response.SmartError(err)
+			}
+
+			// Copying the volumes of a running instance here would mount them on two members at once.
+			if !source.IsSnapshot() {
+				running, err := instanceRunningOnMember(r, s, source)
+				if err != nil {
+					return response.SmartError(err)
+				}
+
+				if running {
+					// Redirect to migration
+					return clusterCopyContainerInternal(ctx, s, r, source, projectName, profiles, req)
+				}
 			}
 		}
 	}
