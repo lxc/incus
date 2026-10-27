@@ -3046,6 +3046,11 @@ func (d *lxc) detachInterfaceRename(netns string, ifName string, hostName string
 
 // Start starts the instance.
 func (d *lxc) Start(stateful bool) error {
+	return d.start(stateful, nil)
+}
+
+// start starts the instance and can use an existing InstanceOperation lock.
+func (d *lxc) start(stateful bool, op *operationlock.InstanceOperation) error {
 	// Check that migration.stateful is set for stateful actions.
 	if stateful && !d.CanLiveMigrate() {
 		return errors.New("Stateful start requires that the instance migration.stateful be set to true")
@@ -3062,15 +3067,17 @@ func (d *lxc) Start(stateful bool) error {
 		return err
 	}
 
-	// Setup a new operation.
-	op, err := operationlock.CreateWaitGet(d.Project().Name, d.Name(), d.op, operationlock.ActionStart, []operationlock.Action{operationlock.ActionRestart, operationlock.ActionRestore}, false, false)
-	if err != nil {
-		if errors.Is(err, operationlock.ErrNonReusuableSucceeded) {
-			// An existing matching operation has now succeeded, return.
-			return nil
-		}
+	// Setup a new operation if needed.
+	if op == nil {
+		op, err = operationlock.CreateWaitGet(d.Project().Name, d.Name(), d.op, operationlock.ActionStart, []operationlock.Action{operationlock.ActionRestart, operationlock.ActionRestore}, false, false)
+		if err != nil {
+			if errors.Is(err, operationlock.ErrNonReusuableSucceeded) {
+				// An existing matching operation has now succeeded, return.
+				return nil
+			}
 
-		return fmt.Errorf("Failed to create instance start operation: %w", err)
+			return fmt.Errorf("Failed to create instance start operation: %w", err)
+		}
 	}
 
 	defer op.Done(nil)
@@ -3874,6 +3881,7 @@ func (d *lxc) onStop(args map[string]string) error {
 			// Create a new restart operation.
 			op, err = operationlock.CreateWaitGet(d.Project().Name, d.Name(), d.op, operationlock.ActionRestart, nil, true, false)
 			if err == nil {
+				op.SetInstanceInitiated(true)
 				defer op.Done(nil)
 			} else {
 				d.logger.Error("Failed to setup new restart operation", logger.Ctx{"err": err})
@@ -3894,10 +3902,10 @@ func (d *lxc) onStop(args map[string]string) error {
 			d.state.Events.SendLifecycle(d.project.Name, lifecycle.InstanceShutdown.Event(d, nil))
 		}
 
-		// Reboot the container
+		// Reboot the container on our own lock, other requests must not join it.
 		if target == "reboot" || autoRestart {
 			// Start the container again
-			err = d.Start(false)
+			err = d.start(false, op)
 			if err != nil {
 				op.Done(fmt.Errorf("Failed restarting instance: %w", err))
 				return

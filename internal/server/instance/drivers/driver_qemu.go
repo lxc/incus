@@ -784,6 +784,11 @@ func (d *qemu) pidWait(timeout time.Duration) bool {
 	for {
 		pid, _ := d.pid()
 		if pid <= 0 {
+			// Don't trust a missing or stale pid file, look for the process itself.
+			pid = d.findQemuPID()
+		}
+
+		if pid <= 0 {
 			break
 		}
 
@@ -898,7 +903,7 @@ func (d *qemu) onStop(target string, reason string) error {
 	cleanShutdown := reason == qmp.EventVMShutdownReasonGuestShutdown || reason == qmp.EventVMShutdownReasonQuit
 
 	var autoRestart bool
-	if target != "reboot" && !cleanShutdown && d.shouldAutoRestart() {
+	if target != "reboot" && !cleanShutdown && op.GetInstanceInitiated() && d.shouldAutoRestart() {
 		autoRestart = true
 
 		// Mark current shutdown as complete.
@@ -907,6 +912,7 @@ func (d *qemu) onStop(target string, reason string) error {
 		// Create a new restart operation.
 		op, err = operationlock.CreateWaitGet(d.Project().Name, d.Name(), d.op, operationlock.ActionRestart, nil, true, false)
 		if err == nil {
+			op.SetInstanceInitiated(true)
 			defer op.Done(nil)
 		} else {
 			d.logger.Error("Failed to setup new restart operation", logger.Ctx{"err": err})
@@ -932,9 +938,9 @@ func (d *qemu) onStop(target string, reason string) error {
 		}
 	}
 
-	// Reboot the instance.
+	// Reboot the instance on our own lock, other requests must not join it.
 	if target == "reboot" || autoRestart {
-		err = d.Start(false)
+		err = d.start(false, op)
 		if err != nil {
 			op.Done(err)
 			return err
@@ -1834,6 +1840,14 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 		}
 
 		reverter.Add(d.numaReservationClear)
+	}
+
+	// Refuse to start on top of a QEMU process that outlived its pid file.
+	stalePID := d.findQemuPID()
+	if stalePID > 0 {
+		err = fmt.Errorf("QEMU process %d is still running for this instance", stalePID)
+		op.Done(err)
+		return err
 	}
 
 	// Rotate the log files.
@@ -7070,14 +7084,49 @@ func (d *qemu) pid() (int, error) {
 		return 0, nil // Process has gone.
 	}
 
-	// The QEMU binary name varies by distribution (e.g. qemu-kvm on EL systems).
-	isQemu := bytes.Contains(cmdLine, []byte("qemu-system")) || bytes.Contains(cmdLine, []byte("qemu-kvm"))
-	instUUID := []byte(d.localConfig["volatile.uuid"])
-	if !isQemu || !bytes.Contains(cmdLine, instUUID) {
+	if !d.qemuProcessMatches(cmdLine) {
 		return -1, errQemuPIDMismatch
 	}
 
 	return pid, nil
+}
+
+// qemuProcessMatches reports whether a process command line is this instance's QEMU.
+func (d *qemu) qemuProcessMatches(cmdLine []byte) bool {
+	// The QEMU binary name varies by distribution (e.g. qemu-kvm on EL systems).
+	isQemu := bytes.Contains(cmdLine, []byte("qemu-system")) || bytes.Contains(cmdLine, []byte("qemu-kvm"))
+
+	return isQemu && bytes.Contains(cmdLine, []byte(d.localConfig["volatile.uuid"]))
+}
+
+// findQemuPID scans the process list for this instance's QEMU, for when the pid file is missing or stale.
+func (d *qemu) findQemuPID() int {
+	if d.localConfig["volatile.uuid"] == "" {
+		return 0
+	}
+
+	entries, err := os.ReadDir("/proc")
+	if err != nil {
+		return 0
+	}
+
+	for _, entry := range entries {
+		pid, err := strconv.Atoi(entry.Name())
+		if err != nil {
+			continue
+		}
+
+		cmdLine, err := os.ReadFile(fmt.Sprintf("/proc/%d/cmdline", pid))
+		if err != nil {
+			continue
+		}
+
+		if d.qemuProcessMatches(cmdLine) {
+			return pid
+		}
+	}
+
+	return 0
 }
 
 // forceStop kills the QEMU prorcess if running.
@@ -11389,9 +11438,13 @@ func (d *qemu) renderState(statusCode api.StatusCode) (*api.InstanceState, error
 
 	// Populate the process information.
 	pid, _ := d.pid()
+	if pid <= 0 {
+		pid = d.findQemuPID()
+	}
+
 	status.Pid = int64(pid)
 
-	startedAt, err := d.processStartedAt(d.InitPID())
+	startedAt, err := d.processStartedAt(pid)
 	if err != nil {
 		return status, err
 	}
