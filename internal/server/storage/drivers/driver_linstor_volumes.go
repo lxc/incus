@@ -320,6 +320,9 @@ func (d *linstor) CreateVolume(vol Volume, filler *VolumeFiller, op *operations.
 	}
 
 	l.Debug("Spawned a new Linstor resource definition for volume", logger.Ctx{"resourceDefinitionName": resourceDefinitionName})
+
+	// Delete by name as the volume can't be looked up until its properties are set.
+	rev.Add(func() { _ = linstor.Client.ResourceDefinitions.Delete(context.TODO(), resourceDefinitionName) })
 	rev.Add(func() { _ = d.DeleteVolume(vol, op) })
 
 	props, err := d.resourceDefinitionProperties(vol)
