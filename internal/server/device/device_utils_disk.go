@@ -165,7 +165,28 @@ func DiskMount(srcPath string, dstPath string, recursive bool, propagation strin
 
 	// Remount bind mounts in readonly mode if requested
 	if readonly && flags&unix.MS_BIND == unix.MS_BIND {
+		// A bind remount replaces all the mount flags, so keep nosuid, nodev and noexec from the source.
+		var st *unix.Statfs_t
+
+		st, err = linux.StatVFS(dstPath)
+		if err != nil {
+			return fmt.Errorf("Unable to get mount flags of %q: %w", dstPath, err)
+		}
+
 		flags = unix.MS_RDONLY | unix.MS_BIND | unix.MS_REMOUNT
+
+		if st.Flags&unix.ST_NOSUID != 0 {
+			flags |= unix.MS_NOSUID
+		}
+
+		if st.Flags&unix.ST_NODEV != 0 {
+			flags |= unix.MS_NODEV
+		}
+
+		if st.Flags&unix.ST_NOEXEC != 0 {
+			flags |= unix.MS_NOEXEC
+		}
+
 		err = unix.Mount("", dstPath, fsName, uintptr(flags), "")
 		if err != nil {
 			return fmt.Errorf("Unable to mount %q in readonly mode: %w", dstPath, err)
