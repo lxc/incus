@@ -238,6 +238,12 @@ func (d *linstor) Create() error {
 
 		d.config[LinstorResourceGroupPlaceCountConfigKey] = strconv.Itoa(int(resourceGroup.SelectFilter.PlaceCount))
 		d.config[LinstorResourceGroupStoragePoolConfigKey] = resourceGroup.SelectFilter.StoragePool
+
+		// The pool config is what the user sees, so make the existing group match it.
+		err = d.setResourceGroupProperties()
+		if err != nil {
+			return fmt.Errorf("Could not create Linstor storage pool: %w", err)
+		}
 	}
 
 	rev.Success()
