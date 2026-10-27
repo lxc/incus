@@ -279,7 +279,16 @@ func (d *linstor) createResourceGroup() error {
 		return fmt.Errorf("Could not create Linstor resource group : %w", err)
 	}
 
-	// Set additional properties based on the config.
+	return d.setResourceGroupProperties()
+}
+
+// setResourceGroupProperties applies the DRBD properties from the pool config to the resource group.
+func (d *linstor) setResourceGroupProperties() error {
+	linstor, err := d.state.Linstor()
+	if err != nil {
+		return err
+	}
+
 	props, err := d.drbdPropsFromConfig(d.config)
 	if err != nil {
 		return fmt.Errorf("Could not parse configuration into DRBD properties: %w", err)
@@ -290,7 +299,7 @@ func (d *linstor) createResourceGroup() error {
 		props["DrbdOptions/Disk/rs-discard-granularity"] = LinstorDefaultResyncDiscardGranularity
 	}
 
-	err = linstor.Client.ResourceGroups.Modify(context.TODO(), resourceGroup.Name, linstorClient.ResourceGroupModify{
+	err = linstor.Client.ResourceGroups.Modify(context.TODO(), d.config[LinstorResourceGroupNameConfigKey], linstorClient.ResourceGroupModify{
 		OverrideProps: props,
 	})
 	if err != nil {
