@@ -1201,7 +1201,7 @@ func networkSRIOVParentVFInfo(vfParent string, vfID int) (ip.VirtFuncInfo, error
 // The useSpoofCheck argument controls whether to use the spoof check feature for the VF on the parent device.
 // If this is false then "security.mac_filtering" must not be enabled.
 // Returns VF PCI device info and IOMMU group number for VMs.
-func networkSRIOVSetupVF(d deviceCommon, vfParent string, vfDevice string, vfID int, volatile map[string]string) (pcidev.Device, uint64, error) {
+func networkSRIOVSetupVF(d deviceCommon, vfParent string, vfDevice string, vfID int, volatile map[string]string, driver string) (pcidev.Device, uint64, error) {
 	var vfPCIDev pcidev.Device
 
 	// Retrieve VF settings from parent device.
@@ -1307,7 +1307,7 @@ func networkSRIOVSetupVF(d deviceCommon, vfParent string, vfDevice string, vfID 
 			return vfPCIDev, 0, fmt.Errorf("Failed disabling spoof check for VF %q: %w", volatile["last_state.vf.id"], err)
 		}
 
-		// Set MAC on VF if specified (this should be passed through into VM when it is bound to vfio-pci).
+		// Set MAC on VF if specified (this should be passed through into VM when it is bound to a VFIO driver).
 		if d.inst.Type() == instancetype.VM {
 			// If no MAC specified in config, use current VF interface MAC.
 			mac := d.config["hwaddr"]
@@ -1338,8 +1338,8 @@ func networkSRIOVSetupVF(d deviceCommon, vfParent string, vfDevice string, vfID 
 		}
 
 		if d.config["acceleration"] != "vdpa" {
-			// Register VF device with vfio-pci driver so it can be passed to VM.
-			err = pcidev.DeviceDriverOverride(vfPCIDev, "vfio-pci")
+			// Register VF device with a VFIO driver so it can be passed to VM.
+			err = pcidev.DeviceDriverOverride(vfPCIDev, driver)
 			if err != nil {
 				return vfPCIDev, 0, fmt.Errorf("Failed overriding driver for VF device %q: %w", vfPCIDev.SlotName, err)
 			}
@@ -1392,7 +1392,7 @@ func networkSRIOVRestoreVF(d deviceCommon, useSpoofCheck bool, volatile map[stri
 
 	if d.inst.Type() == instancetype.VM {
 		// Before we bind the device back to the host, ensure we restore the original driver info as it
-		// should be currently set to vfio-pci.
+		// should be currently set to a VFIO one.
 		err = pcidev.DeviceSetDriverOverride(vfPCIDev, volatile["last_state.pci.driver"])
 		if err != nil {
 			return err
