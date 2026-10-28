@@ -562,6 +562,14 @@ func (d *lvm) ValidateVolume(vol Volume, removeUnknownKeys bool) error {
 	//  default: same as `volume.initial.uid` or `0`
 	//  shortdesc: UID of the volume owner in the instance
 
+	// gendoc:generate(entity=storage_volume_lvm, group=common, key=migration.follow_instance)
+	//
+	// ---
+	//  type: bool
+	//  condition: custom volume
+	//  default: `false`
+	//  shortdesc: Move the volume along with the virtual machine it's attached to when it moves to another cluster member
+
 	// gendoc:generate(entity=storage_volume_lvm, group=common, key=security.shared)
 	//
 	// ---
