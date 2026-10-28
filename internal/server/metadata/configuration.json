@@ -4764,6 +4764,14 @@
 						}
 					},
 					{
+						"ovn.routes_table": {
+							"condition": "standard mode",
+							"longdesc": "",
+							"shortdesc": "Host routing table (VRF) ID that downstream OVN networks export their routes into",
+							"type": "integer"
+						}
+					},
+					{
 						"raw.dnsmasq": {
 							"condition": "-",
 							"default": "-",
@@ -5675,6 +5683,14 @@
 							"longdesc": "",
 							"shortdesc": "Sets the method how OVN NIC external IPs will be advertised on uplink network: `l2proxy` (proxy ARP/NDP) or `routed`",
 							"type": "string"
+						}
+					},
+					{
+						"ovn.routes_table": {
+							"condition": "standard mode",
+							"longdesc": "",
+							"shortdesc": "Host routing table (VRF) ID that downstream OVN networks export their routes into",
+							"type": "integer"
 						}
 					}
 				]
