@@ -367,6 +367,7 @@ vCPU
 vCPUs
 VE
 VDPA
+VFIO
 VFs
 VFS
 VirtIO
