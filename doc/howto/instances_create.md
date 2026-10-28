@@ -277,7 +277,7 @@ This can be done through a `incus-agent.yml` file which is located at:
 
 - `/etc/incus-agent.yml` on Linux
 - `/usr/local/etc/incus-agent.yml` on supported BSD-like OSes (FreeBSD and macOS)
-- `C:\Program Files\Incus Agent\incus-agent.yml` on Windows
+- `C:\Program Files\Incus-Agent\incus-agent.yml` on Windows
 
 If the file is missing or is empty, all features will be enabled.
 If the file contains a `features` map, then all features will be disabled unless specifically enabled.
