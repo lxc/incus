@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io/fs"
 	"maps"
+	"math"
 	"net"
 	"net/http"
 	"os"
@@ -221,6 +222,14 @@ func (n *bridge) Validate(config map[string]string, clientType request.ClientTyp
 		//  default: `false`
 		//  shortdesc: Whether to advertise a /128 route for the IPv6 address of each running instance
 		"bgp.ipv6.instances": validate.Optional(validate.IsBool),
+
+		// gendoc:generate(entity=network_bridge, group=common, key=ovn.routes_table)
+		//
+		// ---
+		//  type: integer
+		//  condition: standard mode
+		//  shortdesc: Host routing table (VRF) ID that downstream OVN networks export their routes into
+		"ovn.routes_table": validate.Optional(validate.IsInRange(1, math.MaxUint32-1)),
 
 		// gendoc:generate(entity=network_bridge, group=common, key=bridge.driver)
 		//
