@@ -161,13 +161,21 @@ func (d *nicSRIOV) validateConfig(instConf instance.ConfigReader, partialValidat
 		// required: no
 		// shortdesc: Failover bridge to use when live-migrating the NIC
 		"failover",
+
+		// gendoc:generate(entity=devices, group=nic_sriov, key=variant)
+		//
+		// ---
+		// type: string
+		// required: no
+		// shortdesc: VFIO variant to use (registers the NIC with the generic `vfio-pci` driver if unset, or with `mlx5_vfio_pci` if set to `mlx5`)
+		"variant",
 	}
 
 	// Check that if network property is set that conflicting keys are not present.
 	if d.config["network"] != "" {
 		requiredFields = append(requiredFields, "network")
 
-		bannedKeys := []string{"nictype", "parent", "mtu", "vlan", "failover"}
+		bannedKeys := []string{"nictype", "parent", "mtu", "vlan", "failover", "variant"}
 		for _, bannedKey := range bannedKeys {
 			if d.config[bannedKey] != "" {
 				return fmt.Errorf("Cannot use %q property in conjunction with %q property", bannedKey, "network")
@@ -196,7 +204,7 @@ func (d *nicSRIOV) validateConfig(instConf instance.ConfigReader, partialValidat
 		d.config["parent"] = netConfig["parent"]
 
 		// Copy certain keys verbatim from the network's settings.
-		inheritKeys := []string{"mtu", "vlan", "failover"}
+		inheritKeys := []string{"mtu", "vlan", "failover", "variant"}
 		for _, inheritKey := range inheritKeys {
 			_, found := netConfig[inheritKey]
 			if found {
@@ -244,6 +252,10 @@ func (d *nicSRIOV) validateConfig(instConf instance.ConfigReader, partialValidat
 		}
 	}
 
+	if d.config["failover"] != "" && d.config["variant"] != "" {
+		return errors.New("Failover bridges cannot be used when a VFIO variant is set")
+	}
+
 	return nil
 }
 
@@ -264,8 +276,8 @@ func (d *nicSRIOV) PreStartCheck() error {
 
 // validateEnvironment checks the runtime environment for correctness.
 func (d *nicSRIOV) validateEnvironment() error {
-	if d.inst.Type() == instancetype.VM && util.IsTrue(d.inst.ExpandedConfig()["migration.stateful"]) && d.config["failover"] == "" {
-		return errors.New("Network SR-IOV devices cannot be used when migration.stateful is enabled and no failover network is specified")
+	if d.inst.Type() == instancetype.VM && util.IsTrue(d.inst.ExpandedConfig()["migration.stateful"]) && d.config["failover"] == "" && d.config["variant"] == "" {
+		return errors.New("Network SR-IOV devices cannot be used when migration.stateful is enabled without specifying a failover network or a VFIO variant")
 	}
 
 	if d.inst.Type() == instancetype.Container && d.config["name"] == "" {
@@ -301,11 +313,16 @@ func (d *nicSRIOV) Start() (*deviceConfig.RunConfig, error) {
 
 	saveData := make(map[string]string)
 
-	// If VM, then try and load the vfio-pci module first.
+	// If VM, then try and load the relevant module first.
+	driver := "vfio-pci"
 	if d.inst.Type() == instancetype.VM {
-		err = linux.LoadModule("vfio-pci")
+		if d.config["variant"] == "mlx5" {
+			driver = "mlx5_vfio_pci"
+		}
+
+		err = linux.LoadModule(driver)
 		if err != nil {
-			return nil, fmt.Errorf("Error loading %q module: %w", "vfio-pci", err)
+			return nil, fmt.Errorf("Error loading %q module: %w", driver, err)
 		}
 	}
 
@@ -341,7 +358,7 @@ func (d *nicSRIOV) Start() (*deviceConfig.RunConfig, error) {
 	}
 
 	// Claim the SR-IOV virtual function (VF) on the parent (PF) and get the PCI information.
-	vfPCIDev, pciIOMMUGroup, err := networkSRIOVSetupVF(d.deviceCommon, parent, vfDev, vfID, saveData, "vfio-pci")
+	vfPCIDev, pciIOMMUGroup, err := networkSRIOVSetupVF(d.deviceCommon, parent, vfDev, vfID, saveData, driver)
 	if err != nil {
 		network.SRIOVVirtualFunctionMutex.Unlock()
 		return nil, err
@@ -385,6 +402,7 @@ func (d *nicSRIOV) Start() (*deviceConfig.RunConfig, error) {
 				{Key: "devName", Value: d.name},
 				{Key: "pciSlotName", Value: vfPCIDev.SlotName},
 				{Key: "pciIOMMUGroup", Value: fmt.Sprintf("%d", pciIOMMUGroup)},
+				{Key: "variant", Value: d.config["variant"]},
 			}...)
 	}
 
