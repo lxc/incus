@@ -1,6 +1,7 @@
 package network
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/lxc/incus/v7/internal/server/cluster/request"
@@ -58,6 +59,13 @@ func (n *sriov) Validate(config map[string]string, clientType request.ClientType
 		// shortdesc: Failover bridge to use when live-migrating `sriov` NICs
 		"failover": validate.Optional(validate.IsInterfaceName),
 
+		// gendoc:generate(entity=network_sriov, group=common, key=variant)
+		//
+		// ---
+		// type: string
+		// shortdesc: VFIO variant to use (registers `sriov` NICs with the generic `vfio-pci` driver if unset, or with `mlx5_vfio_pci` if set to `mlx5`)
+		"variant": validate.Optional(validate.IsOneOf("mlx5")),
+
 		// gendoc:generate(entity=network_sriov, group=common, key=user.*)
 		//
 		// ---
@@ -69,6 +77,10 @@ func (n *sriov) Validate(config map[string]string, clientType request.ClientType
 	err := n.validate(config, rules)
 	if err != nil {
 		return err
+	}
+
+	if config["failover"] != "" && config["variant"] != "" {
+		return errors.New("Failover bridges cannot be used when a VFIO variant is set")
 	}
 
 	return nil
