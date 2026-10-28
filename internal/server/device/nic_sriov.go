@@ -339,7 +339,8 @@ func (d *nicSRIOV) Start() (*deviceConfig.RunConfig, error) {
 	reverter := revert.New()
 	defer reverter.Fail()
 	var failover string
-	if d.inst.Type() == instancetype.VM && d.config["failover"] != "" {
+	// Only handle the failover bridge on live-migratable VMs.
+	if d.inst.Type() == instancetype.VM && d.config["failover"] != "" && util.IsTrue(d.inst.ExpandedConfig()["migration.stateful"]) {
 		failover, err = d.setupFailover()
 		if err != nil {
 			return nil, fmt.Errorf("Failed setting up failover NIC: %w", err)
