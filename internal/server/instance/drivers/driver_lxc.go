@@ -4627,10 +4627,11 @@ func (d *lxc) Delete(force bool, cleanupDependencies bool) error {
 		return fmt.Errorf("Failed to create instance delete operation: %w", err)
 	}
 
-	defer op.Done(nil)
+	defer func() { op.Done(err) }()
 
 	if d.IsRunning() {
-		return api.StatusErrorf(http.StatusBadRequest, "Instance is running")
+		err = api.StatusErrorf(http.StatusBadRequest, "Instance is running")
+		return err
 	}
 
 	err = d.delete(force, cleanupDependencies)
@@ -4643,7 +4644,9 @@ func (d *lxc) Delete(force bool, cleanupDependencies bool) error {
 		parentName, _, _ := api.GetParentAndSnapshotName(d.name)
 
 		// Load the parent.
-		parent, err := instance.LoadByProjectAndName(d.state, d.project.Name, parentName)
+		var parent instance.Instance
+
+		parent, err = instance.LoadByProjectAndName(d.state, d.project.Name, parentName)
 		if err != nil {
 			return fmt.Errorf("Invalid parent: %w", err)
 		}
