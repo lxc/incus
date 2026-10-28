@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: LXD\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
 "POT-Creation-Date: 2026-10-08 14:37+0000\n"
-"PO-Revision-Date: 2026-10-14 09:51+0000\n"
+"PO-Revision-Date: 2026-10-29 12:51+0000\n"
 "Last-Translator: Nicoprog <nicoprog@users.noreply.hosted.weblate.org>\n"
 "Language-Team: French <https://hosted.weblate.org/projects/incus/cli/fr/>\n"
 "Language: fr\n"
@@ -688,7 +688,7 @@ msgstr "%s la syntaxe %s est dépréciée ; %s\n"
 #: cmd/incus/usage/usage.go:967
 #, c-format
 msgid "%s; did you forget a space in %s?\n"
-msgstr ""
+msgstr "%s ; tu as oublié un espace dans %s ?\n"
 
 #: cmd/incus/utils_sftp.go:401
 #, c-format
@@ -751,9 +751,8 @@ msgid "--attributes cannot be used with --format=%s"
 msgstr "--attributes ne peut pas être utilisé avec --format=%s"
 
 #: cmd/incus/low_level.go:1284
-#, fuzzy
 msgid "--bundle cannot be used with --type"
-msgstr "--target ne peut pas être utilisé avec des instances"
+msgstr "--bundle ne peut pas être utilisé avec --type"
 
 #: cmd/incus/action.go:253
 msgid "--console can't be used while forcing instance shutdown"
@@ -1350,33 +1349,33 @@ msgstr "Sauvegardes :"
 #, c-format
 msgid "Bad device override syntax, expecting <device>,<key>=<value>: %s"
 msgstr ""
-"Impossible de traiter ce remplacement, la syntaxe attendue est "
-"<périphérique>,<clef>=<valeur> : %s"
+"Syntaxe incorrecte de la substitution de périphérique, syntaxe attendue "
+"<device>,<key>=<value> : %s"
 
 #: cmd/incus/query.go:92
 #, c-format
 msgid "Bad header, empty name: %q"
-msgstr ""
+msgstr "En-tête incorrect, nom vide : %q"
 
 #: cmd/incus/query.go:87
 #, c-format
 msgid "Bad header, expecting \"name: value\": %q"
-msgstr ""
+msgstr "En-tête incorrect, attendu \"name: value\" : %q"
 
 #: cmd/incus/copy.go:180 cmd/incus/create.go:209 cmd/incus/move.go:273
 #: cmd/incus/network_integration.go:139 cmd/incus/project.go:168
 #, c-format
 msgid "Bad key=value pair: %q"
-msgstr "Ce paramètre n’est pas de la forme <clef>=<valeur> : %q"
+msgstr "Paire incorrecte key=value : %q"
 
 #: cmd/incus/remote.go:158
 msgid "Binary helper for retrieving credentials"
-msgstr "Outil à utiliser pour récupérer les identifiants"
+msgstr "Aide binaire pour la récupération des identifiants"
 
 #: cmd/incus/storage_volume_bitmap.go:189
 #, c-format
 msgid "Bitmap %s deleted from volume %s"
-msgstr "La bitmap %s du volume de stockage %s a été supprimée"
+msgstr "Image bitmap %s supprimée du volume %s"
 
 #: cmd/incus/network.go:950
 msgid "Bond:"
@@ -1565,7 +1564,7 @@ msgstr "Impossible d’utiliser à la fois --no-expiry et --expiry"
 
 #: cmd/incus/low_level.go:1168
 msgid "Cannot add signature without --bundle"
-msgstr ""
+msgstr "Impossible d'ajouter une signature sans --bundle"
 
 #: cmd/incus/remote.go:602
 msgid "Cannot mix HTTPS and Unix URLs"
@@ -1917,6 +1916,8 @@ msgid ""
 "Consider the input as a certificate and signature bundle instead of a "
 "certificate chain"
 msgstr ""
+"Considérer les données d'entrée comme un ensemble composé d'un certificat et "
+"d'une signature, plutôt que comme une chaîne de certificats"
 
 #: cmd/incus/storage_volume.go:608
 msgid "Content type, block or filesystem"
@@ -2538,13 +2539,14 @@ msgstr ""
 "instance. Surchargez le périphérique ou modifiez le profil"
 
 #: cmd/incus/config_device.go:530
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "Device from profile(s) cannot be removed from individual instance. Override "
 "device “%s” or modify profile instead"
 msgstr ""
-"Le périphériques du ou des profiles ne peut pas être supprimé pour une "
-"instance. Surchargez le périphérique “%s” ou modifiez le profil"
+"Les périphériques à un ou plusieurs profils ne peuvent pas être supprimé "
+"d'une instance individuelle. Remplacer le périphérique “%s” ou modifiez le "
+"profil à la place"
 
 #: cmd/incus/config_device.go:278
 msgid "Device from profile(s) cannot be retrieved for individual instance"
@@ -2892,9 +2894,8 @@ msgstr ""
 "Les types reconnus sont « custom », « container » et « virtual-machine »."
 
 #: cmd/incus/config_trust.go:263 cmd/incus/config_trust.go:264
-#, fuzzy
 msgid "Edit trust configurations as YAML"
-msgstr "Clé de configuration invalide"
+msgstr "Modifier les configurations de confiance au format YAML"
 
 #: cmd/incus/cluster.go:213 cmd/incus/cluster.go:1163
 #: cmd/incus/cluster_group.go:477 cmd/incus/config_trust.go:434
@@ -2954,7 +2955,7 @@ msgstr ""
 #: cmd/incus/info.go:837
 #, c-format
 msgid "Endorsement key (%s %d): %s"
-msgstr ""
+msgstr "Clef de validation (%s %d) : %s"
 
 #: cmd/incus/top.go:282
 msgid ""
@@ -2973,11 +2974,12 @@ msgid "Entry TTL"
 msgstr "Entrée TTL"
 
 #: cmd/incus/exec.go:64
-#, fuzzy
 msgid ""
 "Environment variable to set (e.g. HOME=/home/foo) (may be passed multiple "
 "times)"
-msgstr "Variable d'environnement (de la forme HOME=/home/foo) à positionner"
+msgstr ""
+"Variable d'environnement à définir (de la forme HOME=/home/foo) (peut être "
+"transmise plusieurs fois)"
 
 #: cmd/incus/copy.go:63 cmd/incus/create.go:65
 msgid "Ephemeral instance"
@@ -3017,9 +3019,9 @@ msgid "Error setting properties: %v"
 msgstr "Erreur lors de la définition des propriétés : %v"
 
 #: cmd/incus/console_windows.go:27
-#, fuzzy, c-format
+#, c-format
 msgid "Error setting term size %s"
-msgstr "Récupération de l'image : %s"
+msgstr "Erreur lors de la définition de la taille du terme %s"
 
 #: cmd/incus/config.go:579 cmd/incus/config.go:611
 #, c-format
@@ -3074,9 +3076,8 @@ msgid "Evacuating cluster member: %s"
 msgstr "Évacuation du membre du cluster : %s"
 
 #: cmd/incus/monitor.go:57
-#, fuzzy
 msgid "Event type to listen for (may be passed multiple times)"
-msgstr "Type d'événements à surveiller"
+msgstr "Type d'événement à surveiller (peut être spécifié plusieurs fois)"
 
 #: cmd/incus/color/color.go:40
 msgid "Examples:"
@@ -3524,9 +3525,9 @@ msgid "Failed to create certificate: %w"
 msgstr "Échec de la création du certificat : %w"
 
 #: cmd/incus/move_nearlive.go:86
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to create pre-copy snapshot %q: %w"
-msgstr "Échec de la création de %q : %w"
+msgstr "Échec de la création de l'instantané de pré-copie %q : %w"
 
 #: cmd/incus/storage_volume.go:2346
 #, c-format
@@ -3545,15 +3546,17 @@ msgstr ""
 "Échec de la suppression de l'instance originale après l'avoir copiée : %w"
 
 #: cmd/incus/move_nearlive.go:110
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to delete partial copy of instance %q on the target server: %s"
 msgstr ""
-"Échec de la suppression de l'instance originale après l'avoir copiée : %w"
+"Impossible de supprimer la copie partielle de l'instance %q sur le serveur "
+"cible : %s"
 
 #: cmd/incus/move_nearlive.go:24
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to delete pre-copy snapshot %q of instance %q: %s"
-msgstr "Échec du rafraîchissement de l'instance cible '%s' : %v"
+msgstr ""
+"Échec de la suppression de l'instantané de pré-copie %q de l'instance %q : %s"
 
 #: cmd/incus/low_level.go:987 cmd/incus/low_level.go:1070
 #, c-format
@@ -3561,9 +3564,9 @@ msgid "Failed to delete variable %s:%s: %w"
 msgstr "Impossible de supprimer la variable %s:%s : %w"
 
 #: cmd/incus/low_level.go:249
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to dump instance memory: %w"
-msgstr "Échec de la mise à jour de l'état du membre du cluster : %w"
+msgstr "Échec de la sauvegarde de la mémoire de l'instance : %w"
 
 #: cmd/incus/storage_bucket.go:1440
 #, c-format
@@ -3639,9 +3642,9 @@ msgid "Failed to parse PEM certificate: %w"
 msgstr "Impossible de traiter le certificat PEM : %w"
 
 #: cmd/incus/admin_sql.go:104
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to parse dump response: %w"
-msgstr "Échec de l'analyse de la réponse du dump : %w"
+msgstr "Échec de l'analyse de la réponse de vidage : %w"
 
 #: cmd/incus/low_level.go:1199
 msgid "Failed to parse input file as either PEM or DER certificate"
@@ -3694,9 +3697,9 @@ msgid "Failed to repair instance: %w"
 msgstr "Impossible de réparer l’instance : %w"
 
 #: cmd/incus/admin_sql.go:98
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to request dump: %w"
-msgstr "Échec de la demande de dump : %w"
+msgstr "Échec de la demande de vidage : %w"
 
 #: cmd/incus/move_nearlive.go:140
 #, c-format
@@ -3839,11 +3842,11 @@ msgstr "Forcer l’évacuation sans confirmation"
 
 #: cmd/incus/low_level.go:1531
 msgid "Force overwriting existing ESL"
-msgstr ""
+msgstr "Forcer le remplacement existantes ESL"
 
 #: cmd/incus/low_level.go:1416
 msgid "Force overwriting existing PEM file"
-msgstr ""
+msgstr "Forcer la réécriture du fichier PEM existant"
 
 #: cmd/incus/export.go:56 cmd/incus/storage_bucket.go:1310
 #: cmd/incus/storage_volume.go:2273
@@ -4061,9 +4064,8 @@ msgid "GUID NAME"
 msgstr "NOM DU GUID"
 
 #: cmd/incus/remote.go:1055
-#, fuzzy
 msgid "Generate a client token derived from the client certificate"
-msgstr "Ajouter de nouveaux certificat pour des clients de confiance"
+msgstr "Générer un jeton client dérivé du certificat client"
 
 #: cmd/incus/remote.go:1056
 msgid ""
@@ -4221,23 +4223,22 @@ msgid "Get values for cluster member configuration keys"
 msgstr "Récupérer la valeur d’une clef de configuration d’un membre du cluster"
 
 #: cmd/incus/config_device.go:212 cmd/incus/config_device.go:213
-#, fuzzy
 msgid "Get values for device configuration keys"
-msgstr "Clé de configuration invalide"
+msgstr "Récupérer les valeurs des clés de configuration du périphérique"
 
 #: cmd/incus/config.go:380 cmd/incus/config.go:381
-#, fuzzy
 msgid "Get values for instance or server configuration keys"
-msgstr "Clé de configuration invalide"
+msgstr ""
+"Récupérer les valeurs des clés de configuration d'une instance ou d'un "
+"serveur"
 
 #: cmd/incus/network_acl.go:287 cmd/incus/network_acl.go:288
 msgid "Get values for network ACL configuration keys"
 msgstr "Récupérer la valeur d’une clef de configuration d’une ACL réseau"
 
 #: cmd/incus/network.go:801 cmd/incus/network.go:802
-#, fuzzy
 msgid "Get values for network configuration keys"
-msgstr "Clé de configuration invalide"
+msgstr "Récupérer les valeurs des clés de configuration réseau"
 
 #: cmd/incus/network_forward.go:402 cmd/incus/network_forward.go:403
 msgid "Get values for network forward configuration keys"
@@ -4271,14 +4272,12 @@ msgstr ""
 "réseau"
 
 #: cmd/incus/profile.go:613 cmd/incus/profile.go:614
-#, fuzzy
 msgid "Get values for profile configuration keys"
-msgstr "Clé de configuration invalide"
+msgstr "Récupérer les valeurs des clés de configuration du profil"
 
 #: cmd/incus/project.go:432 cmd/incus/project.go:433
-#, fuzzy
 msgid "Get values for project configuration keys"
-msgstr "Clé de configuration invalide"
+msgstr "Récupérer les valeurs des clés de configuration du projet"
 
 #: cmd/incus/storage_bucket.go:370 cmd/incus/storage_bucket.go:371
 msgid "Get values for storage bucket configuration keys"
@@ -4342,11 +4341,12 @@ msgid "HOSTNAME"
 msgstr "NOM D’HÔTE"
 
 #: cmd/incus/query.go:60
-#, fuzzy
 msgid ""
 "Header to set, an empty value removes it (e.g. \"X-Incus-mode: 0644\") (may "
 "be passed multiple times)"
-msgstr "Variable d'environnement (de la forme HOME=/home/foo) à positionner"
+msgstr ""
+"En-tête à définir, une valeur vide le supprime (par exemple : \"X-Incus-"
+"mode: 0644\") (peut être transmis plusieurs fois)"
 
 #: cmd/incus/info.go:795
 msgid "Host interface"
@@ -4399,9 +4399,8 @@ msgid "IMAGES"
 msgstr "IMAGES"
 
 #: cmd/incus/storage_volume_bitmap.go:278
-#, fuzzy
 msgid "INCONSISTENT"
-msgstr "PERSISTANT"
+msgstr "INCOHÉRENT"
 
 #: cmd/incus/top.go:84
 msgid "INSTANCE NAME"
@@ -4453,9 +4452,8 @@ msgid "ISSUE DATE"
 msgstr "DATE D'ÉMISSION"
 
 #: cmd/incus/low_level.go:1669 cmd/incus/low_level.go:1670
-#, fuzzy
 msgid "ISSUER"
-msgstr "DATE D'ÉMISSION"
+msgstr "ÉMETTEUR"
 
 #: cmd/incus/info.go:392
 #, c-format
@@ -4463,10 +4461,8 @@ msgid "Id: %v"
 msgstr "Identifiant : %v"
 
 #: cmd/incus/image.go:179
-#, fuzzy
 msgid "If an alias already exists, delete and recreate it"
-msgstr ""
-"Si l'alias de l'image existe déjà, le supprimer d'abord puis le recréer"
+msgstr "Si un alias existe déjà, supprimer-le puis recréer-le"
 
 #: cmd/incus/rebuild.go:34
 msgid "If an instance is running, stop it and then rebuild it"
@@ -4519,7 +4515,7 @@ msgstr "Ignorer l'état de l’instance"
 #: cmd/incus/low_level.go:1186
 #, c-format
 msgid "Ignored %s block"
-msgstr ""
+msgstr "Bloc %s ignoré"
 
 #: cmd/incus/image_alias.go:77
 msgid "Image alias description"
@@ -4555,14 +4551,12 @@ msgid "Image refreshed successfully!"
 msgstr "Image rafraîchie avec succès !"
 
 #: cmd/incus/action.go:168 cmd/incus/launch.go:49
-#, fuzzy
 msgid "Immediately attach to the console"
-msgstr "Forcer l'arrêt du conteneur (seulement pour stop)"
+msgstr "Fixer immédiatement à la console"
 
 #: cmd/incus/low_level.go:1528 cmd/incus/low_level.go:1529
-#, fuzzy
 msgid "Import Secure Boot signatures"
-msgstr "Supprimer un serveur distant"
+msgstr "Importer les signatures Secure Boot"
 
 #: cmd/incus/import.go:33
 msgid "Import backups of instances including their snapshots."
@@ -4628,14 +4622,14 @@ msgid "Importing instance: %s"
 msgstr "Import de l’instance : %s"
 
 #: cmd/incus/create.go:66
-#, fuzzy
 msgid "Include environment variables from file (may be passed multiple times)"
-msgstr "Inclure les variables environnements à partir d'un fichier"
+msgstr ""
+"Inclure les variables d'environnement d'un fichier (peut être appelé "
+"plusieurs fois)"
 
 #: cmd/incus/manpage.go:33
-#, fuzzy
 msgid "Include less common commands"
-msgstr "Afficher les commandes moins communes"
+msgstr "Ajouter des commandes moins courantes"
 
 #: cmd/incus/manpage.go:71
 msgid "Incus - Command line client"
@@ -4659,24 +4653,20 @@ msgid "Input data file (\"-\" for stdin)"
 msgstr "Fichier de données d’entrée (« - » pour l’entrée standard)"
 
 #: cmd/incus/low_level.go:1203
-#, fuzzy
 msgid "Input file contains no certificate"
-msgstr "Générer le certificat client"
+msgstr "Le fichier d'entrée ne contient aucun certificat"
 
 #: cmd/incus/info.go:934
-#, fuzzy
 msgid "Instance Only"
-msgstr "Le nom du conteneur est : %s"
+msgstr "Uniquement l'instance"
 
 #: cmd/incus/create.go:74
-#, fuzzy
 msgid "Instance description"
-msgstr "Mot de passe de l'administrateur distant"
+msgstr "Description de l'instance"
 
 #: cmd/incus/utils.go:549
-#, fuzzy
 msgid "Instance disconnected"
-msgstr "Mot de passe de l'administrateur distant"
+msgstr "Instance déconnectée"
 
 #: cmd/incus/utils.go:717
 #, c-format
@@ -4689,11 +4679,10 @@ msgid "Instance name is: %s"
 msgstr "Le nom de l’instance est : %s"
 
 #: cmd/incus/file.go:968
-#, fuzzy
 msgid "Instance path cannot be used in SSH SFTP listener mode"
 msgstr ""
-"Impossible de spécifier un chemin cible dans l'instance quand le mode "
-"d'écoute SFTP est utilisé"
+"Le chemin d'accès à l'instance ne peut pas être utilisé en mode écouteur SSH "
+"SFTP"
 
 #: cmd/incus/publish.go:290
 #, c-format
@@ -4719,9 +4708,9 @@ msgid "Invalid IP address or DNS name"
 msgstr "Adresse IP ou nom DNS invalide"
 
 #: cmd/incus/remote.go:267
-#, fuzzy, c-format
+#, c-format
 msgid "Invalid TLS client keypair: %w"
-msgstr "Jeton d’association invalide : %w"
+msgstr "Paire de clés client TLS non valide : %w"
 
 #: cmd/incus/export.go:134 cmd/incus/storage_bucket.go:1390
 #: cmd/incus/storage_volume.go:2379
@@ -4748,7 +4737,7 @@ msgstr "Argument invalide %q"
 #: cmd/incus/storage_volume.go:2384
 #, fuzzy, c-format
 msgid "Invalid backup name segment in path %q: %w"
-msgstr "Segment de nom de sauvegarde non valide dans le chemin %q : %w"
+msgstr "Segment de nom de sauvegarde non valide dans le chemin %q : %w"
 
 #: cmd/incus/utils_properties.go:56
 #, c-format
@@ -4780,9 +4769,9 @@ msgid "Invalid config key column format (too many fields): '%s'"
 msgstr "Format de colonne invalide (trop de champs spécifiés) : « %s »"
 
 #: cmd/incus/default.go:85
-#, fuzzy, c-format
+#, c-format
 msgid "Invalid default %q"
-msgstr "Format invalide : %q"
+msgstr "Format par défaut non valide : %q"
 
 #: cmd/incus/publish.go:194
 #, c-format
@@ -4844,14 +4833,12 @@ msgid "Invalid protocol: %s"
 msgstr "Protocole invalide : %s"
 
 #: cmd/incus/top.go:352
-#, fuzzy
 msgid "Invalid sorting type"
-msgstr "Cible invalide %s"
+msgstr "Type de tri non valide"
 
 #: cmd/incus/top.go:303
-#, fuzzy
 msgid "Invalid sorting type provided"
-msgstr "Cible invalide %s"
+msgstr "Type de tri non valide fourni"
 
 #: cmd/incus/network_allocations.go:224
 #, c-format
@@ -4903,9 +4890,8 @@ msgid "Key description"
 msgstr "Description de la clef"
 
 #: cmd/incus/warning.go:212
-#, fuzzy
 msgid "LAST SEEN"
-msgstr "DERNIÈRE UTILISATION À"
+msgstr "DERNIÈRE APPARITION"
 
 #: cmd/incus/list.go:549
 msgid "LAST USED AT"
@@ -4929,7 +4915,7 @@ msgstr "LOCALISATION"
 #: cmd/incus/info.go:706
 #, fuzzy, c-format
 msgid "Last Used: %s"
-msgstr "Dernière utilisation : %s"
+msgstr "Dernière utilisation : %s"
 
 #: cmd/incus/image.go:999
 #, c-format
@@ -4941,14 +4927,13 @@ msgid "Last used: never"
 msgstr "Dernière utilisation : jamais"
 
 #: cmd/incus/create.go:129
-#, fuzzy, c-format
+#, c-format
 msgid "Launching %s"
-msgstr "Création de %s"
+msgstr "Lancement de %s"
 
 #: cmd/incus/create.go:131
-#, fuzzy
 msgid "Launching the instance"
-msgstr "Création du conteneur"
+msgstr "Lancement de l'instance"
 
 #: cmd/incus/info.go:241
 #, c-format
@@ -4956,16 +4941,15 @@ msgid "Link detected: %v"
 msgstr "Lien détecté : %v"
 
 #: cmd/incus/info.go:243
-#, fuzzy, c-format
+#, c-format
 msgid "Link speed: %dMbit/s (%s duplex)"
-msgstr "Vitesse de la liaison : %dMbit/s (%s duplex)"
+msgstr "Débit de la liaison : %dMbit/s (%s duplex)"
 
 #: cmd/incus/network.go:1233
 msgid "List DHCP leases"
 msgstr "Liste des baux DHCP"
 
 #: cmd/incus/network.go:1234
-#, fuzzy
 msgid ""
 "List DHCP leases\n"
 "\n"
@@ -4993,23 +4977,28 @@ msgstr ""
 "Disposition des colonnes par défaut : hmitL\n"
 "\n"
 "== Colonnes ==\n"
-"L’option -c prend une liste d’arguments séparés par des virgules "
-"(optionnelles) contrôlant quels attributs de bail DHCP afficher lorsque "
-"l’affichage est demandé dans un format tabulaire.\n"
+"L'option -c accepte une liste d'arguments séparés par des virgules qui\n"
+"permettent de contrôler les attributs des baux DHCP à afficher lors de\n"
+"la présentation sous forme de tableau ou au format CSV.\n"
 "\n"
-"Les arguments valides pour cette option sont les caractères suivants :\n"
-" – h : nom d’hôte\n"
-" – m : adresse MAC\n"
-" – i : adresse IP\n"
-" – t : type\n"
-" – L : localisation du bail DHCP (membre du cluster)"
+"Les arguments de colonne sont soit des caractères abrégés prédéfinis\n"
+"(voir ci-dessous), soit des clés de configuration (étendues).\n"
+"\n"
+"Les virgules entre deux caractères d'abréviation consécutifs sont\n"
+"facultatives.\n"
+"\n"
+"Caractères abrégés prédéfinis pour les colonnes :\n"
+"  h - Nom d’hôte\n"
+"  m - Adresse MAC\n"
+"  i - Adresse IP\n"
+"  t - Type\n"
+"  L - Emplacement du bail DHCP (ex : son membre du cluster)"
 
 #: cmd/incus/low_level.go:1623
 msgid "List Secure Boot signatures"
 msgstr "Lister les signatures Secure Boot"
 
 #: cmd/incus/low_level.go:1624
-#, fuzzy
 msgid ""
 "List Secure Boot signatures\n"
 "\n"
@@ -5031,31 +5020,31 @@ msgid ""
 "\tS - Subject (long, for certificates)\n"
 "\tt - Signature type"
 msgstr ""
-"Lister les projets\n"
+"Liste des signatures Secure Boot\n"
 "\n"
-"L’option -c prend une liste d’arguments séparés par des virgules "
-"(optionnelles) contrôlant quels attributs d’instance afficher lorsque "
-"l’affichage est demandé dans un format tabulaire.\n"
+"L'option -c accepte une liste d'arguments (éventuellement séparés par\n"
+"des virgules) qui permettent de contrôler les attributs de signature à\n"
+"afficher lors de la présentation sous forme de tableau ou au format CSV.\n"
 "\n"
-"Disposition des colonnes par défaut : nipvbwzdu\n"
+"La disposition par défaut des colonnes est : tOfs\n"
 "\n"
-"Les arguments valides pour cette option sont les caractères suivants :\n"
-" – n : nom du projet\n"
-" – i : si le projet définit ses propres images\n"
-" – p : si le projet définit ses propres profils\n"
-" – v : si le projet définit ses propres volumes de stockage\n"
-" – b : si le projet définit ses propres buckets de stockage\n"
-" – w : si le projet définit ses propres réseaux\n"
-" – z : si le projet définit ses propres zones réseau\n"
-" – d : description du projet\n"
-" – u : nombre de références au projet"
+"Caractères d'abréviation des colonnes :\n"
+"\tf - Empreinte digitale (courte)\n"
+"\tF - Empreinte digitale (longue)\n"
+"\ti - Émetteur (court, pour les certificats)\n"
+"\tI - Émetteur (long, pour les certificats)\n"
+"\to - GUID du propriétaire\n"
+"\tO - Nom familier du GUID du propriétaire ou GUID s'il n'y en a pas\n"
+"\tr - Valeur brute\n"
+"\ts - Sujet (court, pour les certificats)\n"
+"\tS - Sujet (long, pour les certificats)\n"
+"\tt - Type de signature"
 
 #: cmd/incus/low_level.go:701
 msgid "List UEFI GUIDs and variables"
 msgstr "Lister les GUID et variables UEFI"
 
 #: cmd/incus/low_level.go:702
-#, fuzzy
 msgid ""
 "List UEFI GUIDs and variables\n"
 "\n"
@@ -5074,29 +5063,26 @@ msgid ""
 "\tt - Authenticated write timestamp\n"
 "\tv - Interpreted value"
 msgstr ""
-"Lister les projets\n"
+"Liste des GUID et des variables UEFI\n"
 "\n"
-"L’option -c prend une liste d’arguments séparés par des virgules "
-"(optionnelles) contrôlant quels attributs d’instance afficher lorsque "
-"l’affichage est demandé dans un format tabulaire.\n"
+"L'option -c accepte une liste d'arguments (éventuellement séparés par\n"
+"des virgules) qui permettent de contrôler les attributs des variables à\n"
+"afficher lors de la sortie au format tableau ou CSV.\n"
 "\n"
-"Disposition des colonnes par défaut : nipvbwzdu\n"
+"La disposition des colonnes par défaut est : Gn\n"
 "\n"
-"Les arguments valides pour cette option sont les caractères suivants :\n"
-" – n : nom du projet\n"
-" – i : si le projet définit ses propres images\n"
-" – p : si le projet définit ses propres profils\n"
-" – v : si le projet définit ses propres volumes de stockage\n"
-" – b : si le projet définit ses propres buckets de stockage\n"
-" – w : si le projet définit ses propres réseaux\n"
-" – z : si le projet définit ses propres zones réseau\n"
-" – d : description du projet\n"
-" – u : nombre de références au projet"
+"Caractères d'abréviation des colonnes :\n"
+"\ta - Attributs\n"
+"\tg - GUID\n"
+"\tG - Nom familier du GUID ou GUID s'il n'y en a pas\n"
+"\tn - Nom\n"
+"\tr - Valeur brute\n"
+"\tt - Horodatage d'écriture authentifié\n"
+"\tv - Valeur interprétée"
 
 #: cmd/incus/network_address_set.go:101
-#, fuzzy
 msgid "List address sets across all projects"
-msgstr "Forcer le conteneur à s'arrêter"
+msgstr "Répertorier les ensembles d'adresses pour tous projets confondus"
 
 #: cmd/incus/alias.go:116 cmd/incus/alias.go:117
 msgid "List aliases"
@@ -5104,10 +5090,9 @@ msgstr "Lister les alias"
 
 #: cmd/incus/config_trust.go:577
 msgid "List all active certificate add tokens"
-msgstr "Lister tous les jetons d’ajout de certificat"
+msgstr "Lister tous les jetons d’ajout de certificat actifs"
 
 #: cmd/incus/config_trust.go:578
-#, fuzzy
 msgid ""
 "List all active certificate add tokens\n"
 "\n"
@@ -5133,14 +5118,20 @@ msgstr ""
 "Disposition des colonnes par défaut : ntE\n"
 "\n"
 "== Colonnes ==\n"
-"L’option -c prend une liste d’arguments séparés par des virgules "
-"(optionnelles) contrôlant quels attributs de jeton afficher lorsque "
-"l’affichage est demandé dans un format tabulaire.\n"
+"L'option -c prend une liste d'arguments séparés par des virgules qui\n"
+"déterminent les attributs des jetons à ajouter au certificat lors de\n"
+"l'affichage sous forme de tableau ou au format CSV.\n"
 "\n"
-"Les arguments valides pour cette option sont les caractères suivants :\n"
-" – n : nom\n"
-" – t : jeton\n"
-" – E : date d’expiration"
+"Les arguments de colonne sont soit des caractères abrégés prédéfinis\n"
+"(voir ci-dessous), soit des clés de configuration (étendues).\n"
+"\n"
+"Les virgules entre deux caractères d'abréviation consécutifs sont "
+"facultatives.\n"
+"\n"
+"Caractères abrégés prédéfinis pour les colonnes :\n"
+"  n - Nom\n"
+"  t - Jeton\n"
+"  E - Date d’expiration"
 
 #: cmd/incus/cluster.go:1112
 msgid "List all active cluster member join tokens"
