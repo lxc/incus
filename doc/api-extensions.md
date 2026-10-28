@@ -3619,3 +3619,12 @@ This adds a new `variant` configuration key to both `sriov` networks and NICs, a
 This adds support for PCIe resizable BARs to the `pci` and `gpu` (physical) devices of virtual machines.
 
 The new `rebar.<N>.size` configuration keys set the size of BAR `N` on the host before the device is passed to the VM, with the original size restored when the instance stops.
+
+## `network_ovn_dynamic_routing`
+
+This adds the `ovn.routes_table` configuration key to `bridge` and
+`physical` networks.
+
+When set on an OVN uplink network, the downstream OVN networks use OVN
+dynamic routing to export their routes into that host routing table (VRF)
+on the cluster member hosting the active OVN gateway chassis.

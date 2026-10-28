@@ -600,6 +600,7 @@ var APIExtensions = []string{
 	"storage_volume_migration_follow_instance",
 	"nic_sriov_migration_native",
 	"pci_rebar",
+	"network_ovn_dynamic_routing",
 }
 
 // APIExtensionsCount returns the number of available API extensions.
