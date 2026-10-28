@@ -137,8 +137,16 @@ func (m *incusAgentService) Execute(args []string, r <-chan svc.ChangeRequest, c
 
 	d := newDaemon(m.agentCmd.global.flagLogDebug, m.agentCmd.global.flagLogVerbose, m.agentCmd.global.flagSecretsLocation)
 
+	// Load the agent configuration.
+	err := loadAgentConfig(d)
+	if err != nil {
+		changes <- svc.Status{State: svc.StopPending}
+		elog.Error(1, fmt.Sprintf("Failed to load agent configuration: %s", err))
+		return true, 1
+	}
+
 	// Start the server.
-	err := osLoadModules()
+	err = osLoadModules()
 	if err == nil {
 		err = startHTTPServer(d, m.agentCmd.global.flagLogDebug)
 	}
