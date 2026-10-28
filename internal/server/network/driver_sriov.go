@@ -117,6 +117,10 @@ func (n *sriov) checkParent(parent string) error {
 
 // checkFailover checks that the failover is usable for the network.
 func (n *sriov) checkFailover(failover string) error {
+	if failover == "" {
+		return nil
+	}
+
 	if !IsNativeBridge(failover) {
 		// Check whether a non-native managed bridge exists.
 		_, err := LoadByName(n.state, api.ProjectDefaultName, failover)
@@ -142,11 +146,9 @@ func (n *sriov) Start() error {
 		return err
 	}
 
-	if n.config["failover"] != "" {
-		err = n.checkFailover(n.config["failover"])
-		if err != nil {
-			return err
-		}
+	err = n.checkFailover(n.config["failover"])
+	if err != nil {
+		return err
 	}
 
 	reverter.Success()
