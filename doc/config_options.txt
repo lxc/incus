@@ -1945,6 +1945,13 @@ The custom policy routing table ID to add IPv6 static routes to (in addition to 
 
 ```
 
+```{config:option} variant devices-nic_sriov
+:required: "no"
+:shortdesc: "VFIO variant to use (registers the NIC with the generic `vfio-pci` driver if unset, or with `mlx5_vfio_pci` if set to `mlx5`)"
+:type: "string"
+
+```
+
 ```{config:option} vendorid devices-nic_sriov
 :required: "no"
 :shortdesc: "The vendor ID of the parent host device"
@@ -5021,6 +5028,12 @@ User keys can be used in search.
 ```{config:option} user.* network_sriov-common
 :condition: "-"
 :shortdesc: "User-provided free-form key/value pairs"
+:type: "string"
+
+```
+
+```{config:option} variant network_sriov-common
+:shortdesc: "VFIO variant to use (registers `sriov` NICs with the generic `vfio-pci` driver if unset, or with `mlx5_vfio_pci` if set to `mlx5`)"
 :type: "string"
 
 ```
