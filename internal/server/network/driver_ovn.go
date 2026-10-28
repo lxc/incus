@@ -3206,6 +3206,47 @@ func (n *ovn) getDHCPv4Reservations() ([]iprange.Range, error) {
 	return dhcpReserveIPv4s, nil
 }
 
+// setupDynamicRouting configures OVN dynamic routing based on the uplink's ovn.routes_table setting.
+// When enabled, OVN exports the network's prefixes into that routing table on the active gateway chassis.
+func (n *ovn) setupDynamicRouting(uplinkConfig map[string]string, routerExtPortIPv4 net.IP, routerExtPortIPv6 net.IP) error {
+	// Empty values are deleted, clearing any previous configuration.
+	routerOpts := map[string]string{
+		"dynamic-routing":                   "",
+		"dynamic-routing-redistribute":      "",
+		"dynamic-routing-vrf-id":            "",
+		"dynamic-routing-v4-prefix-nexthop": "",
+		"dynamic-routing-v6-prefix-nexthop": "",
+	}
+
+	if uplinkConfig["ovn.routes_table"] != "" {
+		routerOpts["dynamic-routing"] = "true"
+		routerOpts["dynamic-routing-vrf-id"] = uplinkConfig["ovn.routes_table"]
+
+		// Always redistribute connected and lb, nat only when enabled.
+		redistribute := []string{"connected", "lb"}
+		if util.IsTrue(n.config["ipv4.nat"]) || util.IsTrue(n.config["ipv6.nat"]) {
+			redistribute = append(redistribute, "nat")
+		}
+
+		routerOpts["dynamic-routing-redistribute"] = strings.Join(redistribute, ",")
+
+		if routerExtPortIPv4 != nil {
+			routerOpts["dynamic-routing-v4-prefix-nexthop"] = routerExtPortIPv4.String()
+		}
+
+		if routerExtPortIPv6 != nil {
+			routerOpts["dynamic-routing-v6-prefix-nexthop"] = routerExtPortIPv6.String()
+		}
+	}
+
+	err := n.ovnnb.UpdateLogicalRouterOptions(context.TODO(), n.getRouterName(), routerOpts)
+	if err != nil {
+		return fmt.Errorf("Failed configuring dynamic routing on router: %w", err)
+	}
+
+	return nil
+}
+
 func (n *ovn) setup(update bool) error {
 	// If we are in mock mode, just no-op.
 	if n.state.OS.MockMode {
@@ -3420,6 +3461,17 @@ func (n *ovn) setup(update bool) error {
 			})
 		}
 
+		// Load the uplink network (always present when there is an external router port).
+		uplinkNetworkObj, err := LoadByName(n.state, api.ProjectDefaultName, n.config["network"])
+		if err != nil {
+			return fmt.Errorf("Failed loading uplink network %q: %w", n.config["network"], err)
+		}
+
+		err = n.setupDynamicRouting(uplinkNetworkObj.Config(), routerExtPortIPv4, routerExtPortIPv6)
+		if err != nil {
+			return err
+		}
+
 		// Create external switch port and link to router port.
 		err = n.ovnnb.CreateLogicalSwitchPort(context.TODO(), n.getExtSwitchName(), n.getExtSwitchRouterPortName(), nil, update)
 		if err != nil {
@@ -3458,12 +3510,6 @@ func (n *ovn) setup(update bool) error {
 
 		// Check if uplink network states its gateway mac for static MAC binding.
 		if uplinkNet != nil && n.config["network"] != "none" {
-			// Load the uplink network.
-			uplinkNetworkObj, err := LoadByName(n.state, api.ProjectDefaultName, n.config["network"])
-			if err != nil {
-				return fmt.Errorf("Failed loading uplink network %q: %w", n.config["network"], err)
-			}
-
 			uplinkConfig := uplinkNetworkObj.Config()
 
 			// Handle IPv4 MAC.
@@ -7225,7 +7271,7 @@ func (n *ovn) handleDependencyChange(uplinkName string, uplinkConfig map[string]
 		break // Only run setup once per notification (all changes will be applied).
 	}
 
-	watchedKeys := []string{"dns.nameservers", "ipv4.gateway", "ipv6.gateway", "ipv4.gateway.hwaddr", "ipv6.gateway.hwaddr"}
+	watchedKeys := []string{"dns.nameservers", "ipv4.gateway", "ipv6.gateway", "ipv4.gateway.hwaddr", "ipv6.gateway.hwaddr", "ovn.routes_table"}
 	for _, k := range append(watchedKeys, uplinkKeys...) {
 		if !slices.Contains(changedKeys, k) {
 			continue
