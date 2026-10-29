@@ -541,6 +541,11 @@ func (v Volume) IsVMBlock() bool {
 	return (v.volType == VolumeTypeVM || v.volType == VolumeTypeImage) && v.contentType == ContentTypeBlock
 }
 
+// IsVMFilesystem returns true if volume is the filesystem volume paired with a VM or VM image block volume.
+func (v Volume) IsVMFilesystem() bool {
+	return (v.volType == VolumeTypeVM || v.volType == VolumeTypeImage) && v.contentType == ContentTypeFS
+}
+
 // IsCustomBlock returns true if volume is a custom block volume.
 func (v Volume) IsCustomBlock() bool {
 	return (v.volType == VolumeTypeCustom && v.contentType == ContentTypeBlock)
@@ -592,8 +597,8 @@ func (v Volume) SetConfigStateSize(size string) {
 // ConfigBlockFilesystem returns the filesystem to use for block volumes. Returns config value "block.filesystem"
 // if defined in volume or pool's volume config, otherwise the DefaultFilesystem.
 func (v Volume) ConfigBlockFilesystem() string {
-	blockType := v.ExpandedConfig("block.type")
-	if blockType != "" && blockType == BlockVolumeTypeQcow2 && v.contentType == ContentTypeFS {
+	// The filesystem volume of a qcow2 VM holds its config on btrfs.
+	if v.IsVMFilesystem() && v.ExpandedConfig("block.type") == BlockVolumeTypeQcow2 {
 		return "btrfs"
 	}
 
@@ -608,7 +613,7 @@ func (v Volume) ConfigBlockFilesystem() string {
 // ConfigBlockMountOptions returns the filesystem mount options to use for block volumes. Returns config value
 // "block.mount_options" if defined in volume or pool's volume config, otherwise defaultFilesystemMountOptions.
 func (v Volume) ConfigBlockMountOptions() string {
-	if v.ExpandedConfig("block.type") == BlockVolumeTypeQcow2 && !v.mountFullFilesystem {
+	if v.IsVMFilesystem() && v.ExpandedConfig("block.type") == BlockVolumeTypeQcow2 && !v.mountFullFilesystem {
 		_, snapName, isSnap := api.GetParentAndSnapshotName(v.name)
 		subvol := Qcow2ConfigVolumeBase
 		if isSnap {
