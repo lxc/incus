@@ -186,6 +186,7 @@ MiB
 Mibit
 MicroCeph
 MicroCloud
+migratable
 misconfigured
 MCS
 MII
@@ -255,6 +256,7 @@ proxied
 Proxmox
 proxying
 PTS
+PVID
 PXE
 qdisc
 QEMU
@@ -267,6 +269,7 @@ RBD
 RDNSS
 README
 reconfiguring
+representor
 requestor
 resolvers
 RESTful
@@ -357,6 +360,7 @@ unixgram
 unmanaged
 unmount
 unmounting
+untagged
 uplink
 uptime
 URI
