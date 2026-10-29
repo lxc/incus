@@ -279,7 +279,16 @@ func (d *linstor) createResourceGroup() error {
 		return fmt.Errorf("Could not create Linstor resource group : %w", err)
 	}
 
-	// Set additional properties based on the config.
+	return d.setResourceGroupProperties()
+}
+
+// setResourceGroupProperties applies the DRBD properties from the pool config to the resource group.
+func (d *linstor) setResourceGroupProperties() error {
+	linstor, err := d.state.Linstor()
+	if err != nil {
+		return err
+	}
+
 	props, err := d.drbdPropsFromConfig(d.config)
 	if err != nil {
 		return fmt.Errorf("Could not parse configuration into DRBD properties: %w", err)
@@ -290,7 +299,7 @@ func (d *linstor) createResourceGroup() error {
 		props["DrbdOptions/Disk/rs-discard-granularity"] = LinstorDefaultResyncDiscardGranularity
 	}
 
-	err = linstor.Client.ResourceGroups.Modify(context.TODO(), resourceGroup.Name, linstorClient.ResourceGroupModify{
+	err = linstor.Client.ResourceGroups.Modify(context.TODO(), d.config[LinstorResourceGroupNameConfigKey], linstorClient.ResourceGroupModify{
 		OverrideProps: props,
 	})
 	if err != nil {
@@ -444,12 +453,9 @@ func (d *linstor) getLinstorDevPath(vol Volume) (string, error) {
 	}
 
 	// When retrieving the device path, always make sure that the resource is available on the current node.
-	err = linstor.Client.Resources.MakeAvailable(context.TODO(), resourceDefinition.Name, d.getSatelliteName(), linstorClient.ResourceMakeAvailable{
-		Diskful: false,
-	})
+	err = d.makeResourceAvailable(resourceDefinition.Name)
 	if err != nil {
-		l.Debug("Could not make resource available on node", logger.Ctx{"resourceDefinitionName": resourceDefinition.Name, "nodeName": d.getSatelliteName(), "error": err})
-		return "", fmt.Errorf("Could not make resource available on node: %w", err)
+		return "", err
 	}
 
 	volumes, err := linstor.Client.Resources.GetVolumes(context.TODO(), resourceDefinition.Name, d.getSatelliteName())
@@ -584,22 +590,56 @@ func (d *linstor) getSatelliteName() string {
 func (d *linstor) makeVolumeAvailable(vol Volume) error {
 	l := d.logger.AddContext(logger.Ctx{"volume": vol.Name()})
 	l.Debug("Making volume available on node")
-	linstor, err := d.state.Linstor()
-	if err != nil {
-		return err
-	}
 
 	resourceDefinition, err := d.getResourceDefinition(vol, false)
 	if err != nil {
 		return err
 	}
 
-	err = linstor.Client.Resources.MakeAvailable(context.TODO(), resourceDefinition.Name, d.getSatelliteName(), linstorClient.ResourceMakeAvailable{
+	return d.makeResourceAvailable(resourceDefinition.Name)
+}
+
+// makeResourceAvailable deploys the resource on the current node if it isn't already.
+// The auto-placer skips nodes with AutoplaceTarget=false, in which case a diskless replica is attached directly.
+func (d *linstor) makeResourceAvailable(resourceDefinitionName string) error {
+	l := d.logger.AddContext(logger.Ctx{"resourceDefinitionName": resourceDefinitionName, "nodeName": d.getSatelliteName()})
+
+	linstor, err := d.state.Linstor()
+	if err != nil {
+		return err
+	}
+
+	nodeName := d.getSatelliteName()
+
+	err = linstor.Client.Resources.MakeAvailable(context.TODO(), resourceDefinitionName, nodeName, linstorClient.ResourceMakeAvailable{
 		Diskful: false,
 	})
+	if err == nil {
+		return nil
+	}
+
+	if !errors.Is(err, linstorClient.NotFoundError) {
+		l.Debug("Could not make resource available on node", logger.Ctx{"error": err})
+		return fmt.Errorf("Could not make resource %q available on node %q: %w", resourceDefinitionName, nodeName, err)
+	}
+
+	// Nothing to do if the resource is already deployed on the node.
+	_, err = linstor.Client.Resources.Get(context.TODO(), resourceDefinitionName, nodeName)
+	if err == nil {
+		return nil
+	}
+
+	l.Debug("Resource can't be auto-placed on node, attaching a diskless replica")
+
+	err = linstor.Client.Resources.Create(context.TODO(), linstorClient.ResourceCreate{
+		Resource: linstorClient.Resource{
+			Name:     resourceDefinitionName,
+			NodeName: nodeName,
+			Flags:    []string{linstorapi.FlagDrbdDiskless},
+		},
+	})
 	if err != nil {
-		l.Debug("Could not make resource available on node", logger.Ctx{"resourceDefinitionName": resourceDefinition.Name, "nodeName": d.getSatelliteName(), "error": err})
-		return fmt.Errorf("Could not make resource available on node: %w", err)
+		return fmt.Errorf("Could not attach diskless resource %q on node %q: %w", resourceDefinitionName, nodeName, err)
 	}
 
 	return nil
@@ -947,6 +987,12 @@ func (d *linstor) resizeVolume(vol Volume, sizeBytes int64) error {
 		return fmt.Errorf("Unable to remove the exact size property: %w", err)
 	}
 
+	// LINSTOR refuses to resize while a replica is still syncing, which is the case right after a clone.
+	err = d.waitResourceDefinitionSynced(resourceDefinition.Name)
+	if err != nil {
+		return err
+	}
+
 	// Resize the volume definition.
 	err = linstor.Client.ResourceDefinitions.ModifyVolumeDefinition(context.TODO(), resourceDefinition.Name, volumeIndex, linstorClient.VolumeDefinitionModify{
 		SizeKib: uint64(sizeBytes) / 1024,
@@ -956,6 +1002,34 @@ func (d *linstor) resizeVolume(vol Volume, sizeBytes int64) error {
 	}
 
 	return nil
+}
+
+// waitResourceDefinitionSynced waits for every replica of the resource definition to be in sync.
+func (d *linstor) waitResourceDefinitionSynced(resourceDefinitionName string) error {
+	linstor, err := d.state.Linstor()
+	if err != nil {
+		return err
+	}
+
+	ctx, cancel := context.WithTimeout(context.TODO(), 5*time.Minute)
+	defer cancel()
+
+	for {
+		status, err := linstor.Client.ResourceDefinitions.SyncStatus(ctx, resourceDefinitionName)
+		if err != nil {
+			return fmt.Errorf("Unable to get sync status of resource definition %q: %w", resourceDefinitionName, err)
+		}
+
+		if status.SyncedOnAll {
+			return nil
+		}
+
+		select {
+		case <-ctx.Done():
+			return fmt.Errorf("Timed out waiting for resource definition %q to sync", resourceDefinitionName)
+		case <-time.After(time.Second):
+		}
+	}
 }
 
 func (d *linstor) copyVolume(vol Volume, srcVol Volume) error {
@@ -984,6 +1058,9 @@ func (d *linstor) copyVolume(vol Volume, srcVol Volume) error {
 	if err != nil {
 		return err
 	}
+
+	// The controller may have created the target even when the request fails, so clean up on any error from here.
+	rev.Add(func() { _ = linstor.Client.ResourceDefinitions.Delete(context.TODO(), targetResourceDefinitionName) })
 
 	_, err = linstor.Client.ResourceDefinitions.Clone(context.TODO(), srcResourceDefinition.Name, linstorClient.ResourceDefinitionCloneRequest{
 		Name:               targetResourceDefinitionName,
@@ -1017,8 +1094,6 @@ loop:
 			return errors.New("Clone operation failed")
 		}
 	}
-
-	rev.Add(func() { _ = linstor.Client.ResourceDefinitions.Delete(context.TODO(), targetResourceDefinitionName) })
 
 	// Re-apply the aux properties in case the controller ignored the ones in the clone request.
 	err = d.setResourceDefinitionProperties(vol, targetResourceDefinitionName)
