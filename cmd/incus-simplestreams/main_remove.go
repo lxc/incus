@@ -77,11 +77,10 @@ func (c *cmdRemove) run(cmd *cobra.Command, args []string) error {
 	}
 
 	// Delete the image entry.
+	// Walk every product: --product-name allows several products to share
+	// the same os/release/variant/architecture, so the metadata fields
+	// cannot be used to pick one.
 	for kProduct, product := range products.Products {
-		if product.OperatingSystem != image.Properties["os"] || product.Release != image.Properties["release"] || product.Variant != image.Properties["variant"] || product.Architecture != image.Properties["architecture"] {
-			continue
-		}
-
 		for kVersion, version := range product.Versions {
 			// Get the metadata entry.
 			metaEntry, ok := version.Items["incus.tar.xz"]
@@ -158,8 +157,6 @@ func (c *cmdRemove) run(cmd *cobra.Command, args []string) error {
 		if len(product.Versions) == 0 {
 			delete(products.Products, kProduct)
 		}
-
-		break
 	}
 
 	// Write back the images file.
