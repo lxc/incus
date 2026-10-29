@@ -1922,7 +1922,8 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 
 	// Record (or load) boot state.
 	bs := &qemuBootState{
-		Version: qemuBootStateVersion,
+		Version:   qemuBootStateVersion,
+		IOThreads: qemuIOThreadCount,
 	}
 
 	if stateful {
@@ -5150,7 +5151,14 @@ func (d *qemu) generateQemuConfig(bs *qemuBootState, mountInfo *storagePools.Mou
 		multifunction: multi,
 	}
 
-	conf = append(conf, qemuSCSI(&scsiOpts, bs.getSCSIQueues())...)
+	conf = append(conf, qemuIOThreads(bs.IOThreads)...)
+
+	ioThread := ""
+	if bs.IOThreads > 0 {
+		ioThread = qemuIOThreadName(0)
+	}
+
+	conf = append(conf, qemuSCSI(&scsiOpts, bs.getSCSIQueues(), ioThread)...)
 
 	// Export the config directory and agent as 9p drives when supported.
 	if !isWindows && plan9 {
@@ -6151,6 +6159,22 @@ func qemuBlockThrottle(limits *deviceConfig.DiskLimits) qmp.BlockThrottle {
 }
 
 // addDriveConfig adds the qemu config required for adding a supplementary drive.
+// qemuIOThread returns the iothread new disks go to, empty when the VM was booted without any.
+func qemuIOThread(m *qmp.Monitor) (string, error) {
+	ioThreads, err := m.GetIOThreads()
+	if err != nil {
+		return "", err
+	}
+
+	for _, id := range ioThreads {
+		if strings.HasPrefix(id, qemuIOThreadPrefix) {
+			return id, nil
+		}
+	}
+
+	return "", nil
+}
+
 func (d *qemu) addDriveConfig(qemuDev map[string]any, bootIndexes map[string]int, driveConf deviceConfig.MountEntryItem) (monitorHook, error) {
 	aioMode := "native" // Use native kernel async IO and O_DIRECT by default.
 	cacheMode := "none" // Bypass host cache, use O_DIRECT semantics by default.
@@ -6546,6 +6570,18 @@ func (d *qemu) addDriveConfig(qemuDev map[string]any, bootIndexes map[string]int
 				}
 			} else {
 				blockDev["filename"] = fmt.Sprintf("/dev/fdset/%d", info.ID)
+			}
+		}
+
+		// Attach virtio-blk disks to an iothread when the VM was booted with some.
+		if bus == "virtio-blk" {
+			ioThread, err := qemuIOThread(m)
+			if err != nil {
+				return err
+			}
+
+			if ioThread != "" {
+				qemuDev["iothread"] = ioThread
 			}
 		}
 

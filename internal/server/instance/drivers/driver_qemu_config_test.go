@@ -286,8 +286,22 @@ func TestQemuConfigTemplates(t *testing.T) {
 			`,
 		}}
 		for _, tc := range testCases {
-			runTest(tc.expected, qemuSCSI(&tc.opts, 4))
+			runTest(tc.expected, qemuSCSI(&tc.opts, 4, ""))
 		}
+
+		runTest(`# SCSI controller
+			[device "qemu_scsi"]
+			addr = "00.0"
+			bus = "qemu_pcie1"
+			driver = "virtio-scsi-pci"
+			iothread = "qemu_iothread0"
+			num_queues = "4"
+			`, qemuSCSI(&qemuDevOpts{"pci", "qemu_pcie1", "00.0", false}, 4, "qemu_iothread0"))
+
+		runTest(`# Disk I/O thread
+			[object "qemu_iothread0"]
+			qom-type = "iothread"
+			`, qemuIOThreads(1))
 	})
 
 	t.Run("qemu_balloon", func(t *testing.T) {
