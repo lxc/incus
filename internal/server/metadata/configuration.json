@@ -3842,6 +3842,13 @@
 						}
 					},
 					{
+						"volatile.\u003cname\u003e.last_state.migratable": {
+							"longdesc": "The original NIC migratable capability",
+							"shortdesc": "NIC original migratable capability",
+							"type": "string"
+						}
+					},
+					{
 						"volatile.\u003cname\u003e.last_state.mtu": {
 							"longdesc": "The original MTU that was used when moving a physical device into an instance.",
 							"shortdesc": "Network device original MTU",
@@ -3866,6 +3873,48 @@
 						"volatile.\u003cname\u003e.last_state.pci.slot.name": {
 							"longdesc": "The parent host device PCI slot name.",
 							"shortdesc": "PCI parent slot name",
+							"type": "string"
+						}
+					},
+					{
+						"volatile.\u003cname\u003e.last_state.representor": {
+							"longdesc": "The representor port name",
+							"shortdesc": "Representor name",
+							"type": "string"
+						}
+					},
+					{
+						"volatile.\u003cname\u003e.last_state.representor.mtu": {
+							"longdesc": "The original representor MTU",
+							"shortdesc": "Representor original MTU",
+							"type": "string"
+						}
+					},
+					{
+						"volatile.\u003cname\u003e.last_state.representor.pvid": {
+							"longdesc": "The original representor PVID",
+							"shortdesc": "Representor original PVID",
+							"type": "string"
+						}
+					},
+					{
+						"volatile.\u003cname\u003e.last_state.representor.tagged": {
+							"longdesc": "The original representor tagged VLANs",
+							"shortdesc": "Representor original tagged VLANs",
+							"type": "string"
+						}
+					},
+					{
+						"volatile.\u003cname\u003e.last_state.representor.untagged": {
+							"longdesc": "The original representor untagged VLANs",
+							"shortdesc": "Representor original untagged VLANs",
+							"type": "string"
+						}
+					},
+					{
+						"volatile.\u003cname\u003e.last_state.representor.up": {
+							"longdesc": "The original representor state",
+							"shortdesc": "Representor original state",
 							"type": "string"
 						}
 					},
