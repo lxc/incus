@@ -350,13 +350,43 @@ func qemuPCIe(opts *qemuPCIeOpts) []cfg.Section {
 	}}
 }
 
-func qemuSCSI(opts *qemuDevOpts, numQueues int) []cfg.Section {
+// qemuIOThreadCount is the number of iothreads the virtio disks run through.
+const qemuIOThreadCount = 1
+
+// qemuIOThreadPrefix is the object name prefix of the iothreads.
+const qemuIOThreadPrefix = "qemu_iothread"
+
+// qemuIOThreadName returns the object name of an iothread.
+func qemuIOThreadName(index int) string {
+	return fmt.Sprintf("%s%d", qemuIOThreadPrefix, index)
+}
+
+func qemuIOThreads(count int) []cfg.Section {
+	sections := make([]cfg.Section, 0, count)
+	for i := range count {
+		sections = append(sections, cfg.Section{
+			Name:    fmt.Sprintf(`object "%s"`, qemuIOThreadName(i)),
+			Comment: "Disk I/O thread",
+			Entries: map[string]string{
+				"qom-type": "iothread",
+			},
+		})
+	}
+
+	return sections
+}
+
+func qemuSCSI(opts *qemuDevOpts, numQueues int, ioThread string) []cfg.Section {
 	entries := qemuDeviceEntries(&qemuDevEntriesOpts{
 		dev:     *opts,
 		pciName: "virtio-scsi-pci",
 		ccwName: "virtio-scsi-ccw",
 	})
 	entries["num_queues"] = fmt.Sprintf("%d", numQueues)
+
+	if ioThread != "" {
+		entries["iothread"] = ioThread
+	}
 
 	return []cfg.Section{{
 		Name:    `device "qemu_scsi"`,
