@@ -114,6 +114,9 @@ const qemuNetDevIDPrefix = "incus_"
 // qemuBlockDevIDPrefix used as part of the name given QEMU blockdevs generated from user added devices.
 const qemuBlockDevIDPrefix = "incus_"
 
+// qemuDiskMaxWriteZeroes caps guest write-zeroes requests so the I/O limits get to pace them.
+const qemuDiskMaxWriteZeroes = 64 * 1024 * 1024
+
 // qemuMountTagMaxLength defines the maximum number of characters allowed for the mount tag added to the QEMU configuration.
 const qemuMountTagMaxLength = 30
 
@@ -6573,15 +6576,20 @@ func (d *qemu) addDriveConfig(qemuDev map[string]any, bootIndexes map[string]int
 			}
 		}
 
-		// Attach virtio-blk disks to an iothread when the VM was booted with some.
-		if bus == "virtio-blk" {
+		// Follow the disk layout the VM was booted with so a migration target matches its source.
+		if slices.Contains([]string{"virtio-blk", "virtio-scsi"}, bus) {
 			ioThread, err := qemuIOThread(m)
 			if err != nil {
 				return err
 			}
 
 			if ioThread != "" {
-				qemuDev["iothread"] = ioThread
+				if bus == "virtio-blk" {
+					qemuDev["iothread"] = ioThread
+					qemuDev["max-write-zeroes-sectors"] = qemuDiskMaxWriteZeroes / 512
+				} else if media == "disk" {
+					qemuDev["max_io_size"] = qemuDiskMaxWriteZeroes
+				}
 			}
 		}
 
