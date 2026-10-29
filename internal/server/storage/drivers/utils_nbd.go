@@ -19,6 +19,7 @@ import (
 	"github.com/lxc/incus/v7/internal/linux"
 	"github.com/lxc/incus/v7/internal/linux/nbd"
 	internalUtil "github.com/lxc/incus/v7/internal/util"
+	"github.com/lxc/incus/v7/shared/logger"
 	"github.com/lxc/incus/v7/shared/subprocess"
 	"github.com/lxc/incus/v7/shared/util"
 )
@@ -368,7 +369,16 @@ func DisconnectQemuNbdWait(nbdPath string) error {
 
 // DisconnectQemuNbd disconnects the NBD device at nbdPath.
 func DisconnectQemuNbd(nbdPath string) error {
-	var err error
+	// Dirty pages are only written back on the last close of the device, so flush them while the server is still there.
+	f, err := os.Open(nbdPath)
+	if err == nil {
+		err = f.Sync()
+		_ = f.Close()
+	}
+
+	if err != nil {
+		logger.Warn("Failed flushing NBD device", logger.Ctx{"dev": nbdPath, "err": err})
+	}
 
 	// Devices attached by qemu-nbd itself (older Incus) only take the ioctl interface.
 	if nbdBackend(nbdPath) == "" {
