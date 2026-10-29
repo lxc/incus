@@ -1324,7 +1324,7 @@ func (c *cmdStorageBucketExport) run(cmd *cobra.Command, args []string) error {
 	poolName := parsed[0].RemoteObject.String
 	bucketName := parsed[1].String
 	hasTarget := !parsed[2].Skipped
-	targetName := parsed[2].Get("." + bucketName + ".backup")
+	targetName := parsed[2].Get(randName(".incus-", 8, ".backup"))
 
 	// If a target was specified, use the bucket on the given member.
 	if c.storageBucket.flagTarget != "" {
