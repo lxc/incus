@@ -848,7 +848,7 @@ func (d *lvm) SetVolumeQuota(vol Volume, size string, allowUnsafeResize bool, op
 			}
 		} else if sizeBytes > oldSizeBytes {
 			// Get exclusive mode if active.
-			release, err := d.acquireExclusive(vol)
+			release, err := d.acquireExclusiveIfActive(vol)
 			if err != nil {
 				return err
 			}
@@ -895,8 +895,8 @@ func (d *lvm) SetVolumeQuota(vol Volume, size string, allowUnsafeResize bool, op
 			}
 		}
 
-		// Get exclusive mode.
-		release, err := d.acquireExclusive(vol)
+		// Get exclusive mode if active.
+		release, err := d.acquireExclusiveIfActive(vol)
 		if err != nil {
 			return err
 		}
