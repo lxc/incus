@@ -1101,6 +1101,24 @@ loop:
 		return err
 	}
 
+	// The clone inherits every member of the source, drop the diskless ones as the new
+	// volume gets its own when mounted and stale image attachments shouldn't spread.
+	resources, err := linstor.Client.Resources.GetAll(context.TODO(), targetResourceDefinitionName)
+	if err != nil {
+		return fmt.Errorf("Unable to get the resources for the resource definition: %w", err)
+	}
+
+	for _, r := range resources {
+		if !slices.Contains(r.Flags, linstorapi.FlagDiskless) || slices.Contains(r.Flags, linstorapi.FlagTieBreaker) {
+			continue
+		}
+
+		err = linstor.Client.Resources.Delete(context.TODO(), r.Name, r.NodeName)
+		if err != nil {
+			return fmt.Errorf("Unable to delete diskless resource on node %q: %w", r.NodeName, err)
+		}
+	}
+
 	rev.Success()
 
 	return nil
