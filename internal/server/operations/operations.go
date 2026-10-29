@@ -462,8 +462,11 @@ func (op *Operation) Connect(r *http.Request, w http.ResponseWriter) (chan error
 
 	chanConnect := make(chan error, 1)
 
+	// Capture the handler under the lock, done() clears it once the operation finishes.
+	onConnect := op.onConnect
+
 	go func(op *Operation, chanConnect chan error) {
-		err := op.onConnect(op, r, w)
+		err := onConnect(op, r, w)
 		if err != nil {
 			chanConnect <- err
 
