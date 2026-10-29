@@ -2298,7 +2298,7 @@ func (c *cmdStorageVolumeExport) run(cmd *cobra.Command, args []string) error {
 	poolName := parsed[0].RemoteObject.String
 	volName := parsed[1].String
 	hasTarget := !parsed[2].Skipped
-	targetName := parsed[2].Get("." + volName + ".backup")
+	targetName := parsed[2].Get(randName(".incus-", 8, ".backup"))
 
 	// Use the provided target.
 	if c.storage.flagTarget != "" {
