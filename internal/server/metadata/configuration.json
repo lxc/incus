@@ -2195,6 +2195,14 @@
 						}
 					},
 					{
+						"variant": {
+							"longdesc": "",
+							"required": "no",
+							"shortdesc": "VFIO variant to use (registers the NIC with the generic `vfio-pci` driver if unset, or with `mlx5_vfio_pci` if set to `mlx5`)",
+							"type": "string"
+						}
+					},
+					{
 						"vendorid": {
 							"longdesc": "",
 							"required": "no",
@@ -5634,6 +5642,13 @@
 							"condition": "-",
 							"longdesc": "",
 							"shortdesc": "User-provided free-form key/value pairs",
+							"type": "string"
+						}
+					},
+					{
+						"variant": {
+							"longdesc": "",
+							"shortdesc": "VFIO variant to use (registers `sriov` NICs with the generic `vfio-pci` driver if unset, or with `mlx5_vfio_pci` if set to `mlx5`)",
 							"type": "string"
 						}
 					},

@@ -1272,6 +1272,14 @@ func (d *qemu) restoreStateMultifd(ctx context.Context, monitor *qmp.Monitor, co
 		return fmt.Errorf("Failed setting migration parameters: %w", err)
 	}
 
+	vfioMigration := d.hasVFIOMigration()
+	if vfioMigration {
+		err = monitor.MigrateSetCapabilities(map[string]bool{"return-path": true, "switchover-ack": true})
+		if err != nil {
+			return fmt.Errorf("Failed setting switchover parameters: %w", err)
+		}
+	}
+
 	err = monitor.MigrateIncomingUnix(filepath.Join(qemuDir, "migration.sock"))
 	if err != nil {
 		return err
@@ -1291,6 +1299,10 @@ func (d *qemu) restoreStateMultifd(ctx context.Context, monitor *qmp.Monitor, co
 			if err != nil {
 				cancel(fmt.Errorf("Failed connecting to the migration socket: %w", err))
 				return
+			}
+
+			if vfioMigration {
+				go func() { _, _ = util.SafeCopy(conn, qemuConn) }()
 			}
 
 			_, err = qemuConn.Write(buf[:n])
@@ -1501,8 +1513,12 @@ func (d *qemu) restoreState(monitor *qmp.Monitor) error {
 // Once started, the VM is in a paused state and it's up to the caller to wait for the transfer to complete and
 // resume or kill the VM guest.
 func (d *qemu) saveStateHandle(monitor *qmp.Monitor, f *os.File) error {
-	// Capabilities persist in QEMU, clear multifd left on by an incoming migration as it can't write to a file.
-	err := monitor.MigrateSetCapabilities(map[string]bool{"multifd": false})
+	// Capabilities persist in QEMU, clear those left on by an incoming migration as they can't be used to write to a file.
+	err := monitor.MigrateSetCapabilities(map[string]bool{
+		"multifd":        false,
+		"switchover-ack": false,
+		"return-path":    false,
+	})
 	if err != nil {
 		return fmt.Errorf("Failed setting migration capabilities: %w", err)
 	}
@@ -1573,6 +1589,8 @@ func (d *qemu) saveStateMultifd(monitor *qmp.Monitor, conns []io.ReadWriteCloser
 	}
 
 	// Pair each QEMU connection with one of the websockets, the target tells them apart by their content.
+	vfioMigration := d.hasVFIOMigration()
+
 	go func() {
 		for i := 0; i < len(conns); {
 			qemuConn, err := listener.AcceptUnix()
@@ -1590,6 +1608,10 @@ func (d *qemu) saveStateMultifd(monitor *qmp.Monitor, conns []io.ReadWriteCloser
 
 			conn := conns[i]
 			i++
+
+			if vfioMigration {
+				go func() { _, _ = util.SafeCopy(qemuConn, conn) }()
+			}
 
 			go func() {
 				_, _ = util.SafeCopy(conn, qemuConn)
@@ -6576,9 +6598,14 @@ func (d *qemu) addNetDevConfig(busName string, qemuDev map[string]any, bootIndex
 			connected = util.IsTrueOrEmpty(nicItem.Value)
 		case "failover":
 			qemuDev["failover"] = util.IsTrue(nicItem.Value)
-
 		case "failoverPair":
 			qemuDev["failover_pair_id"] = qemuDeviceIDPrefix + linux.PathNameEncode(nicItem.Value)
+		case "variant":
+			if nicItem.Value != "" {
+				qemuDev["enable-migration"] = "on"
+				// This is required to maximize compatibility.
+				qemuDev["x-pre-copy-dirty-page-tracking"] = "off"
+			}
 		}
 	}
 
@@ -10097,6 +10124,8 @@ func (d *qemu) migrateSendLive(ctx context.Context, pool storagePools.Pool, clus
 		parameters["multifd-channels"] = len(stateConnExtra)
 	}
 
+	vfioMigration := d.hasVFIOMigration()
+
 	// Apply the global bandwidth limit to the memory and state transfer.
 	bwlimit := d.state.GlobalConfig.InstancesMigrationBwlimit()
 	if bwlimit != "" {
@@ -10127,6 +10156,10 @@ func (d *qemu) migrateSendLive(ctx context.Context, pool storagePools.Pool, clus
 
 			// Parallel state transfer, reset explicitly as a previous attempt may have left it on.
 			"multifd": multifd,
+
+			// VFIO migration requires bidirectional communication.
+			"return-path":    vfioMigration,
+			"switchover-ack": vfioMigration,
 		}
 
 		err = monitor.MigrateSetCapabilities(capabilities)
@@ -10184,6 +10217,10 @@ func (d *qemu) migrateSendLive(ctx context.Context, pool storagePools.Pool, clus
 
 			// Parallel state transfer, reset explicitly as a previous attempt may have left it on.
 			"multifd": multifd,
+
+			// VFIO migration requires bidirectional communication.
+			"return-path":    vfioMigration,
+			"switchover-ack": vfioMigration,
 		}
 
 		err = monitor.MigrateSetCapabilities(capabilities)
@@ -14310,4 +14347,30 @@ func (d *qemu) ResetNVRAM() error {
 
 	defer logger.WarnOnError(d.unmount, "Failed to unmount instance")
 	return d.setupNvram()
+}
+
+// hasVFIOMigration returns whether the instance features live-migratable VFIO devices.
+func (d *qemu) hasVFIOMigration() bool {
+	if !d.CanLiveMigrate() {
+		return false
+	}
+
+	for _, dev := range d.expandedDevices {
+		if dev["type"] != "nic" {
+			continue
+		}
+
+		if dev["variant"] != "" {
+			return true
+		}
+
+		if dev["network"] != "" {
+			n, err := network.LoadByName(d.state, api.ProjectDefaultName, dev["network"])
+			if err == nil && n.Config()["variant"] != "" {
+				return true
+			}
+		}
+	}
+
+	return false
 }
