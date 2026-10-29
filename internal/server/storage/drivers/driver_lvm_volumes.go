@@ -77,7 +77,7 @@ func (d *lvm) CreateVolume(vol Volume, filler *VolumeFiller, op *operations.Oper
 		if err != nil {
 			return err
 		}
-	} else if vol.ContentType() == ContentTypeFS && vol.ExpandedConfig("block.type") == BlockVolumeTypeQcow2 {
+	} else if vol.IsVMFilesystem() && vol.ExpandedConfig("block.type") == BlockVolumeTypeQcow2 {
 		err = Qcow2CreateConfig(vol, op)
 		if err != nil {
 			return err
@@ -1622,7 +1622,7 @@ func (d *lvm) MountVolumeSnapshot(snapVol Volume, op *operations.Operation) erro
 		mountVol := snapVol
 		mountFlags, mountOptions := linux.ResolveMountOptions(strings.Split(mountVol.ConfigBlockMountOptions(), ","))
 
-		isQcow2 := snapVol.ExpandedConfig("block.type") == BlockVolumeTypeQcow2
+		isQcow2 := snapVol.IsVMFilesystem() && snapVol.ExpandedConfig("block.type") == BlockVolumeTypeQcow2
 		if isQcow2 {
 			parentName, _, _ := api.GetParentAndSnapshotName(snapVol.name)
 			mountVol = NewVolume(d, d.name, snapVol.volType, snapVol.contentType, parentName, snapVol.config, snapVol.poolConfig)
