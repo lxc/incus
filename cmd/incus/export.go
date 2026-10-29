@@ -67,7 +67,7 @@ func (c *cmdExport) run(cmd *cobra.Command, args []string) error {
 	d := parsed[0].RemoteServer
 	instanceName := parsed[0].RemoteObject.String
 	hasTarget := !parsed[1].Skipped
-	targetName := parsed[1].Get("." + instanceName + ".backup")
+	targetName := parsed[1].Get(randName(".incus-", 8, ".backup"))
 
 	if isStdout(targetName) {
 		// If outputting to stdout, quiesce the output.
