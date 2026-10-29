@@ -1654,6 +1654,55 @@ var ConfigDeviceVolatileKeys = map[string]func(value string) error{
 	//  shortdesc: SR-IOV virtual function original VLAN
 	"last_state.vf.vlan": validate.IsAny,
 
+	// gendoc:generate(entity=instance, group=volatile, key=volatile.<name>.last_state.representor)
+	// The representor port name
+	// ---
+	//  type: string
+	//  shortdesc: Representor name
+	"last_state.representor": validate.IsAny,
+
+	// gendoc:generate(entity=instance, group=volatile, key=volatile.<name>.last_state.representor.mtu)
+	// The original representor MTU
+	// ---
+	//  type: string
+	//  shortdesc: Representor original MTU
+	"last_state.representor.mtu": validate.IsAny,
+
+	// gendoc:generate(entity=instance, group=volatile, key=volatile.<name>.last_state.representor.pvid)
+	// The original representor PVID
+	// ---
+	//  type: string
+	//  shortdesc: Representor original PVID
+	"last_state.representor.pvid": validate.IsAny,
+
+	// gendoc:generate(entity=instance, group=volatile, key=volatile.<name>.last_state.representor.tagged)
+	// The original representor tagged VLANs
+	// ---
+	//  type: string
+	//  shortdesc: Representor original tagged VLANs
+	"last_state.representor.tagged": validate.IsAny,
+
+	// gendoc:generate(entity=instance, group=volatile, key=volatile.<name>.last_state.representor.untagged)
+	// The original representor untagged VLANs
+	// ---
+	//  type: string
+	//  shortdesc: Representor original untagged VLANs
+	"last_state.representor.untagged": validate.IsAny,
+
+	// gendoc:generate(entity=instance, group=volatile, key=volatile.<name>.last_state.representor.up)
+	// The original representor state
+	// ---
+	//  type: string
+	//  shortdesc: Representor original state
+	"last_state.representor.up": validate.IsAny,
+
+	// gendoc:generate(entity=instance, group=volatile, key=volatile.<name>.last_state.migratable)
+	// The original NIC migratable capability
+	// ---
+	//  type: string
+	//  shortdesc: NIC original migratable capability
+	"last_state.migratable": validate.IsAny,
+
 	// gendoc:generate(entity=instance, group=volatile, key=volatile.<name>.failover.host_name)
 	//
 	// ---
