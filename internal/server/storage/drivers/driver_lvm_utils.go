@@ -640,6 +640,21 @@ func (d *lvm) acquireExclusive(vol Volume) (func(), error) {
 	}, nil
 }
 
+// acquireExclusiveIfActive switches the lock of an active volume to exclusive mode and leaves inactive ones alone.
+// Snapshot origins can only be resized while inactive, so they must not get activated just for the lock.
+func (d *lvm) acquireExclusiveIfActive(vol Volume) (func(), error) {
+	_, err := d.lvmDevPath(d.lvmPath(d.config["lvm.vg_name"], vol.volType, vol.contentType, vol.name))
+	if errors.Is(err, os.ErrNotExist) {
+		return func() {}, nil
+	}
+
+	if err != nil {
+		return nil, err
+	}
+
+	return d.acquireExclusive(vol)
+}
+
 // removeLogicalVolume removes a logical volume.
 func (d *lvm) removeLogicalVolume(volDevPath string) error {
 	_, err := subprocess.TryRunCommand("lvremove", "-f", volDevPath)
