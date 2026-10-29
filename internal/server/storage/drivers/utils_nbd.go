@@ -1,6 +1,7 @@
 package drivers
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"io/fs"
@@ -180,11 +181,19 @@ func startQemuNbdServer(devPath string, format string, detectZeroes string, read
 		return "", "", err
 	}
 
+	stateDir, err := os.Open(nbdStateDir())
+	if err != nil {
+		return "", "", err
+	}
+
+	defer func() { _ = stateDir.Close() }()
+
 	id := uuid.New().String()
 	sockPath := filepath.Join(nbdStateDir(), id+".sock")
 	pidPath := filepath.Join(nbdStateDir(), id+".pid")
 
-	args := []string{"--fork", "--socket=" + sockPath, "--pid-file=" + pidPath}
+	// The socket is reached through an inherited directory fd to stay under the unix socket path length limit.
+	args := []string{"--fork", "--socket=/proc/self/fd/3/" + id + ".sock", "--pid-file=" + pidPath}
 	if detectZeroes != "" {
 		if detectZeroes == "unmap" {
 			args = append(args, "--discard=unmap")
@@ -203,7 +212,7 @@ func startQemuNbdServer(devPath string, format string, detectZeroes string, read
 
 	args = append(args, devPath)
 
-	_, err = subprocess.RunCommand("qemu-nbd", args...)
+	_, err = subprocess.RunCommandInheritFds(context.Background(), []*os.File{stateDir}, "qemu-nbd", args...)
 	if err != nil {
 		return "", "", err
 	}
@@ -224,7 +233,17 @@ func killQemuNbdServer(pidPath string) {
 // attachQemuNbd negotiates with the qemu-nbd server at sockPath and hands the connection to the kernel.
 // A negative index allocates a new device, otherwise the given existing device is used.
 func attachQemuNbd(sockPath string, backend string, index int) (int, error) {
-	conn, err := net.DialUnix("unix", nil, &net.UnixAddr{Name: sockPath, Net: "unix"})
+	// Dial through a directory fd to stay under the unix socket path length limit.
+	sockDir, err := os.Open(filepath.Dir(sockPath))
+	if err != nil {
+		return -1, err
+	}
+
+	defer func() { _ = sockDir.Close() }()
+
+	shortPath := fmt.Sprintf("/proc/self/fd/%d/%s", sockDir.Fd(), filepath.Base(sockPath))
+
+	conn, err := net.DialUnix("unix", nil, &net.UnixAddr{Name: shortPath, Net: "unix"})
 	if err != nil {
 		return -1, fmt.Errorf("Failed connecting to qemu-nbd: %w", err)
 	}
