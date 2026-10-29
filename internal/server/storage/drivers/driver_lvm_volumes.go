@@ -402,7 +402,8 @@ func (d *lvm) FillVolumeConfig(vol Volume) error {
 	// Copy volume.* configuration options from pool.
 	// Exclude "block.filesystem", "block.mount_options", and "block.create_options" as they depend on volume type (handled below).
 	// Exclude "lvm.stripes", "lvm.stripes.size" as they only work on non-thin storage pools (handled below).
-	err := d.fillVolumeConfig(&vol, "block.filesystem", "block.mount_options", "block.create_options", "lvm.stripes", "lvm.stripes.size")
+	// Exclude "block.type" as it only applies to block volumes (handled below).
+	err := d.fillVolumeConfig(&vol, "block.filesystem", "block.mount_options", "block.create_options", "lvm.stripes", "lvm.stripes.size", "block.type")
 	if err != nil {
 		return err
 	}
@@ -439,6 +440,11 @@ func (d *lvm) FillVolumeConfig(vol Volume) error {
 	}
 
 	if d.clustered && (vol.IsVMBlock() || vol.IsCustomBlock()) {
+		// Inherit the block type from the pool if not set.
+		if vol.config["block.type"] == "" {
+			vol.config["block.type"] = d.config["volume.block.type"]
+		}
+
 		// Set default block type to qcow2.
 		if vol.config["block.type"] == "" {
 			vol.config["block.type"] = BlockVolumeTypeQcow2
@@ -668,6 +674,10 @@ func (d *lvm) ValidateVolume(vol Volume, removeUnknownKeys bool) error {
 
 	if vol.config["block.type"] == BlockVolumeTypeQcow2 && util.IsTrue(vol.config["security.shared"]) {
 		return errors.New("QCOW2 volume type is incompatible with the 'security.shared' option.")
+	}
+
+	if vol.config["block.type"] != "" && !IsContentBlock(vol.contentType) {
+		return errors.New("block.type can only be used with block volumes")
 	}
 
 	return nil
