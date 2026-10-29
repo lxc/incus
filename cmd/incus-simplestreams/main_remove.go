@@ -86,6 +86,7 @@ func (c *cmdRemove) run(cmd *cobra.Command, args []string) error {
 			// Get the metadata entry.
 			metaEntry, ok := version.Items["incus.tar.xz"]
 			if ok {
+				matched := false
 				if metaEntry.CombinedSha256DiskKvmImg == image.Fingerprint {
 					// Deleting a VM image.
 					err = c.remove(version.Items["disk-kvm.img"].Path)
@@ -95,6 +96,7 @@ func (c *cmdRemove) run(cmd *cobra.Command, args []string) error {
 
 					delete(version.Items, "disk-kvm.img")
 					metaEntry.CombinedSha256DiskKvmImg = ""
+					matched = true
 				} else if metaEntry.CombinedSha256SquashFs == image.Fingerprint {
 					// Deleting a squashfs container image.
 					err = c.remove(version.Items["squashfs"].Path)
@@ -104,6 +106,7 @@ func (c *cmdRemove) run(cmd *cobra.Command, args []string) error {
 
 					delete(version.Items, "squashfs")
 					metaEntry.CombinedSha256SquashFs = ""
+					matched = true
 				} else if metaEntry.CombinedSha256RootXz == image.Fingerprint {
 					// Deleting a tarball container image.
 					err = c.remove(version.Items["root.tar.xz"].Path)
@@ -113,21 +116,24 @@ func (c *cmdRemove) run(cmd *cobra.Command, args []string) error {
 
 					delete(version.Items, "root.tar.xz")
 					metaEntry.CombinedSha256RootXz = ""
-				} else {
-					continue
+					matched = true
 				}
 
-				// Update the metadata entry.
-				version.Items["incus.tar.xz"] = metaEntry
+				if matched {
+					// Update the metadata entry.
+					version.Items["incus.tar.xz"] = metaEntry
 
-				// Delete the version if it's now empty.
-				if len(version.Items) == 1 {
-					err = c.remove(metaEntry.Path)
-					if err != nil {
-						return err
+					// Delete the version if it's now empty.
+					if len(version.Items) == 1 {
+						err = c.remove(metaEntry.Path)
+						if err != nil {
+							return err
+						}
+
+						delete(product.Versions, kVersion)
 					}
 
-					delete(product.Versions, kVersion)
+					continue
 				}
 			}
 
