@@ -3400,8 +3400,9 @@ func (b *backend) MountInstance(inst instance.Instance, op *operations.Operation
 		return nil, fmt.Errorf("Failed getting disk path: %w", err)
 	}
 
+	// Only block volumes have a qcow2 image, filesystem volumes just inherit the key from the pool.
 	backingPaths := []string{}
-	if vol.Config()["block.type"] == drivers.BlockVolumeTypeQcow2 {
+	if vol.IsVMBlock() && vol.Config()["block.type"] == drivers.BlockVolumeTypeQcow2 {
 		// Get snapshots.
 		volSnaps, err := VolumeDBSnapshotsGet(b, inst.Project().Name, inst.Name(), vol.Type())
 		if err != nil {
@@ -6833,8 +6834,9 @@ func (b *backend) MountCustomVolume(projectName, volName string, op *operations.
 		return nil, err
 	}
 
+	// Only block volumes have a qcow2 image, filesystem volumes just inherit the key from the pool.
 	backingPaths := []string{}
-	if vol.Config()["block.type"] == drivers.BlockVolumeTypeQcow2 {
+	if vol.IsCustomBlock() && vol.Config()["block.type"] == drivers.BlockVolumeTypeQcow2 {
 		// Get snapshots.
 		_, volName := project.StorageVolumeParts(vol.Name())
 		volSnaps, err := VolumeDBSnapshotsGet(b, projectName, volName, vol.Type())
@@ -9256,16 +9258,6 @@ func (b *backend) qcow2Resize(inst instance.Instance, vol drivers.Volume, size s
 		return nil
 	}
 
-	volDiskPath, err := b.driver.GetVolumeDiskPath(vol)
-	if err != nil {
-		return err
-	}
-
-	imgInfo, err := drivers.Qcow2Info(volDiskPath)
-	if err != nil {
-		return err
-	}
-
 	sizeBytes, err := units.ParseByteSizeString(size)
 	if err != nil {
 		return err
@@ -9280,33 +9272,46 @@ func (b *backend) qcow2Resize(inst instance.Instance, vol drivers.Volume, size s
 	// Round the size to closest minSizeBytes bytes.
 	sizeBytes = drivers.RoundAbove(minSizeBytes, sizeBytes)
 
-	if sizeBytes <= int64(imgInfo.VirtualSize) {
-		return fmt.Errorf("Qcow2 volume cannot be shrunk")
-	}
-
-	err = drivers.Qcow2Resize(volDiskPath, sizeBytes)
-	if err != nil {
-		return err
-	}
-
-	// Move the GPT alt header to the end of the guest disk.
-	if vol.IsVMBlock() {
-		nbdPath, err := drivers.ConnectQemuNbd(volDiskPath, "qcow2", "", false)
+	// The volume of a stopped instance is deactivated, mount it with the snapshots backing it for the resize.
+	return vol.MountWithSnapshotsTask(func(_ string, _ map[string]string, _ *operations.Operation) error {
+		volDiskPath, err := b.driver.GetVolumeDiskPath(vol)
 		if err != nil {
 			return err
 		}
 
-		defer func() {
-			_ = drivers.DisconnectQemuNbdWait(nbdPath)
-		}()
-
-		err = drivers.MoveGPTAltHeader(b.logger, nbdPath)
+		imgInfo, err := drivers.Qcow2Info(volDiskPath)
 		if err != nil {
 			return err
 		}
-	}
 
-	return nil
+		if sizeBytes <= int64(imgInfo.VirtualSize) {
+			return fmt.Errorf("Qcow2 volume cannot be shrunk")
+		}
+
+		err = drivers.Qcow2Resize(volDiskPath, sizeBytes)
+		if err != nil {
+			return err
+		}
+
+		// Move the GPT alt header to the end of the guest disk.
+		if vol.IsVMBlock() {
+			nbdPath, err := drivers.ConnectQemuNbd(volDiskPath, "qcow2", "", false)
+			if err != nil {
+				return err
+			}
+
+			defer func() {
+				_ = drivers.DisconnectQemuNbdWait(nbdPath)
+			}()
+
+			err = drivers.MoveGPTAltHeader(b.logger, nbdPath)
+			if err != nil {
+				return err
+			}
+		}
+
+		return nil
+	}, op)
 }
 
 // qcow2BackingPaths returns information about the backing chain of a qcow2 image.

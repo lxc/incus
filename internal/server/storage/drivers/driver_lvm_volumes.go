@@ -77,7 +77,7 @@ func (d *lvm) CreateVolume(vol Volume, filler *VolumeFiller, op *operations.Oper
 		if err != nil {
 			return err
 		}
-	} else if vol.ContentType() == ContentTypeFS && vol.ExpandedConfig("block.type") == BlockVolumeTypeQcow2 {
+	} else if vol.IsVMFilesystem() && vol.ExpandedConfig("block.type") == BlockVolumeTypeQcow2 {
 		err = Qcow2CreateConfig(vol, op)
 		if err != nil {
 			return err
@@ -402,7 +402,8 @@ func (d *lvm) FillVolumeConfig(vol Volume) error {
 	// Copy volume.* configuration options from pool.
 	// Exclude "block.filesystem", "block.mount_options", and "block.create_options" as they depend on volume type (handled below).
 	// Exclude "lvm.stripes", "lvm.stripes.size" as they only work on non-thin storage pools (handled below).
-	err := d.fillVolumeConfig(&vol, "block.filesystem", "block.mount_options", "block.create_options", "lvm.stripes", "lvm.stripes.size")
+	// Exclude "block.type" as it only applies to block volumes (handled below).
+	err := d.fillVolumeConfig(&vol, "block.filesystem", "block.mount_options", "block.create_options", "lvm.stripes", "lvm.stripes.size", "block.type")
 	if err != nil {
 		return err
 	}
@@ -439,6 +440,11 @@ func (d *lvm) FillVolumeConfig(vol Volume) error {
 	}
 
 	if d.clustered && (vol.IsVMBlock() || vol.IsCustomBlock()) {
+		// Inherit the block type from the pool if not set.
+		if vol.config["block.type"] == "" {
+			vol.config["block.type"] = d.config["volume.block.type"]
+		}
+
 		// Set default block type to qcow2.
 		if vol.config["block.type"] == "" {
 			vol.config["block.type"] = BlockVolumeTypeQcow2
@@ -670,6 +676,10 @@ func (d *lvm) ValidateVolume(vol Volume, removeUnknownKeys bool) error {
 		return errors.New("QCOW2 volume type is incompatible with the 'security.shared' option.")
 	}
 
+	if vol.config["block.type"] != "" && !IsContentBlock(vol.contentType) {
+		return errors.New("block.type can only be used with block volumes")
+	}
+
 	return nil
 }
 
@@ -838,7 +848,7 @@ func (d *lvm) SetVolumeQuota(vol Volume, size string, allowUnsafeResize bool, op
 			}
 		} else if sizeBytes > oldSizeBytes {
 			// Get exclusive mode if active.
-			release, err := d.acquireExclusive(vol)
+			release, err := d.acquireExclusiveIfActive(vol)
 			if err != nil {
 				return err
 			}
@@ -885,8 +895,8 @@ func (d *lvm) SetVolumeQuota(vol Volume, size string, allowUnsafeResize bool, op
 			}
 		}
 
-		// Get exclusive mode.
-		release, err := d.acquireExclusive(vol)
+		// Get exclusive mode if active.
+		release, err := d.acquireExclusiveIfActive(vol)
 		if err != nil {
 			return err
 		}
@@ -1612,7 +1622,7 @@ func (d *lvm) MountVolumeSnapshot(snapVol Volume, op *operations.Operation) erro
 		mountVol := snapVol
 		mountFlags, mountOptions := linux.ResolveMountOptions(strings.Split(mountVol.ConfigBlockMountOptions(), ","))
 
-		isQcow2 := snapVol.ExpandedConfig("block.type") == BlockVolumeTypeQcow2
+		isQcow2 := snapVol.IsVMFilesystem() && snapVol.ExpandedConfig("block.type") == BlockVolumeTypeQcow2
 		if isQcow2 {
 			parentName, _, _ := api.GetParentAndSnapshotName(snapVol.name)
 			mountVol = NewVolume(d, d.name, snapVol.volType, snapVol.contentType, parentName, snapVol.config, snapVol.poolConfig)
