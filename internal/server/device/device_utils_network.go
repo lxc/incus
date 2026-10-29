@@ -17,6 +17,8 @@ import (
 
 	"github.com/mdlayher/arp"
 	"github.com/mdlayher/ndp"
+	"github.com/vishvananda/netlink"
+	"github.com/vishvananda/netlink/nl"
 	"golang.org/x/sys/unix"
 
 	"github.com/lxc/incus/v7/internal/server/bgp"
@@ -1198,6 +1200,7 @@ func networkSRIOVParentVFInfo(vfParent string, vfID int) (ip.VirtFuncInfo, error
 
 // networkSRIOVSetupVF configures a SR-IOV virtual function (VF) on the parent (PF) and stores original properties
 // of the PF and VF devices into volatile for restoration on detach.
+// If switchdev is in use, this additionally configures the VF representor.
 // The useSpoofCheck argument controls whether to use the spoof check feature for the VF on the parent device.
 // If this is false then "security.mac_filtering" must not be enabled.
 // Returns VF PCI device info and IOMMU group number for VMs.
@@ -1249,13 +1252,106 @@ func networkSRIOVSetupVF(d deviceCommon, vfParent string, vfDevice string, vfID 
 
 	reverter.Add(func() { _ = pcidev.DeviceProbe(vfPCIDev) })
 
-	// Setup VF VLAN if specified.
-	if d.config["vlan"] != "" {
+	// Check if the PF is in switchdev mode.
+	var representor netlink.Link
+	if network.SRIOVSwitchdevEnabled(vfParent) && d.config["acceleration"] != "vdpa" {
+		switchID, pfID, err := network.SRIOVGetSwitchAndPFID(vfParent)
+		if err != nil {
+			return vfPCIDev, 0, err
+		}
+
+		nics, err := os.ReadDir("/sys/class/net")
+		if err != nil {
+			return vfPCIDev, 0, err
+		}
+
+		representorPort := network.SRIOVFindRepresentorPort(nics, switchID, pfID, vfID)
+		if representorPort == "" {
+			return vfPCIDev, 0, fmt.Errorf("No representor found for VF %d on %q", vfID, vfParent)
+		}
+
+		volatile["last_state.representor"] = representorPort
+		representor, err = netlink.LinkByName(representorPort)
+		if err != nil {
+			return vfPCIDev, 0, err
+		}
+
+		volatile["last_state.representor.up"] = strconv.FormatBool(representor.Attrs().Flags&net.FlagUp != 0)
+		masterIndex := representor.Attrs().MasterIndex
+		if masterIndex == 0 {
+			return vfPCIDev, 0, fmt.Errorf("Representor %q must be attached to a Linux bridge", representorPort)
+		}
+
+		master, err := netlink.LinkByIndex(masterIndex)
+		if err != nil {
+			return vfPCIDev, 0, err
+		}
+
+		bridge, ok := master.(*netlink.Bridge)
+		if !ok {
+			return vfPCIDev, 0, fmt.Errorf("Representor %q must be attached to a Linux bridge", representorPort)
+		}
+
+		representorMTU := representor.Attrs().MTU
+		volatile["last_state.representor.mtu"] = strconv.Itoa(representorMTU)
+		if d.config["mtu"] != "" && d.config["mtu"] != volatile["last_state.representor.mtu"] {
+			mtu, err := strconv.Atoi(d.config["mtu"])
+			if err != nil {
+				return vfPCIDev, 0, err
+			}
+
+			err = netlink.LinkSetMTU(representor, mtu)
+			if err != nil {
+				return vfPCIDev, 0, fmt.Errorf("Failed setting MTU on representor %q: %w", representorPort, err)
+			}
+
+			reverter.Add(func() { _ = netlink.LinkSetMTU(representor, representorMTU) })
+		}
+
+		// VLAN 0 means no VLAN on a VF, so it gets the same treatment as an unset value.
+		vlan := d.config["vlan"]
+		if vlan == "" || vlan == "0" {
+			// No matter whether the bridge has VLAN filtering enabled or not, setting the representor’s
+			// VLAN to 1 will put it in a reproducible state.
+			vlan = "1"
+		} else if bridge.VlanFiltering == nil || !*bridge.VlanFiltering {
+			return vfPCIDev, 0, fmt.Errorf("Bridge %q must have VLAN filtering enabled to set a VLAN", bridge.Attrs().Name)
+		}
+
+		vid, err := networkParseVLAN(vlan)
+		if err != nil {
+			return vfPCIDev, 0, err
+		}
+
+		pvid, untagged, tagged, err := networkSRIOVSaveRepresentorVLANs(representor)
+		if err != nil {
+			return vfPCIDev, 0, err
+		}
+
+		volatile["last_state.representor.pvid"] = pvid
+		volatile["last_state.representor.untagged"] = untagged
+		volatile["last_state.representor.tagged"] = tagged
+		reverter.Add(func() { _ = networkSRIOVRestoreRepresentorVLANs(representor, pvid, untagged, tagged) })
+
+		// Incus currently only supports a single tagged VLAN.
+		err = networkSRIOVSetRepresentorVLAN(representor, vid)
+		if err != nil {
+			return vfPCIDev, 0, err
+		}
+	} else {
+		// Setting VLAN 0 clears whatever VLAN is configured on the VF.
+		vlan := d.config["vlan"]
+		if vlan == "" {
+			vlan = "0"
+		}
+
 		link := &ip.Link{Name: vfParent}
-		err := link.SetVfVlan(volatile["last_state.vf.id"], d.config["vlan"])
+		err := link.SetVfVlan(volatile["last_state.vf.id"], vlan)
 		if err != nil {
 			return vfPCIDev, 0, fmt.Errorf("Failed setting VLAN for VF %q: %w", volatile["last_state.vf.id"], err)
 		}
+
+		reverter.Add(func() { _ = link.SetVfVlan(volatile["last_state.vf.id"], volatile["last_state.vf.vlan"]) })
 	}
 
 	// Setup VF trust setting if specified
@@ -1270,6 +1366,10 @@ func networkSRIOVSetupVF(d deviceCommon, vfParent string, vfDevice string, vfID 
 		if err != nil {
 			return vfPCIDev, 0, fmt.Errorf("Failed setting trusted to %t for VF %q: %w", toSet, volatile["last_state.vf.id"], err)
 		}
+
+		reverter.Add(func() {
+			_ = link.SetVfTrusted(volatile["last_state.vf.id"], util.IsTrue(volatile["last_state.vf.trusted"]))
+		})
 	}
 
 	// Setup VF MAC spoofing protection if specified.
@@ -1289,11 +1389,17 @@ func networkSRIOVSetupVF(d deviceCommon, vfParent string, vfDevice string, vfID 
 			return vfPCIDev, 0, fmt.Errorf("Failed setting MAC for VF %q: %w", volatile["last_state.vf.id"], err)
 		}
 
+		reverter.Add(func() { _ = link.SetVfAddress(volatile["last_state.vf.id"], volatile["last_state.vf.hwaddr"]) })
+
 		// Now that MAC is set on VF, we can enable spoof checking.
 		err = link.SetVfSpoofchk(volatile["last_state.vf.id"], true)
 		if err != nil {
 			return vfPCIDev, 0, fmt.Errorf("Failed enabling spoof check for VF %q: %w", volatile["last_state.vf.id"], err)
 		}
+
+		reverter.Add(func() {
+			_ = link.SetVfSpoofchk(volatile["last_state.vf.id"], util.IsTrue(volatile["last_state.vf.spoofcheck"]))
+		})
 	} else {
 		// Try to reset VF to ensure no previous MAC restriction exists, as some devices require this
 		// before being able to set a new VF MAC or disable spoofchecking. However some devices don't
@@ -1307,6 +1413,10 @@ func networkSRIOVSetupVF(d deviceCommon, vfParent string, vfDevice string, vfID 
 			return vfPCIDev, 0, fmt.Errorf("Failed disabling spoof check for VF %q: %w", volatile["last_state.vf.id"], err)
 		}
 
+		reverter.Add(func() {
+			_ = link.SetVfSpoofchk(volatile["last_state.vf.id"], util.IsTrue(volatile["last_state.vf.spoofcheck"]))
+		})
+
 		// Set MAC on VF if specified (this should be passed through into VM when it is bound to a VFIO driver).
 		if d.inst.Type() == instancetype.VM {
 			// If no MAC specified in config, use current VF interface MAC.
@@ -1319,6 +1429,8 @@ func networkSRIOVSetupVF(d deviceCommon, vfParent string, vfDevice string, vfID 
 			if err != nil {
 				return vfPCIDev, 0, fmt.Errorf("Failed setting MAC for VF %q: %w", volatile["last_state.vf.id"], err)
 			}
+
+			reverter.Add(func() { _ = link.SetVfAddress(volatile["last_state.vf.id"], volatile["last_state.vf.hwaddr"]) })
 		}
 	}
 
@@ -1355,6 +1467,14 @@ func networkSRIOVSetupVF(d deviceCommon, vfParent string, vfDevice string, vfID 
 		volatile["last_state.pci.driver"] = vfPCIDev.Driver
 	}
 
+	// Bring the representor up.
+	if representor != nil && util.IsFalse(volatile["last_state.representor.up"]) {
+		err = netlink.LinkSetUp(representor)
+		if err != nil {
+			return vfPCIDev, 0, err
+		}
+	}
+
 	reverter.Success()
 
 	return vfPCIDev, pciIOMMUGroup, nil
@@ -1362,6 +1482,7 @@ func networkSRIOVSetupVF(d deviceCommon, vfParent string, vfDevice string, vfID 
 
 // networkSRIOVRestoreVF restores SR-IOV VF device settings on parent PF and on VF NIC. Used when removing a VF NIC
 // from an instance. Use volatile data that was stored when the device was first added with networkSRIOVSetupVF().
+// If switchdev is in use, this additionally restores the VF representor.
 // The useSpoofCheck argument controls whether to use the spoof check feature for the VF on the parent device.
 func networkSRIOVRestoreVF(d deviceCommon, useSpoofCheck bool, volatile map[string]string) error {
 	// Retrieve parent interface from config or volatile.
@@ -1403,12 +1524,44 @@ func networkSRIOVRestoreVF(d deviceCommon, useSpoofCheck bool, volatile map[stri
 	// The OS won't let an already bound device be bound again so is safe to call twice.
 	reverter.Add(func() { _ = pcidev.DeviceProbe(vfPCIDev) })
 
-	// Reset VF VLAN if specified
-	if volatile["last_state.vf.vlan"] != "" {
-		link := &ip.Link{Name: parent}
-		err := link.SetVfVlan(volatile["last_state.vf.id"], volatile["last_state.vf.vlan"])
+	representorPort := volatile["last_state.representor"]
+	var representor netlink.Link
+	if representorPort != "" {
+		representor, err = netlink.LinkByName(representorPort)
 		if err != nil {
 			return err
+		}
+
+		// First, bring the representor down.
+		err = netlink.LinkSetDown(representor)
+		if err != nil {
+			return err
+		}
+
+		// Reset the MTU.
+		mtu, err := strconv.Atoi(volatile["last_state.representor.mtu"])
+		if err != nil {
+			return err
+		}
+
+		err = netlink.LinkSetMTU(representor, mtu)
+		if err != nil {
+			return fmt.Errorf("Failed resetting MTU on representor %q: %w", representorPort, err)
+		}
+
+		// Reset VLANs.
+		err = networkSRIOVRestoreRepresentorVLANs(representor, volatile["last_state.representor.pvid"], volatile["last_state.representor.untagged"], volatile["last_state.representor.tagged"])
+		if err != nil {
+			return fmt.Errorf("Failed restoring VLANs on representor %q: %w", representorPort, err)
+		}
+	} else {
+		// Reset VF VLAN if specified
+		if volatile["last_state.vf.vlan"] != "" {
+			link := &ip.Link{Name: parent}
+			err := link.SetVfVlan(volatile["last_state.vf.id"], volatile["last_state.vf.vlan"])
+			if err != nil {
+				return err
+			}
 		}
 	}
 
@@ -1452,6 +1605,14 @@ func networkSRIOVRestoreVF(d deviceCommon, useSpoofCheck bool, volatile map[stri
 	err = networkRestorePhysicalNIC(volatile["host_name"], volatile)
 	if err != nil {
 		return err
+	}
+
+	// Restore the representor’s link state.
+	if representor != nil && util.IsTrue(volatile["last_state.representor.up"]) {
+		err = netlink.LinkSetUp(representor)
+		if err != nil {
+			return err
+		}
 	}
 
 	reverter.Success()
@@ -1717,4 +1878,115 @@ func pingOverIfaceByName(deadline time.Time, address net.IP, parentInterface str
 	}
 
 	return nil
+}
+
+func networkSRIOVSaveRepresentorVLANs(representor netlink.Link) (string, string, string, error) {
+	vlans, err := networkBridgeVLANList()
+	if err != nil {
+		return "", "", "", err
+	}
+
+	entries := vlans[int32(representor.Attrs().Index)]
+	var pvid string
+	var untagged []string
+	var tagged []string
+	for i := 0; i < len(entries); i++ {
+		entry := entries[i]
+		atom := strconv.FormatUint(uint64(entry.Vid), 10)
+		isRange := false
+		if entry.Flags&nl.BRIDGE_VLAN_INFO_RANGE_BEGIN != 0 {
+			isRange = true
+			i++
+			if i >= len(entries) || entries[i].Flags&nl.BRIDGE_VLAN_INFO_RANGE_END == 0 || entries[i].Vid <= entry.Vid {
+				return "", "", "", errors.New("Invalid bridge VLAN range")
+			}
+
+			atom = fmt.Sprintf("%s-%d", atom, entries[i].Vid)
+		} else if entry.Flags&nl.BRIDGE_VLAN_INFO_RANGE_END != 0 {
+			return "", "", "", errors.New("Unexpected bridge VLAN end marker")
+		}
+
+		if entry.PortVID() {
+			if isRange || pvid != "" {
+				return "", "", "", errors.New("Invalid PVID")
+			}
+
+			pvid = atom
+		}
+
+		if entry.EngressUntag() {
+			untagged = append(untagged, atom)
+		} else {
+			tagged = append(tagged, atom)
+		}
+	}
+
+	return pvid, strings.Join(untagged, ","), strings.Join(tagged, ","), nil
+}
+
+func networkParseVLAN(vlan string) (uint16, error) {
+	vid, err := strconv.ParseUint(vlan, 10, 16)
+	if err != nil || vid < 1 || vid > 4094 {
+		return 0, fmt.Errorf("Invalid VLAN: %s", vlan)
+	}
+
+	return uint16(vid), nil
+}
+
+func networkSRIOVRestoreRepresentorVLANAtom(representor netlink.Link, pvid string, atom string, untagged bool) error {
+	start, end, isRange := strings.Cut(atom, "-")
+	startVLAN, err := networkParseVLAN(start)
+	if err != nil {
+		return err
+	}
+
+	if isRange {
+		var endVLAN uint16
+		endVLAN, err = networkParseVLAN(end)
+		if err != nil {
+			return err
+		}
+
+		err = netlink.BridgeVlanAddRange(representor, startVLAN, endVLAN, false, untagged, false, true)
+	} else {
+		err = netlink.BridgeVlanAdd(representor, startVLAN, start == pvid, untagged, false, true)
+	}
+
+	return err
+}
+
+func networkSRIOVRestoreRepresentorVLANs(representor netlink.Link, pvid string, untagged string, tagged string) error {
+	err := netlink.BridgeVlanDelRange(representor, 1, 4094, false, false, false, true)
+	if err != nil {
+		return err
+	}
+
+	if untagged != "" {
+		for _, atom := range strings.Split(untagged, ",") {
+			err = networkSRIOVRestoreRepresentorVLANAtom(representor, pvid, atom, true)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	if tagged != "" {
+		for _, atom := range strings.Split(tagged, ",") {
+			err = networkSRIOVRestoreRepresentorVLANAtom(representor, pvid, atom, false)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
+func networkSRIOVSetRepresentorVLAN(representor netlink.Link, vlan uint16) error {
+	err := netlink.BridgeVlanDelRange(representor, 1, 4094, false, false, false, true)
+	if err != nil {
+		return err
+	}
+
+	return netlink.BridgeVlanAdd(representor, vlan, true, true, false, true)
 }

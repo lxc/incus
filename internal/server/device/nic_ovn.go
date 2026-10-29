@@ -1443,17 +1443,23 @@ func (d *nicOVN) Stop() (*deviceConfig.RunConfig, error) {
 func (d *nicOVN) postStop() error {
 	defer func() {
 		_ = d.volatileSet(map[string]string{
-			"host_name":                "",
-			"last_state.hwaddr":        "",
-			"last_state.mtu":           "",
-			"last_state.created":       "",
-			"last_state.vdpa.name":     "",
-			"last_state.vf.parent":     "",
-			"last_state.vf.id":         "",
-			"last_state.vf.hwaddr":     "",
-			"last_state.vf.vlan":       "",
-			"last_state.vf.spoofcheck": "",
-			"last_state.pci.driver":    "",
+			"host_name":                       "",
+			"last_state.hwaddr":               "",
+			"last_state.mtu":                  "",
+			"last_state.created":              "",
+			"last_state.vdpa.name":            "",
+			"last_state.vf.parent":            "",
+			"last_state.vf.id":                "",
+			"last_state.vf.hwaddr":            "",
+			"last_state.vf.vlan":              "",
+			"last_state.vf.spoofcheck":        "",
+			"last_state.pci.driver":           "",
+			"last_state.representor":          "",
+			"last_state.representor.mtu":      "",
+			"last_state.representor.pvid":     "",
+			"last_state.representor.tagged":   "",
+			"last_state.representor.untagged": "",
+			"last_state.representor.up":       "",
 		})
 	}()
 
