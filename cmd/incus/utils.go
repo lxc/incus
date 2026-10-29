@@ -569,19 +569,19 @@ func sshfsMount(ctx context.Context, sftpConn net.Conn, entity string, relPath s
 	return sftpConn.Close()
 }
 
+func randString(length int) string {
+	chars := []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0987654321")
+	randStr := make([]rune, length)
+	for i := range randStr {
+		randStr[i] = chars[rand.Intn(len(chars))]
+	}
+
+	return string(randStr)
+}
+
 // sshSFTPServer runs an SSH server listening on a random port of 127.0.0.1.
 // It provides an unauthenticated SFTP server connected to the instance's filesystem.
 func sshSFTPServer(ctx context.Context, sftpConn func() (net.Conn, error), authNone bool, authUser string, listenAddr string) error {
-	randString := func(length int) string {
-		chars := []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0987654321")
-		randStr := make([]rune, length)
-		for i := range randStr {
-			randStr[i] = chars[rand.Intn(len(chars))]
-		}
-
-		return string(randStr)
-	}
-
 	// Setup an SSH SFTP server.
 	sshConfig := &ssh.ServerConfig{}
 
@@ -931,4 +931,9 @@ func parseMode(m string, mode fs.FileMode, umask fs.FileMode, isDir bool) (fs.Fi
 // possible.
 func parsePristineMode(m string) (fs.FileMode, error) {
 	return parseMode(m, fs.FileMode(0), fs.FileMode(0), false)
+}
+
+// randName returns a random name.
+func randName(prefix string, length int, suffix string) string {
+	return prefix + randString(length) + suffix
 }
