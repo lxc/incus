@@ -501,6 +501,10 @@ func (s *SimpleStreams) GetAliasArchitectures(imageType string, name string) (ma
 
 // GetImage returns an image for the provided image fingerprint.
 func (s *SimpleStreams) GetImage(fingerprint string) (*api.Image, error) {
+	if fingerprint == "" {
+		return nil, errors.New("The fingerprint cannot be empty")
+	}
+
 	images, _, err := s.getImages()
 	if err != nil {
 		return nil, err
