@@ -1221,6 +1221,11 @@ func (d *btrfs) SetVolumeQuota(vol Volume, size string, allowUnsafeResize bool, 
 		return err
 	}
 
+	// ISO volumes are read-only and sized to their image, a quota would be exceeded right away.
+	if vol.contentType == ContentTypeISO {
+		return nil
+	}
+
 	// For VM block files, resize the file if needed.
 	if vol.contentType == ContentTypeBlock {
 		// Do nothing if size isn't specified.
