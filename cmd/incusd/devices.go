@@ -682,6 +682,37 @@ func devicesRegister(instances []instance.Instance) {
 	}
 }
 
+// devicesRegisterPools re-registers the disk devices of running instances that use the given pools.
+// Their registration failed at startup if the pool wasn't available at the time.
+func devicesRegisterPools(s *state.State, instances []instance.Instance, poolNames []string) {
+	for _, inst := range instances {
+		if !inst.IsRunning() {
+			continue
+		}
+
+		for _, entry := range inst.ExpandedDevices().Sorted() {
+			if entry.Config["type"] != "disk" || !slices.Contains(poolNames, entry.Config["pool"]) {
+				continue
+			}
+
+			err := device.Register(inst, s, entry.Name, entry.Config, func() map[string]string {
+				volatile := make(map[string]string)
+				prefix := fmt.Sprintf("volatile.%s.", entry.Name)
+				for k, v := range inst.LocalConfig() {
+					if strings.HasPrefix(k, prefix) {
+						volatile[strings.TrimPrefix(k, prefix)] = v
+					}
+				}
+
+				return volatile
+			})
+			if err != nil {
+				logger.Error("Failed to register device", logger.Ctx{"project": inst.Project().Name, "instance": inst.Name(), "device": entry.Name, "err": err})
+			}
+		}
+	}
+}
+
 // cleanupOrphanedProxyHelpers reaps forkproxy helpers left running for stopped containers.
 func cleanupOrphanedProxyHelpers(instances []instance.Instance) {
 	for _, inst := range instances {
