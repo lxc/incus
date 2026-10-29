@@ -27,6 +27,8 @@ type qemuBootState struct {
 	MachineType string `json:"machine_type"`
 
 	MemoryTopology *qemuMemoryTopology `json:"memory_topology"`
+
+	IOThreads int `json:"io_threads,omitempty"`
 }
 
 var qemuBootStateVersion = 1
@@ -132,6 +134,10 @@ func (d *qemu) checkBootStateLimits(bs *qemuBootState) error {
 		if bs.MemoryTopology.Base <= 0 || total > limit {
 			return fmt.Errorf("Boot state memory of %d bytes exceeds the limit of %d bytes", total, limit)
 		}
+	}
+
+	if bs.IOThreads > qemuIOThreadCount {
+		return fmt.Errorf("Boot state I/O thread count %d exceeds the limit of %d", bs.IOThreads, qemuIOThreadCount)
 	}
 
 	return nil

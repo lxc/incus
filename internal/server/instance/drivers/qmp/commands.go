@@ -704,6 +704,27 @@ func (m *Monitor) GetCPUs() ([]int, error) {
 	return pids, nil
 }
 
+// GetIOThreads returns the IDs of the iothread objects.
+func (m *Monitor) GetIOThreads() ([]string, error) {
+	var resp struct {
+		Return []struct {
+			ID string `json:"id"`
+		} `json:"return"`
+	}
+
+	err := m.Run("query-iothreads", nil, &resp)
+	if err != nil {
+		return nil, err
+	}
+
+	ids := make([]string, 0, len(resp.Return))
+	for _, thread := range resp.Return {
+		ids = append(ids, thread.ID)
+	}
+
+	return ids, nil
+}
+
 // GetMemorySizeBytes returns the current size of the base memory in bytes.
 func (m *Monitor) GetMemorySizeBytes() (int64, error) {
 	// Prepare the response.
