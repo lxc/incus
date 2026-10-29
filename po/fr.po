@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: LXD\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
 "POT-Creation-Date: 2026-10-08 14:37+0000\n"
-"PO-Revision-Date: 2026-10-29 12:51+0000\n"
-"Last-Translator: Nicoprog <nicoprog@users.noreply.hosted.weblate.org>\n"
+"PO-Revision-Date: 2026-10-29 23:05+0000\n"
+"Last-Translator: Benjamin Somers <bensmrs@users.noreply.hosted.weblate.org>\n"
 "Language-Team: French <https://hosted.weblate.org/projects/incus/cli/fr/>\n"
 "Language: fr\n"
 "MIME-Version: 1.0\n"
@@ -688,7 +688,7 @@ msgstr "%s la syntaxe %s est dépréciée ; %s\n"
 #: cmd/incus/usage/usage.go:967
 #, c-format
 msgid "%s; did you forget a space in %s?\n"
-msgstr "%s ; tu as oublié un espace dans %s ?\n"
+msgstr "%s ; avez-vous oublié une espace dans %s ?\n"
 
 #: cmd/incus/utils_sftp.go:401
 #, c-format
@@ -1003,6 +1003,7 @@ msgid "Add new remote servers"
 msgstr "Ajouter de nouveaux serveurs distants"
 
 #: cmd/incus/remote.go:135
+#, fuzzy
 msgid ""
 "Add new remote servers\n"
 "\n"
@@ -1029,8 +1030,6 @@ msgstr ""
 "  incus remote add ressource_distante_identifiant https://"
 "UTILISATEUR:MOTDEPASSE@exemple.com/complement/de/chemin --"
 "protocol=simplestreams\n"
-"\n"
-"Le nom du serveur distant peut être ignoré si une seule cible est indiquée.\n"
 
 #: cmd/incus/config_trust.go:93
 msgid "Add new trusted client"
@@ -1350,7 +1349,7 @@ msgstr "Sauvegardes :"
 msgid "Bad device override syntax, expecting <device>,<key>=<value>: %s"
 msgstr ""
 "Syntaxe incorrecte de la substitution de périphérique, syntaxe attendue "
-"<device>,<key>=<value> : %s"
+"<device>,<key>=<value>: %s"
 
 #: cmd/incus/query.go:92
 #, c-format
@@ -1360,22 +1359,22 @@ msgstr "En-tête incorrect, nom vide : %q"
 #: cmd/incus/query.go:87
 #, c-format
 msgid "Bad header, expecting \"name: value\": %q"
-msgstr "En-tête incorrect, attendu \"name: value\" : %q"
+msgstr "En-tête %q incorrect, attendu : « nom: valeur »"
 
 #: cmd/incus/copy.go:180 cmd/incus/create.go:209 cmd/incus/move.go:273
 #: cmd/incus/network_integration.go:139 cmd/incus/project.go:168
 #, c-format
 msgid "Bad key=value pair: %q"
-msgstr "Paire incorrecte key=value : %q"
+msgstr "Ce paramètre n’est pas de la forme <clef>=<valeur> : %q"
 
 #: cmd/incus/remote.go:158
 msgid "Binary helper for retrieving credentials"
-msgstr "Aide binaire pour la récupération des identifiants"
+msgstr "Outil à utiliser pour récupérer les identifiants"
 
 #: cmd/incus/storage_volume_bitmap.go:189
 #, c-format
 msgid "Bitmap %s deleted from volume %s"
-msgstr "Image bitmap %s supprimée du volume %s"
+msgstr "La bitmap %s du volume de stockage %s a été supprimée"
 
 #: cmd/incus/network.go:950
 msgid "Bond:"
@@ -1564,7 +1563,7 @@ msgstr "Impossible d’utiliser à la fois --no-expiry et --expiry"
 
 #: cmd/incus/low_level.go:1168
 msgid "Cannot add signature without --bundle"
-msgstr "Impossible d'ajouter une signature sans --bundle"
+msgstr "Impossible d’ajouter une signature sans --bundle"
 
 #: cmd/incus/remote.go:602
 msgid "Cannot mix HTTPS and Unix URLs"
@@ -1916,8 +1915,8 @@ msgid ""
 "Consider the input as a certificate and signature bundle instead of a "
 "certificate chain"
 msgstr ""
-"Considérer les données d'entrée comme un ensemble composé d'un certificat et "
-"d'une signature, plutôt que comme une chaîne de certificats"
+"Considérer les données d’entrée comme un bundle de certificats et de "
+"signatures plutôt qu’une chaîne de certificats"
 
 #: cmd/incus/storage_volume.go:608
 msgid "Content type, block or filesystem"
@@ -2535,8 +2534,8 @@ msgid ""
 "Device from profile(s) cannot be modified for individual instance. Override "
 "device or modify profile instead"
 msgstr ""
-"Le périphériques du ou des profiles ne peut pas être modifié pour une "
-"instance. Surchargez le périphérique ou modifiez le profil"
+"Un périphérique provenant d’un profil ne peut pas être modifié pour une "
+"instance. Veuillez surcharger le périphérique ou modifier le profil"
 
 #: cmd/incus/config_device.go:530
 #, c-format
@@ -2953,7 +2952,7 @@ msgstr ""
 "  pour l'adresse si elle n'est pas encore paramétrée."
 
 #: cmd/incus/info.go:837
-#, c-format
+#, c-format, fuzzy
 msgid "Endorsement key (%s %d): %s"
 msgstr "Clef de validation (%s %d) : %s"
 
@@ -2978,8 +2977,8 @@ msgid ""
 "Environment variable to set (e.g. HOME=/home/foo) (may be passed multiple "
 "times)"
 msgstr ""
-"Variable d'environnement à définir (de la forme HOME=/home/foo) (peut être "
-"transmise plusieurs fois)"
+"Variable d’environnement à définir (par exemple HOME=/home/foo) (peut être "
+"utilisé plusieurs fois)"
 
 #: cmd/incus/copy.go:63 cmd/incus/create.go:65
 msgid "Ephemeral instance"
@@ -3566,7 +3565,7 @@ msgstr "Impossible de supprimer la variable %s:%s : %w"
 #: cmd/incus/low_level.go:249
 #, c-format
 msgid "Failed to dump instance memory: %w"
-msgstr "Échec de la sauvegarde de la mémoire de l'instance : %w"
+msgstr "Échec de l’export de la mémoire de l'instance : %w"
 
 #: cmd/incus/storage_bucket.go:1440
 #, c-format
@@ -4624,12 +4623,12 @@ msgstr "Import de l’instance : %s"
 #: cmd/incus/create.go:66
 msgid "Include environment variables from file (may be passed multiple times)"
 msgstr ""
-"Inclure les variables d'environnement d'un fichier (peut être appelé "
+"Importer les variables d’environnement depuis un fichier (peut être utilisé "
 "plusieurs fois)"
 
 #: cmd/incus/manpage.go:33
 msgid "Include less common commands"
-msgstr "Ajouter des commandes moins courantes"
+msgstr "Afficher les commandes moins courantes"
 
 #: cmd/incus/manpage.go:71
 msgid "Incus - Command line client"
@@ -4654,11 +4653,11 @@ msgstr "Fichier de données d’entrée (« - » pour l’entrée standard)"
 
 #: cmd/incus/low_level.go:1203
 msgid "Input file contains no certificate"
-msgstr "Le fichier d'entrée ne contient aucun certificat"
+msgstr "Le fichier d’entrée ne contient aucun certificat"
 
 #: cmd/incus/info.go:934
 msgid "Instance Only"
-msgstr "Uniquement l'instance"
+msgstr "Instance seule"
 
 #: cmd/incus/create.go:74
 msgid "Instance description"
@@ -5090,7 +5089,7 @@ msgstr "Lister les alias"
 
 #: cmd/incus/config_trust.go:577
 msgid "List all active certificate add tokens"
-msgstr "Lister tous les jetons d’ajout de certificat actifs"
+msgstr "Lister tous les jetons d’ajout de certificat"
 
 #: cmd/incus/config_trust.go:578
 msgid ""
