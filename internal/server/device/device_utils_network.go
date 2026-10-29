@@ -1450,6 +1450,51 @@ func networkSRIOVSetupVF(d deviceCommon, vfParent string, vfDevice string, vfID 
 		}
 
 		if d.config["acceleration"] != "vdpa" {
+			// Non-default drivers require setting the migratable bit.
+			if driver != "vfio-pci" {
+				pfPath, err := os.Readlink(fmt.Sprintf("/sys/class/net/%s/device", vfParent))
+				if err != nil {
+					return vfPCIDev, 0, fmt.Errorf("Failed looking up PF device %q: %w", vfParent, err)
+				}
+
+				ports, err := netlink.DevLinkGetPortList("pci", filepath.Base(pfPath))
+				if err != nil {
+					return vfPCIDev, 0, fmt.Errorf("Failed listing devlink ports of PF %q: %w", vfParent, err)
+				}
+
+				// VF ports only show up in switchdev mode, which live migration requires.
+				var port *netlink.DevlinkPort
+				for _, candidate := range ports {
+					if candidate.VfNumber != nil && int(*candidate.VfNumber) == vfID {
+						port = candidate
+						break
+					}
+				}
+
+				if port == nil {
+					return vfPCIDev, 0, fmt.Errorf("VF device %q has no devlink port, the PF must be in switchdev mode", vfPCIDev.SlotName)
+				}
+
+				if !port.Fn.MigratableSupported {
+					return vfPCIDev, 0, fmt.Errorf("VF device %q is not live-migratable", vfPCIDev.SlotName)
+				}
+
+				volatile["last_state.migratable"] = strconv.FormatBool(port.Fn.Migratable)
+				if !port.Fn.Migratable {
+					err = netlink.DevlinkPortFnSet(port.BusName, port.DeviceName, port.PortIndex, netlink.DevlinkPortFnSetAttrs{
+						FnAttrs:         netlink.DevlinkPortFn{Migratable: true},
+						MigratableValid: true,
+					})
+					if err != nil {
+						return vfPCIDev, 0, fmt.Errorf("Failed making VF device %q live-migratable: %w", vfPCIDev.SlotName, err)
+					}
+
+					reverter.Add(func() {
+						_ = netlink.DevlinkPortFnSet(port.BusName, port.DeviceName, port.PortIndex, netlink.DevlinkPortFnSetAttrs{MigratableValid: true})
+					})
+				}
+			}
+
 			// Register VF device with a VFIO driver so it can be passed to VM.
 			err = pcidev.DeviceDriverOverride(vfPCIDev, driver)
 			if err != nil {
@@ -1592,6 +1637,37 @@ func networkSRIOVRestoreVF(d deviceCommon, useSpoofCheck bool, volatile map[stri
 		err := link.SetVfTrusted(volatile["last_state.vf.id"], mode)
 		if err != nil && d.config["security.trusted"] != "" {
 			return err
+		}
+	}
+
+	// Reset migratable bit.
+	if util.IsFalse(volatile["last_state.migratable"]) {
+		pfPath, err := os.Readlink(fmt.Sprintf("/sys/class/net/%s/device", parent))
+		if err != nil {
+			return fmt.Errorf("Failed looking up PF device %q: %w", parent, err)
+		}
+
+		ports, err := netlink.DevLinkGetPortList("pci", filepath.Base(pfPath))
+		if err != nil {
+			return fmt.Errorf("Failed listing devlink ports of PF %q: %w", parent, err)
+		}
+
+		vfID, err := strconv.Atoi(volatile["last_state.vf.id"])
+		if err != nil {
+			return fmt.Errorf("Failed parsing VF index %q: %w", volatile["last_state.vf.id"], err)
+		}
+
+		for _, port := range ports {
+			if port.VfNumber == nil || int(*port.VfNumber) != vfID {
+				continue
+			}
+
+			err = netlink.DevlinkPortFnSet(port.BusName, port.DeviceName, port.PortIndex, netlink.DevlinkPortFnSetAttrs{MigratableValid: true})
+			if err != nil {
+				return fmt.Errorf("Failed resetting VF live migration bit: %w", err)
+			}
+
+			break
 		}
 	}
 
