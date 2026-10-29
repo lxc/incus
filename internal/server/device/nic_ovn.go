@@ -1460,6 +1460,7 @@ func (d *nicOVN) postStop() error {
 			"last_state.representor.tagged":   "",
 			"last_state.representor.untagged": "",
 			"last_state.representor.up":       "",
+			"last_state.migratable":           "",
 		})
 	}()
 
