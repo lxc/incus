@@ -3400,8 +3400,9 @@ func (b *backend) MountInstance(inst instance.Instance, op *operations.Operation
 		return nil, fmt.Errorf("Failed getting disk path: %w", err)
 	}
 
+	// Only block volumes have a qcow2 image, filesystem volumes just inherit the key from the pool.
 	backingPaths := []string{}
-	if vol.Config()["block.type"] == drivers.BlockVolumeTypeQcow2 {
+	if vol.IsVMBlock() && vol.Config()["block.type"] == drivers.BlockVolumeTypeQcow2 {
 		// Get snapshots.
 		volSnaps, err := VolumeDBSnapshotsGet(b, inst.Project().Name, inst.Name(), vol.Type())
 		if err != nil {
@@ -6833,8 +6834,9 @@ func (b *backend) MountCustomVolume(projectName, volName string, op *operations.
 		return nil, err
 	}
 
+	// Only block volumes have a qcow2 image, filesystem volumes just inherit the key from the pool.
 	backingPaths := []string{}
-	if vol.Config()["block.type"] == drivers.BlockVolumeTypeQcow2 {
+	if vol.IsCustomBlock() && vol.Config()["block.type"] == drivers.BlockVolumeTypeQcow2 {
 		// Get snapshots.
 		_, volName := project.StorageVolumeParts(vol.Name())
 		volSnaps, err := VolumeDBSnapshotsGet(b, projectName, volName, vol.Type())
