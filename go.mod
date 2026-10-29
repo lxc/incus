@@ -82,6 +82,8 @@ require (
 	software.sslmate.com/src/go-pkcs12 v0.7.4
 )
 
+replace github.com/vishvananda/netlink v1.3.1 => github.com/bensmrs/netlink v1.3.1-incus7.6
+
 require (
 	cyphar.com/go-pathrs v0.2.6 // indirect
 	github.com/AdaLogics/go-fuzz-headers v0.0.0-20240806141605-e8a1dd7889d6 // indirect

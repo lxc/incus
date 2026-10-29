@@ -448,18 +448,25 @@ func (d *nicSRIOV) Stop() (*deviceConfig.RunConfig, error) {
 func (d *nicSRIOV) postStop() error {
 	defer func() {
 		_ = d.volatileSet(map[string]string{
-			"failover.host_name":       "",
-			"host_name":                "",
-			"last_state.hwaddr":        "",
-			"last_state.mtu":           "",
-			"last_state.created":       "",
-			"last_state.vf.parent":     "",
-			"last_state.vf.id":         "",
-			"last_state.vf.hwaddr":     "",
-			"last_state.vf.vlan":       "",
-			"last_state.vf.spoofcheck": "",
-			"last_state.vf.trusted":    "",
-			"last_state.pci.driver":    "",
+			"failover.host_name":              "",
+			"host_name":                       "",
+			"last_state.hwaddr":               "",
+			"last_state.mtu":                  "",
+			"last_state.created":              "",
+			"last_state.vf.parent":            "",
+			"last_state.vf.id":                "",
+			"last_state.vf.hwaddr":            "",
+			"last_state.vf.vlan":              "",
+			"last_state.vf.spoofcheck":        "",
+			"last_state.vf.trusted":           "",
+			"last_state.pci.driver":           "",
+			"last_state.representor":          "",
+			"last_state.representor.mtu":      "",
+			"last_state.representor.pvid":     "",
+			"last_state.representor.tagged":   "",
+			"last_state.representor.untagged": "",
+			"last_state.representor.up":       "",
+			"last_state.migratable":           "",
 		})
 	}()
 

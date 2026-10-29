@@ -3484,6 +3484,12 @@ The original MAC that was used when moving a physical device into an instance.
 Comma-separated list of the last used IP addresses of the network device.
 ```
 
+```{config:option} volatile.<name>.last_state.migratable instance-volatile
+:shortdesc: "NIC original migratable capability"
+:type: "string"
+The original NIC migratable capability
+```
+
 ```{config:option} volatile.<name>.last_state.mtu instance-volatile
 :shortdesc: "Network device original MTU"
 :type: "string"
@@ -3506,6 +3512,42 @@ The parent host device used when allocating a PCI device to an instance.
 :shortdesc: "PCI parent slot name"
 :type: "string"
 The parent host device PCI slot name.
+```
+
+```{config:option} volatile.<name>.last_state.representor instance-volatile
+:shortdesc: "Representor name"
+:type: "string"
+The representor port name
+```
+
+```{config:option} volatile.<name>.last_state.representor.mtu instance-volatile
+:shortdesc: "Representor original MTU"
+:type: "string"
+The original representor MTU
+```
+
+```{config:option} volatile.<name>.last_state.representor.pvid instance-volatile
+:shortdesc: "Representor original PVID"
+:type: "string"
+The original representor PVID
+```
+
+```{config:option} volatile.<name>.last_state.representor.tagged instance-volatile
+:shortdesc: "Representor original tagged VLANs"
+:type: "string"
+The original representor tagged VLANs
+```
+
+```{config:option} volatile.<name>.last_state.representor.untagged instance-volatile
+:shortdesc: "Representor original untagged VLANs"
+:type: "string"
+The original representor untagged VLANs
+```
+
+```{config:option} volatile.<name>.last_state.representor.up instance-volatile
+:shortdesc: "Representor original state"
+:type: "string"
+The original representor state
 ```
 
 ```{config:option} volatile.<name>.last_state.usb.bus instance-volatile
