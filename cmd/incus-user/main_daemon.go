@@ -22,6 +22,7 @@ var (
 	mu           sync.RWMutex
 	connections  uint64
 	transactions uint64
+	setupMu      sync.Mutex
 )
 
 var projectNames []string

@@ -81,15 +81,19 @@ func proxyConnection(conn *net.UnixConn, serverUnixPath string) {
 	logger.Debug("Connected")
 	defer logger.Debug("Disconnected")
 
-	// Check if the user was setup.
+	// Check if the user was setup, under a lock as concurrent connections would otherwise race on the setup.
+	setupMu.Lock()
 	if !util.PathExists(internalUtil.VarPath("users", fmt.Sprintf("%d", creds.Uid))) || !slices.Contains(projectNames, fmt.Sprintf("user-%d", creds.Uid)) {
 		log.Infof("Setting up for uid %d", creds.Uid)
 		err := serverSetupUser(creds.Uid)
 		if err != nil {
+			setupMu.Unlock()
 			log.Errorf("Failed to setup new user: %v", err)
 			return
 		}
 	}
+
+	setupMu.Unlock()
 
 	// Connect to the daemon.
 	unixAddr, err := net.ResolveUnixAddr("unix", serverUnixPath)
