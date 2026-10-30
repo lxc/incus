@@ -149,8 +149,7 @@ checksum:
   name_template: "checksums.txt"
 
 gomod:
-  proxy: true
-  mod: mod
+  proxy: false
 
 milestones:
   - repo:
