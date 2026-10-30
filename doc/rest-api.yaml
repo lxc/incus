@@ -807,6 +807,29 @@ definitions:
         title: DebugKernelModule represents a loaded kernel module.
         type: object
         x-go-package: github.com/lxc/incus-os/incus-osd/api
+    DebugLVM:
+        properties:
+            lvs:
+                items:
+                    additionalProperties: {}
+                    type: object
+                type: array
+                x-go-name: LVs
+            pvs:
+                items:
+                    additionalProperties: {}
+                    type: object
+                type: array
+                x-go-name: PVs
+            vgs:
+                items:
+                    additionalProperties: {}
+                    type: object
+                type: array
+                x-go-name: VGs
+        title: DebugLVM represents LVM debug information for the system.
+        type: object
+        x-go-package: github.com/lxc/incus-os/incus-osd/api
     DebugReport:
         properties:
             media_type:
@@ -7660,6 +7683,9 @@ definitions:
         x-go-package: github.com/lxc/incus-os/incus-osd/api
     SystemKernelConfigCPU:
         properties:
+            disable_thermal_protection:
+                type: boolean
+                x-go-name: DisableThermalProtection
             scaling_governor:
                 type: string
                 x-go-name: ScalingGovernor
@@ -7989,6 +8015,13 @@ definitions:
                 x-go-name: DefaultConfirmationTimeout
             dns:
                 $ref: '#/definitions/SystemNetworkDNS'
+            ignore_service_checks:
+                description: |-
+                    If true, when bringing up the network don't wait for DNS and NTP to be configured and
+                    available before continuing. Most systems shouldn't need to set this, and when enabled
+                    initial update checks may fail due to being unable to resolve hostnames.
+                type: boolean
+                x-go-name: IgnoreServiceChecks
             interfaces:
                 items:
                     $ref: '#/definitions/SystemNetworkInterface'
@@ -8491,6 +8524,18 @@ definitions:
                 type: string
                 x-go-name: PublicKey
         title: SystemNetworkWireguardState holds state information about a specific wireguard interface.
+        type: object
+        x-go-package: github.com/lxc/incus-os/incus-osd/api
+    SystemNextBootVersion:
+        properties:
+            next_boot_version:
+                description: |-
+                    If not specified or "newest", the system will attempt to boot into the newest installed OS version.
+                    Values of "current" or "oldest" will change the boot target to reboot into the same version or
+                    the prior installed version.
+                type: string
+                x-go-name: NextBootVersion
+        title: SystemNextBootVersion defines a struct that is used to specify what version of IncusOS to boot the next time the system starts.
         type: object
         x-go-package: github.com/lxc/incus-os/incus-osd/api
     SystemProvider:
