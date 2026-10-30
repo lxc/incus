@@ -188,12 +188,9 @@ func probeActiveUnixSocket(sock string) bool {
 	return false
 }
 
-func probeFileExists(sock string) bool {
-	_, err := os.Lstat(sock)
-	return err == nil
-}
-
-func resolveUnixSocket(path string, probe func(string) bool) (string, string) {
+// ResolveUnixSocket returns the Unix socket path and optional project name for a local Unix connection.
+// If path is empty, it automatically resolves to an active or default socket.
+func ResolveUnixSocket(path string) (string, string) {
 	if path != "" {
 		return path, ""
 	}
@@ -208,30 +205,36 @@ func resolveUnixSocket(path string, probe func(string) bool) (string, string) {
 		return socketForDir(envDir)
 	}
 
+	// Collect the sockets present on disk.
+	type candidate struct {
+		path    string
+		project string
+	}
+
+	candidates := []candidate{}
 	for _, dir := range defaultSocketDirs {
 		sock, proj := socketForDir(dir)
-		if probe(sock) {
-			return sock, proj
+
+		_, err := os.Lstat(sock)
+		if err == nil {
+			candidates = append(candidates, candidate{path: sock, project: proj})
 		}
 	}
 
-	return "", ""
-}
-
-// ResolveUnixSocket returns the active Unix socket path and optional project name for a local Unix connection.
-// If path is empty, it automatically resolves to an active or default socket.
-func ResolveUnixSocket(path string) (string, string) {
-	sock, proj := resolveUnixSocket(path, probeActiveUnixSocket)
-	if sock != "" {
-		return sock, proj
+	if len(candidates) == 0 {
+		return socketForDir(defaultSocketDirs[len(defaultSocketDirs)-1])
 	}
 
-	sock, proj = resolveUnixSocket(path, probeFileExists)
-	if sock != "" {
-		return sock, proj
+	// Connecting wakes up socket-activated daemons, so only do it to tell a stale socket from an active one.
+	if len(candidates) > 1 {
+		for _, c := range candidates {
+			if probeActiveUnixSocket(c.path) {
+				return c.path, c.project
+			}
+		}
 	}
 
-	return socketForDir(defaultSocketDirs[len(defaultSocketDirs)-1])
+	return candidates[0].path, candidates[0].project
 }
 
 // ConnectIncusUnixWithContext lets you connect to a remote Incus daemon over a local unix socket with context.Context.
