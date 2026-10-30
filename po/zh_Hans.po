@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lxd\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2026-10-23 18:47-0400\n"
+"POT-Creation-Date: 2026-10-29 23:41-0400\n"
 "PO-Revision-Date: 2026-04-21 03:03+0000\n"
 "Last-Translator: meipeter <meipeter114514@outlook.com>\n"
 "Language-Team: Chinese (Simplified Han script) <https://hosted.weblate.org/"
@@ -1190,7 +1190,7 @@ msgstr "您是否正在加入现有集群？"
 msgid "Are you sure you want to %s cluster member %q? (yes/no) [default=no]: "
 msgstr "您确定要 %s 集群成员 %q 吗？（是/否）[默认值=否]： "
 
-#: cmd/incus/console.go:453
+#: cmd/incus/console.go:457
 msgid "As neither could be found, the raw SPICE socket can be found at:"
 msgstr "由于两者都找不到，原始 SPICE 套接字可在以下位置找到："
 
@@ -3348,7 +3348,7 @@ msgstr "无法从标准输入读取：%w"
 msgid "Failed setting BootNext: %w"
 msgstr "启动命令失败：%w"
 
-#: cmd/incus/console.go:431
+#: cmd/incus/console.go:435
 #, c-format
 msgid "Failed starting command: %w"
 msgstr "启动命令失败：%w"
@@ -9202,7 +9202,7 @@ msgid ""
 "You can invoke it through \"incusd cluster\"."
 msgstr ""
 
-#: cmd/incus/console.go:452
+#: cmd/incus/console.go:456
 msgid ""
 "The client automatically uses either spicy or remote-viewer when present."
 msgstr ""

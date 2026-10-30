@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: incus\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2026-10-23 18:47-0400\n"
+"POT-Creation-Date: 2026-10-29 23:41-0400\n"
 "PO-Revision-Date: 2026-04-21 03:01+0000\n"
 "Last-Translator: Anonymous <noreply@weblate.org>\n"
 "Language-Team: Swedish <https://hosted.weblate.org/projects/incus/cli/sv/>\n"
@@ -1200,7 +1200,7 @@ msgid "Are you sure you want to %s cluster member %q? (yes/no) [default=no]: "
 msgstr ""
 "Är du säker på att du vill %s klustra medlem %q? (ja/nej) [standard=nej]: "
 
-#: cmd/incus/console.go:453
+#: cmd/incus/console.go:457
 msgid "As neither could be found, the raw SPICE socket can be found at:"
 msgstr "Eftersom ingen av dem kunde hittas, finns den råa SPICE-sockeln på:"
 
@@ -3402,7 +3402,7 @@ msgstr "Det gick inte att läsa från filen: %w"
 msgid "Failed setting BootNext: %w"
 msgstr "Startkommandot misslyckades: %w"
 
-#: cmd/incus/console.go:431
+#: cmd/incus/console.go:435
 #, c-format
 msgid "Failed starting command: %w"
 msgstr "Startkommandot misslyckades: %w"
@@ -9847,7 +9847,7 @@ msgstr ""
 "\n"
 "Du kan anropa det genom \"incusd cluster\"."
 
-#: cmd/incus/console.go:452
+#: cmd/incus/console.go:456
 msgid ""
 "The client automatically uses either spicy or remote-viewer when present."
 msgstr ""

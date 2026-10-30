@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: incus\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2026-10-23 18:47-0400\n"
+"POT-Creation-Date: 2026-10-29 23:41-0400\n"
 "PO-Revision-Date: 2026-04-29 08:09+0000\n"
 "Last-Translator: Américo Monteiro <a_monteiro@gmx.com>\n"
 "Language-Team: Portuguese <https://hosted.weblate.org/projects/incus/cli/pt/"
@@ -1210,7 +1210,7 @@ msgstr ""
 "Tem certeza de que deseja %s membro do agrupamento %q? (sim/não) "
 "[predefinição=não]: "
 
-#: cmd/incus/console.go:453
+#: cmd/incus/console.go:457
 msgid "As neither could be found, the raw SPICE socket can be found at:"
 msgstr ""
 "Como nenhum pode ser encontrado, o socket SPICE cru pode ser encontrado em:"
@@ -3423,7 +3423,7 @@ msgstr "Falhou ao ler do ficheiro: %w"
 msgid "Failed setting BootNext: %w"
 msgstr "Falhou ao iniciar comando: %w"
 
-#: cmd/incus/console.go:431
+#: cmd/incus/console.go:435
 #, c-format
 msgid "Failed starting command: %w"
 msgstr "Falhou ao iniciar comando: %w"
@@ -9940,7 +9940,7 @@ msgstr ""
 "\n"
 "Você pode invoca-lo através de \"incusd cluster\"."
 
-#: cmd/incus/console.go:452
+#: cmd/incus/console.go:456
 msgid ""
 "The client automatically uses either spicy or remote-viewer when present."
 msgstr ""
