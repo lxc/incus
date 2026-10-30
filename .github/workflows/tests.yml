@@ -282,7 +282,6 @@ jobs:
             libsqlite3-dev \
             libtool \
             libudev-dev \
-            linux-modules-extra-$(uname -r) \
             llvm \
             make \
             pkg-config\
@@ -311,6 +310,9 @@ jobs:
             xfsprogs \
             xz-utils \
             zfsutils-linux
+
+          # Extra kernel modules, no longer a separate package on newer kernels.
+          sudo apt-get install --no-install-recommends -y linux-modules-extra-$(uname -r) || true
 
           # Make sure all AppArmor profiles are loaded.
           sudo systemctl start apparmor
