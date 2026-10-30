@@ -484,6 +484,18 @@ test_projects_storage() {
 
     incus storage volume list "${pool}" | grep custom | grep -q vol
 
+    # Profiles using the volume are listed from both projects and with all projects.
+    incus profile create volprofile
+    incus profile device add volprofile vol disk pool="${pool}" source=vol path=/mnt/vol
+    incus profile create volprofile --project default
+    incus profile device add volprofile vol disk pool="${pool}" source=vol path=/mnt/vol --project default
+    expected="/1.0/profiles/volprofile /1.0/profiles/volprofile?project=foo"
+    [ "$(incus query "/1.0/storage-pools/${pool}/volumes/custom/vol?project=foo" | jq -r '.used_by | sort | join(" ")')" = "${expected}" ]
+    [ "$(incus query "/1.0/storage-pools/${pool}/volumes/custom/vol?project=default" | jq -r '.used_by | sort | join(" ")')" = "${expected}" ]
+    [ "$(incus query "/1.0/storage-pools/${pool}/volumes?recursion=1&all-projects=true" | jq -r '.[] | select(.type == "custom" and .name == "vol") | .used_by | sort | join(" ")')" = "${expected}" ]
+    incus profile delete volprofile
+    incus profile delete volprofile --project default
+
     incus storage volume delete "${pool}" vol
 
     incus project switch default
