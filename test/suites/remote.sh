@@ -306,6 +306,17 @@ test_remote_admin() {
     incus_remote remote rename foo bar
     incus_remote remote list | grep 'bar'
     incus_remote remote list | grep -v 'foo'
+
+    # Filtering
+    [ "$(incus_remote remote list -f csv -c n ba)" = "bar (current)" ]
+    [ "$(incus_remote remote list -f csv -c n 'name=^b.*')" = "bar (current)" ]
+    incus_remote remote list -f csv -c n "url=https://${INCUS_ADDR}" | grep -q "^bar "
+    ! incus_remote remote list -f csv -c n "url=https://${INCUS_ADDR}" | grep -qx local || false
+    incus_remote remote list -f csv -c n protocol=incus auth_type=tls | grep -q "^bar "
+    ! incus_remote remote list -f csv -c n protocol=incus auth_type=tls | grep -qx local || false
+    ! incus_remote remote list -f csv -c n public=true | grep -q "^bar " || false
+    [ "$(incus_remote remote list -f csv -c n static=false 'name=^b.*')" = "bar (current)" ]
+    ! incus_remote remote list bogus=true || false
     [ "$(incus_remote remote get-default)" = "bar" ]
 
     ! incus_remote remote remove bar || false
