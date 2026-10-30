@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"runtime"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -31,6 +32,13 @@ func TestResolveUnixSocket(t *testing.T) {
 	fallbackDir1 := t.TempDir()
 	fallbackDir2 := t.TempDir()
 
+	// Dir with a lone active socket, which must be used without connecting to it.
+	loneDir := t.TempDir()
+	loneSock := filepath.Join(loneDir, "unix.socket")
+	loneListener, err := net.Listen("unix", loneSock)
+	assert.NoError(t, err)
+	defer func() { _ = loneListener.Close() }()
+
 	// Dirs for incus-user (unix.socket not writable, unix.socket.user writable).
 	userDir := t.TempDir()
 	userSock := filepath.Join(userDir, "unix.socket.user")
@@ -49,6 +57,7 @@ func TestResolveUnixSocket(t *testing.T) {
 		expectedPath string
 		expectedProj string
 		skipOS       []string
+		noConnect    net.Listener
 	}{
 		{
 			name:         "env override",
@@ -72,6 +81,13 @@ func TestResolveUnixSocket(t *testing.T) {
 			path:         "",
 			socketDirs:   []string{staleDir, activeDir},
 			expectedPath: activeSock,
+		},
+		{
+			name:         "lone socket used without connecting",
+			path:         "",
+			socketDirs:   []string{fallbackDir1, loneDir},
+			expectedPath: loneSock,
+			noConnect:    loneListener,
 		},
 		{
 			name:         "default fallback when no socket exists",
@@ -109,6 +125,17 @@ func TestResolveUnixSocket(t *testing.T) {
 			path, project := ResolveUnixSocket(tc.path)
 			assert.Equal(t, tc.expectedPath, path)
 			assert.Equal(t, tc.expectedProj, project)
+
+			if tc.noConnect != nil {
+				unixListener, ok := tc.noConnect.(*net.UnixListener)
+				assert.True(t, ok)
+
+				err := unixListener.SetDeadline(time.Now().Add(100 * time.Millisecond))
+				assert.NoError(t, err)
+
+				_, err = unixListener.Accept()
+				assert.ErrorIs(t, err, os.ErrDeadlineExceeded)
+			}
 		})
 	}
 }
