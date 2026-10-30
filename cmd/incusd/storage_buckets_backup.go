@@ -48,7 +48,7 @@ var storagePoolBucketBackupCmd = APIEndpoint{
 var storagePoolBucketBackupsExportCmd = APIEndpoint{
 	Path: "storage-pools/{poolName}/buckets/{bucketName}/backups/{backupName}/export",
 
-	Get: APIEndpointAction{Handler: storagePoolBucketBackupExportGet, AccessHandler: allowPermission(auth.ObjectTypeStorageBucket, auth.EntitlementCanView, "poolName", "bucketName", "location")},
+	Get: APIEndpointAction{Handler: storagePoolBucketBackupExportGet, AccessHandler: allowPermission(auth.ObjectTypeStorageBucket, auth.EntitlementCanManageBackups, "poolName", "bucketName", "location")},
 }
 
 // swagger:operation GET /1.0/storage-pools/{poolName}/buckets/{bucketName}/backups storage storage_pool_buckets_backups_get

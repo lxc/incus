@@ -733,10 +733,11 @@ func (b *backend) CreateInstance(inst instance.Instance, op *operations.Operatio
 	return nil
 }
 
-// stripMetadataLinks removes any symlink in the instance's metadata area (everything but the guest
-// rootfs) and returns the removed paths. Removing rather than just reporting neutralizes links that
-// reach the volume via a path (e.g. snapshot restore) that cannot be cleanly reverted.
-func stripMetadataLinks(instPath string) ([]string, error) {
+// stripMetadata removes anything in the instance's metadata area (everything but the guest rootfs)
+// that isn't a directory, a regular file or an allowed self-symlink, and returns the removed paths.
+// Removing rather than just reporting neutralizes entries that reach the volume via a path
+// (e.g. snapshot restore) that cannot be cleanly reverted.
+func stripMetadata(instPath string) ([]string, error) {
 	rootfsPath := filepath.Join(instPath, "rootfs")
 
 	var removed []string
@@ -751,13 +752,18 @@ func stripMetadataLinks(instPath string) ([]string, error) {
 			return filepath.SkipDir
 		}
 
+		// Keep directories and regular files.
+		if d.IsDir() || d.Type().IsRegular() {
+			return nil
+		}
+
+		// Keep the self-symlinks Incus itself maintains.
 		if d.Type()&fs.ModeSymlink != 0 {
 			relPath, err := filepath.Rel(instPath, path)
 			if err != nil {
 				return err
 			}
 
-			// Allow the links Incus itself maintains.
 			if relPath == "qemu.nvram" || relPath == "config/lxd-agent" {
 				target, err := os.Readlink(path)
 				if err != nil {
@@ -768,14 +774,15 @@ func stripMetadataLinks(instPath string) ([]string, error) {
 					return nil
 				}
 			}
-
-			err = os.Remove(path)
-			if err != nil {
-				return err
-			}
-
-			removed = append(removed, path)
 		}
+
+		// Remove everything else (disallowed symlinks, device nodes, pipes, sockets).
+		err = os.Remove(path)
+		if err != nil {
+			return err
+		}
+
+		removed = append(removed, path)
 
 		return nil
 	})
@@ -786,8 +793,8 @@ func stripMetadataLinks(instPath string) ([]string, error) {
 	return removed, nil
 }
 
-// stripInstanceMetadataLinks mounts the instance, strips disallowed metadata symlinks and errors if any were found.
-func (b *backend) stripInstanceMetadataLinks(inst instance.Instance, op *operations.Operation) error {
+// stripInstanceMetadata mounts the instance, strips disallowed metadata entries and errors if any were found.
+func (b *backend) stripInstanceMetadata(inst instance.Instance, op *operations.Operation) error {
 	volType, err := InstanceTypeToVolumeType(inst.Type())
 	if err != nil {
 		return err
@@ -800,14 +807,14 @@ func (b *backend) stripInstanceMetadataLinks(inst instance.Instance, op *operati
 
 	defer func() { _ = b.UnmountInstance(inst, op) }()
 
-	removed, err := stripMetadataLinks(drivers.GetVolumeMountPath(b.name, volType, project.Instance(inst.Project().Name, inst.Name())))
+	removed, err := stripMetadata(drivers.GetVolumeMountPath(b.name, volType, project.Instance(inst.Project().Name, inst.Name())))
 	if err != nil {
 		return err
 	}
 
 	if len(removed) > 0 {
-		b.logger.Warn("Removed disallowed symlinks from instance metadata", logger.Ctx{"instance": inst.Name(), "project": inst.Project().Name, "paths": removed})
-		return fmt.Errorf("Instance metadata contained disallowed symlinks: %v", removed)
+		b.logger.Warn("Removed disallowed entries from instance metadata", logger.Ctx{"instance": inst.Name(), "project": inst.Project().Name, "paths": removed})
+		return fmt.Errorf("Instance metadata contained disallowed entries: %v", removed)
 	}
 
 	return nil
@@ -892,13 +899,13 @@ func (b *backend) CreateInstanceFromBackup(srcBackup backup.Info, srcData io.Rea
 	}
 
 	// Strip unsafe symlinks before any host-side use of the metadata area.
-	removed, err := stripMetadataLinks(vol.MountPath())
+	removed, err := stripMetadata(vol.MountPath())
 	if err != nil {
 		return nil, nil, err
 	}
 
 	if len(removed) > 0 {
-		return nil, nil, fmt.Errorf("Backup metadata contained disallowed symlinks: %v", removed)
+		return nil, nil, fmt.Errorf("Backup metadata contained disallowed entries: %v", removed)
 	}
 
 	err = b.ensureInstanceSymlink(instanceType, srcBackup.Project, srcBackup.Name, vol.MountPath())
@@ -1369,7 +1376,7 @@ func (b *backend) CreateInstanceFromCopy(inst instance.Instance, src instance.In
 
 			srcDependentVolumes = append(srcDependentVolumes, srcVol)
 
-			vol := localMigration.ProtobufToDependentVolume(volWithType.Volume, volWithType.VolumeTypes[0], newDevices[*volWithType.Volume.DeviceName])
+			vol := localMigration.ProtobufToDependentVolume(volWithType.Volume, volWithType.VolumeTypes[0], newDevices[volWithType.Volume.GetDeviceName()])
 			dstDependentVolumes = append(dstDependentVolumes, vol)
 		}
 
@@ -1433,7 +1440,7 @@ func (b *backend) CreateInstanceFromCopy(inst instance.Instance, src instance.In
 	}
 
 	// Strip unsafe symlinks, including any hidden in a copied-from snapshot.
-	err = b.stripInstanceMetadataLinks(inst, op)
+	err = b.stripInstanceMetadata(inst, op)
 	if err != nil {
 		return err
 	}
@@ -1966,7 +1973,7 @@ func (b *backend) RefreshInstance(inst instance.Instance, src instance.Instance,
 
 			srcDependentVolumes = append(srcDependentVolumes, srcVol)
 
-			vol := localMigration.ProtobufToDependentVolume(volWithType.Volume, volWithType.VolumeTypes[0], newDevices[*volWithType.Volume.DeviceName])
+			vol := localMigration.ProtobufToDependentVolume(volWithType.Volume, volWithType.VolumeTypes[0], newDevices[volWithType.Volume.GetDeviceName()])
 			dstDependentVolumes = append(dstDependentVolumes, vol)
 		}
 
@@ -2034,7 +2041,7 @@ func (b *backend) RefreshInstance(inst instance.Instance, src instance.Instance,
 	}
 
 	// Strip unsafe symlinks materialized from the refresh source.
-	err = b.stripInstanceMetadataLinks(inst, op)
+	err = b.stripInstanceMetadata(inst, op)
 	if err != nil {
 		return err
 	}
@@ -2215,7 +2222,7 @@ func (b *backend) CreateInstanceFromImage(inst instance.Instance, fingerprint st
 	}
 
 	// Strip unsafe symlinks introduced by the image.
-	err = b.stripInstanceMetadataLinks(inst, op)
+	err = b.stripInstanceMetadata(inst, op)
 	if err != nil {
 		return err
 	}
@@ -2580,7 +2587,7 @@ func (b *backend) CreateInstanceFromMigration(inst instance.Instance, conn io.Re
 
 	// Strip unsafe symlinks from migrated data, skipping intra-cluster moves (no new data, may not be locally mountable).
 	if !isRemoteClusterMove {
-		err = b.stripInstanceMetadataLinks(inst, op)
+		err = b.stripInstanceMetadata(inst, op)
 		if err != nil {
 			return err
 		}
@@ -4056,7 +4063,7 @@ func (b *backend) RestoreInstanceSnapshot(inst instance.Instance, src instance.I
 	// Strip unsafe symlinks from restored content on all success paths (a snapshot may hide them and restore can't be reverted).
 	defer func() {
 		if err == nil {
-			err = b.stripInstanceMetadataLinks(inst, op)
+			err = b.stripInstanceMetadata(inst, op)
 		}
 	}()
 
@@ -7614,7 +7621,14 @@ func (b *backend) UpdateInstanceBackupFile(inst instance.Instance, snapshots boo
 
 		// Write the YAML
 		path := filepath.Join(inst.Path(), "backup.yaml")
-		f, err := root.OpenFile("backup.yaml", os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0o400)
+
+		// Remove any existing entry first so we never write through a planted hard link.
+		err = root.Remove("backup.yaml")
+		if err != nil && !errors.Is(err, fs.ErrNotExist) {
+			return err
+		}
+
+		f, err := root.OpenFile("backup.yaml", os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0o400)
 		if err != nil {
 			return fmt.Errorf("Failed to create file %q: %w", path, err)
 		}
@@ -8489,6 +8503,16 @@ func (b *backend) CreateCustomVolumeFromBackup(srcBackup backup.Info, srcData io
 		// (<parent>/<snap>) rather than the expected snapshot name only form, so we need to handle both.
 		if internalInstance.IsSnapshot(snapshot.Name) {
 			_, snapName, _ = api.GetParentAndSnapshotName(snapshot.Name)
+		}
+
+		// The name is used as a path segment and must match the backup content.
+		err = validate.IsAPIName(snapName, false)
+		if err != nil {
+			return fmt.Errorf("Invalid snapshot name: %w", err)
+		}
+
+		if !slices.Contains(srcBackup.Snapshots, snapName) {
+			return fmt.Errorf("Snapshot %q in index doesn't match backup content", snapName)
 		}
 
 		fullSnapName := drivers.GetSnapshotVolumeName(srcBackup.Name, snapName)
@@ -10390,6 +10414,22 @@ func (b *backend) createDependentVolumesFromMigration(inst instance.Instance, co
 		}
 
 		b.logger.Debug("Creating dependent volume from migration", logger.Ctx{"name": dependentVol.Name, "type": dependentVol.MigrationType, "size": dependentVol.VolumeSize})
+
+		// Validate the volume name as it's used as a path segment.
+		err = validate.IsAPIName(dependentVol.Name, false)
+		if err != nil {
+			return nil, fmt.Errorf("Invalid dependent volume name: %w", err)
+		}
+
+		// Enforce the target project's storage pool restrictions.
+		if !project.StoragePoolAllowed(inst.Project().Config, dependentVol.Pool) {
+			return nil, fmt.Errorf("Storage pool %q not allowed for project %q", dependentVol.Pool, inst.Project().Name)
+		}
+
+		// The offer and index headers both come from the source, don't assume they match.
+		if info == nil || info.Config == nil || len(info.Config.DependentVolumes) <= idx || info.Config.DependentVolumes[idx] == nil || info.Config.DependentVolumes[idx].Volume == nil {
+			return nil, errors.New("Bad dependent volume definition found in index header")
+		}
 
 		// During a refresh only the new snapshots should be received. The root volume's
 		// args.Snapshots list has already been reduced to the snapshots the target is

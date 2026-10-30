@@ -1578,16 +1578,38 @@ type DependentVolumeWithType struct {
 	VolumeTypes []localMigration.Type
 }
 
+// ValidateDependentVolumesAgainstOffer rejects a migration response whose dependent volumes don't
+// match the ones the source offered, so a malicious target can't redefine their identity.
+func ValidateDependentVolumesAgainstOffer(offer []*migration.DependentVolume, resp []*migration.DependentVolume) error {
+	offered := make(map[string]*migration.DependentVolume, len(offer))
+	for _, vol := range offer {
+		offered[vol.GetDeviceName()] = vol
+	}
+
+	for _, vol := range resp {
+		match, ok := offered[vol.GetDeviceName()]
+		if !ok {
+			return fmt.Errorf("Dependent volume %q was not offered", vol.GetDeviceName())
+		}
+
+		if vol.GetName() != match.GetName() || vol.GetPool() != match.GetPool() || vol.GetContentType() != match.GetContentType() {
+			return fmt.Errorf("Dependent volume %q doesn't match the offer", vol.GetDeviceName())
+		}
+	}
+
+	return nil
+}
+
 // DependentVolumesMatchMigrationType returns the transport type matching the header's dependent volumes.
 func DependentVolumesMatchMigrationType(s *state.State, header *migration.MigrationHeader, snapshots bool, overrides api.DevicesMap, source bool, clusterMove bool) ([]DependentVolumeWithType, error) {
 	dependentVolumes := []DependentVolumeWithType{}
 	for _, vol := range header.DependentVolumes {
-		contentType := drivers.ContentType(*vol.ContentType)
-		poolName := *vol.Pool
+		contentType := drivers.ContentType(vol.GetContentType())
+		poolName := vol.GetPool()
 		storageMove := false
 
-		if overrides != nil && overrides[*vol.DeviceName] != nil {
-			newPoolName, ok := overrides[*vol.DeviceName]["pool"]
+		if overrides != nil && overrides[vol.GetDeviceName()] != nil {
+			newPoolName, ok := overrides[vol.GetDeviceName()]["pool"]
 			if ok {
 				storageMove = newPoolName != poolName
 				poolName = newPoolName

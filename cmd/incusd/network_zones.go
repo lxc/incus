@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/lxc/incus/v7/internal/filter"
 	"github.com/lxc/incus/v7/internal/server/auth"
@@ -223,6 +224,11 @@ func networkZonesGet(d *Daemon, r *http.Request) response.Response {
 		return response.InternalError(err)
 	}
 
+	userCanEdit, err := s.Authorizer.GetPermissionChecker(r.Context(), r, auth.EntitlementCanEdit, auth.ObjectTypeNetworkZone)
+	if err != nil {
+		return response.InternalError(err)
+	}
+
 	linkResults := make([]string, 0)
 	fullResults := make([]api.NetworkZone, 0)
 	for zoneName, projectName := range zoneNamesMap {
@@ -239,6 +245,10 @@ func networkZonesGet(d *Daemon, r *http.Request) response.Response {
 			netzoneInfo := netzone.Info()
 			netzoneInfo.UsedBy, _ = netzone.UsedBy() // Ignore errors in UsedBy, will return nil.
 			netzoneInfo.Project = projectName
+
+			if !userCanEdit(auth.ObjectNetworkZone(projectName, zoneName)) {
+				networkZoneStripSecrets(netzoneInfo)
+			}
 
 			if clauses != nil && len(clauses.Clauses) > 0 {
 				match, err := filter.Match(*netzoneInfo, *clauses)
@@ -304,6 +314,12 @@ func networkZonesPost(d *Daemon, r *http.Request) response.Response {
 	s := d.State()
 
 	projectName, _, err := project.NetworkZoneProject(s.DB.Cluster, request.ProjectParam(r))
+	if err != nil {
+		return response.SmartError(err)
+	}
+
+	// Authorize against the project the zone is actually created in.
+	err = s.Authorizer.CheckPermission(r.Context(), r, auth.ObjectProject(projectName), auth.EntitlementCanCreateNetworkZones)
 	if err != nil {
 		return response.SmartError(err)
 	}
@@ -484,7 +500,26 @@ func networkZoneGet(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
+	// Only editors get to see the peer keys.
+	err = s.Authorizer.CheckPermission(r.Context(), r, auth.ObjectNetworkZone(projectName, zoneName), auth.EntitlementCanEdit)
+	if err != nil {
+		if !api.StatusErrorCheck(err, http.StatusForbidden) {
+			return response.SmartError(err)
+		}
+
+		networkZoneStripSecrets(info)
+	}
+
 	return response.SyncResponseETag(true, info, netzone.Etag())
+}
+
+// networkZoneStripSecrets removes the peer keys from the zone config.
+func networkZoneStripSecrets(info *api.NetworkZone) {
+	for key := range info.Config {
+		if strings.HasPrefix(key, "peers.") && strings.HasSuffix(key, ".key") {
+			delete(info.Config, key)
+		}
+	}
 }
 
 // swagger:operation PATCH /1.0/network-zones/{zone} network-zones network_zone_patch

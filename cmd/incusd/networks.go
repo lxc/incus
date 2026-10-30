@@ -409,6 +409,12 @@ func networksPost(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
+	// Authorize against the project the network is actually created in.
+	err = s.Authorizer.CheckPermission(r.Context(), r, auth.ObjectProject(projectName), auth.EntitlementCanCreateNetworks)
+	if err != nil {
+		return response.SmartError(err)
+	}
+
 	networkCreateLock.Lock()
 	defer networkCreateLock.Unlock()
 

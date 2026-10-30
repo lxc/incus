@@ -1206,65 +1206,46 @@ func (m *Monitor) NBDServerStart(listenPath string, maxConnections int) (net.Con
 		MaxConnections int `json:"max-connections"`
 	}
 
-	listenAddress := listenPath
-	if listenAddress == "" {
-		// Create abstract unix listener.
-		listener, err := net.Listen("unix", "")
-		if err != nil {
-			return nil, fmt.Errorf("Failed creating unix listener: %w", err)
-		}
+	// QEMU may have dropped privileges, bind the socket ourselves and pass the FD.
+	err := os.Remove(listenPath)
+	if err != nil && !errors.Is(err, fs.ErrNotExist) {
+		return nil, fmt.Errorf("Failed to remove stale socket %q: %w", listenPath, err)
+	}
 
-		// Get the random address, and then close the listener, and pass the address for use with nbd-server-start.
-		listenAddress = listener.Addr().String()
-		_ = listener.Close()
+	listener, err := net.ListenUnix("unix", &net.UnixAddr{Name: listenPath, Net: "unix"})
+	if err != nil {
+		return nil, fmt.Errorf("Failed creating unix listener: %w", err)
+	}
 
-		args.Addr.Type = "unix"
-		args.Addr.Data = map[string]any{
-			"path":     strings.TrimPrefix(listenAddress, "@"),
-			"abstract": true,
-		}
-	} else {
-		// QEMU may have dropped privileges, bind the socket ourselves and pass the FD.
-		err := os.Remove(listenPath)
-		if err != nil && !errors.Is(err, fs.ErrNotExist) {
-			return nil, fmt.Errorf("Failed to remove stale socket %q: %w", listenPath, err)
-		}
+	listener.SetUnlinkOnClose(false)
 
-		listener, err := net.ListenUnix("unix", &net.UnixAddr{Name: listenPath, Net: "unix"})
-		if err != nil {
-			return nil, fmt.Errorf("Failed creating unix listener: %w", err)
-		}
+	listenerFile, err := listener.File()
+	_ = listener.Close()
+	if err != nil {
+		return nil, fmt.Errorf("Failed getting listener file descriptor: %w", err)
+	}
 
-		listener.SetUnlinkOnClose(false)
+	defer func() { _ = listenerFile.Close() }()
 
-		listenerFile, err := listener.File()
-		_ = listener.Close()
-		if err != nil {
-			return nil, fmt.Errorf("Failed getting listener file descriptor: %w", err)
-		}
+	err = m.SendFile(listenPath, listenerFile)
+	if err != nil {
+		return nil, fmt.Errorf("Failed sending listener file descriptor: %w", err)
+	}
 
-		defer func() { _ = listenerFile.Close() }()
-
-		err = m.SendFile(listenPath, listenerFile)
-		if err != nil {
-			return nil, fmt.Errorf("Failed sending listener file descriptor: %w", err)
-		}
-
-		args.Addr.Type = "fd"
-		args.Addr.Data = map[string]any{
-			"str": listenPath,
-		}
+	args.Addr.Type = "fd"
+	args.Addr.Data = map[string]any{
+		"str": listenPath,
 	}
 
 	args.MaxConnections = maxConnections
 
-	err := m.Run("nbd-server-start", args, nil)
+	err = m.Run("nbd-server-start", args, nil)
 	if err != nil {
 		return nil, err
 	}
 
 	// Connect to the NBD server and return the connection.
-	conn, err := net.Dial("unix", listenAddress)
+	conn, err := net.Dial("unix", listenPath)
 	if err != nil {
 		return nil, fmt.Errorf("Failed connecting to NBD server: %w", err)
 	}

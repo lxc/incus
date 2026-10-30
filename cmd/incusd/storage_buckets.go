@@ -329,6 +329,12 @@ func storagePoolBucketsGet(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
+	// S3 keys are only returned to callers allowed to edit the bucket.
+	userHasEditPermission, err := s.Authorizer.GetPermissionChecker(r.Context(), r, auth.EntitlementCanEdit, auth.ObjectTypeStorageBucket)
+	if err != nil {
+		return response.SmartError(err)
+	}
+
 	var filteredDBBuckets []*db.StorageBucket
 
 	for _, bucket := range dbBuckets {
@@ -337,7 +343,13 @@ func storagePoolBucketsGet(d *Daemon, r *http.Request) response.Response {
 			location = bucket.Location
 		}
 
-		if !userHasPermission(auth.ObjectStorageBucket(requestProjectName, poolName, bucket.Name, location)) {
+		// In all-projects mode each bucket must be checked against its own project.
+		objectProjectName := requestProjectName
+		if allProjects {
+			objectProjectName = bucket.Project
+		}
+
+		if !userHasPermission(auth.ObjectStorageBucket(objectProjectName, poolName, bucket.Name, location)) {
 			continue
 		}
 
@@ -388,7 +400,19 @@ func storagePoolBucketsGet(d *Daemon, r *http.Request) response.Response {
 			bucketsFull := make([]*api.StorageBucketFull, 0, len(buckets))
 
 			for i, bucket := range buckets {
-				fullBucket, err := getBucketFull(r.Context(), s, pool, filteredDBBuckets[i].ID, *bucket)
+				var location string
+				if s.ServerClustered && !pool.Driver().Info().Remote {
+					location = filteredDBBuckets[i].Location
+				}
+
+				objectProjectName := requestProjectName
+				if allProjects {
+					objectProjectName = filteredDBBuckets[i].Project
+				}
+
+				canEdit := userHasEditPermission(auth.ObjectStorageBucket(objectProjectName, poolName, bucket.Name, location))
+
+				fullBucket, err := getBucketFull(r.Context(), s, pool, filteredDBBuckets[i].ID, *bucket, canEdit)
 				if err != nil {
 					return response.InternalError(err)
 				}
@@ -579,7 +603,21 @@ func storagePoolBucketGet(d *Daemon, r *http.Request) response.Response {
 
 	// Prepare the response.
 	if localUtil.IsRecursionRequest(r) {
-		bucketFull, err := getBucketFull(r.Context(), s, pool, bucket.ID, bucket.StorageBucket)
+		var location string
+		if s.ServerClustered && !pool.Driver().Info().Remote {
+			location = bucket.Location
+		}
+
+		// S3 keys are only returned to callers allowed to edit the bucket.
+		var canEdit bool
+		err = s.Authorizer.CheckPermission(r.Context(), r, auth.ObjectStorageBucket(request.ProjectParam(r), poolName, bucketName, location), auth.EntitlementCanEdit)
+		if err == nil {
+			canEdit = true
+		} else if !api.StatusErrorCheck(err, http.StatusForbidden) {
+			return response.SmartError(err)
+		}
+
+		bucketFull, err := getBucketFull(r.Context(), s, pool, bucket.ID, bucket.StorageBucket, canEdit)
 		if err != nil {
 			return response.InternalError(err)
 		}
@@ -590,7 +628,7 @@ func storagePoolBucketGet(d *Daemon, r *http.Request) response.Response {
 	return response.SyncResponseETag(true, bucket.StorageBucket, bucket.Etag())
 }
 
-func getBucketFull(ctx context.Context, s *state.State, pool storagePools.Pool, id int64, bucket api.StorageBucket) (*api.StorageBucketFull, error) {
+func getBucketFull(ctx context.Context, s *state.State, pool storagePools.Pool, id int64, bucket api.StorageBucket, canEdit bool) (*api.StorageBucketFull, error) {
 	// Set the base object.
 	resp := api.StorageBucketFull{
 		StorageBucket: bucket,
@@ -616,21 +654,23 @@ func getBucketFull(ctx context.Context, s *state.State, pool storagePools.Pool, 
 		return nil, err
 	}
 
-	// Add all keys.
-	err = s.DB.Cluster.Transaction(ctx, func(ctx context.Context, tx *db.ClusterTx) error {
-		dbBucketKeys, err := tx.GetStoragePoolBucketKeys(ctx, id)
+	// S3 keys are credentials, only expose them to callers allowed to edit the bucket.
+	if canEdit {
+		err = s.DB.Cluster.Transaction(ctx, func(ctx context.Context, tx *db.ClusterTx) error {
+			dbBucketKeys, err := tx.GetStoragePoolBucketKeys(ctx, id)
+			if err != nil {
+				return fmt.Errorf("Failed loading storage bucket keys: %w", err)
+			}
+
+			for _, dbBucketKey := range dbBucketKeys {
+				resp.Keys = append(resp.Keys, dbBucketKey.StorageBucketKey)
+			}
+
+			return nil
+		})
 		if err != nil {
-			return fmt.Errorf("Failed loading storage bucket keys: %w", err)
+			return nil, err
 		}
-
-		for _, dbBucketKey := range dbBucketKeys {
-			resp.Keys = append(resp.Keys, dbBucketKey.StorageBucketKey)
-		}
-
-		return nil
-	})
-	if err != nil {
-		return nil, err
 	}
 
 	return &resp, nil
@@ -692,6 +732,12 @@ func storagePoolBucketsPost(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
+	// Authorize against the project the bucket is actually created in.
+	err = s.Authorizer.CheckPermission(r.Context(), r, auth.ObjectProject(bucketProjectName), auth.EntitlementCanCreateStorageBuckets)
+	if err != nil {
+		return response.SmartError(err)
+	}
+
 	poolName, err := pathVar(r, "poolName")
 	if err != nil {
 		return response.SmartError(err)
@@ -711,6 +757,14 @@ func storagePoolBucketsPost(d *Daemon, r *http.Request) response.Response {
 	pool, err := storagePools.LoadByName(s, poolName)
 	if err != nil {
 		return response.SmartError(fmt.Errorf("Failed loading storage pool: %w", err))
+	}
+
+	// Enforce the project's storage pool restrictions.
+	err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
+		return project.AllowBucketCreation(tx, request.ProjectParam(r), poolName)
+	})
+	if err != nil {
+		return response.SmartError(err)
 	}
 
 	// Quick checks.

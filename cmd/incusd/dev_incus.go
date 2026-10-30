@@ -108,6 +108,11 @@ var devIncusImageExport = devIncusHandler{"/1.0/images/{fingerprint}/export", fu
 	// Use by security checks to distinguish /dev/incus vs REST APs
 	r.RemoteAddr = "@dev_incus"
 
+	// Pin the project to the instance's own so the guest can't export other projects' images.
+	query := r.URL.Query()
+	query.Set("project", c.Project().Name)
+	r.URL.RawQuery = query.Encode()
+
 	resp := imageExport(d, r)
 
 	err := resp.Render(w)
@@ -427,6 +432,29 @@ func loadContainerForMonitorName(name string, s *state.State) (instance.Containe
 	return c, nil
 }
 
+// containerNameFromCgroup extracts the container name from a /proc/<pid>/cgroup content.
+// Only the first lxc.payload. or lxc.monitor. path component is trusted, as a container
+// can create arbitrarily named cgroups below its own payload cgroup.
+func containerNameFromCgroup(content string) (string, bool) {
+	for line := range strings.SplitSeq(content, "\n") {
+		_, path, found := strings.Cut(line, ":/")
+		if !found {
+			continue
+		}
+
+		for component := range strings.SplitSeq(path, "/") {
+			for _, prefix := range []string{"lxc.payload.", "lxc.monitor."} {
+				name, found := strings.CutPrefix(component, prefix)
+				if found && name != "" {
+					return name, true
+				}
+			}
+		}
+	}
+
+	return "", false
+}
+
 func findContainerForPid(pid int32, s *state.State) (instance.Container, error) {
 	/*
 	 * Try and figure out which container a pid is in. There is probably a
@@ -469,11 +497,8 @@ func findContainerForPid(pid int32, s *state.State) (instance.Container, error) 
 		// In containerized deployments the monitor's cmdline can be empty, fall back to its cgroup path.
 		cgroup, err := os.ReadFile(fmt.Sprintf("/proc/%d/cgroup", pid))
 		if err == nil {
-			_, name, found := strings.Cut(string(cgroup), "/lxc.monitor.")
+			name, found := containerNameFromCgroup(string(cgroup))
 			if found {
-				name, _, _ = strings.Cut(name, "\n")
-				name, _, _ = strings.Cut(name, "/")
-
 				return loadContainerForMonitorName(name, s)
 			}
 		}

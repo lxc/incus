@@ -99,6 +99,36 @@ func (op *operation) Get() api.Operation {
 	return op.Operation
 }
 
+// connectSecretKeys are the operation metadata keys holding per-connection
+// websocket secrets. The server returns them only in the synchronous create
+// response and strips them from later renders (events and queries), so keep
+// this in sync with the server's strip list.
+var connectSecretKeys = []string{api.SecretNameControl, api.SecretNameFilesystem, "fds"}
+
+// applyUpdate replaces the tracked operation, preserving the per-connection
+// websocket secrets delivered in the create response but absent from later renders.
+func (op *operation) applyUpdate(newOp api.Operation) {
+	for _, key := range connectSecretKeys {
+		_, ok := newOp.Metadata[key]
+		if ok {
+			continue
+		}
+
+		value, ok := op.Metadata[key]
+		if !ok {
+			continue
+		}
+
+		if newOp.Metadata == nil {
+			newOp.Metadata = map[string]any{}
+		}
+
+		newOp.Metadata[key] = value
+	}
+
+	op.Operation = newOp
+}
+
 // GetWebsocket returns a raw websocket connection from the operation.
 func (op *operation) GetWebsocket(secret string) (*websocket.Conn, error) {
 	return op.r.GetOperationWebsocket(op.ID, secret)
@@ -139,7 +169,7 @@ func (op *operation) Refresh() error {
 	}
 
 	// Update the operation struct
-	op.Operation = *newOp
+	op.applyUpdate(*newOp)
 
 	return nil
 }
@@ -163,7 +193,7 @@ func (op *operation) WaitContext(ctx context.Context) error {
 			return err
 		}
 
-		op.Operation = *opAPI
+		op.applyUpdate(*opAPI)
 
 		if opAPI.Err != "" {
 			return errors.New(opAPI.Err)
@@ -269,7 +299,7 @@ func (op *operation) setupListener() error {
 		}
 
 		// Update the struct
-		op.Operation = newOp
+		op.applyUpdate(newOp)
 
 		// And check if we're done
 		if op.StatusCode.IsFinal() {

@@ -18,6 +18,7 @@ import (
 	"os/exec"
 	"path"
 	"path/filepath"
+	"regexp"
 	"runtime"
 	"slices"
 	"sort"
@@ -33,6 +34,7 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/kballard/go-shellquote"
 	liblxc "github.com/lxc/go-lxc"
+	ociSpecs "github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/pkg/sftp"
 	yaml "go.yaml.in/yaml/v4"
 	"golang.org/x/sync/errgroup"
@@ -163,12 +165,28 @@ func lxcSetConfigItem(c *liblxc.Container, key string, value string) error {
 		return nil
 	}
 
+	// The config file is line based, so a line break in the key or value would inject additional directives.
+	if strings.ContainsAny(key, "\r\n") || strings.ContainsAny(value, "\r\n") {
+		return fmt.Errorf("Failed to set LXC config: %s: Key and value cannot contain line breaks", key)
+	}
+
 	err := c.SetConfigItem(key, value)
 	if err != nil {
 		return fmt.Errorf("Failed to set LXC config: %s=%s", key, value)
 	}
 
 	return nil
+}
+
+// forklxcBlockedEnv returns whether an instance or image environment variable must be kept out of
+// the root forklxc process, as it would alter the behavior of the dynamic loader or of glibc.
+func forklxcBlockedEnv(name string) bool {
+	return strings.HasPrefix(name, "LD_") || slices.Contains([]string{"GCONV_PATH", "GLIBC_TUNABLES"}, name)
+}
+
+// isOCI returns whether the container was created from an OCI image.
+func (d *lxc) isOCI() bool {
+	return util.IsTrue(d.expandedConfig["volatile.container.oci"]) || d.localConfig["image.type"] == "oci"
 }
 
 // lxcEncodeCmd encodes a command for lxc.init.cmd/lxc.execute.cmd, whose
@@ -195,6 +213,27 @@ func lxcEncodeCmd(args []string) (string, error) {
 	}
 
 	return strings.Join(words, " "), nil
+}
+
+var ociTmpfsOptionValue = regexp.MustCompile(`^(gid|mode|nr_blocks|nr_inodes|size|uid)=[0-9a-zA-Z%]+$`)
+
+// lxcEncodeOCITmpfs encodes an OCI tmpfs mount as a lxc.mount.entry value from validated parts only.
+// The config comes from the image, so nothing that could turn the entry into another kind of mount is kept.
+func lxcEncodeOCITmpfs(destination string, options []string) (string, error) {
+	target := strings.TrimLeft(destination, "/")
+	if target == "" || strings.ContainsAny(target, " \t\n\v\f\r\\") {
+		return "", fmt.Errorf("Invalid OCI mount destination: %q", destination)
+	}
+
+	flags := []string{"async", "atime", "defaults", "dev", "diratime", "dirsync", "exec", "noatime", "nodev", "nodiratime", "noexec", "norelatime", "nostrictatime", "nosuid", "relatime", "ro", "rw", "strictatime", "suid", "sync"}
+
+	for _, option := range options {
+		if !slices.Contains(flags, option) && !ociTmpfsOptionValue.MatchString(option) {
+			return "", fmt.Errorf("Invalid OCI mount option for %q: %q", destination, option)
+		}
+	}
+
+	return fmt.Sprintf("none %s tmpfs %s 0 0", target, strings.Join(append(slices.Clone(options), "create=dir"), ",")), nil
 }
 
 func lxcStatusCode(lxcState liblxc.State) api.StatusCode {
@@ -2120,8 +2159,9 @@ func (d *lxc) startCommon() (string, []func() error, error) {
 			return "", nil, err
 		}
 
-		// Check if we need to change idmap.
-		if nextMap != nil && d.state.OS.IdmapSet != nil && !d.state.OS.IdmapSet.Includes(nextMap) {
+		// Allocate a map when missing (e.g. after a rebuild of a never-started
+		// instance) or when the current one is outside the host's allowed range.
+		if d.state.OS.IdmapSet != nil && (nextMap == nil || !d.state.OS.IdmapSet.Includes(nextMap)) {
 			// Update the idmap, keeping the allocation locked until it's persisted.
 			err = func() error {
 				idmapLock.Lock()
@@ -2513,9 +2553,12 @@ func (d *lxc) startCommon() (string, []func() error, error) {
 	}
 
 	// Handle application containers.
-	config, err := instance.OCISpec(d.Path())
-	if err != nil {
-		return "", nil, err
+	var config *ociSpecs.Spec
+	if d.isOCI() {
+		config, err = instance.OCISpec(d.Path())
+		if err != nil {
+			return "", nil, err
+		}
 	}
 
 	if config != nil {
@@ -2663,16 +2706,23 @@ func (d *lxc) startCommon() (string, []func() error, error) {
 			}
 
 			// Skip all our own mounts.
-			if slices.Contains(lxcMounts, filepath.Clean(mount.Destination)) {
+			destination := filepath.Clean("/" + mount.Destination)
+			if slices.Contains(lxcMounts, destination) {
 				continue
 			}
 
-			err := lxcSetConfigItem(cc, "lxc.mount.entry", fmt.Sprintf("%s %s %s %s 0 0", mount.Source, strings.TrimLeft(mount.Destination, "/"), mount.Type, strings.Join(append(mount.Options, "create=dir"), ",")))
+			// Never pass the image's own source, type or options through to liblxc.
+			entry, err := lxcEncodeOCITmpfs(destination, mount.Options)
 			if err != nil {
 				return "", nil, err
 			}
 
-			lxcMounts = append(lxcMounts, mount.Destination)
+			err = lxcSetConfigItem(cc, "lxc.mount.entry", entry)
+			if err != nil {
+				return "", nil, err
+			}
+
+			lxcMounts = append(lxcMounts, destination)
 		}
 
 		// Mount /run as a tmpfs if it isn't already mounted and the image's /run is empty.
@@ -3171,28 +3221,30 @@ func (d *lxc) start(stateful bool, op *operationlock.InstanceOperation) error {
 
 	for k, v := range d.expandedConfig {
 		after, ok := strings.CutPrefix(k, "environment.")
-		if ok {
+		if ok && !forklxcBlockedEnv(after) {
 			envDict[after] = v
 		}
 	}
 
 	// Add the image environment of application containers.
-	spec, err := instance.OCISpec(d.Path())
-	if err != nil {
-		op.Done(err)
-		return err
-	}
+	if d.isOCI() {
+		spec, err := instance.OCISpec(d.Path())
+		if err != nil {
+			op.Done(err)
+			return err
+		}
 
-	ociEnv, err := instance.OCIEnvironment(spec)
-	if err != nil {
-		op.Done(err)
-		return err
-	}
+		ociEnv, err := instance.OCIEnvironment(spec)
+		if err != nil {
+			op.Done(err)
+			return err
+		}
 
-	for k, v := range ociEnv {
-		_, ok := envDict[k]
-		if !ok {
-			envDict[k] = v
+		for k, v := range ociEnv {
+			_, ok := envDict[k]
+			if !ok && !forklxcBlockedEnv(k) {
+				envDict[k] = v
+			}
 		}
 	}
 
@@ -5957,8 +6009,8 @@ func (d *lxc) Export(metaWriter io.Writer, rootfsWriter io.Writer, properties ma
 	fnam := filepath.Join(cDir, "metadata.yaml")
 
 	if util.PathExists(fnam) {
-		// Parse the metadata.
-		content, err := os.ReadFile(fnam)
+		// Parse the metadata, confined to the instance directory so an imported snapshot's symlink isn't followed.
+		content, err := readRegularFileInRoot(cDir, "metadata.yaml")
 		if err != nil {
 			_ = metaTarWriter.Close()
 			if rootfsTarWriter != nil {
@@ -6385,6 +6437,13 @@ func (d *lxc) MigrateSend(args instance.MigrateSendArgs) error {
 	migrationTypes, err := localMigration.MatchTypes(respHeader, migration.MigrationFSType_RSYNC, poolMigrationTypes)
 	if err != nil {
 		err := fmt.Errorf("Failed to negotiate migration type: %w", err)
+		op.Done(err)
+		return err
+	}
+
+	// The target can only negotiate types for the volumes we offered, not redefine them.
+	err = storagePools.ValidateDependentVolumesAgainstOffer(offerHeader.DependentVolumes, respHeader.DependentVolumes)
+	if err != nil {
 		op.Done(err)
 		return err
 	}
@@ -6997,7 +7056,7 @@ func (d *lxc) MigrateReceive(args instance.MigrateReceiveArgs) error {
 	dependentVolumes := []localMigration.DependentVolumeArgs{}
 	for _, volWithType := range volumesWithTypes {
 		respHeader.DependentVolumes = append(respHeader.DependentVolumes, volWithType.Volume)
-		vol := localMigration.ProtobufToDependentVolume(volWithType.Volume, volWithType.VolumeTypes[0], localDevices[*volWithType.Volume.DeviceName])
+		vol := localMigration.ProtobufToDependentVolume(volWithType.Volume, volWithType.VolumeTypes[0], localDevices[volWithType.Volume.GetDeviceName()])
 		dependentVolumes = append(dependentVolumes, vol)
 	}
 

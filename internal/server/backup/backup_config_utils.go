@@ -191,6 +191,10 @@ func UpdateInstanceConfig(c *db.Cluster, b Info, mountPath string) error {
 	}
 
 	for _, snapshot := range backup.Snapshots {
+		if snapshot == nil {
+			return errors.New("Bad snapshot definition found in index")
+		}
+
 		updateRootDevicePool(snapshot.Devices, pool.Name)
 		updateRootDevicePool(snapshot.ExpandedDevices, pool.Name)
 	}
@@ -199,9 +203,13 @@ func UpdateInstanceConfig(c *db.Cluster, b Info, mountPath string) error {
 		return errors.New("No root device could be found")
 	}
 
-	// Write updated backup.yaml file.
+	// Delete then recreate with O_EXCL so we never write through a planted hard link or symlink.
+	err = os.Remove(backupFilePath)
+	if err != nil && !errors.Is(err, fs.ErrNotExist) {
+		return err
+	}
 
-	file, err := os.Create(backupFilePath)
+	file, err := os.OpenFile(backupFilePath, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0o400)
 	if err != nil {
 		return err
 	}

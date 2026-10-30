@@ -230,7 +230,13 @@ func profilesGet(d *Daemon, r *http.Request) response.Response {
 			}
 
 			for _, profile := range profiles {
-				if !userHasPermission(auth.ObjectProfile(p.Name, profile.Name)) {
+				// In all-projects mode each profile must be checked against its own project.
+				objectProjectName := p.Name
+				if allProjects {
+					objectProjectName = profile.Project
+				}
+
+				if !userHasPermission(auth.ObjectProfile(objectProjectName, profile.Name)) {
 					continue
 				}
 
@@ -262,7 +268,13 @@ func profilesGet(d *Daemon, r *http.Request) response.Response {
 			}
 		} else {
 			for _, profile := range profiles {
-				if !userHasPermission(auth.ObjectProfile(p.Name, profile.Name)) {
+				// In all-projects mode each profile must be checked against its own project.
+				objectProjectName := p.Name
+				if allProjects {
+					objectProjectName = profile.Project
+				}
+
+				if !userHasPermission(auth.ObjectProfile(objectProjectName, profile.Name)) {
 					continue
 				}
 
@@ -340,6 +352,12 @@ func profilesPost(d *Daemon, r *http.Request) response.Response {
 	s := d.State()
 
 	p, err := project.ProfileProject(s.DB.Cluster, request.ProjectParam(r))
+	if err != nil {
+		return response.SmartError(err)
+	}
+
+	// Authorize against the project the profile is actually created in.
+	err = s.Authorizer.CheckPermission(r.Context(), r, auth.ObjectProject(p.Name), auth.EntitlementCanCreateProfiles)
 	if err != nil {
 		return response.SmartError(err)
 	}
