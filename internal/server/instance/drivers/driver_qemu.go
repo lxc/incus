@@ -11600,11 +11600,10 @@ func (d *qemu) renderState(statusCode api.StatusCode) (*api.InstanceState, error
 		StatusCode: statusCode,
 	}
 
-	status.TPM = d.tpmState()
-
 	// If VM is stopped or errored, we're done here.
 	if d.isErrorStatusCode(statusCode) || !d.isRunningStatusCode(statusCode) {
 		status.Disk = d.diskState()
+		status.TPM = d.tpmState()
 
 		return status, nil
 	}
@@ -11660,6 +11659,9 @@ func (d *qemu) renderState(statusCode api.StatusCode) (*api.InstanceState, error
 
 	// Populate the disk information.
 	status.Disk = d.diskState()
+
+	// Populate the TPM information, always from the host as the agent can't see it.
+	status.TPM = d.tpmState()
 
 	// Populate the CPU time allocation.
 	limitsCPU, ok := d.expandedConfig["limits.cpu"]
