@@ -10,7 +10,6 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
-	"path/filepath"
 	"slices"
 	"strconv"
 	"strings"
@@ -1341,63 +1340,6 @@ func (d *ceph) getRBDNbdImageSpec(rbdName string) string {
 	return fmt.Sprintf("%s:%s", spec, strings.Join(opts, ":"))
 }
 
-// rbdNbdMappedDevPaths returns the NBD device paths currently serving the given image specification.
-func (d *ceph) rbdNbdMappedDevPaths(imageSpec string) ([]string, error) {
-	devPaths := []string{}
-
-	entries, err := os.ReadDir("/sys/class/block")
-	if err != nil {
-		if errors.Is(err, fs.ErrNotExist) {
-			return nil, nil
-		}
-
-		return nil, err
-	}
-
-	for _, entry := range entries {
-		fName := entry.Name()
-
-		// Skip anything that's not a whole NBD device.
-		idxStr, found := strings.CutPrefix(fName, "nbd")
-		if !found {
-			continue
-		}
-
-		_, err := strconv.ParseUint(idxStr, 10, 64)
-		if err != nil {
-			continue
-		}
-
-		// Get the process serving the device (only present when connected).
-		pidData, err := os.ReadFile(fmt.Sprintf("/sys/class/block/%s/pid", fName))
-		if err != nil {
-			continue
-		}
-
-		pid, err := strconv.Atoi(strings.TrimSpace(string(pidData)))
-		if err != nil {
-			continue
-		}
-
-		// Check that the device is served by qemu-nbd for our image.
-		cmdline, err := os.ReadFile(fmt.Sprintf("/proc/%d/cmdline", pid))
-		if err != nil {
-			continue
-		}
-
-		cmdArgs := strings.Split(strings.TrimSuffix(string(cmdline), "\x00"), "\x00")
-		if len(cmdArgs) == 0 || filepath.Base(cmdArgs[0]) != "qemu-nbd" {
-			continue
-		}
-
-		if slices.Contains(cmdArgs, imageSpec) {
-			devPaths = append(devPaths, fmt.Sprintf("/dev/%s", fName))
-		}
-	}
-
-	return devPaths, nil
-}
-
 // rbdNbdMapOptions returns the qemu-nbd detect-zeroes mode and read-only flag for the given RBD image.
 func (d *ceph) rbdNbdMapOptions(rbdName string) (string, bool) {
 	// Snapshots can only be mapped read-only.
@@ -1410,11 +1352,6 @@ func (d *ceph) rbdNbdMapOptions(rbdName string) (string, bool) {
 
 // rbdNbdMapVolume maps a given RBD image through qemu-nbd.
 func (d *ceph) rbdNbdMapVolume(rbdName string) (string, error) {
-	err := linux.LoadModule("nbd")
-	if err != nil {
-		return "", fmt.Errorf("Error loading nbd module: %w", err)
-	}
-
 	detectZeroes, readOnly := d.rbdNbdMapOptions(rbdName)
 
 	devPath, err := ConnectQemuNbd(d.getRBDNbdImageSpec(rbdName), "raw", detectZeroes, readOnly)
@@ -1447,7 +1384,7 @@ func (d *ceph) rbdRefreshDevice(vol Volume, devPath string) error {
 
 // rbdNbdUnmapVolume unmaps any qemu-nbd mapping of the given RBD image.
 func (d *ceph) rbdNbdUnmapVolume(rbdName string, unmapAll bool) error {
-	devPaths, err := d.rbdNbdMappedDevPaths(d.getRBDNbdImageSpec(rbdName))
+	devPaths, err := QemuNbdDevices(d.getRBDNbdImageSpec(rbdName))
 	if err != nil {
 		return err
 	}
@@ -1485,7 +1422,7 @@ func (d *ceph) getRBDMappedDevPath(vol Volume, mapIfMissing bool) (bool, string,
 	}
 
 	// Check for a qemu-nbd mapping.
-	devPaths, err := d.rbdNbdMappedDevPaths(d.getRBDNbdImageSpec(rbdName))
+	devPaths, err := QemuNbdDevices(d.getRBDNbdImageSpec(rbdName))
 	if err != nil {
 		return false, "", err
 	}
