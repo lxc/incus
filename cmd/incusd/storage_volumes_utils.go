@@ -103,7 +103,13 @@ func storagePoolVolumeUsedByGet(s *state.State, requestProjectName string, poolN
 
 	// Handle image volumes.
 	if vol.Type == db.StoragePoolVolumeTypeNameImage {
-		return []string{api.NewURL().Path(version.APIVersion, "images", vol.Name).Project(requestProjectName).Target(vol.Location).String()}, nil
+		// Fall back to the volume's project when listing all projects.
+		projectName := requestProjectName
+		if projectName == "" {
+			projectName = vol.Project
+		}
+
+		return []string{api.NewURL().Path(version.APIVersion, "images", vol.Name).Project(projectName).Target(vol.Location).String()}, nil
 	}
 
 	// Check if the daemon itself is using it.
@@ -129,7 +135,8 @@ func storagePoolVolumeUsedByGet(s *state.State, requestProjectName string, poolN
 		return []string{}, err
 	}
 
-	err = storagePools.VolumeUsedByProfileDevices(s, poolName, requestProjectName, &vol.StorageVolume, func(profileID int64, profile api.Profile, p api.Project, usedByDevices []string) error {
+	// Match profiles against the volume's own project, the request project may be empty or a non-storage one.
+	err = storagePools.VolumeUsedByProfileDevices(s, poolName, vol.Project, &vol.StorageVolume, func(profileID int64, profile api.Profile, p api.Project, usedByDevices []string) error {
 		volumeUsedBy = append(volumeUsedBy, api.NewURL().Path(version.APIVersion, "profiles", profile.Name).Project(p.Name).String())
 		return nil
 	})
