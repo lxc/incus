@@ -912,8 +912,8 @@ func (d *qemu) onStop(target string, reason string) error {
 		// Mark current shutdown as complete.
 		op.Done(nil)
 
-		// Create a new restart operation.
-		op, err = operationlock.CreateWaitGet(d.Project().Name, d.Name(), d.op, operationlock.ActionRestart, nil, true, false)
+		// Create a new restart operation, kept private so that other requests can't join it.
+		op, err = operationlock.CreateWaitGet(d.Project().Name, d.Name(), d.op, operationlock.ActionRestart, nil, false, false)
 		if err == nil {
 			op.SetInstanceInitiated(true)
 			defer op.Done(nil)
