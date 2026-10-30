@@ -79,7 +79,7 @@ func Create(projectName string, instanceName string, apiOp *operations.Operation
 
 	op := instanceOperations[opKey]
 	if op != nil {
-		if op.reusable && reuseExisting && !op.instanceInitiated {
+		if op.reusable && reuseExisting {
 			logger.Debug("Instance operation lock reused", logger.Ctx{"project": op.projectName, "instance": op.instanceName, "action": op.action, "reusable": op.reusable})
 
 			return op, nil
