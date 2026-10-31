@@ -303,6 +303,25 @@ snap_restore() {
     incus snapshot create a-b c-d
     incus snapshot restore a-b c-d
     incus delete -f a-b
+
+    # Isolated containers in restricted projects, snapshots keep the instance's idmap.
+    incus project create restricted-snap -c features.images=false
+    incus project set restricted-snap restricted=true restricted.containers.lowlevel=block restricted.snapshots=allow
+    incus profile device add default root disk path="/" pool="incustest-$(basename "${INCUS_DIR}")" --project restricted-snap
+    incus launch testimage c1 --project restricted-snap -c security.idmap.isolated=true
+    incus snapshot create c1 snap0 --project restricted-snap
+    incus snapshot create c1 snap1 --project restricted-snap
+    base="$(incus config get c1 volatile.idmap.base --project restricted-snap)"
+    [ -n "${base}" ]
+    [ "$(incus query "/1.0/instances/c1/snapshots/snap0?project=restricted-snap" | jq -r '.config["volatile.idmap.base"]')" = "${base}" ]
+    [ "$(incus query "/1.0/instances/c1/snapshots/snap1?project=restricted-snap" | jq -r '.config["volatile.idmap.base"]')" = "${base}" ]
+    incus stop -f c1 --project restricted-snap
+    incus snapshot restore c1 snap1 --diskonly --project restricted-snap
+    incus snapshot restore c1 snap1 --project restricted-snap
+    [ "$(incus config get c1 volatile.idmap.base --project restricted-snap)" = "${base}" ]
+    incus start c1 --project restricted-snap
+    incus delete -f c1 --project restricted-snap
+    incus project delete restricted-snap
 }
 
 restore_and_compare_fs() {
