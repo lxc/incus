@@ -348,47 +348,50 @@ func lxcCreate(s *state.State, args db.InstanceArgs, p api.Project, partialDevic
 	}
 
 	// Setup the initial idmap config, keeping the allocation locked until it's persisted.
-	err = func() error {
-		idmapLock.Lock()
-		defer idmapLock.Unlock()
+	// Snapshots keep the map they were taken with rather than allocating their own.
+	if !d.IsSnapshot() {
+		err = func() error {
+			idmapLock.Lock()
+			defer idmapLock.Unlock()
 
-		var idmapSet *idmap.Set
-		base := int64(0)
-		if !d.IsPrivileged() {
-			idmapSet, base, err = d.findIdmap()
-			if err != nil {
-				return err
+			var idmapSet *idmap.Set
+			base := int64(0)
+			if !d.IsPrivileged() {
+				idmapSet, base, err = d.findIdmap()
+				if err != nil {
+					return err
+				}
 			}
-		}
 
-		idmapSetJSON, err := idmapSet.ToJSON()
+			idmapSetJSON, err := idmapSet.ToJSON()
+			if err != nil {
+				return fmt.Errorf("Failed to encode ID map: %w", err)
+			}
+
+			v := map[string]string{
+				"volatile.idmap.next": idmapSetJSON,
+				"volatile.idmap.base": fmt.Sprintf("%v", base),
+			}
+
+			// Invalidate the idmap cache.
+			d.idmapset = nil
+
+			// Set last_state if not currently set.
+			if d.localConfig["volatile.last_state.idmap"] == "" {
+				v["volatile.last_state.idmap"] = "[]"
+			}
+
+			return d.VolatileSet(v)
+		}()
 		if err != nil {
-			return fmt.Errorf("Failed to encode ID map: %w", err)
+			return nil, nil, err
 		}
 
-		v := map[string]string{
-			"volatile.idmap.next": idmapSetJSON,
-			"volatile.idmap.base": fmt.Sprintf("%v", base),
+		// Re-run init to update the idmap.
+		err = d.init()
+		if err != nil {
+			return nil, nil, err
 		}
-
-		// Invalidate the idmap cache.
-		d.idmapset = nil
-
-		// Set last_state if not currently set.
-		if d.localConfig["volatile.last_state.idmap"] == "" {
-			v["volatile.last_state.idmap"] = "[]"
-		}
-
-		return d.VolatileSet(v)
-	}()
-	if err != nil {
-		return nil, nil, err
-	}
-
-	// Re-run init to update the idmap.
-	err = d.init()
-	if err != nil {
-		return nil, nil, err
 	}
 
 	if !d.IsSnapshot() {
@@ -4553,7 +4556,7 @@ func (d *lxc) Restore(sourceContainer instance.Instance, stateful bool, diskOnly
 		// Restore the configuration.
 		args = db.InstanceArgs{
 			Architecture: sourceContainer.Architecture(),
-			Config:       sourceContainer.LocalConfig(),
+			Config:       maps.Clone(sourceContainer.LocalConfig()),
 			Description:  sourceContainer.Description(),
 			Devices:      sourceContainer.LocalDevices(),
 			Ephemeral:    sourceContainer.IsEphemeral(),
@@ -4561,6 +4564,16 @@ func (d *lxc) Restore(sourceContainer instance.Instance, stateful bool, diskOnly
 			Project:      sourceContainer.Project().Name,
 			Type:         sourceContainer.Type(),
 			Snapshot:     sourceContainer.IsSnapshot(),
+		}
+
+		// Keep the instance's idmap allocation, the snapshot only describes the on-disk state.
+		for _, key := range []string{"volatile.idmap.base", "volatile.idmap.current", "volatile.idmap.next"} {
+			value, ok := d.localConfig[key]
+			if ok {
+				args.Config[key] = value
+			} else {
+				delete(args.Config, key)
+			}
 		}
 	} else {
 		args = db.InstanceArgs{
