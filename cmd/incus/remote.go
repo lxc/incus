@@ -14,6 +14,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"regexp"
 	"runtime"
 	"slices"
 	"sort"
@@ -1258,7 +1259,7 @@ type cmdRemoteList struct {
 	flagColumns string
 }
 
-var cmdRemoteListUsage = u.Usage{}
+var cmdRemoteListUsage = u.Usage{u.Filter.List(0)}
 
 func (c *cmdRemoteList) command() *cobra.Command {
 	cmd := &cobra.Command{}
@@ -1269,6 +1270,23 @@ func (c *cmdRemoteList) command() *cobra.Command {
 		`List the available remotes
 
 Default column layout: nupaPsg
+
+A single keyword like "images" will list any remote with a name starting by "images".
+A regular expression on the remote name. (e.g. .*local.*$).
+A key/value pair referring to a remote attribute. Available keys:
+  - name={remote name}
+  - url={remote URL}
+  - protocol={remote protocol}
+  - auth_type={authentication type}
+  - project={default project}
+  - public={true or false}
+  - static={true or false}
+  - global={true or false}
+
+Values are matched as regular expressions. (e.g. url=https://.*:8443).
+
+When multiple filters are passed, they are added one on top of the other,
+selecting remotes which satisfy them all.
 
 == Columns ==
 The -c option takes a comma separated list of arguments that control
@@ -1404,12 +1422,69 @@ func (c *cmdRemoteList) globalColumnData(_ string, rc config.Remote) string {
 	return strGlobal
 }
 
+func (c *cmdRemoteList) remoteShouldShow(filters []string, name string, rc config.Remote) (bool, error) {
+	values := map[string][]string{
+		"name":      {name},
+		"url":       rc.Addrs,
+		"protocol":  {rc.Protocol},
+		"auth_type": {c.authTypeColumnData(name, rc)},
+		"project":   {rc.Project},
+		"public":    {strconv.FormatBool(rc.Public)},
+		"static":    {strconv.FormatBool(rc.Static)},
+		"global":    {strconv.FormatBool(rc.Global)},
+	}
+
+	for _, filter := range filters {
+		key, value, found := strings.Cut(filter, "=")
+		if !found {
+			// A bare keyword matches remote names starting with it, like the other list commands.
+			key = "name"
+			value = "^" + filter
+		}
+
+		candidates, ok := values[strings.ToLower(key)]
+		if !ok {
+			return false, fmt.Errorf(i18n.G("Unknown filter key %q"), key)
+		}
+
+		// Go has no full match mode, so anchor the expression unless the user did it already.
+		regexpValue := value
+		if !strings.Contains(value, "^") && !strings.Contains(value, "$") {
+			regexpValue = "^" + regexpValue + "$"
+		}
+
+		// Fall back to a literal comparison for invalid expressions.
+		r, err := regexp.Compile(regexpValue)
+
+		matched := false
+		for _, candidate := range candidates {
+			if err != nil {
+				matched = candidate == value
+			} else {
+				matched = r.MatchString(candidate)
+			}
+
+			if matched {
+				break
+			}
+		}
+
+		if !matched {
+			return false, nil
+		}
+	}
+
+	return true, nil
+}
+
 func (c *cmdRemoteList) run(cmd *cobra.Command, args []string) error {
 	conf := c.global.conf
-	_, err := c.global.Parse(cmdRemoteListUsage, cmd, args)
+	parsed, err := c.global.Parse(cmdRemoteListUsage, cmd, args)
 	if err != nil {
 		return err
 	}
+
+	filters := parsed[0].StringList
 
 	columns, err := c.parseColumns()
 	if err != nil {
@@ -1418,7 +1493,19 @@ func (c *cmdRemoteList) run(cmd *cobra.Command, args []string) error {
 
 	// List the remotes
 	data := [][]string{}
+	remotes := map[string]config.Remote{}
 	for name, rc := range conf.Remotes {
+		show, err := c.remoteShouldShow(filters, name, rc)
+		if err != nil {
+			return err
+		}
+
+		if !show {
+			continue
+		}
+
+		remotes[name] = rc
+
 		line := []string{}
 		for _, column := range columns {
 			line = append(line, column.Data(name, rc))
@@ -1434,7 +1521,7 @@ func (c *cmdRemoteList) run(cmd *cobra.Command, args []string) error {
 		header = append(header, column.Name)
 	}
 
-	return cli.RenderTable(os.Stdout, c.flagFormat, header, data, conf.Remotes)
+	return cli.RenderTable(os.Stdout, c.flagFormat, header, data, remotes)
 }
 
 // Rename.
