@@ -423,8 +423,8 @@ func restoreRestrictedVolatileConfig(project api.Project, instanceType instancet
 			continue
 		}
 
-		// Idmap keys describe the on-disk state of the snapshot and so must come from it.
-		if strings.HasPrefix(key, "volatile.idmap.") || key == "volatile.last_state.idmap" {
+		// The on-disk idmap state must come from the snapshot, its allocation is replaced on restore.
+		if key == "volatile.last_state.idmap" {
 			continue
 		}
 
