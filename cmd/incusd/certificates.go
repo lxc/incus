@@ -1118,7 +1118,29 @@ func doCertificateUpdate(d *Daemon, dbInfo api.Certificate, req api.CertificateP
 		certProjects := req.Projects
 		if !userCanEditCertificate {
 			if r.TLS == nil {
-				response.Forbidden(errors.New("Cannot update certificate information"))
+				return response.Forbidden(errors.New("Cannot update certificate information"))
+			}
+
+			// Only the holder of the certificate may update it.
+			certBlock, _ := pem.Decode([]byte(dbInfo.Certificate))
+
+			oldCert, err := x509.ParseCertificate(certBlock.Bytes)
+			if err != nil {
+				// This should not happen
+				return response.InternalError(err)
+			}
+
+			trustedCerts := map[string]x509.Certificate{
+				dbInfo.Name: *oldCert,
+			}
+
+			trusted := false
+			if len(r.TLS.PeerCertificates) > 0 {
+				trusted, _ = localUtil.CheckTrustState(*r.TLS.PeerCertificates[0], trustedCerts, s.Endpoints.NetworkCert(), false)
+			}
+
+			if !trusted {
+				return response.Forbidden(errors.New("Certificate cannot be changed"))
 			}
 
 			// Ensure the user in not trying to change fields other than the certificate.
@@ -1143,29 +1165,6 @@ func doCertificateUpdate(d *Daemon, dbInfo api.Certificate, req api.CertificateP
 			}
 
 			certProjects = dbInfo.Projects
-
-			if req.Certificate != "" && dbInfo.Certificate != req.Certificate {
-				certBlock, _ := pem.Decode([]byte(dbInfo.Certificate))
-
-				oldCert, err := x509.ParseCertificate(certBlock.Bytes)
-				if err != nil {
-					// This should not happen
-					return response.InternalError(err)
-				}
-
-				trustedCerts := map[string]x509.Certificate{
-					dbInfo.Name: *oldCert,
-				}
-
-				trusted := false
-				if len(r.TLS.PeerCertificates) > 0 {
-					trusted, _ = localUtil.CheckTrustState(*r.TLS.PeerCertificates[0], trustedCerts, s.Endpoints.NetworkCert(), false)
-				}
-
-				if !trusted {
-					return response.Forbidden(errors.New("Certificate cannot be changed"))
-				}
-			}
 		}
 
 		if req.Certificate != "" && dbInfo.Certificate != req.Certificate {
