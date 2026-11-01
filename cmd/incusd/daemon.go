@@ -954,13 +954,33 @@ func (d *Daemon) Init() error {
 	return nil
 }
 
+// projectConfig returns the configuration of a project for the authorizer.
+func (d *Daemon) projectConfig(ctx context.Context, projectName string) (map[string]string, error) {
+	var config map[string]string
+
+	err := d.db.Cluster.Transaction(ctx, func(ctx context.Context, tx *db.ClusterTx) error {
+		dbProject, err := dbCluster.GetProject(ctx, tx.Tx(), projectName)
+		if err != nil {
+			return err
+		}
+
+		config, err = dbCluster.GetProjectConfig(ctx, tx.Tx(), dbProject.ID)
+		return err
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return config, nil
+}
+
 func (d *Daemon) init() error {
 	var err error
 
 	var dbWarnings []dbCluster.Warning
 
 	// Set default authorizer.
-	d.authorizer, err = auth.LoadAuthorizer(d.shutdownCtx, auth.DriverTLS, logger.Log, d.clientCerts)
+	d.authorizer, err = auth.LoadAuthorizer(d.shutdownCtx, auth.DriverTLS, logger.Log, d.clientCerts, auth.WithProjectConfigFunc(d.projectConfig))
 	if err != nil {
 		return err
 	}
@@ -2029,7 +2049,7 @@ func (d *Daemon) setupOpenFGA(apiURL string, apiToken string, storeID string) er
 
 	if apiURL == "" || apiToken == "" || storeID == "" {
 		// Reset to default authorizer.
-		d.authorizer, err = auth.LoadAuthorizer(d.shutdownCtx, auth.DriverTLS, logger.Log, d.clientCerts)
+		d.authorizer, err = auth.LoadAuthorizer(d.shutdownCtx, auth.DriverTLS, logger.Log, d.clientCerts, auth.WithProjectConfigFunc(d.projectConfig))
 		if err != nil {
 			return err
 		}
@@ -2048,7 +2068,7 @@ func (d *Daemon) setupOpenFGA(apiURL string, apiToken string, storeID string) er
 
 	reverter.Add(func() {
 		// Reset to default authorizer.
-		d.authorizer, _ = auth.LoadAuthorizer(d.shutdownCtx, auth.DriverTLS, logger.Log, d.clientCerts)
+		d.authorizer, _ = auth.LoadAuthorizer(d.shutdownCtx, auth.DriverTLS, logger.Log, d.clientCerts, auth.WithProjectConfigFunc(d.projectConfig))
 	})
 
 	// Build the list of resources to update the model.
@@ -2300,7 +2320,7 @@ func (d *Daemon) setupAuthorizationScriptlet(scriptlet string) error {
 
 	if scriptlet == "" {
 		// Reset to default authorizer.
-		d.authorizer, err = auth.LoadAuthorizer(d.shutdownCtx, auth.DriverTLS, logger.Log, d.clientCerts)
+		d.authorizer, err = auth.LoadAuthorizer(d.shutdownCtx, auth.DriverTLS, logger.Log, d.clientCerts, auth.WithProjectConfigFunc(d.projectConfig))
 		if err != nil {
 			return err
 		}

@@ -105,9 +105,10 @@ type Authorizer interface {
 // Opts is used as part of the LoadAuthorizer function so that only the relevant configuration fields are passed into a
 // particular driver.
 type Opts struct {
-	config          map[string]any
-	projectsGetFunc func(ctx context.Context) (map[int64]string, error)
-	resourcesFunc   func() (*Resources, error)
+	config            map[string]any
+	projectsGetFunc   func(ctx context.Context) (map[int64]string, error)
+	projectConfigFunc func(ctx context.Context, projectName string) (map[string]string, error)
+	resourcesFunc     func() (*Resources, error)
 }
 
 // Resources represents a set of current API resources as Object slices for use when loading an Authorizer.
@@ -138,6 +139,13 @@ func WithConfig(c map[string]any) func(*Opts) {
 func WithProjectsGetFunc(f func(ctx context.Context) (map[int64]string, error)) func(*Opts) {
 	return func(o *Opts) {
 		o.projectsGetFunc = f
+	}
+}
+
+// WithProjectConfigFunc should be passed into LoadAuthorizer when DriverTLS is used.
+func WithProjectConfigFunc(f func(ctx context.Context, projectName string) (map[string]string, error)) func(*Opts) {
+	return func(o *Opts) {
+		o.projectConfigFunc = f
 	}
 }
 
