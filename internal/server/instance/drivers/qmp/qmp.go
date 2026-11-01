@@ -28,6 +28,7 @@ type qemuMachineProtocol struct {
 	listeners    atomic.Uint32   // Listeners number
 	cid          atomic.Uint32   // Auto increase command id
 	log          *qmpLog         // qmp log
+	disconnected bool            // are we disconnected?
 }
 
 // qmpEvent represents a QEMU QMP event.
@@ -110,7 +111,7 @@ func (qmp *qemuMachineProtocol) disconnect() error {
 
 		qmp.log = nil
 	}
-
+	qmp.disconnected = true
 	return qmp.uc.Close()
 }
 
@@ -126,6 +127,7 @@ func (qmp *qemuMachineProtocol) qmpIncreaseID() uint32 {
 
 // connect sets up a QMP connection.
 func (qmp *qemuMachineProtocol) connect() error {
+	qmp.disconnected = false
 	qmp.commandLock = make(chan struct{}, 1)
 
 	enc := json.NewEncoder(qmp.uc)
@@ -247,7 +249,7 @@ func (qmp *qemuMachineProtocol) listen(r io.Reader, events chan<- qmpEvent, repl
 	err := scanner.Err()
 	if err == nil {
 		err = errors.New("Monitor has exited")
-	} else {
+	} else if ! qmp.disconnected {
 		logger.Warn("QMP monitor read failed", logger.Ctx{"err": err})
 	}
 
