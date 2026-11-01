@@ -757,7 +757,7 @@ func projectPatch(d *Daemon, r *http.Request) response.Response {
 		for k, v := range project.Config {
 			_, ok := config[k]
 			if !ok {
-				config[k] = v
+				req.Config[k] = v
 			}
 		}
 	}
