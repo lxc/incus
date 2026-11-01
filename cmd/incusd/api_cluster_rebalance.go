@@ -297,7 +297,7 @@ func clusterRebalanceServers(ctx context.Context, s *state.State, srcServer *Ser
 				sortedCandidates = append(sortedCandidates, instanceCandidate.NodeInfo)
 			}
 
-			scriptCtx, cancel := context.WithTimeout(ctx, time.Second*5)
+			scriptCtx, cancel := context.WithTimeout(ctx, time.Second*10)
 			scriptTarget, err := scriptlet.InstancePlacementRun(scriptCtx, logger.Log, s, &placementReq, sortedCandidates, leaderAddress)
 			cancel()
 			if err != nil {
