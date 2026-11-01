@@ -247,7 +247,7 @@ func (qmp *qemuMachineProtocol) listen(r io.Reader, events chan<- qmpEvent, repl
 	err := scanner.Err()
 	if err == nil {
 		err = errors.New("Monitor has exited")
-	} else {
+	} else if !errors.Is(err, net.ErrClosed) {
 		logger.Warn("QMP monitor read failed", logger.Ctx{"err": err})
 	}
 
