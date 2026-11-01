@@ -37,6 +37,12 @@ test_projects_crud() {
     incus project show bar | sed 's/^description:.*/description: "Bar project"/' | incus project edit bar
     incus project show bar | grep -q "description: Bar project"
 
+    # Patching the project keeps the other config keys and the description
+    incus query -X PATCH -d '{\"config\":{\"user.note\":\"x\"}}' /1.0/projects/bar
+    [ "$(incus project get bar user.note)" = "x" ]
+    [ "$(incus project get bar features.images)" = "true" ]
+    incus project show bar | grep -q "description: Bar project"
+
     # Create a second project
     incus project create foo
 
