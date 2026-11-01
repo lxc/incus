@@ -75,7 +75,7 @@ type Router struct {
 var baseDrivers = []string{DriverAllow, DriverDeny, DriverTLS}
 
 // NewRouter returns a Router with the base drivers loaded.
-func NewRouter(ctx context.Context, l logger.Logger, certificateCache *certificate.Cache) (*Router, error) {
+func NewRouter(ctx context.Context, l logger.Logger, certificateCache *certificate.Cache, options ...func(opts *Opts)) (*Router, error) {
 	rt := &Router{certificates: certificateCache}
 
 	err := rt.init("router", l)
@@ -87,7 +87,7 @@ func NewRouter(ctx context.Context, l logger.Logger, certificateCache *certifica
 	// reconfigurations and never stopped.
 	drivers := make(map[string]Authorizer, len(baseDrivers))
 	for _, name := range baseDrivers {
-		driver, err := LoadAuthorizer(ctx, name, l, certificateCache)
+		driver, err := LoadAuthorizer(ctx, name, l, certificateCache, options...)
 		if err != nil {
 			return nil, err
 		}
