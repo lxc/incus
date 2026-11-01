@@ -1047,6 +1047,106 @@ jobs:
         run: |
           sudo --preserve-env=PATH,GOPATH env INCUS_BIN_DIR="$(go env GOPATH)/bin" ./test/clustering-vm.sh
 
+  security-tests:
+    name: Security
+    # Runs on ephemeral Debian VMs with nested virtualization (amd64 only).
+    runs-on:
+      - self-hosted
+      - lxc-incus-test
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Install Go (stable)
+        uses: actions/setup-go@v7
+        with:
+          go-version: stable
+
+      - name: Install dependencies
+        run: |
+          set -x
+
+          sudo apt-get update
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install --no-install-recommends -y \
+            acl \
+            attr \
+            autoconf \
+            automake \
+            bind9-dnsutils \
+            build-essential \
+            busybox-static \
+            curl \
+            dnsmasq-base \
+            dosfstools \
+            e2fsprogs \
+            gdisk \
+            genisoimage \
+            gettext \
+            git \
+            iptables \
+            iputils-ping \
+            jq \
+            libacl1-dev \
+            libcap-dev \
+            libdbus-1-dev \
+            lxc-dev \
+            liblz4-dev \
+            libseccomp-dev \
+            libselinux-dev \
+            libsqlite3-dev \
+            libtool \
+            libudev-dev \
+            libuv1-dev \
+            make \
+            nftables \
+            openssl \
+            openvswitch-switch \
+            ovmf \
+            pkg-config \
+            procps \
+            python3 \
+            qemu-system-modules-spice \
+            qemu-system-x86 \
+            qemu-utils \
+            rsync \
+            socat \
+            sqlite3 \
+            squashfs-tools \
+            uuid-runtime \
+            virtiofsd \
+            xz-utils
+
+          # The OVN TLS check needs a running Open vSwitch.
+          sudo systemctl start openvswitch-switch
+
+      - name: Download go dependencies
+        run: |
+          go mod download
+
+      - name: Build cowsql and raft
+        uses: ./.github/actions/build-cowsql
+
+      - name: Run Incus build
+        run: |
+          make
+
+      - name: Run security regression tests
+        env:
+          CGO_LDFLAGS_ALLOW: "(-Wl,-wrap,pthread_create)|(-Wl,-z,now)"
+          INCUS_CLI_TIMEOUT: "600"
+          INCUS_VERBOSE: "1"
+        run: |
+          chmod +x ~
+          echo "root:1000000:1000000000" | sudo tee /etc/subuid /etc/subgid
+          cd test
+
+          # The runner provides every prerequisite, so no test in the group may skip.
+          INCUS_REQUIRED_TESTS="$(sed -n 's/^ *run_test test_\(security_regression_[a-z0-9_]*\) .*/\1/p' main.sh | tr '\n' ' ')"
+          export INCUS_REQUIRED_TESTS
+
+          sudo --preserve-env=PATH,GOPATH,GITHUB_ACTIONS,INCUS_VERBOSE,INCUS_CLI_TIMEOUT,INCUS_REQUIRED_TESTS env LD_LIBRARY_PATH=${LD_LIBRARY_PATH} ./main.sh standalone_security
+
   client:
     name: Client
     strategy:
