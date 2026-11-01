@@ -79,6 +79,7 @@ test_openfga() {
     user_is_not_project_admin
     user_is_project_operator
     user_can_view_inherited_storage_volume
+    user_cannot_read_bucket_keys
 
     # Shared networks need OVN for features.networks projects.
     if command -v ovn-nbctl > /dev/null 2>&1 && ovn-nbctl --timeout=10 show > /dev/null 2>&1; then
@@ -283,6 +284,60 @@ user_can_view_inherited_storage_volume() {
     incus storage volume delete "oidc-openfga:${pool_name}" "${volume_name}"
     fga tuple delete --store-id "${OPENFGA_STORE_ID}" user:user1 operator "project:${project_name}"
     incus project delete "${project_name}"
+}
+
+# GHSA-x8gj-2q73-qr6j and GHSA-pf5w-m8m6-5265: a client that can view a bucket but
+# not edit it must not learn the bucket's S3 keys, neither from the key endpoints
+# nor embedded in a recursive bucket response. Needs a fine-grained authorizer, so
+# it lives here rather than in the TLS-only security_regression suite.
+user_cannot_read_bucket_keys() {
+    bucket_pool="openfga-bucket-pool"
+    bucket_name="openfga-bucket"
+    bucket_key="openfga-key"
+    bucket_secret="openfgabucketsecretkey00"
+
+    # Buckets need a real filesystem, so back a dir pool with a loop device + ext4.
+    loop_file_1=""
+    loop_device_1=""
+    configure_loop_device loop_file_1 loop_device_1
+    mkfs.ext4 "${loop_device_1}"
+    bucket_mnt="${TEST_DIR}/openfga-bucket-mnt"
+    mkdir "${bucket_mnt}"
+    mount "${loop_device_1}" "${bucket_mnt}"
+    losetup -d "${loop_device_1}"
+    mkdir "${bucket_mnt}/s3"
+    incus storage create "${bucket_pool}" dir "source=${bucket_mnt}/s3"
+    incus config set core.storage_buckets_address "127.0.0.1:$(local_tcp_port)"
+
+    incus storage bucket create "${bucket_pool}" "${bucket_name}"
+    incus storage bucket key create "${bucket_pool}" "${bucket_name}" "${bucket_key}" --secret-key="${bucket_secret}" > /dev/null
+
+    # Make user1 a project viewer: can_view but not can_edit on the bucket.
+    fga tuple delete --store-id "${OPENFGA_STORE_ID}" user:user1 operator project:default
+    fga tuple write --store-id "${OPENFGA_STORE_ID}" user:user1 viewer project:default
+
+    # The viewer can see the bucket itself...
+    incus storage bucket show "oidc-openfga:${bucket_pool}" "${bucket_name}" > /dev/null
+
+    # ...but GHSA-x8gj-2q73-qr6j: the key endpoints require can_edit and are refused.
+    ! incus query "oidc-openfga:/1.0/storage-pools/${bucket_pool}/buckets/${bucket_name}/keys?recursion=1" > /dev/null 2>&1 || false
+    ! incus query "oidc-openfga:/1.0/storage-pools/${bucket_pool}/buckets/${bucket_name}/keys/${bucket_key}" > /dev/null 2>&1 || false
+
+    # ...and GHSA-pf5w-m8m6-5265: the recursive bucket view no longer embeds the S3
+    # keys for a non-editor, so the secret key must be absent from it.
+    ! incus query "oidc-openfga:/1.0/storage-pools/${bucket_pool}/buckets/${bucket_name}?recursion=1" | grep -qF "${bucket_secret}" || false
+
+    # Sanity: an operator (can_edit) does receive the key through recursion, proving
+    # the above is the credential being withheld and not an unrelated failure.
+    fga tuple delete --store-id "${OPENFGA_STORE_ID}" user:user1 viewer project:default
+    fga tuple write --store-id "${OPENFGA_STORE_ID}" user:user1 operator project:default
+    incus query "oidc-openfga:/1.0/storage-pools/${bucket_pool}/buckets/${bucket_name}?recursion=1" | grep -qF "${bucket_secret}"
+
+    incus storage bucket delete "${bucket_pool}" "${bucket_name}"
+    incus config unset core.storage_buckets_address
+    incus storage delete "${bucket_pool}"
+    umount "${bucket_mnt}"
+    deconfigure_loop_device "${loop_file_1}" "${loop_device_1}"
 }
 
 user_can_view_shared_network() {
