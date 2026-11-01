@@ -1726,7 +1726,7 @@ func fetchProject(tx *db.ClusterTx, projectName string, skipIfNoLimits bool) (*p
 
 	instances := make([]api.Instance, 0, len(dbInstances))
 	for _, inst := range dbInstances {
-		apiInstance, err := inst.ToAPI(ctx, tx.Tx(), dbInstanceDevices, dbProfileConfigs, dbProfileDevices)
+		apiInstance, err := inst.ToAPI(ctx, tx.Tx(), nil, dbInstanceDevices, nil, dbProfileConfigs, dbProfileDevices)
 		if err != nil {
 			return nil, fmt.Errorf("Failed to get API data for instance %q in project %q: %w", inst.Name, inst.Project, err)
 		}
