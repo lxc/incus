@@ -220,14 +220,47 @@ func InstancePlacementRun(ctx context.Context, l logger.Logger, s *state.State, 
 				objectIDs = append(objectIDs, obj.ID)
 			}
 
+			// Load everything in bulk, per instance queries are too slow on a large cluster.
+			objectConfigs, err := dbCluster.GetConfig(ctx, tx.Tx(), "instances", "instance", dbCluster.ConfigFilter{ReferenceID: objectIDs})
+			if err != nil {
+				return err
+			}
+
 			objectDevices, err := dbCluster.GetDevices(ctx, tx.Tx(), "instances", "instance", dbCluster.DeviceFilter{ReferenceID: objectIDs})
+			if err != nil {
+				return err
+			}
+
+			objectProfiles, err := dbCluster.GetAllInstanceProfiles(ctx, tx.Tx())
+			if err != nil {
+				return err
+			}
+
+			profilesByID := map[int]dbCluster.Profile{}
+			for _, obj := range objects {
+				for _, profile := range objectProfiles[obj.ID] {
+					profilesByID[profile.ID] = profile
+				}
+			}
+
+			profiles := make([]dbCluster.Profile, 0, len(profilesByID))
+			for _, profile := range profilesByID {
+				profiles = append(profiles, profile)
+			}
+
+			profileConfigs, err := dbCluster.GetReferencedProfileConfigs(ctx, tx.Tx(), profiles)
+			if err != nil {
+				return err
+			}
+
+			profileDevices, err := dbCluster.GetReferencedProfileDevices(ctx, tx.Tx(), profiles)
 			if err != nil {
 				return err
 			}
 
 			// Convert the []Instances into []api.Instances.
 			for _, obj := range objects {
-				instance, err := obj.ToAPI(ctx, tx.Tx(), nil, objectDevices, nil, nil, nil)
+				instance, err := obj.ToAPI(ctx, tx.Tx(), objectConfigs, objectDevices, objectProfiles, profileConfigs, profileDevices)
 				if err != nil {
 					return err
 				}
