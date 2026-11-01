@@ -227,7 +227,7 @@ func InstancePlacementRun(ctx context.Context, l logger.Logger, s *state.State, 
 
 			// Convert the []Instances into []api.Instances.
 			for _, obj := range objects {
-				instance, err := obj.ToAPI(ctx, tx.Tx(), objectDevices, nil, nil)
+				instance, err := obj.ToAPI(ctx, tx.Tx(), nil, objectDevices, nil, nil, nil)
 				if err != nil {
 					return err
 				}
@@ -270,7 +270,7 @@ func InstancePlacementRun(ctx context.Context, l logger.Logger, s *state.State, 
 					return err
 				}
 
-				instance, err := obj.ToAPI(ctx, tx.Tx(), devices, nil, nil)
+				instance, err := obj.ToAPI(ctx, tx.Tx(), nil, devices, nil, nil, nil)
 				if err != nil {
 					return err
 				}
