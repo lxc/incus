@@ -867,7 +867,7 @@ func evacuateClusterSelectTarget(ctx context.Context, s *state.State, inst insta
 			reqExpanded.Profiles = append(reqExpanded.Profiles, p.Name)
 		}
 
-		ctx, cancel := context.WithTimeout(ctx, time.Second*5)
+		ctx, cancel := context.WithTimeout(ctx, time.Second*10)
 		targetMemberInfo, err = scriptlet.InstancePlacementRun(ctx, logger.Log, s, &reqExpanded, candidateMembers, leaderAddress)
 		if err != nil {
 			cancel()
