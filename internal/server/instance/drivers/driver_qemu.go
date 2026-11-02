@@ -10639,6 +10639,10 @@ func (d *qemu) migrateSendLive(ctx context.Context, pool storagePools.Pool, clus
 	// The state hand-over is complete, past this point the migration can no longer be reverted.
 	if clusterMoveSourceName != "" {
 		*committed = true
+
+		// The target owns the instance state now, none of the local copies may be written back.
+		mirror.Discard(d.RunPath())
+		_ = os.RemoveAll(d.localImageMetadataDir())
 	}
 
 	reverter.Success()
