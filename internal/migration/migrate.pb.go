@@ -822,6 +822,7 @@ type MigrationHeader struct {
 	DependentVolumes   []*DependentVolume     `protobuf:"bytes,14,rep,name=dependentVolumes" json:"dependentVolumes,omitempty"`
 	BlockFeatures      *BlockFeatures         `protobuf:"bytes,15,opt,name=blockFeatures" json:"blockFeatures,omitempty"`
 	MultifdChannels    *uint32                `protobuf:"varint,16,opt,name=multifdChannels" json:"multifdChannels,omitempty"`
+	DirtyBitmaps       *bool                  `protobuf:"varint,17,opt,name=dirtyBitmaps" json:"dirtyBitmaps,omitempty"`
 	unknownFields      protoimpl.UnknownFields
 	sizeCache          protoimpl.SizeCache
 }
@@ -959,6 +960,13 @@ func (x *MigrationHeader) GetMultifdChannels() uint32 {
 		return *x.MultifdChannels
 	}
 	return 0
+}
+
+func (x *MigrationHeader) GetDirtyBitmaps() bool {
+	if x != nil && x.DirtyBitmaps != nil {
+		return *x.DirtyBitmaps
+	}
+	return false
 }
 
 type MigrationControl struct {
@@ -1119,7 +1127,7 @@ const file_internal_migration_migrate_proto_rawDesc = "" +
 	"deviceName\x18\n" +
 	" \x01(\tR\n" +
 	"deviceName\x12>\n" +
-	"\rblockFeatures\x18\v \x01(\v2\x18.migration.blockFeaturesR\rblockFeatures\"\xdb\x05\n" +
+	"\rblockFeatures\x18\v \x01(\v2\x18.migration.blockFeaturesR\rblockFeatures\"\xff\x05\n" +
 	"\x0fMigrationHeader\x12*\n" +
 	"\x02fs\x18\x01 \x02(\x0e2\x1a.migration.MigrationFSTypeR\x02fs\x12'\n" +
 	"\x04criu\x18\x02 \x01(\x0e2\x13.migration.CRIUTypeR\x04criu\x12*\n" +
@@ -1138,7 +1146,8 @@ const file_internal_migration_migrate_proto_rawDesc = "" +
 	"\x12indexHeaderVersion\x18\r \x01(\rR\x12indexHeaderVersion\x12F\n" +
 	"\x10dependentVolumes\x18\x0e \x03(\v2\x1a.migration.DependentVolumeR\x10dependentVolumes\x12>\n" +
 	"\rblockFeatures\x18\x0f \x01(\v2\x18.migration.blockFeaturesR\rblockFeatures\x12(\n" +
-	"\x0fmultifdChannels\x18\x10 \x01(\rR\x0fmultifdChannels\"F\n" +
+	"\x0fmultifdChannels\x18\x10 \x01(\rR\x0fmultifdChannels\x12\"\n" +
+	"\fdirtyBitmaps\x18\x11 \x01(\bR\fdirtyBitmaps\"F\n" +
 	"\x10MigrationControl\x12\x18\n" +
 	"\asuccess\x18\x01 \x02(\bR\asuccess\x12\x18\n" +
 	"\amessage\x18\x02 \x01(\tR\amessage\"3\n" +
