@@ -1,8 +1,6 @@
 package cmd
 
 import (
-	"strings"
-
 	"github.com/fvbommel/sortorder"
 )
 
@@ -65,35 +63,4 @@ func (a SortColumnsNaturally) Less(i, j int) bool {
 	}
 
 	return false
-}
-
-// ByNameAndType represents the type for sorting Storage volumes.
-type ByNameAndType [][]string
-
-func (a ByNameAndType) Len() int {
-	return len(a)
-}
-
-func (a ByNameAndType) Swap(i, j int) {
-	a[i], a[j] = a[j], a[i]
-}
-
-func (a ByNameAndType) Less(i, j int) bool {
-	// Sort snapshot and parent together.
-	iType, _, _ := strings.Cut(a[i][0], " ")
-	jType, _, _ := strings.Cut(a[j][0], " ")
-
-	if iType != jType {
-		return sortorder.NaturalLess(a[i][0], a[j][0])
-	}
-
-	if a[i][1] == "" {
-		return false
-	}
-
-	if a[j][1] == "" {
-		return true
-	}
-
-	return sortorder.NaturalLess(a[i][1], a[j][1])
 }
