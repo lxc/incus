@@ -90,6 +90,17 @@ func Stop(local string) error {
 	return m.syncAll(true)
 }
 
+// Discard stops replicating every mirror whose local directory is under prefix, without a final sync.
+func Discard(prefix string) {
+	for _, m := range find(prefix) {
+		mirrorsMu.Lock()
+		delete(mirrors, m.local)
+		mirrorsMu.Unlock()
+
+		m.unwatch()
+	}
+}
+
 // Active returns whether local is being replicated.
 func Active(local string) bool {
 	mirrorsMu.Lock()
