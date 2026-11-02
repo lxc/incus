@@ -13,7 +13,6 @@ import (
 	"os"
 	"reflect"
 	"slices"
-	"sort"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -35,11 +34,6 @@ import (
 	"github.com/lxc/incus/v7/shared/validate"
 )
 
-type clusterColumn struct {
-	Name string
-	Data func(api.ClusterMember) string
-}
-
 type cmdCluster struct {
 	global *cmdGlobal
 }
@@ -51,7 +45,7 @@ func (c *cmdCluster) command() *cobra.Command {
 	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Manage cluster members`))
 
 	// List
-	clusterListCmd := cmdClusterList{global: c.global, cluster: c}
+	clusterListCmd := cmdClusterList{global: c.global, cluster: c, lister: &listable[api.ClusterMember]{global: c.global}}
 	cmd.AddCommand(clusterListCmd.command())
 
 	// Rename
@@ -99,7 +93,7 @@ func (c *cmdCluster) command() *cobra.Command {
 	cmd.AddCommand(cmdClusterAdd.command())
 
 	// List tokens
-	cmdClusterListTokens := cmdClusterListTokens{global: c.global, cluster: c}
+	cmdClusterListTokens := cmdClusterListTokens{global: c.global, cluster: c, lister: &listable[*api.ClusterMemberJoinToken]{global: c.global}}
 	cmd.AddCommand(cmdClusterListTokens.command())
 
 	// Revoke tokens
@@ -135,10 +129,7 @@ func (c *cmdCluster) command() *cobra.Command {
 type cmdClusterList struct {
 	global  *cmdGlobal
 	cluster *cmdCluster
-
-	flagColumns     string
-	flagFormat      string
-	flagAllProjects bool
+	lister  *listable[api.ClusterMember]
 }
 
 var cmdClusterListUsage = u.Usage{u.RemoteColonOpt, u.Filter.List(0)}
@@ -148,34 +139,18 @@ func (c *cmdClusterList) command() *cobra.Command {
 	cmd.Use = cli.U("list", cmdClusterListUsage...)
 	cmd.Aliases = []string{"ls"}
 	cmd.Short = i18n.G("List all the cluster members")
-	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
-		`List all the cluster members
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G("List all the cluster members"))
 
-	The -c option takes a (optionally comma-separated) list of arguments
-	that control which cluster members attributes to output when displaying in table
-	or csv format.
-
-	Default column layout is: nurafdsm
-
-	Column shorthand chars:
-
-    n - Server name
-    u - URL
-    r - Roles
-    a - Architecture
-    f - Failure Domain
-    d - Description
-    s - Status
-    m - Message`,
-	))
-
-	cli.AddStringFlag(cmd.Flags(), &c.flagColumns, "columns|c", defaultClusterColumns, "", i18n.G("Columns"))
-	cli.AddStringFlag(cmd.Flags(), &c.flagFormat, "format|f", c.global.defaultListFormat(), "", i18n.G(`Format (csv|json|table|yaml|compact|markdown), use suffix ",noheader" to disable headers and ",header" to enable it if missing, e.g. csv,header`))
-	cli.AddBoolFlag(cmd.Flags(), &c.flagAllProjects, "all-projects", i18n.G("Display clusters from all projects"))
-
-	cmd.PreRunE = func(cmd *cobra.Command, _ []string) error {
-		return cli.ValidateFlagFormatForListOutput(cmd.Flag("format").Value.String())
-	}
+	c.lister.init(cmd, "nurafdsm", map[rune]listColumn[api.ClusterMember]{
+		'n': {i18n.G("NAME"), i18n.G("Server name"), c.serverColumnData},
+		'u': {i18n.G("URL"), i18n.G("URL"), c.urlColumnData},
+		'r': {i18n.G("ROLES"), i18n.G("Roles"), c.rolesColumnData},
+		'a': {i18n.G("ARCHITECTURE"), i18n.G("Architecture"), c.architectureColumnData},
+		'f': {i18n.G("FAILURE DOMAIN"), i18n.G("Failure domain"), c.failureDomainColumnData},
+		'd': {i18n.G("DESCRIPTION"), i18n.G("Description"), c.descriptionColumnData},
+		's': {i18n.G("STATE"), i18n.G("State"), c.statusColumnData},
+		'm': {i18n.G("MESSAGE"), i18n.G("Message"), c.messageColumnData},
+	})
 
 	cmd.RunE = c.run
 
@@ -190,42 +165,6 @@ func (c *cmdClusterList) command() *cobra.Command {
 	return cmd
 }
 
-const defaultClusterColumns = "nurafdsm"
-
-func (c *cmdClusterList) parseColumns() ([]clusterColumn, error) {
-	columnsShorthandMap := map[rune]clusterColumn{
-		'n': {i18n.G("NAME"), c.serverColumnData},
-		'u': {i18n.G("URL"), c.urlColumnData},
-		'r': {i18n.G("ROLES"), c.rolesColumnData},
-		'a': {i18n.G("ARCHITECTURE"), c.architectureColumnData},
-		'f': {i18n.G("FAILURE DOMAIN"), c.failureDomainColumnData},
-		'd': {i18n.G("DESCRIPTION"), c.descriptionColumnData},
-		's': {i18n.G("STATUS"), c.statusColumnData},
-		'm': {i18n.G("MESSAGE"), c.messageColumnData},
-	}
-
-	columnList := strings.Split(c.flagColumns, ",")
-
-	columns := []clusterColumn{}
-
-	for _, columnEntry := range columnList {
-		if columnEntry == "" {
-			return nil, fmt.Errorf(i18n.G("Empty column entry (redundant, leading or trailing command) in '%s'"), c.flagColumns)
-		}
-
-		for _, columnRune := range columnEntry {
-			column, ok := columnsShorthandMap[columnRune]
-			if !ok {
-				return nil, fmt.Errorf(i18n.G("Unknown column shorthand char '%c' in '%s'"), columnRune, columnEntry)
-			}
-
-			columns = append(columns, column)
-		}
-	}
-
-	return columns, nil
-}
-
 func (c *cmdClusterList) serverColumnData(cluster api.ClusterMember) string {
 	return cluster.ServerName
 }
@@ -237,7 +176,7 @@ func (c *cmdClusterList) urlColumnData(cluster api.ClusterMember) string {
 func (c *cmdClusterList) rolesColumnData(cluster api.ClusterMember) string {
 	roles := cluster.Roles
 	rolesDelimiter := "\n"
-	if c.flagFormat == "csv" {
+	if c.lister.flagFormat == "csv" {
 		rolesDelimiter = ","
 	}
 
@@ -272,10 +211,6 @@ func (c *cmdClusterList) run(cmd *cobra.Command, args []string) error {
 
 	d := parsed[0].RemoteServer
 
-	if c.global.flagProject != "" && c.flagAllProjects {
-		return errors.New(i18n.G("Can't specify --project with --all-projects"))
-	}
-
 	filters := prepareClusterMemberServerFilters(parsed[1].StringList, api.ClusterMember{})
 
 	// Check if clustered
@@ -294,35 +229,11 @@ func (c *cmdClusterList) run(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	// Process the columns
-	columns, err := c.parseColumns()
-	if err != nil {
-		return err
-	}
-
-	// Render the table
-	data := [][]string{}
-	for _, member := range members {
-		line := []string{}
-		for _, column := range columns {
-			line = append(line, column.Data(member))
-		}
-
-		data = append(data, line)
-	}
-
-	if len(data) == 0 {
+	if len(members) == 0 {
 		u.HintMissingSpace(args, i18n.G("No matching member found"))
 	}
 
-	sort.Sort(cli.SortColumnsNaturally(data))
-
-	header := []string{}
-	for _, column := range columns {
-		header = append(header, column.Name)
-	}
-
-	return cli.RenderTable(os.Stdout, c.flagFormat, header, data, members)
+	return c.lister.run(members)
 }
 
 // Show.
@@ -1094,14 +1005,7 @@ func (c *cmdClusterAdd) run(cmd *cobra.Command, args []string) error {
 type cmdClusterListTokens struct {
 	global  *cmdGlobal
 	cluster *cmdCluster
-
-	flagFormat  string
-	flagColumns string
-}
-
-type clusterListTokenColumn struct {
-	Name string
-	Data func(*api.ClusterMemberJoinToken) string
+	lister  *listable[*api.ClusterMemberJoinToken]
 }
 
 var cmdClusterListTokensUsage = u.Usage{u.RemoteColonOpt}
@@ -1110,28 +1014,13 @@ func (c *cmdClusterListTokens) command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("list-tokens", cmdClusterListTokensUsage...)
 	cmd.Short = i18n.G("List all active cluster member join tokens")
-	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
-		`List all active cluster member join tokens
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G("List all active cluster member join tokens"))
 
-Default column layout: ntE
-
-== Columns ==
-The -c option takes a comma separated list of arguments that control
-which join tokens attributes to output when displaying in table or csv
-format.
-
-Column arguments are either pre-defined shorthand chars (see below),
-or (extended) config keys.
-
-Commas between consecutive shorthand chars are optional.
-
-Pre-defined column shorthand chars:
-  n - Name
-  t - Token
-  E - Expires At`,
-	))
-	cli.AddStringFlag(cmd.Flags(), &c.flagFormat, "format|f", c.global.defaultListFormat(), "", i18n.G(`Format (csv|json|table|yaml|compact|markdown), use suffix ",noheader" to disable headers and ",header" to enable if demanded, e.g. csv,header`))
-	cli.AddStringFlag(cmd.Flags(), &c.flagColumns, "columns|c", defaultclusterTokensColumns, "", i18n.G("Columns"))
+	c.lister.init(cmd, "ntE", map[rune]listColumn[*api.ClusterMemberJoinToken]{
+		'n': {i18n.G("NAME"), i18n.G("Name"), c.serverNameColumnData},
+		't': {i18n.G("TOKEN"), i18n.G("Token"), c.tokenColumnData},
+		'E': {i18n.G("EXPIRES"), i18n.G("Expiration date"), c.expiresAtColumnData},
+	})
 
 	cmd.RunE = c.run
 
@@ -1144,36 +1033,6 @@ Pre-defined column shorthand chars:
 	}
 
 	return cmd
-}
-
-const defaultclusterTokensColumns = "ntE"
-
-func (c *cmdClusterListTokens) parseColumns() ([]clusterListTokenColumn, error) {
-	columnsShorthandMap := map[rune]clusterListTokenColumn{
-		'n': {i18n.G("NAME"), c.serverNameColumnData},
-		't': {i18n.G("TOKEN"), c.tokenColumnData},
-		'E': {i18n.G("EXPIRES AT"), c.expiresAtColumnData},
-	}
-
-	columnList := strings.Split(c.flagColumns, ",")
-	columns := []clusterListTokenColumn{}
-
-	for _, columnEntry := range columnList {
-		if columnEntry == "" {
-			return nil, fmt.Errorf(i18n.G("Empty column entry (redundant, leading or trailing command) in '%s'"), c.flagColumns)
-		}
-
-		for _, columnRune := range columnEntry {
-			column, ok := columnsShorthandMap[columnRune]
-			if !ok {
-				return nil, fmt.Errorf(i18n.G("Unknown column shorthand char '%c' in '%s'"), columnRune, columnEntry)
-			}
-
-			columns = append(columns, column)
-		}
-	}
-
-	return columns, nil
 }
 
 func (c *cmdClusterListTokens) serverNameColumnData(token *api.ClusterMemberJoinToken) string {
@@ -1212,15 +1071,7 @@ func (c *cmdClusterListTokens) run(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	data := [][]string{}
 	joinTokens := []*api.ClusterMemberJoinToken{}
-
-	// Parse column flags.
-	columns, err := c.parseColumns()
-	if err != nil {
-		return err
-	}
-
 	for _, op := range ops {
 		if op.Class != api.OperationClassToken {
 			continue
@@ -1235,23 +1086,10 @@ func (c *cmdClusterListTokens) run(cmd *cobra.Command, args []string) error {
 			continue // Operation is not a valid cluster member join token operation.
 		}
 
-		line := []string{}
-		for _, column := range columns {
-			line = append(line, column.Data(joinToken))
-		}
-
 		joinTokens = append(joinTokens, joinToken)
-		data = append(data, line)
 	}
 
-	sort.Sort(cli.SortColumnsNaturally(data))
-
-	header := []string{}
-	for _, column := range columns {
-		header = append(header, column.Name)
-	}
-
-	return cli.RenderTable(os.Stdout, c.flagFormat, header, data, joinTokens)
+	return c.lister.run(joinTokens)
 }
 
 // Revoke Tokens.
