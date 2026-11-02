@@ -6,8 +6,6 @@ import (
 	"io"
 	"maps"
 	"os"
-	"sort"
-	"strings"
 
 	"github.com/spf13/cobra"
 	"go.yaml.in/yaml/v4"
@@ -32,7 +30,7 @@ func (c *cmdNetworkLoadBalancer) command() *cobra.Command {
 	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G("Manage network load balancers"))
 
 	// List.
-	networkLoadBalancerListCmd := cmdNetworkLoadBalancerList{global: c.global, networkLoadBalancer: c}
+	networkLoadBalancerListCmd := cmdNetworkLoadBalancerList{global: c.global, networkLoadBalancer: c, lister: &listable[api.NetworkLoadBalancer]{global: c.global}}
 	cmd.AddCommand(networkLoadBalancerListCmd.command())
 
 	// Show.
@@ -85,14 +83,7 @@ func (c *cmdNetworkLoadBalancer) command() *cobra.Command {
 type cmdNetworkLoadBalancerList struct {
 	global              *cmdGlobal
 	networkLoadBalancer *cmdNetworkLoadBalancer
-
-	flagFormat  string
-	flagColumns string
-}
-
-type networkLoadBalancerColumn struct {
-	Name string
-	Data func(api.NetworkLoadBalancer) string
+	lister              *listable[api.NetworkLoadBalancer]
 }
 
 var cmdNetworkLoadBalancerListUsage = u.Usage{u.Network.Remote()}
@@ -102,35 +93,16 @@ func (c *cmdNetworkLoadBalancerList) command() *cobra.Command {
 	cmd.Use = cli.U("list", cmdNetworkLoadBalancerListUsage...)
 	cmd.Aliases = []string{"ls"}
 	cmd.Short = i18n.G("List available network load balancers")
-	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
-		`List available network load balancers
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G("List available network load balancers"))
 
-Default column layout: ldp
-
-== Columns ==
-The -c option takes a comma separated list of arguments that control
-which network load balancer attributes to output when displaying
-in table or csv format.
-
-Column arguments are either pre-defined shorthand chars (see below),
-or (extended) config keys.
-
-Commas between consecutive shorthand chars are optional.
-
-Pre-defined column shorthand chars:
-  l - Listen Address
-  d - Description
-  p - Ports
-  L - Location of the operation (e.g. its cluster member)`,
-	))
+	c.lister.init(cmd, "ldp", map[rune]listColumn[api.NetworkLoadBalancer]{
+		'l': {i18n.G("LISTEN ADDRESS"), i18n.G("Listen address"), c.listenAddressColumnData},
+		'd': {i18n.G("DESCRIPTION"), i18n.G("Description"), c.descriptionColumnData},
+		'p': {i18n.G("PORTS"), i18n.G("Ports"), c.portsColumnData},
+		'L': {i18n.G("LOCATION"), i18n.G("Location (cluster member)"), c.locationColumnData},
+	}, locationToggle)
 
 	cmd.RunE = c.run
-	cli.AddStringFlag(cmd.Flags(), &c.flagFormat, "format|f", c.global.defaultListFormat(), "", i18n.G(`Format (csv|json|table|yaml|compact|markdown), use suffix ",noheader" to disable headers and ",header" to enable it if missing, e.g. csv,header`))
-	cli.AddStringFlag(cmd.Flags(), &c.flagColumns, "columns|c", defaultNetworkLoadBalancerColumns, "", i18n.G("Columns"))
-
-	cmd.PreRunE = func(cmd *cobra.Command, _ []string) error {
-		return cli.ValidateFlagFormatForListOutput(cmd.Flag("format").Value.String())
-	}
 
 	cmd.ValidArgsFunction = func(_ *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		if len(args) == 0 {
@@ -141,40 +113,6 @@ Pre-defined column shorthand chars:
 	}
 
 	return cmd
-}
-
-const defaultNetworkLoadBalancerColumns = "ldp"
-
-func (c *cmdNetworkLoadBalancerList) parseColumns(clustered bool) ([]networkLoadBalancerColumn, error) {
-	columnsShorthandMap := map[rune]networkLoadBalancerColumn{
-		'l': {i18n.G("LISTEN ADDRESS"), c.listenAddressColumnData},
-		'd': {i18n.G("DESCRIPTION"), c.descriptionColumnData},
-		'p': {i18n.G("PORTS"), c.portsColumnData},
-		'L': {i18n.G("LOCATION"), c.locationColumnData},
-	}
-
-	columnList := strings.Split(c.flagColumns, ",")
-	columns := []networkLoadBalancerColumn{}
-	if c.flagColumns == defaultNetworkLoadBalancerColumns && clustered {
-		columnList = append(columnList, "L")
-	}
-
-	for _, columnEntry := range columnList {
-		if columnEntry == "" {
-			return nil, fmt.Errorf(i18n.G("Empty column entry (redundant, leading or trailing command) in '%s'"), c.flagColumns)
-		}
-
-		for _, columnRune := range columnEntry {
-			column, ok := columnsShorthandMap[columnRune]
-			if !ok {
-				return nil, fmt.Errorf(i18n.G("Unknown column shorthand char '%c' in '%s'"), columnRune, columnEntry)
-			}
-
-			columns = append(columns, column)
-		}
-	}
-
-	return columns, nil
 }
 
 func (c *cmdNetworkLoadBalancerList) listenAddressColumnData(loadBalancer api.NetworkLoadBalancer) string {
@@ -202,36 +140,17 @@ func (c *cmdNetworkLoadBalancerList) run(cmd *cobra.Command, args []string) erro
 	d := parsed[0].RemoteServer
 	networkName := parsed[0].RemoteObject.String
 
+	err = c.lister.toggle(locationToggle, d.IsClustered())
+	if err != nil {
+		return err
+	}
+
 	loadBalancers, err := d.GetNetworkLoadBalancers(networkName)
 	if err != nil {
 		return err
 	}
 
-	// Parse column flags.
-	columns, err := c.parseColumns(d.IsClustered())
-	if err != nil {
-		return err
-	}
-
-	// Render the table
-	data := [][]string{}
-	for _, loadBalancer := range loadBalancers {
-		line := []string{}
-		for _, column := range columns {
-			line = append(line, column.Data(loadBalancer))
-		}
-
-		data = append(data, line)
-	}
-
-	sort.Sort(cli.SortColumnsNaturally(data))
-
-	header := []string{}
-	for _, column := range columns {
-		header = append(header, column.Name)
-	}
-
-	return cli.RenderTable(os.Stdout, c.flagFormat, header, data, loadBalancers)
+	return c.lister.run(loadBalancers)
 }
 
 // Show.
