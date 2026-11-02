@@ -435,6 +435,20 @@ func (d *linstor) getResourceDefinition(vol Volume, fetchVolumeDefinitions bool)
 	return filteredResourceDefinitions[0], nil
 }
 
+// checkVolumeAbsent fails when a resource definition already exists for the volume.
+func (d *linstor) checkVolumeAbsent(vol Volume) error {
+	exists, err := d.HasVolume(vol)
+	if err != nil {
+		return err
+	}
+
+	if exists {
+		return fmt.Errorf("A resource definition already exists for volume %q", vol.name)
+	}
+
+	return nil
+}
+
 // getLinstorDevPath return the device path for a given `vol` in the current node.
 //
 // If the resource is not available on the current node, it is made available before
