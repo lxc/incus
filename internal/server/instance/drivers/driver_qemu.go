@@ -387,6 +387,7 @@ type qemu struct {
 	// Stateful migration streams.
 	migrationReceiveStateful   map[string]io.ReadWriteCloser
 	migrationReceiveStateExtra []io.ReadWriteCloser
+	migrationDirtyBitmaps      bool
 
 	// Cancelled if the migration source fails partway through.
 	migrationReceiveCtx context.Context
@@ -1125,7 +1126,7 @@ func (d *qemu) killQemuProcess(pid int) error {
 // restoreState restores the VM state from a file handle.
 func (d *qemu) restoreStateHandle(ctx context.Context, monitor *qmp.Monitor, f *os.File) error {
 	// Emit MIGRATION events so the VM resumes as soon as the transfer completes rather than on the next poll.
-	err := monitor.MigrateSetCapabilities(map[string]bool{"events": true})
+	err := monitor.MigrateSetCapabilities(map[string]bool{"events": true, "dirty-bitmaps": d.migrationDirtyBitmaps})
 	if err != nil {
 		return fmt.Errorf("Failed setting migration capabilities: %w", err)
 	}
@@ -1275,7 +1276,7 @@ func (d *qemu) restoreStateMultifd(ctx context.Context, monitor *qmp.Monitor, co
 	defer cancel(nil)
 
 	// Emit MIGRATION events so the VM resumes as soon as the transfer completes rather than on the next poll.
-	err = monitor.MigrateSetCapabilities(map[string]bool{"multifd": true, "events": true})
+	err = monitor.MigrateSetCapabilities(map[string]bool{"multifd": true, "events": true, "dirty-bitmaps": d.migrationDirtyBitmaps})
 	if err != nil {
 		return fmt.Errorf("Failed setting migration capabilities: %w", err)
 	}
@@ -1531,6 +1532,7 @@ func (d *qemu) saveStateHandle(monitor *qmp.Monitor, f *os.File) error {
 		"multifd":        false,
 		"switchover-ack": false,
 		"return-path":    false,
+		"dirty-bitmaps":  false,
 	})
 	if err != nil {
 		return fmt.Errorf("Failed setting migration capabilities: %w", err)
@@ -9580,6 +9582,9 @@ func (d *qemu) MigrateSend(args instance.MigrateSendArgs) error {
 		// Offer parallel channels for the state transfer.
 		channels := qemuMigrationChannels()
 		offerHeader.MultifdChannels = &channels
+
+		// Offer to carry the persistent bitmaps in the state transfer.
+		offerHeader.DirtyBitmaps = new(true)
 	}
 
 	reverter := revert.New()
@@ -9803,7 +9808,7 @@ func (d *qemu) MigrateSend(args instance.MigrateSendArgs) error {
 				defer instanceRefClear(d)
 			}
 
-			err = d.migrateSendLive(ctx, pool, args.ClusterMoveSourceName, args.StoragePool, blockSize, filesystemConn, stateConn, stateConnExtra, volSourceArgs, &committed)
+			err = d.migrateSendLive(ctx, pool, args.ClusterMoveSourceName, args.StoragePool, blockSize, filesystemConn, stateConn, stateConnExtra, volSourceArgs, respHeader.GetDirtyBitmaps(), &committed)
 			if err != nil {
 				return err
 			}
@@ -10283,7 +10288,7 @@ func (d *qemu) cancelMigrationSnapshot(monitor *qmp.Monitor, diskName string) {
 }
 
 // migrateSendLive performs live migration send process.
-func (d *qemu) migrateSendLive(ctx context.Context, pool storagePools.Pool, clusterMoveSourceName string, storagePool string, rootDiskSize int64, filesystemConn io.ReadWriteCloser, stateConn io.ReadWriteCloser, stateConnExtra []io.ReadWriteCloser, volSourceArgs *localMigration.VolumeSourceArgs, committed *bool) error {
+func (d *qemu) migrateSendLive(ctx context.Context, pool storagePools.Pool, clusterMoveSourceName string, storagePool string, rootDiskSize int64, filesystemConn io.ReadWriteCloser, stateConn io.ReadWriteCloser, stateConnExtra []io.ReadWriteCloser, volSourceArgs *localMigration.VolumeSourceArgs, dirtyBitmaps bool, committed *bool) error {
 	monitor, err := d.qmpConnect()
 	if err != nil {
 		return err
@@ -10356,6 +10361,9 @@ func (d *qemu) migrateSendLive(ctx context.Context, pool storagePools.Pool, clus
 			// VFIO migration requires bidirectional communication.
 			"return-path":    vfioMigration,
 			"switchover-ack": vfioMigration,
+
+			// Persistent bitmaps travel with the state when the target accepts them.
+			"dirty-bitmaps": dirtyBitmaps,
 		}
 
 		err = monitor.MigrateSetCapabilities(capabilities)
@@ -10417,6 +10425,9 @@ func (d *qemu) migrateSendLive(ctx context.Context, pool storagePools.Pool, clus
 			// VFIO migration requires bidirectional communication.
 			"return-path":    vfioMigration,
 			"switchover-ack": vfioMigration,
+
+			// Persistent bitmaps travel with the state when the target accepts them.
+			"dirty-bitmaps": dirtyBitmaps,
 		}
 
 		err = monitor.MigrateSetCapabilities(capabilities)
@@ -10835,6 +10846,12 @@ func (d *qemu) MigrateReceive(args instance.MigrateReceiveArgs) error {
 		if args.StateConnExtra != nil && offerHeader.GetMultifdChannels() > 0 {
 			channels = min(offerHeader.GetMultifdChannels(), qemuMigrationChannels())
 			respHeader.MultifdChannels = &channels
+		}
+
+		// Accept the persistent bitmaps, our metadata images start out empty.
+		if offerHeader.GetDirtyBitmaps() {
+			respHeader.DirtyBitmaps = new(true)
+			d.migrationDirtyBitmaps = true
 		}
 	}
 
