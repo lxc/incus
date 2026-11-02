@@ -111,7 +111,19 @@ func (d *gpuPhysical) validateConfig(instConf instance.ConfigReader, partialVali
 		optionalFields = append(optionalFields, "nvidia.clique")
 	}
 
-	err := d.config.Validate(gpuValidationRules(nil, optionalFields))
+	rules := gpuValidationRules(nil, optionalFields)
+
+	if instConf.Type() == instancetype.VM || instConf.Type() == instancetype.Any {
+		// gendoc:generate(entity=devices, group=gpu_physical, key=rebar.<N>.size)
+		//
+		// ---
+		//  type: string
+		//  required: no
+		//  shortdesc: Size to set resizable BAR `N` to before passing the GPU to the VM, for example `8GiB` (VM only)
+		rebarValidationRules(rules)
+	}
+
+	err := d.config.Validate(rules)
 	if err != nil {
 		return err
 	}
@@ -343,6 +355,12 @@ func (d *gpuPhysical) startVM() (*deviceConfig.RunConfig, error) {
 	saveData["last_state.pci.slot.name"] = pciDev.SlotName
 	saveData["last_state.pci.driver"] = pciDev.Driver
 
+	// Apply any requested BAR sizes while the device can still be unbound.
+	err = rebarApply(pciDev, d.config, saveData)
+	if err != nil {
+		return nil, err
+	}
+
 	err = d.pciDeviceDriverOverrideIOMMU(pciDev, "vfio-pci", false)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to override IOMMU group driver: %w", err)
@@ -437,15 +455,18 @@ func (d *gpuPhysical) Stop() (*deviceConfig.RunConfig, error) {
 
 // postStop is run after the device is removed from the instance.
 func (d *gpuPhysical) postStop() error {
+	v := d.volatileGet()
+
 	defer func() {
-		_ = d.volatileSet(map[string]string{
+		reset := map[string]string{
 			"last_state.pci.slot.name": "",
 			"last_state.pci.driver":    "",
 			"vgpu.uuid":                "",
-		})
-	}()
+		}
 
-	v := d.volatileGet()
+		rebarVolatileReset(reset)
+		_ = d.volatileSet(reset)
+	}()
 
 	if d.inst.Type() == instancetype.Container {
 		// Remove host files for this device.
@@ -462,7 +483,13 @@ func (d *gpuPhysical) postStop() error {
 			SlotName: v["last_state.pci.slot.name"],
 		}
 
-		err := d.pciDeviceDriverOverrideIOMMU(pciDev, v["last_state.pci.driver"], true)
+		// Put the BARs back to their original sizes while the device is unbound.
+		err := rebarRestore(pciDev, v)
+		if err != nil {
+			return err
+		}
+
+		err = d.pciDeviceDriverOverrideIOMMU(pciDev, v["last_state.pci.driver"], true)
 		if err != nil {
 			return err
 		}
