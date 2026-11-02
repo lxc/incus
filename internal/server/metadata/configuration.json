@@ -494,6 +494,14 @@
 						}
 					},
 					{
+						"rebar.\u003cN\u003e.size": {
+							"longdesc": "",
+							"required": "no",
+							"shortdesc": "Size to set resizable BAR `N` to before passing the GPU to the VM, for example `8GiB` (VM only)",
+							"type": "string"
+						}
+					},
+					{
 						"uid": {
 							"default": "0",
 							"longdesc": "",
@@ -2237,6 +2245,14 @@
 							"required": "no",
 							"shortdesc": "Whether to expose the device's option ROM to the VM",
 							"type": "bool"
+						}
+					},
+					{
+						"rebar.\u003cN\u003e.size": {
+							"longdesc": "",
+							"required": "no",
+							"shortdesc": "Size to set resizable BAR `N` to before passing the device to the VM (for example `8GiB`)",
+							"type": "string"
 						}
 					}
 				]
