@@ -888,6 +888,11 @@ func (d *qemu) onStop(target string, reason string) error {
 		d.logger.Error("Failed saving UEFI variables", logger.Ctx{"err": err})
 	}
 
+	err = d.saveImageMetadata()
+	if err != nil {
+		d.logger.Error("Failed saving metadata images", logger.Ctx{"err": err})
+	}
+
 	_ = os.Remove(d.pidFilePath())
 	_ = os.Remove(d.monitorPath())
 	_ = os.Remove(d.spicePath())
@@ -5652,19 +5657,64 @@ func (d *qemu) addFileDescriptor(fdFiles *[]*os.File, file *os.File) int {
 	return 2 + len(*fdFiles) // Use 2+fdFiles count, as first user file descriptor is 3.
 }
 
-// ImageMetadataDir returns the metadata image directory for the given instance path.
+// ImageMetadataDir returns the directory holding the metadata images of a stopped instance.
 func ImageMetadataDir(instancePath string) string {
 	return filepath.Join(instancePath, "image_metadata")
 }
 
-// imageMetadataDir returns the instance's metadata image directory.
+// imageMetadataDir returns the instance volume directory holding the metadata images while stopped.
 func (d *qemu) imageMetadataDir() string {
 	return ImageMetadataDir(d.Path())
 }
 
-// imageMetadataPath returns the instance's image metadata file path.
+// localImageMetadataDir returns the host-local directory the metadata images are used from while running.
+func (d *qemu) localImageMetadataDir() string {
+	return internalUtil.VarPath("virtual-machines-bitmaps", project.Instance(d.project.Name, d.name))
+}
+
+// imageMetadataPath returns the local metadata image path of a device.
 func (d *qemu) imageMetadataPath(devName string) string {
+	return filepath.Join(d.localImageMetadataDir(), fmt.Sprintf("%s.qcow2", devName))
+}
+
+// savedImageMetadataPath returns the metadata image path of a device within the instance volume.
+func (d *qemu) savedImageMetadataPath(devName string) string {
 	return filepath.Join(d.imageMetadataDir(), fmt.Sprintf("%s.qcow2", devName))
+}
+
+// saveImageMetadata moves the metadata images into the instance volume so the next start keeps their bitmaps.
+func (d *qemu) saveImageMetadata() error {
+	localDir := d.localImageMetadataDir()
+	entries, err := os.ReadDir(localDir)
+	if errors.Is(err, fs.ErrNotExist) {
+		return nil
+	}
+
+	if err != nil {
+		return err
+	}
+
+	// The local copies only describe the run that just ended.
+	defer func() { _ = os.RemoveAll(localDir) }()
+
+	savedDir := d.imageMetadataDir()
+	err = os.MkdirAll(savedDir, 0o700)
+	if err != nil {
+		return err
+	}
+
+	for _, entry := range entries {
+		if !entry.Type().IsRegular() || !strings.HasSuffix(entry.Name(), ".qcow2") {
+			continue
+		}
+
+		err = mirror.CopyFile(filepath.Join(localDir, entry.Name()), filepath.Join(savedDir, entry.Name()))
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 // isRBDPath checks whether a disk path refers to an RBD image rather than a local device.
@@ -5808,6 +5858,11 @@ func (d *qemu) removeImageMetadata(devName string) error {
 
 	defer func() { _ = d.unmount() }()
 
+	err = os.Remove(d.savedImageMetadataPath(devName))
+	if err != nil && !errors.Is(err, fs.ErrNotExist) {
+		return err
+	}
+
 	err = os.Remove(d.imageMetadataPath(devName))
 	if err != nil && !errors.Is(err, fs.ErrNotExist) {
 		return err
@@ -5832,13 +5887,32 @@ func (d *qemu) ensureMetadataImage(rawPath string, devName string) (string, stri
 		return rawPath, "", nil
 	}
 
-	qcow2Dir := d.imageMetadataDir()
+	qcow2Dir := d.localImageMetadataDir()
 	err = os.MkdirAll(qcow2Dir, 0o700)
 	if err != nil {
 		return "", "", fmt.Errorf("Failed creating metadata image directory: %w", err)
 	}
 
 	qcow2Path := d.imageMetadataPath(devName)
+	savedPath := d.savedImageMetadataPath(devName)
+
+	// A copy saved by a clean stop is the only one that still matches the disk.
+	if util.PathExists(savedPath) {
+		err = mirror.CopyFile(savedPath, qcow2Path)
+		if err != nil {
+			return "", "", fmt.Errorf("Failed loading metadata image %q: %w", savedPath, err)
+		}
+
+		err = os.Remove(savedPath)
+		if err != nil {
+			return "", "", fmt.Errorf("Failed removing saved metadata image %q: %w", savedPath, err)
+		}
+	} else {
+		err = os.Remove(qcow2Path)
+		if err != nil && !errors.Is(err, fs.ErrNotExist) {
+			return "", "", fmt.Errorf("Failed removing stale metadata image %q: %w", qcow2Path, err)
+		}
+	}
 
 	// If we already have metadata image, then just use it
 	if util.PathExists(qcow2Path) {
@@ -7858,6 +7932,16 @@ func (d *qemu) Rename(newName string, applyTemplateTrigger bool) error {
 		}
 	}
 
+	// Rename the local metadata image path.
+	_ = os.RemoveAll(internalUtil.VarPath("virtual-machines-bitmaps", newFullName))
+	if util.PathExists(d.localImageMetadataDir()) {
+		err := os.Rename(d.localImageMetadataDir(), internalUtil.VarPath("virtual-machines-bitmaps", newFullName))
+		if err != nil {
+			d.logger.Error("Failed renaming instance", ctxMap)
+			return err
+		}
+	}
+
 	reverter := revert.New()
 	defer reverter.Fail()
 
@@ -8869,6 +8953,9 @@ func (d *qemu) cleanup() {
 
 	// Remove the devices path
 	_ = os.Remove(d.DevicesPath())
+
+	// Remove the local metadata images
+	_ = os.RemoveAll(d.localImageMetadataDir())
 
 	// Remove the shmounts path
 	_ = os.RemoveAll(d.ShmountsPath())
