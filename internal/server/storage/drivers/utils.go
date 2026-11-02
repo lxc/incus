@@ -359,11 +359,24 @@ func fsckIfErrors(devPath string, fsType string) {
 
 	logger.Warn("Filesystem errors recorded, running e2fsck", logger.Ctx{"dev": devPath})
 
-	_, err = subprocess.RunCommand("e2fsck", "-f", "-p", devPath)
-	if err != nil {
-		// Exit codes 1 and 2 mean errors were corrected.
+	// Exit codes 1 and 2 mean errors were corrected, 4 means preen mode couldn't handle them.
+	fsckExitCode := func(err error) int {
 		var exitErr *exec.ExitError
-		if errors.As(err, &exitErr) && exitErr.ExitCode() <= 2 {
+		if errors.As(err, &exitErr) {
+			return exitErr.ExitCode()
+		}
+
+		return -1
+	}
+
+	_, err = subprocess.RunCommand("e2fsck", "-f", "-p", devPath)
+	if err != nil && fsckExitCode(err) == 4 {
+		logger.Warn("Filesystem needs a full repair, running e2fsck -y", logger.Ctx{"dev": devPath})
+		_, err = subprocess.RunCommand("e2fsck", "-f", "-y", devPath)
+	}
+
+	if err != nil {
+		if fsckExitCode(err) > 0 && fsckExitCode(err) <= 2 {
 			logger.Info("Filesystem errors repaired", logger.Ctx{"dev": devPath})
 			return
 		}
