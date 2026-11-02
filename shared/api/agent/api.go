@@ -1,5 +1,9 @@
 package api
 
+import (
+	"time"
+)
+
 // API10Put contains the fields which are needed for the incus-agent to connect to Incus.
 type API10Put struct {
 	// Context ID
@@ -17,4 +21,8 @@ type API10Put struct {
 	// Whether or not to enable /dev/incus
 	// Example: true
 	DevIncus bool `json:"dev_incus" yaml:"dev_incus"`
+
+	// Current time on the host
+	// Example: 2026-11-02T12:00:00.123456789Z
+	Time time.Time `json:"time" yaml:"time"`
 }

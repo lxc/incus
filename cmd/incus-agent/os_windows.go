@@ -760,3 +760,29 @@ func osSetEnv(post *api.InstanceExecPost, env map[string]string) {
 		post.Cwd = system32
 	}
 }
+
+// osStepClock moves the system clock forward by the given offset.
+func osStepClock(offset time.Duration) error {
+	t := time.Now().Add(offset).UTC()
+
+	// SYSTEMTIME as expected by SetSystemTime.
+	st := struct {
+		Year, Month, DayOfWeek, Day, Hour, Minute, Second, Milliseconds uint16
+	}{
+		Year:         uint16(t.Year()),
+		Month:        uint16(t.Month()),
+		DayOfWeek:    uint16(t.Weekday()),
+		Day:          uint16(t.Day()),
+		Hour:         uint16(t.Hour()),
+		Minute:       uint16(t.Minute()),
+		Second:       uint16(t.Second()),
+		Milliseconds: uint16(t.Nanosecond() / 1e6),
+	}
+
+	ret, _, err := windows.NewLazySystemDLL("kernel32.dll").NewProc("SetSystemTime").Call(uintptr(unsafe.Pointer(&st)))
+	if ret == 0 {
+		return err
+	}
+
+	return nil
+}
