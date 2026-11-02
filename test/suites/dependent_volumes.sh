@@ -73,6 +73,18 @@ test_dependent_volumes() {
     incus config device add c1 vol2 disk pool="${storage_pool}" source="${storage_volume2}" dependent=true path=/extra
     incus storage volume get "${storage_pool}" "${storage_volume2}" dependent | grep -Fx 'true'
 
+    # Renaming and moving a dependent volume updates the instance device
+    incus storage volume rename "${storage_pool}" "${storage_volume2}" "${storage_volume2}-renamed"
+    incus config device get c1 vol2 source | grep -Fx "${storage_volume2}-renamed"
+    incus storage create "${storage_pool}-move" dir
+    incus storage volume move "${storage_pool}/${storage_volume2}-renamed" "${storage_pool}-move/${storage_volume2}"
+    incus config device get c1 vol2 pool | grep -Fx "${storage_pool}-move"
+    incus storage volume move "${storage_pool}-move/${storage_volume2}" "${storage_pool}/${storage_volume2}"
+    incus config device get c1 vol2 pool | grep -Fx "${storage_pool}"
+    incus config device get c1 vol2 source | grep -Fx "${storage_volume2}"
+    incus storage volume get "${storage_pool}" "${storage_volume2}" dependent | grep -Fx 'true'
+    incus storage delete "${storage_pool}-move"
+
     # Snapshots on the instance and dependent volumes must survive export and import.
     incus snapshot create c1 snap-export
     [ "$(incus storage volume snapshot ls "${storage_pool}" "${storage_volume}" --format json | jq 'length == 1')" = "true" ]
