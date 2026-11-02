@@ -36,6 +36,34 @@ func usbIsOurDevice(config deviceConfig.Device, usb *USBEvent) bool {
 	return true
 }
 
+// usbMatchEvent indicates whether the USB event qualifies as part of our device.
+// Removal events lack the serial, so serialDevs tracks the bus and device numbers of serial matches.
+func usbMatchEvent(config deviceConfig.Device, serialDevs map[[2]int]bool, usb *USBEvent) bool {
+	if config["serial"] == "" {
+		return usbIsOurDevice(config, usb)
+	}
+
+	devKey := [2]int{usb.BusNum, usb.DevNum}
+	if usb.Action == "remove" {
+		if !serialDevs[devKey] {
+			return false
+		}
+
+		delete(serialDevs, devKey)
+		return true
+	}
+
+	if !usbIsOurDevice(config, usb) {
+		return false
+	}
+
+	if usb.Action == "add" {
+		serialDevs[devKey] = true
+	}
+
+	return true
+}
+
 type usb struct {
 	deviceCommon
 }
@@ -151,9 +179,22 @@ func (d *usb) Register() error {
 	deviceName := d.name
 	state := d.state
 
+	// Seed the serial matches with the devices already present.
+	serialDevs := map[[2]int]bool{}
+	if devConfig["serial"] != "" {
+		usbs, err := d.loadUsb()
+		if err != nil {
+			return err
+		}
+
+		for _, usb := range usbs {
+			usbMatchEvent(devConfig, serialDevs, &usb)
+		}
+	}
+
 	// Handler for when a USB event occurs.
 	f := func(e USBEvent) (*deviceConfig.RunConfig, error) {
-		if !usbIsOurDevice(devConfig, &e) || !util.IsTrueOrEmpty(devConfig["attached"]) {
+		if !usbMatchEvent(devConfig, serialDevs, &e) || !util.IsTrueOrEmpty(devConfig["attached"]) {
 			return nil, nil
 		}
 
