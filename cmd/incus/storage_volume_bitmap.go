@@ -2,9 +2,6 @@ package main
 
 import (
 	"fmt"
-	"os"
-	"sort"
-	"strings"
 
 	"github.com/spf13/cobra"
 	"go.yaml.in/yaml/v4"
@@ -37,7 +34,7 @@ func (c *cmdStorageVolumeBitmap) command() *cobra.Command {
 	cmd.AddCommand(storageVolumeBitmapDeleteCmd.command())
 
 	// List
-	storageVolumeBitmapListCmd := cmdStorageVolumeBitmapList{global: c.global, storage: c.storage, storageVolume: c.storageVolume, storageVolumeBitmap: c}
+	storageVolumeBitmapListCmd := cmdStorageVolumeBitmapList{global: c.global, storage: c.storage, storageVolume: c.storageVolume, storageVolumeBitmap: c, lister: &listable[api.StorageVolumeBitmap]{global: c.global}}
 	cmd.AddCommand(storageVolumeBitmapListCmd.command())
 
 	// Show
@@ -198,44 +195,28 @@ type cmdStorageVolumeBitmapList struct {
 	storage             *cmdStorage
 	storageVolume       *cmdStorageVolume
 	storageVolumeBitmap *cmdStorageVolumeBitmap
-
-	flagFormat  string
-	flagColumns string
+	lister              *listable[api.StorageVolumeBitmap]
 }
 
 var cmdStorageVolumeBitmapListUsage = u.Usage{u.Pool.Remote(), u.MakePath(u.StorageVolumeType.Optional(), u.Volume)}
-
-const defaultStorageVolumeBitmapColumns = "ncgrbpi"
 
 func (c *cmdStorageVolumeBitmapList) command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("list", cmdStorageVolumeBitmapListUsage...)
 	cmd.Aliases = []string{"ls"}
 	cmd.Short = i18n.G("List storage volume dirty bitmaps")
-	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
-		`List storage volume dirty bitmaps
-
-	The -c option takes a (optionally comma-separated) list of arguments
-	that control which bitmap attributes to output when displaying in
-	table or csv format.
-
-	Column shorthand chars:
-		n - Name
-		c - Number of dirty bytes
-		g - Granularity
-		r - Recording
-		b - Busy
-		p - Persistent
-		i - Inconsistent`,
-	))
-
-	cli.AddStringFlag(cmd.Flags(), &c.flagColumns, "columns|c", defaultStorageVolumeBitmapColumns, "", i18n.G("Columns"))
-	cli.AddStringFlag(cmd.Flags(), &c.flagFormat, "format|f", c.global.defaultListFormat(), "", i18n.G(`Format (csv|json|table|yaml|compact|markdown), use suffix ",noheader" to disable headers and ",header" to enable it if missing, e.g. csv,header`))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G("List storage volume dirty bitmaps"))
 	cli.AddStringFlag(cmd.Flags(), &c.storage.flagTarget, "target", "", "", i18n.G("Cluster member name"))
 
-	cmd.PreRunE = func(cmd *cobra.Command, _ []string) error {
-		return cli.ValidateFlagFormatForListOutput(cmd.Flag("format").Value.String())
-	}
+	c.lister.init(cmd, "ncgrbpi", map[rune]listColumn[api.StorageVolumeBitmap]{
+		'n': {i18n.G("NAME"), i18n.G("Name"), func(v api.StorageVolumeBitmap) string { return v.Name }},
+		'c': {i18n.G("DIRTY BYTES"), i18n.G("Number of dirty bytes"), func(v api.StorageVolumeBitmap) string { return fmt.Sprintf("%d", v.Count) }},
+		'g': {i18n.G("GRANULARITY"), i18n.G("Granularity"), func(v api.StorageVolumeBitmap) string { return fmt.Sprintf("%d", v.Granularity) }},
+		'r': {i18n.G("RECORDING"), i18n.G("Whether the bitmap is currently tracking data"), func(v api.StorageVolumeBitmap) string { return yesNo(v.Recording) }},
+		'b': {i18n.G("BUSY"), i18n.G("Whether the bitmap is busy"), func(v api.StorageVolumeBitmap) string { return yesNo(v.Busy) }},
+		'p': {i18n.G("PERSISTENT"), i18n.G("Whether the bitmap is persistent"), func(v api.StorageVolumeBitmap) string { return yesNo(v.Persistent) }},
+		'i': {i18n.G("INCONSISTENT"), i18n.G("Whether the bitmap is inconsistent"), func(v api.StorageVolumeBitmap) string { return yesNo(v.Inconsistent) }},
+	})
 
 	cmd.RunE = c.run
 
@@ -259,46 +240,6 @@ type storageVolumeBitmapColumn struct {
 	Data func(api.StorageVolumeBitmap) string
 }
 
-func boolYesNo(value bool) string {
-	if value {
-		return i18n.G("YES")
-	}
-
-	return i18n.G("NO")
-}
-
-func (c *cmdStorageVolumeBitmapList) parseColumns() ([]storageVolumeBitmapColumn, error) {
-	columnsShorthandMap := map[rune]storageVolumeBitmapColumn{
-		'n': {i18n.G("NAME"), func(v api.StorageVolumeBitmap) string { return v.Name }},
-		'c': {i18n.G("DIRTY BYTES"), func(v api.StorageVolumeBitmap) string { return fmt.Sprintf("%d", v.Count) }},
-		'g': {i18n.G("GRANULARITY"), func(v api.StorageVolumeBitmap) string { return fmt.Sprintf("%d", v.Granularity) }},
-		'r': {i18n.G("RECORDING"), func(v api.StorageVolumeBitmap) string { return boolYesNo(v.Recording) }},
-		'b': {i18n.G("BUSY"), func(v api.StorageVolumeBitmap) string { return boolYesNo(v.Busy) }},
-		'p': {i18n.G("PERSISTENT"), func(v api.StorageVolumeBitmap) string { return boolYesNo(v.Persistent) }},
-		'i': {i18n.G("INCONSISTENT"), func(v api.StorageVolumeBitmap) string { return boolYesNo(v.Inconsistent) }},
-	}
-
-	columnList := strings.Split(c.flagColumns, ",")
-	columns := []storageVolumeBitmapColumn{}
-
-	for _, columnEntry := range columnList {
-		if columnEntry == "" {
-			return nil, fmt.Errorf(i18n.G("Empty column entry (redundant, leading or trailing command) in '%s'"), c.flagColumns)
-		}
-
-		for _, columnRune := range columnEntry {
-			column, ok := columnsShorthandMap[columnRune]
-			if !ok {
-				return nil, fmt.Errorf(i18n.G("Unknown column shorthand char '%c' in '%s'"), columnRune, columnEntry)
-			}
-
-			columns = append(columns, column)
-		}
-	}
-
-	return columns, nil
-}
-
 func (c *cmdStorageVolumeBitmapList) run(cmd *cobra.Command, args []string) error {
 	parsed, err := c.global.Parse(cmdStorageVolumeBitmapListUsage, cmd, args)
 	if err != nil {
@@ -320,30 +261,7 @@ func (c *cmdStorageVolumeBitmapList) run(cmd *cobra.Command, args []string) erro
 		return fmt.Errorf(i18n.G("Failed to list bitmaps: %w"), err)
 	}
 
-	// Parse column flags.
-	columns, err := c.parseColumns()
-	if err != nil {
-		return err
-	}
-
-	data := [][]string{}
-	for _, bitmap := range bitmaps {
-		line := []string{}
-		for _, column := range columns {
-			line = append(line, column.Data(bitmap))
-		}
-
-		data = append(data, line)
-	}
-
-	sort.Sort(cli.SortColumnsNaturally(data))
-
-	header := []string{}
-	for _, column := range columns {
-		header = append(header, column.Name)
-	}
-
-	return cli.RenderTable(os.Stdout, c.flagFormat, header, data, bitmaps)
+	return c.lister.run(bitmaps)
 }
 
 // Bitmap show.
