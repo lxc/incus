@@ -11,6 +11,7 @@ import (
 	"os"
 	"os/exec"
 	"strconv"
+	"time"
 	"unsafe"
 
 	"github.com/creack/pty"
@@ -196,4 +197,11 @@ func openPty(uid, gid int64) (*os.File, *os.File, error) {
 	reverter.Success()
 
 	return pty, tty, nil
+}
+
+// osStepClock moves the system clock forward by the given offset.
+func osStepClock(offset time.Duration) error {
+	tv := unix.NsecToTimeval(time.Now().Add(offset).UnixNano())
+
+	return unix.Settimeofday(&tv)
 }

@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"time"
 
 	incus "github.com/lxc/incus/v7/client"
 	"github.com/lxc/incus/v7/internal/ports"
@@ -16,6 +17,7 @@ import (
 	"github.com/lxc/incus/v7/internal/version"
 	"github.com/lxc/incus/v7/shared/api"
 	agentAPI "github.com/lxc/incus/v7/shared/api/agent"
+	"github.com/lxc/incus/v7/shared/logger"
 	localtls "github.com/lxc/incus/v7/shared/tls"
 )
 
@@ -59,12 +61,12 @@ func api10Get(d *Daemon, r *http.Request) response.Response {
 	return response.SyncResponseETag(true, fullSrv, fullSrv)
 }
 
-func setConnectionInfo(d *Daemon, rd io.Reader) error {
+func setConnectionInfo(d *Daemon, rd io.Reader) (*agentAPI.API10Put, error) {
 	var data agentAPI.API10Put
 
 	err := json.NewDecoder(rd).Decode(&data)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	d.DevIncusMu.Lock()
@@ -74,13 +76,37 @@ func setConnectionInfo(d *Daemon, rd io.Reader) error {
 	d.DevIncusEnabled = data.DevIncus
 	d.DevIncusMu.Unlock()
 
+	return &data, nil
+}
+
+// syncClock steps the clock forward to the host's time when it fell behind,
+// as happens after a live migration or a stateful restore.
+func syncClock(hostTime time.Time) error {
+	offset := time.Until(hostTime)
+	if offset < 500*time.Millisecond {
+		return nil
+	}
+
+	err := osStepClock(offset)
+	if err != nil {
+		return err
+	}
+
+	logger.Info("Stepped the clock forward to the host's time", logger.Ctx{"offset": offset})
+
 	return nil
 }
 
 func api10Put(d *Daemon, r *http.Request) response.Response {
-	err := setConnectionInfo(d, r.Body)
+	data, err := setConnectionInfo(d, r.Body)
 	if err != nil {
 		return response.ErrorResponse(http.StatusInternalServerError, err.Error())
+	}
+
+	if !data.Time.IsZero() {
+		go func() {
+			logger.WarnOnError(func() error { return syncClock(data.Time) }, "Failed to sync the clock with the host")
+		}()
 	}
 
 	// Try connecting to the host.
