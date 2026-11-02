@@ -167,7 +167,7 @@ func (c *cmdAgent) run(cmd *cobra.Command, args []string) error {
 				return err
 			}
 
-			err = setConnectionInfo(d, f)
+			_, err = setConnectionInfo(d, f)
 			if err != nil {
 				_ = f.Close()
 				return err

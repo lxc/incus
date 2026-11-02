@@ -416,6 +416,11 @@ func (d *qemu) qmpConnect() (*qmp.Monitor, error) {
 // Callers should check that the instance is running (and therefore mounted) before calling this function,
 // otherwise the qmp.Connect call will fail to use the monitor socket file.
 func (d *qemu) getAgentClient() (*http.Client, error) {
+	return d.agentClient(true)
+}
+
+// agentClient returns a client for the agent, checkStarted skips VMs whose agent hasn't reported in yet.
+func (d *qemu) agentClient(checkStarted bool) (*http.Client, error) {
 	// Check that the VM is in a state where the agent may be reachable.
 	status := d.statusCode()
 	if !d.isRunningStatusCode(status) || status == api.Frozen {
@@ -486,7 +491,7 @@ func (d *qemu) getAgentClient() (*http.Client, error) {
 		return nil, err
 	}
 
-	if !monitor.AgenStarted() || monitor.GetInstanceState() != nil {
+	if checkStarted && (!monitor.AgenStarted() || monitor.GetInstanceState() != nil) {
 		return nil, errQemuAgentOffline
 	}
 
@@ -2812,6 +2817,12 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 
 	// Finish handling stateful start.
 	if stateful {
+		// Reconnect the agent right away so it can resync its clock.
+		err = d.advertiseVsockAddress()
+		if err != nil {
+			d.logger.Debug("Failed to advertise vsock address to instance agent", logger.Ctx{"err": err})
+		}
+
 		// Cleanup state.
 		_ = os.Remove(d.StatePath())
 		d.stateful = false
@@ -2992,8 +3003,9 @@ func (d *qemu) getAgentConnectionInfo() (*agentAPI.API10Put, error) {
 }
 
 // advertiseVsockAddress advertises the CID and port to the VM.
+// After a stateful restore the agent is up before it has reported in, so don't wait for that.
 func (d *qemu) advertiseVsockAddress() error {
-	client, err := d.getAgentClient()
+	client, err := d.agentClient(false)
 	if err != nil {
 		return fmt.Errorf("Failed getting agent client handle: %w", err)
 	}
@@ -3021,6 +3033,9 @@ func (d *qemu) advertiseVsockAddress() error {
 	if connInfo == nil {
 		return nil
 	}
+
+	// Let the agent catch its clock up after a migration or restore.
+	connInfo.Time = time.Now()
 
 	_, _, err = agent.RawQuery("PUT", "/1.0", connInfo, "")
 	if err != nil {
