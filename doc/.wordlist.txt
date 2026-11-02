@@ -21,6 +21,7 @@ backends
 backported
 Backports
 balancer
+BARs
 balancers
 benchmarking
 BFD
@@ -271,6 +272,7 @@ README
 reconfiguring
 representor
 requestor
+resizable
 resolvers
 RESTful
 RHEL
