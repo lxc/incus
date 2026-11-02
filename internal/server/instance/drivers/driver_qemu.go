@@ -9607,18 +9607,19 @@ func (d *qemu) MigrateSend(args instance.MigrateSendArgs) error {
 	if args.Live && remoteClusterMove && !storageMove {
 		err = linux.SetMountReadOnly(d.Path(), true)
 		if err != nil {
-			d.logger.Warn("Failed making config volume read-only, syncing it instead", logger.Ctx{"err": err})
-
-			err = linux.SyncFS(d.Path())
-			if err != nil {
-				err := fmt.Errorf("Failed syncing config volume: %w", err)
-				op.Done(err)
-				return err
+			// Two members writing the same volume corrupt it, so never go ahead without the protection.
+			err := fmt.Errorf("Failed making config volume read-only: %w", err)
+			writers := linux.MountWriters(d.Path())
+			if len(writers) > 0 {
+				err = fmt.Errorf("%w (open for writing by %s)", err, strings.Join(writers, ", "))
 			}
-		} else {
-			configReadOnly = true
-			reverter.Add(func() { _ = linux.SetMountReadOnly(d.Path(), false) })
+
+			op.Done(err)
+			return err
 		}
+
+		configReadOnly = true
+		reverter.Add(func() { _ = linux.SetMountReadOnly(d.Path(), false) })
 	}
 
 	// Send offer to target.
