@@ -17,6 +17,16 @@ func (c *cmdExec) getTERM() (string, bool) {
 	return os.LookupEnv("TERM")
 }
 
+// isForeground checks whether the process is in the foreground process group of the terminal.
+func (c *cmdExec) isForeground(fd int) bool {
+	pgrp, err := unix.IoctlGetInt(fd, unix.TIOCGPGRP)
+	if err != nil {
+		return true
+	}
+
+	return pgrp == unix.Getpgrp()
+}
+
 func (c *cmdExec) controlSocketHandler(control *websocket.Conn) {
 	ch := make(chan os.Signal, 10)
 	signal.Notify(ch,

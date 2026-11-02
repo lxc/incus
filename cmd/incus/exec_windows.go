@@ -29,6 +29,11 @@ func (c *cmdExec) getTERM() (string, bool) {
 	return "dumb", true
 }
 
+// isForeground always returns true as Windows has no terminal process groups.
+func (c *cmdExec) isForeground(fd int) bool {
+	return true
+}
+
 func (c *cmdExec) controlSocketHandler(control *websocket.Conn) {
 	ch := make(chan os.Signal, 10)
 	signal.Notify(ch, os.Interrupt)
