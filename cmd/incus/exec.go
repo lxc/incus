@@ -140,8 +140,14 @@ func (c *cmdExec) run(cmd *cobra.Command, args []string) error {
 	stdinTerminal := termios.IsTerminal(stdinFd)
 	stdoutTerminal := termios.IsTerminal(stdoutFd)
 
+	// Reading a terminal from a background process group stops the process, so leave it alone.
+	disableStdin := c.flagDisableStdin
+	if stdinTerminal && !c.isForeground(stdinFd) {
+		disableStdin = true
+	}
+
 	// Determine interaction mode
-	if c.flagDisableStdin {
+	if disableStdin {
 		c.interactive = false
 	} else if c.flagMode == "interactive" || c.flagForceInteractive {
 		c.interactive = true
@@ -176,7 +182,7 @@ func (c *cmdExec) run(cmd *cobra.Command, args []string) error {
 
 	var stdin io.Reader
 	stdin = os.Stdin
-	if c.flagDisableStdin {
+	if disableStdin {
 		stdin = bytes.NewReader(nil)
 	}
 
