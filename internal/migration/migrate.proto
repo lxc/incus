@@ -104,6 +104,7 @@ message MigrationHeader {
 	repeated DependentVolume		dependentVolumes        = 14;
 	optional blockFeatures			blockFeatures		= 15;
 	optional uint32				multifdChannels		= 16;
+	optional bool				dirtyBitmaps		= 17;
 }
 
 message MigrationControl {
