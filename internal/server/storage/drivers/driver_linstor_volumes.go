@@ -1304,12 +1304,6 @@ func (d *linstor) SetVolumeQuota(vol Volume, size string, allowUnsafeResize bool
 		return err
 	}
 
-	// Get the device path.
-	devPath, err := d.getLinstorDevPath(vol)
-	if err != nil {
-		return err
-	}
-
 	// LVM and ZFS (LINSTOR's backends) round up the final block device size to the next extent. Because of
 	// this, we cannot simply get the volume size from the OS. We must fetch the size from LINSTOR.
 	oldSizeBytes, err := d.getVolumeSize(vol)
@@ -1323,6 +1317,19 @@ func (d *linstor) SetVolumeQuota(vol Volume, size string, allowUnsafeResize bool
 	}
 
 	inUse := vol.MountInUse()
+
+	// Get the device path, attaching the volume to this node if needed.
+	devPath, err := d.getLinstorDevPath(vol)
+	if err != nil {
+		return err
+	}
+
+	// Image volumes are only attached for the resize, don't leave the attachment behind.
+	if vol.volType == VolumeTypeImage && !inUse {
+		defer func() {
+			logger.WarnOnError(func() error { return d.deleteDisklessResource(vol) }, "Failed detaching image volume")
+		}()
+	}
 
 	// Resize filesystem if needed.
 	if vol.contentType == ContentTypeFS {
