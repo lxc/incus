@@ -7,7 +7,7 @@
 msgid   ""
 msgstr  "Project-Id-Version: incus\n"
         "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-        "POT-Creation-Date: 2026-10-30 13:21-0400\n"
+        "POT-Creation-Date: 2026-11-03 09:16-0500\n"
         "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
         "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
         "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1140,7 +1140,7 @@ msgstr  ""
 msgid   "Can't read from stdin: %w"
 msgstr  ""
 
-#: cmd/incus/remote.go:1698
+#: cmd/incus/remote.go:1699
 msgid   "Can't remove the default remote"
 msgstr  ""
 
@@ -1380,7 +1380,7 @@ msgstr  ""
 msgid   "Compression algorithm to use (none for uncompressed, ignored for ISO storage volumes)"
 msgstr  ""
 
-#: cmd/incus/copy.go:60 cmd/incus/create.go:62 cmd/incus/import.go:43
+#: cmd/incus/copy.go:60 cmd/incus/create.go:62 cmd/incus/import.go:55
 msgid   "Config key/value to apply to the new instance (may be passed multiple times)"
 msgstr  ""
 
@@ -3571,7 +3571,7 @@ msgstr  ""
 msgid   "IP addresses:"
 msgstr  ""
 
-#: cmd/incus/remote.go:133 cmd/incus/remote.go:1768
+#: cmd/incus/remote.go:133 cmd/incus/remote.go:1769
 msgid   "IP/FQDN/URL"
 msgstr  ""
 
@@ -3742,7 +3742,7 @@ msgstr  ""
 msgid   "Importing custom volume: %s"
 msgstr  ""
 
-#: cmd/incus/import.go:80
+#: cmd/incus/import.go:92
 #, c-format
 msgid   "Importing instance: %s"
 msgstr  ""
@@ -3991,7 +3991,7 @@ msgstr  ""
 msgid   "Keep the image up to date after initial copy"
 msgstr  ""
 
-#: cmd/incus/remote.go:1874 cmd/incus/remote.go:1878
+#: cmd/incus/remote.go:1875 cmd/incus/remote.go:1879
 msgid   "Keepalive timeouts must be positive integers"
 msgstr  ""
 
@@ -5819,7 +5819,7 @@ msgstr  ""
 msgid   "New aliases to add to the image (may be passed multiple times)"
 msgstr  ""
 
-#: cmd/incus/copy.go:61 cmd/incus/create.go:64 cmd/incus/import.go:44 cmd/incus/move.go:63
+#: cmd/incus/copy.go:61 cmd/incus/create.go:64 cmd/incus/import.go:56 cmd/incus/move.go:63
 msgid   "New key/value to apply to a specific device (may be passed multiple times)"
 msgstr  ""
 
@@ -6486,22 +6486,22 @@ msgstr  ""
 msgid   "Refreshing the image: %s"
 msgstr  ""
 
-#: cmd/incus/remote.go:549 cmd/incus/remote.go:1581
+#: cmd/incus/remote.go:549 cmd/incus/remote.go:1582
 #, c-format
 msgid   "Remote %s already exists"
 msgstr  ""
 
-#: cmd/incus/remote.go:1572 cmd/incus/remote.go:1686 cmd/incus/remote.go:1754 cmd/incus/remote.go:1803 cmd/incus/remote.go:1884
+#: cmd/incus/remote.go:1573 cmd/incus/remote.go:1687 cmd/incus/remote.go:1755 cmd/incus/remote.go:1804 cmd/incus/remote.go:1885
 #, c-format
 msgid   "Remote %s doesn't exist"
 msgstr  ""
 
-#: cmd/incus/remote.go:1694
+#: cmd/incus/remote.go:1695
 #, c-format
 msgid   "Remote %s is global and cannot be removed"
 msgstr  ""
 
-#: cmd/incus/remote.go:1576 cmd/incus/remote.go:1690 cmd/incus/remote.go:1807
+#: cmd/incus/remote.go:1577 cmd/incus/remote.go:1691 cmd/incus/remote.go:1808
 #, c-format
 msgid   "Remote %s is static and cannot be modified"
 msgstr  ""
@@ -6510,7 +6510,7 @@ msgstr  ""
 msgid   "Remote names may not contain colons"
 msgstr  ""
 
-#: cmd/incus/remote.go:1566
+#: cmd/incus/remote.go:1567
 msgid   "Remote names may not contain colons or equal signs"
 msgstr  ""
 
@@ -6625,7 +6625,7 @@ msgstr  ""
 msgid   "Remove profiles from instances"
 msgstr  ""
 
-#: cmd/incus/remote.go:1658 cmd/incus/remote.go:1659
+#: cmd/incus/remote.go:1659 cmd/incus/remote.go:1660
 msgid   "Remove remotes"
 msgstr  ""
 
@@ -6694,7 +6694,7 @@ msgstr  ""
 msgid   "Rename projects"
 msgstr  ""
 
-#: cmd/incus/remote.go:1538 cmd/incus/remote.go:1539
+#: cmd/incus/remote.go:1539 cmd/incus/remote.go:1540
 msgid   "Rename remotes"
 msgstr  ""
 
@@ -6996,7 +6996,7 @@ msgstr  ""
 msgid   "Set a cluster member's configuration keys"
 msgstr  ""
 
-#: cmd/incus/remote.go:1846 cmd/incus/remote.go:1847
+#: cmd/incus/remote.go:1847 cmd/incus/remote.go:1848
 msgid   "Set a keepalive timeout for a remote"
 msgstr  ""
 
@@ -7184,7 +7184,7 @@ msgid   "Set storage volume configuration keys\n"
         "Supported values for type are \"custom\", \"container\" and \"virtual-machine\"."
 msgstr  ""
 
-#: cmd/incus/remote.go:1774 cmd/incus/remote.go:1775
+#: cmd/incus/remote.go:1775 cmd/incus/remote.go:1776
 msgid   "Set the URL(s) for the remote"
 msgstr  ""
 
@@ -7727,7 +7727,7 @@ msgstr  ""
 msgid   "Storage pool description"
 msgstr  ""
 
-#: cmd/incus/copy.go:67 cmd/incus/create.go:68 cmd/incus/import.go:42 cmd/incus/move.go:70
+#: cmd/incus/copy.go:67 cmd/incus/create.go:68 cmd/incus/import.go:54 cmd/incus/move.go:70
 msgid   "Storage pool name"
 msgstr  ""
 
@@ -7801,7 +7801,7 @@ msgstr  ""
 msgid   "Switch the current project"
 msgstr  ""
 
-#: cmd/incus/remote.go:1726 cmd/incus/remote.go:1727
+#: cmd/incus/remote.go:1727 cmd/incus/remote.go:1728
 msgid   "Switch the default remote"
 msgstr  ""
 
@@ -9278,7 +9278,19 @@ msgstr  ""
 
 #: cmd/incus/import.go:36
 msgid   "incus import backup0.tar.gz\n"
-        "    Create a new instance using backup0.tar.gz as the source."
+        "    Create a new instance using backup0.tar.gz as the source.\n"
+        "\n"
+        "incus import backup0.tar.gz u2\n"
+        "    Create a new instance named u2 using backup0.tar.gz as the source.\n"
+        "\n"
+        "incus import backup0.tar.gz -s pool1\n"
+        "    Create a new instance on the pool1 storage pool.\n"
+        "\n"
+        "incus import backup0.tar.gz -d eth0,ipv4.address=10.0.0.10 -d eth0,ipv6.address=fd42::10\n"
+        "    Create a new instance, overriding the static addresses of its eth0 device to match the local network.\n"
+        "\n"
+        "incus import backup0.tar.gz -c boot.autostart=true\n"
+        "    Create a new instance, overriding one of its configuration keys."
 msgstr  ""
 
 #: cmd/incus/info.go:46
@@ -9490,7 +9502,7 @@ msgid   "incus query -X DELETE --wait /1.0/instances/c1\n"
         "    Upload a file to local instance \"c1\"."
 msgstr  ""
 
-#: cmd/incus/remote.go:1848
+#: cmd/incus/remote.go:1849
 msgid   "incus remote set-keepalive my-remote 30\n"
         "    Set a keepalive with 30 seconds timeout for my-remote\n"
         "\n"
