@@ -559,6 +559,15 @@ func instancePost(d *Daemon, r *http.Request) response.Response {
 	}
 
 	// Cross-server instance migration.
+	if req.Target != nil {
+		err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
+			return project.AllowMigrationTarget(tx, projectName)
+		})
+		if err != nil {
+			return response.SmartError(err)
+		}
+	}
+
 	ws, err := newMigrationSource(inst, req.Live, req.InstanceOnly, req.AllowInconsistent, "", "", req.Devices, nil, req.Target)
 	if err != nil {
 		return response.InternalError(err)
