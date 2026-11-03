@@ -15,6 +15,14 @@ import (
 
 // Event handling functions
 
+// getSkipEvents reads skipEvents under the lock getEvents writes it under.
+func (r *ProtocolIncus) getSkipEvents() bool {
+	r.eventListenersLock.Lock()
+	defer r.eventListenersLock.Unlock()
+
+	return r.skipEvents
+}
+
 // getEvents connects to the Incus monitoring interface.
 func (r *ProtocolIncus) getEvents(allProjects bool, eventTypes []string) (*EventListener, error) {
 	// Prevent anything else from interacting with the listeners
