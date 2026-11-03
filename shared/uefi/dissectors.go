@@ -251,11 +251,35 @@ type ESLEntry struct {
 	Data  []byte `json:"data"`
 }
 
+// MarshalYAML marshals ESL entries to YAML.
+func (e ESLEntry) MarshalYAML() (any, error) {
+	return struct {
+		Owner string
+		Data  string
+	}{
+		Owner: e.Owner,
+		Data:  base64.StdEncoding.EncodeToString(e.Data),
+	}, nil
+}
+
 // ESLNode represents a collection of ESL entries sharing a type and a header.
 type ESLNode struct {
 	Type    string     `json:"type"`
 	Header  []byte     `json:"header,omitempty"`
 	Entries []ESLEntry `json:"entries"`
+}
+
+// MarshalYAML marshals ESL nodes to YAML.
+func (e ESLNode) MarshalYAML() (any, error) {
+	return struct {
+		Type    string
+		Header  string `yaml:",omitempty"`
+		Entries []ESLEntry
+	}{
+		Type:    e.Type,
+		Header:  base64.StdEncoding.EncodeToString(e.Header),
+		Entries: e.Entries,
+	}, nil
 }
 
 // ESL represents an EFI Signature List.
