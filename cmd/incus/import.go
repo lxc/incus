@@ -35,7 +35,19 @@ func (c *cmdImport) command() *cobra.Command {
 	))
 	cmd.Example = cli.FormatSection("", i18n.G(
 		`incus import backup0.tar.gz
-    Create a new instance using backup0.tar.gz as the source.`,
+    Create a new instance using backup0.tar.gz as the source.
+
+incus import backup0.tar.gz u2
+    Create a new instance named u2 using backup0.tar.gz as the source.
+
+incus import backup0.tar.gz -s pool1
+    Create a new instance on the pool1 storage pool.
+
+incus import backup0.tar.gz -d eth0,ipv4.address=10.0.0.10 -d eth0,ipv6.address=fd42::10
+    Create a new instance, overriding the static addresses of its eth0 device to match the local network.
+
+incus import backup0.tar.gz -c boot.autostart=true
+    Create a new instance, overriding one of its configuration keys.`,
 	))
 
 	cmd.RunE = c.run
