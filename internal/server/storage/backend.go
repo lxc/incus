@@ -641,7 +641,10 @@ func (b *backend) applyInstanceRootDiskInitialValues(inst instance.Instance, vol
 		}
 	}
 
-	return nil
+	// Check project restrictions against the resulting volume config.
+	return b.state.DB.Cluster.Transaction(b.state.ShutdownCtx, func(ctx context.Context, tx *db.ClusterTx) error {
+		return project.AllowVolumeConfig(tx, inst.Project().Name, b.name, volConfig)
+	})
 }
 
 // CreateInstance creates an empty instance.
@@ -866,6 +869,14 @@ func (b *backend) CreateInstanceFromBackup(srcBackup backup.Info, srcData io.Rea
 
 			volumeConfig["size"] = rootConfig["size"]
 		}
+	}
+
+	// Check project restrictions against the volume config from the backup.
+	err = b.state.DB.Cluster.Transaction(b.state.ShutdownCtx, func(ctx context.Context, tx *db.ClusterTx) error {
+		return project.AllowVolumeConfig(tx, srcBackup.Project, b.name, volumeConfig)
+	})
+	if err != nil {
+		return nil, nil, err
 	}
 
 	// Import dependent disks
@@ -2386,6 +2397,14 @@ func (b *backend) CreateInstanceFromMigration(inst instance.Instance, conn io.Re
 	} else if srcInfo != nil && srcInfo.Config != nil && srcInfo.Config.Volume != nil {
 		volumeConfig = srcInfo.Config.Volume.Config
 		volumeDescription = srcInfo.Config.Volume.Description
+
+		// Check project restrictions against the volume config from the source.
+		err = b.state.DB.Cluster.Transaction(b.state.ShutdownCtx, func(ctx context.Context, tx *db.ClusterTx) error {
+			return project.AllowVolumeConfig(tx, inst.Project().Name, b.name, volumeConfig)
+		})
+		if err != nil {
+			return err
+		}
 	} else {
 		volumeConfig = make(map[string]string)
 		volumeDescription = args.Description
