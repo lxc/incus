@@ -399,13 +399,23 @@ test_backup_import_with_project() {
         incus export c2 "${INCUS_DIR}/c2-optimized.tar.gz" --optimized-storage
     fi
 
+    incus config set c2 user.foo=bar
+    incus config device override c2 root user.foo=bar
     incus export c2 "${INCUS_DIR}/c2.tar.gz"
     incus delete --force c2
 
     incus import "${INCUS_DIR}/c2.tar.gz"
-    incus import "${INCUS_DIR}/c2.tar.gz" c3
+    incus import "${INCUS_DIR}/c2.tar.gz" c3 -c user.foo= -c user.bar=baz -d root,user.foo= -d root,user.bar=baz
     incus info c2 | grep snap0
     incus info c3 | grep snap0
+
+    # check the config and device overrides
+    [ "$(incus config get c2 user.foo)" = "bar" ]
+    [ "$(incus config device get c2 root user.foo)" = "bar" ]
+    [ "$(incus config get c3 user.foo)" = "" ]
+    [ "$(incus config get c3 user.bar)" = "baz" ]
+    [ "$(incus config device get c3 root user.foo)" = "" ]
+    [ "$(incus config device get c3 root user.bar)" = "baz" ]
     incus start c2
     incus start c3
     incus stop c2 --force
