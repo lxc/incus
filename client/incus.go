@@ -422,7 +422,7 @@ func (r *ProtocolIncus) queryOperation(method string, path string, data any, ETa
 	// Attempt to setup an early event listener
 	var listener *EventListener
 
-	skipListener := r.skipEvents
+	skipListener := r.getSkipEvents()
 	if !skipListener {
 		var err error
 
@@ -558,7 +558,7 @@ func (r *ProtocolIncus) WithContext(ctx context.Context) InstanceServer {
 		project:              r.project,
 		eventConns:           make(map[string]*websocket.Conn),
 		eventListeners:       make(map[string][]*EventListener),
-		skipEvents:           r.skipEvents,
+		skipEvents:           r.getSkipEvents(),
 		oidcClient:           r.oidcClient,
 		tempPath:             r.tempPath,
 	}
