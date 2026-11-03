@@ -387,6 +387,7 @@ type qemu struct {
 	// Stateful migration streams.
 	migrationReceiveStateful   map[string]io.ReadWriteCloser
 	migrationReceiveStateExtra []io.ReadWriteCloser
+	migrationDirtyBitmaps      bool
 
 	// Cancelled if the migration source fails partway through.
 	migrationReceiveCtx context.Context
@@ -888,6 +889,11 @@ func (d *qemu) onStop(target string, reason string) error {
 		d.logger.Error("Failed saving UEFI variables", logger.Ctx{"err": err})
 	}
 
+	err = d.saveImageMetadata()
+	if err != nil {
+		d.logger.Error("Failed saving metadata images", logger.Ctx{"err": err})
+	}
+
 	_ = os.Remove(d.pidFilePath())
 	_ = os.Remove(d.monitorPath())
 	_ = os.Remove(d.spicePath())
@@ -1120,7 +1126,7 @@ func (d *qemu) killQemuProcess(pid int) error {
 // restoreState restores the VM state from a file handle.
 func (d *qemu) restoreStateHandle(ctx context.Context, monitor *qmp.Monitor, f *os.File) error {
 	// Emit MIGRATION events so the VM resumes as soon as the transfer completes rather than on the next poll.
-	err := monitor.MigrateSetCapabilities(map[string]bool{"events": true})
+	err := monitor.MigrateSetCapabilities(map[string]bool{"events": true, "dirty-bitmaps": d.migrationDirtyBitmaps})
 	if err != nil {
 		return fmt.Errorf("Failed setting migration capabilities: %w", err)
 	}
@@ -1270,7 +1276,7 @@ func (d *qemu) restoreStateMultifd(ctx context.Context, monitor *qmp.Monitor, co
 	defer cancel(nil)
 
 	// Emit MIGRATION events so the VM resumes as soon as the transfer completes rather than on the next poll.
-	err = monitor.MigrateSetCapabilities(map[string]bool{"multifd": true, "events": true})
+	err = monitor.MigrateSetCapabilities(map[string]bool{"multifd": true, "events": true, "dirty-bitmaps": d.migrationDirtyBitmaps})
 	if err != nil {
 		return fmt.Errorf("Failed setting migration capabilities: %w", err)
 	}
@@ -1526,6 +1532,7 @@ func (d *qemu) saveStateHandle(monitor *qmp.Monitor, f *os.File) error {
 		"multifd":        false,
 		"switchover-ack": false,
 		"return-path":    false,
+		"dirty-bitmaps":  false,
 	})
 	if err != nil {
 		return fmt.Errorf("Failed setting migration capabilities: %w", err)
@@ -5652,19 +5659,64 @@ func (d *qemu) addFileDescriptor(fdFiles *[]*os.File, file *os.File) int {
 	return 2 + len(*fdFiles) // Use 2+fdFiles count, as first user file descriptor is 3.
 }
 
-// ImageMetadataDir returns the metadata image directory for the given instance path.
+// ImageMetadataDir returns the directory holding the metadata images of a stopped instance.
 func ImageMetadataDir(instancePath string) string {
 	return filepath.Join(instancePath, "image_metadata")
 }
 
-// imageMetadataDir returns the instance's metadata image directory.
+// imageMetadataDir returns the instance volume directory holding the metadata images while stopped.
 func (d *qemu) imageMetadataDir() string {
 	return ImageMetadataDir(d.Path())
 }
 
-// imageMetadataPath returns the instance's image metadata file path.
+// localImageMetadataDir returns the host-local directory the metadata images are used from while running.
+func (d *qemu) localImageMetadataDir() string {
+	return internalUtil.VarPath("virtual-machines-bitmaps", project.Instance(d.project.Name, d.name))
+}
+
+// imageMetadataPath returns the local metadata image path of a device.
 func (d *qemu) imageMetadataPath(devName string) string {
+	return filepath.Join(d.localImageMetadataDir(), fmt.Sprintf("%s.qcow2", devName))
+}
+
+// savedImageMetadataPath returns the metadata image path of a device within the instance volume.
+func (d *qemu) savedImageMetadataPath(devName string) string {
 	return filepath.Join(d.imageMetadataDir(), fmt.Sprintf("%s.qcow2", devName))
+}
+
+// saveImageMetadata moves the metadata images into the instance volume so the next start keeps their bitmaps.
+func (d *qemu) saveImageMetadata() error {
+	localDir := d.localImageMetadataDir()
+	entries, err := os.ReadDir(localDir)
+	if errors.Is(err, fs.ErrNotExist) {
+		return nil
+	}
+
+	if err != nil {
+		return err
+	}
+
+	// The local copies only describe the run that just ended.
+	defer func() { _ = os.RemoveAll(localDir) }()
+
+	savedDir := d.imageMetadataDir()
+	err = os.MkdirAll(savedDir, 0o700)
+	if err != nil {
+		return err
+	}
+
+	for _, entry := range entries {
+		if !entry.Type().IsRegular() || !strings.HasSuffix(entry.Name(), ".qcow2") {
+			continue
+		}
+
+		err = mirror.CopyFile(filepath.Join(localDir, entry.Name()), filepath.Join(savedDir, entry.Name()))
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 // isRBDPath checks whether a disk path refers to an RBD image rather than a local device.
@@ -5808,6 +5860,11 @@ func (d *qemu) removeImageMetadata(devName string) error {
 
 	defer func() { _ = d.unmount() }()
 
+	err = os.Remove(d.savedImageMetadataPath(devName))
+	if err != nil && !errors.Is(err, fs.ErrNotExist) {
+		return err
+	}
+
 	err = os.Remove(d.imageMetadataPath(devName))
 	if err != nil && !errors.Is(err, fs.ErrNotExist) {
 		return err
@@ -5832,13 +5889,32 @@ func (d *qemu) ensureMetadataImage(rawPath string, devName string) (string, stri
 		return rawPath, "", nil
 	}
 
-	qcow2Dir := d.imageMetadataDir()
+	qcow2Dir := d.localImageMetadataDir()
 	err = os.MkdirAll(qcow2Dir, 0o700)
 	if err != nil {
 		return "", "", fmt.Errorf("Failed creating metadata image directory: %w", err)
 	}
 
 	qcow2Path := d.imageMetadataPath(devName)
+	savedPath := d.savedImageMetadataPath(devName)
+
+	// A copy saved by a clean stop is the only one that still matches the disk.
+	if util.PathExists(savedPath) {
+		err = mirror.CopyFile(savedPath, qcow2Path)
+		if err != nil {
+			return "", "", fmt.Errorf("Failed loading metadata image %q: %w", savedPath, err)
+		}
+
+		err = os.Remove(savedPath)
+		if err != nil {
+			return "", "", fmt.Errorf("Failed removing saved metadata image %q: %w", savedPath, err)
+		}
+	} else {
+		err = os.Remove(qcow2Path)
+		if err != nil && !errors.Is(err, fs.ErrNotExist) {
+			return "", "", fmt.Errorf("Failed removing stale metadata image %q: %w", qcow2Path, err)
+		}
+	}
 
 	// If we already have metadata image, then just use it
 	if util.PathExists(qcow2Path) {
@@ -7858,6 +7934,16 @@ func (d *qemu) Rename(newName string, applyTemplateTrigger bool) error {
 		}
 	}
 
+	// Rename the local metadata image path.
+	_ = os.RemoveAll(internalUtil.VarPath("virtual-machines-bitmaps", newFullName))
+	if util.PathExists(d.localImageMetadataDir()) {
+		err := os.Rename(d.localImageMetadataDir(), internalUtil.VarPath("virtual-machines-bitmaps", newFullName))
+		if err != nil {
+			d.logger.Error("Failed renaming instance", ctxMap)
+			return err
+		}
+	}
+
 	reverter := revert.New()
 	defer reverter.Fail()
 
@@ -8870,6 +8956,9 @@ func (d *qemu) cleanup() {
 	// Remove the devices path
 	_ = os.Remove(d.DevicesPath())
 
+	// Remove the local metadata images
+	_ = os.RemoveAll(d.localImageMetadataDir())
+
 	// Remove the shmounts path
 	_ = os.RemoveAll(d.ShmountsPath())
 }
@@ -9493,6 +9582,9 @@ func (d *qemu) MigrateSend(args instance.MigrateSendArgs) error {
 		// Offer parallel channels for the state transfer.
 		channels := qemuMigrationChannels()
 		offerHeader.MultifdChannels = &channels
+
+		// Offer to carry the persistent bitmaps in the state transfer.
+		offerHeader.DirtyBitmaps = new(true)
 	}
 
 	reverter := revert.New()
@@ -9520,18 +9612,19 @@ func (d *qemu) MigrateSend(args instance.MigrateSendArgs) error {
 	if args.Live && remoteClusterMove && !storageMove {
 		err = linux.SetMountReadOnly(d.Path(), true)
 		if err != nil {
-			d.logger.Warn("Failed making config volume read-only, syncing it instead", logger.Ctx{"err": err})
-
-			err = linux.SyncFS(d.Path())
-			if err != nil {
-				err := fmt.Errorf("Failed syncing config volume: %w", err)
-				op.Done(err)
-				return err
+			// Two members writing the same volume corrupt it, so never go ahead without the protection.
+			err := fmt.Errorf("Failed making config volume read-only: %w", err)
+			writers := linux.MountWriters(d.Path())
+			if len(writers) > 0 {
+				err = fmt.Errorf("%w (open for writing by %s)", err, strings.Join(writers, ", "))
 			}
-		} else {
-			configReadOnly = true
-			reverter.Add(func() { _ = linux.SetMountReadOnly(d.Path(), false) })
+
+			op.Done(err)
+			return err
 		}
+
+		configReadOnly = true
+		reverter.Add(func() { _ = linux.SetMountReadOnly(d.Path(), false) })
 	}
 
 	// Send offer to target.
@@ -9715,7 +9808,7 @@ func (d *qemu) MigrateSend(args instance.MigrateSendArgs) error {
 				defer instanceRefClear(d)
 			}
 
-			err = d.migrateSendLive(ctx, pool, args.ClusterMoveSourceName, args.StoragePool, blockSize, filesystemConn, stateConn, stateConnExtra, volSourceArgs, &committed)
+			err = d.migrateSendLive(ctx, pool, args.ClusterMoveSourceName, args.StoragePool, blockSize, filesystemConn, stateConn, stateConnExtra, volSourceArgs, respHeader.GetDirtyBitmaps(), &committed)
 			if err != nil {
 				return err
 			}
@@ -10195,7 +10288,7 @@ func (d *qemu) cancelMigrationSnapshot(monitor *qmp.Monitor, diskName string) {
 }
 
 // migrateSendLive performs live migration send process.
-func (d *qemu) migrateSendLive(ctx context.Context, pool storagePools.Pool, clusterMoveSourceName string, storagePool string, rootDiskSize int64, filesystemConn io.ReadWriteCloser, stateConn io.ReadWriteCloser, stateConnExtra []io.ReadWriteCloser, volSourceArgs *localMigration.VolumeSourceArgs, committed *bool) error {
+func (d *qemu) migrateSendLive(ctx context.Context, pool storagePools.Pool, clusterMoveSourceName string, storagePool string, rootDiskSize int64, filesystemConn io.ReadWriteCloser, stateConn io.ReadWriteCloser, stateConnExtra []io.ReadWriteCloser, volSourceArgs *localMigration.VolumeSourceArgs, dirtyBitmaps bool, committed *bool) error {
 	monitor, err := d.qmpConnect()
 	if err != nil {
 		return err
@@ -10268,6 +10361,9 @@ func (d *qemu) migrateSendLive(ctx context.Context, pool storagePools.Pool, clus
 			// VFIO migration requires bidirectional communication.
 			"return-path":    vfioMigration,
 			"switchover-ack": vfioMigration,
+
+			// Persistent bitmaps travel with the state when the target accepts them.
+			"dirty-bitmaps": dirtyBitmaps,
 		}
 
 		err = monitor.MigrateSetCapabilities(capabilities)
@@ -10329,6 +10425,9 @@ func (d *qemu) migrateSendLive(ctx context.Context, pool storagePools.Pool, clus
 			// VFIO migration requires bidirectional communication.
 			"return-path":    vfioMigration,
 			"switchover-ack": vfioMigration,
+
+			// Persistent bitmaps travel with the state when the target accepts them.
+			"dirty-bitmaps": dirtyBitmaps,
 		}
 
 		err = monitor.MigrateSetCapabilities(capabilities)
@@ -10552,6 +10651,10 @@ func (d *qemu) migrateSendLive(ctx context.Context, pool storagePools.Pool, clus
 	// The state hand-over is complete, past this point the migration can no longer be reverted.
 	if clusterMoveSourceName != "" {
 		*committed = true
+
+		// The target owns the instance state now, none of the local copies may be written back.
+		mirror.Discard(d.RunPath())
+		_ = os.RemoveAll(d.localImageMetadataDir())
 	}
 
 	reverter.Success()
@@ -10743,6 +10846,12 @@ func (d *qemu) MigrateReceive(args instance.MigrateReceiveArgs) error {
 		if args.StateConnExtra != nil && offerHeader.GetMultifdChannels() > 0 {
 			channels = min(offerHeader.GetMultifdChannels(), qemuMigrationChannels())
 			respHeader.MultifdChannels = &channels
+		}
+
+		// Accept the persistent bitmaps, our metadata images start out empty.
+		if offerHeader.GetDirtyBitmaps() {
+			respHeader.DirtyBitmaps = new(true)
+			d.migrationDirtyBitmaps = true
 		}
 	}
 
