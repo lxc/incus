@@ -177,6 +177,21 @@ func AllowInstanceMigrationSource(tx *db.ClusterTx, projectName string, req api.
 	return checkMigrationSource(info.Project, req)
 }
 
+// AllowMigrationTarget refuses push mode migration in restricted projects, as the server would connect
+// to an arbitrary remote URL.
+func AllowMigrationTarget(tx *db.ClusterTx, projectName string) error {
+	info, err := fetchProject(tx, projectName, true)
+	if err != nil {
+		return err
+	}
+
+	if info != nil && util.IsTrue(info.Project.Config["restricted"]) {
+		return errors.New("Restricted projects aren't allowed to use push mode migration")
+	}
+
+	return nil
+}
+
 // checkMigrationSource refuses pull mode migration in restricted projects, as the server would connect
 // to an arbitrary remote URL.
 func checkMigrationSource(project api.Project, req api.InstancesPost) error {
