@@ -1014,6 +1014,19 @@ func createFromBackup(s *state.State, r *http.Request, projectName string, data 
 
 	bInfo.Project = projectName
 
+	// Dependent volumes are created in the effective storage project, check that's allowed.
+	if len(bInfo.Config.DependentVolumes) > 0 {
+		storageProjectName, err := project.StorageVolumeProject(s.DB.Cluster, projectName, db.StoragePoolVolumeTypeCustom)
+		if err != nil {
+			return response.SmartError(err)
+		}
+
+		err = s.Authorizer.CheckPermission(r.Context(), r, auth.ObjectProject(storageProjectName), auth.EntitlementCanCreateStorageVolumes)
+		if err != nil {
+			return response.SmartError(err)
+		}
+	}
+
 	// Override pool.
 	if pool != "" {
 		bInfo.Pool = pool
