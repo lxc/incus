@@ -66,7 +66,7 @@ func (d *lvm) load() error {
 	// Validate the required binaries.
 	tools := []string{"lvm"}
 	if d.clustered {
-		tools = append(tools, []string{"lvmlockctl", "sanlock", "btrfs"}...)
+		tools = append(tools, []string{"dmsetup", "lvmlockctl", "sanlock", "btrfs"}...)
 	}
 
 	for _, tool := range tools {
@@ -535,6 +535,15 @@ func (d *lvm) Delete(op *operations.Operation) error {
 	vgExists, vgTags, err := d.volumeGroupExists(d.config["lvm.vg_name"])
 	if err != nil {
 		return err
+	}
+
+	// A shared VG that was wiped or lost while its lockspace was started leaves its sanlock
+	// lease volume mapped, which prevents a VG of the same name from being created again.
+	if d.clustered && !vgExists {
+		err := d.removeStaleSanlockLV(d.config["lvm.vg_name"])
+		if err != nil {
+			return err
+		}
 	}
 
 	removeVg := false
