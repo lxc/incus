@@ -8,16 +8,17 @@ msgstr ""
 "Project-Id-Version: incus\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
 "POT-Creation-Date: 2026-11-03 09:16-0500\n"
-"PO-Revision-Date: 2026-10-08 19:32+0000\n"
-"Last-Translator: Américo Monteiro <a_monteiro@gmx.com>\n"
-"Language-Team: Portuguese <https://hosted.weblate.org/projects/incus/cli/pt/"
-">\n"
+"PO-Revision-Date: 2026-11-03 21:12+0000\n"
+"Last-Translator: Américo Monteiro <a-"
+"monteiro@users.noreply.hosted.weblate.org>\n"
+"Language-Team: Portuguese <https://hosted.weblate.org/projects/incus/cli/pt/>"
+"\n"
 "Language: pt\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n > 1;\n"
-"X-Generator: Weblate 2026.10.1.dev0\n"
+"X-Generator: Weblate 2026.11.1.dev0\n"
 
 #: cmd/incus/info.go:459
 msgid "  Chassis:"
@@ -2091,13 +2092,12 @@ msgid "Create a dirty bitmap on a virtual machine"
 msgstr "Criar um mapa de bits sujo numa máquina virtual"
 
 #: cmd/incus/low_level.go:107
-#, fuzzy
 msgid ""
 "Create a dirty bitmap on the root and dependent disks of a running virtual "
 "machine"
 msgstr ""
-"Criar um mapa de bits sujo em todos os discos de uma máquina virtual em "
-"execução"
+"Criar um mapa de bits sujo na raiz e discos dependentes de uma máquina "
+"virtual em execução"
 
 #: cmd/incus/admin_init_interactive.go:385
 #, c-format
@@ -2947,7 +2947,7 @@ msgstr ""
 
 #: cmd/incus/remote.go:908
 msgid "Encrypt the private key with a password"
-msgstr ""
+msgstr "Encriptar a chave privada com uma palavra passe"
 
 #: cmd/incus/info.go:837
 #, c-format
@@ -6417,7 +6417,6 @@ msgid "List the available remotes"
 msgstr "Lista os remotos disponíveis"
 
 #: cmd/incus/remote.go:1269
-#, fuzzy
 msgid ""
 "List the available remotes\n"
 "\n"
@@ -6464,14 +6463,34 @@ msgstr ""
 "\n"
 "Disposição predefinida de coluna: nupaPsg\n"
 "\n"
+"Uma única palavra chave como \"images\" vai listar qualquer remoto com o "
+"nome a começar por \"images\".\n"
+"Uma expressão regular no nome remoto. (ex. .*local.*$).\n"
+"Um par chave/valor a referir um atributo remoto. Chaves disponíveis:\n"
+"  - name={nome remoto}\n"
+"  - url={URL remoto}\n"
+"  - protocol={protocolo remoto}\n"
+"  - auth_type={tipo de autenticação}\n"
+"  - project={projeto predefinido}\n"
+"  - public={verdadeiro ou falso}\n"
+"  - static={verdadeiro ou falso}\n"
+"  - global={verdadeiro ou falso}\n"
+"\n"
+"Os valores são correspondidos como expressões regulares. (ex. url=https://"
+".*:8443).\n"
+"\n"
+"Quando são passados vários filtros, eles são adicionados um no topo do "
+"outro,\n"
+"selecionando os remotos que satisfazem todos eles.\n"
+"\n"
 "== Colunas ==\n"
 "A opção -c recebe uma lista separada por vírgulas de argumentos que "
 "controlam\n"
 "quais atributos remotos são incluídos ao mostrar em tabela\n"
 "ou formato csv.\n"
 "\n"
-"Os argumentos de coluna são ou caracteres curtos predefinidos (veja "
-"abaixo),\n"
+"Os argumentos de coluna são ou caracteres curtos predefinidos (veja abaixo)"
+",\n"
 "ou chaves de configuração (estendidas).\n"
 "\n"
 "As vírgulas entre caracteres curtos consecutivos são opcionais.\n"
@@ -6964,6 +6983,11 @@ msgid ""
 "shared client credentials.\n"
 "Generation fails if either output file already exists."
 msgstr ""
+"Despoleta manualmente a geração de um certificado de cliente\n"
+"\n"
+"Use --tls-cert e --tls-key juntamente para escolher ficheiros de saída em "
+"vez de credenciais de cliente partilhadas.\n"
+"A geração falha se algum dos ficheiros de saída já existir."
 
 #: cmd/incus/info.go:158 cmd/incus/info.go:267
 #, c-format
@@ -7204,12 +7228,10 @@ msgid "NBD access to a block storage volume"
 msgstr "Acesso NBD a volume de armazenamento de bloco"
 
 #: cmd/incus/low_level.go:272
-#, fuzzy
 msgid "NBD access to a virtual machine's root and dependent disks"
-msgstr "Acesso NBD a todos os discos de uma máquina virtual"
+msgstr "Acesso NBD a raiz e discos dependentes de uma máquina virtual"
 
 #: cmd/incus/low_level.go:273
-#, fuzzy
 msgid ""
 "NBD access to a virtual machine's root and dependent disks\n"
 "\n"
@@ -7217,12 +7239,12 @@ msgid ""
 "a local NBD server, with each disk reachable as an NBD export named after\n"
 "its Incus device name."
 msgstr ""
-"Acesso NBD a todos os discos de uma máquina virtual\n"
+"Acesso NBD a raiz e discos dependentes de uma máquina virtual\n"
 "\n"
-"Isto expõe todos os discos de uma máquina virtual em execução sobre um "
-"servidor\n"
-"NBD local, com cada disco acessível como uma exportação NBD nomeada após o "
-"seu\n"
+"Isto expõe a raiz e os discos dependentes de uma máquina virtual em execução "
+"sobre um\n"
+"servidor NBD local, com cada disco acessível como exportação NBD nomeada "
+"após o seu\n"
 "nome de dispositivo Incus."
 
 #: cmd/incus/low_level.go:342 cmd/incus/storage_volume.go:2678
@@ -7836,13 +7858,12 @@ msgid "Path to the existing block device:"
 msgstr "Caminho para o dispositivo de bloco existente:"
 
 #: cmd/incus/remote.go:909
-#, fuzzy
 msgid "Path to the generated TLS client certificate"
-msgstr "Gera o certificado de cliente"
+msgstr "Caminho para o certificado de cliente TLS gerado"
 
 #: cmd/incus/remote.go:910
 msgid "Path to the generated TLS client key"
-msgstr ""
+msgstr "Caminho para a chave de cliente TLS gerada"
 
 #: cmd/incus/action.go:63 cmd/incus/action.go:64
 msgid "Pause instances"
@@ -8311,9 +8332,8 @@ msgid "Remote-specific TLS client certificate (PEM)"
 msgstr "Certificado de cliente (PEM) TLS específico de remoto"
 
 #: cmd/incus/remote.go:164
-#, fuzzy
 msgid "Remote-specific TLS client key (PEM or encrypted OpenSSH)"
-msgstr "Chave de cliente (PEM) TLS específica de remoto"
+msgstr "Chave de cliente TLS específica de remoto (PEM ou OpenSSH encriptada)"
 
 #: cmd/incus/remote.go:165
 msgid "Remote-specific TLS client keypair (PKCS#12)"
@@ -10535,9 +10555,9 @@ msgid "Unknown file type '%s'"
 msgstr "Tipo de ficheiro desconhecido '%s'"
 
 #: cmd/incus/remote.go:1447
-#, fuzzy, c-format
+#, c-format
 msgid "Unknown filter key %q"
-msgstr "Tipo de ficheiro desconhecido '%s'"
+msgstr "Chave de filtro desconhecida %q"
 
 #: cmd/incus/usage/usage.go:377
 #, c-format
@@ -11649,6 +11669,23 @@ msgid ""
 "incus import backup0.tar.gz -c boot.autostart=true\n"
 "    Create a new instance, overriding one of its configuration keys."
 msgstr ""
+"incus import backup0.tar.gz\n"
+"    Cria uma nova instância usando backup0.tar.gz como fonte.\n"
+"\n"
+"incus import backup0.tar.gz u2\n"
+"    Cria uma nova instância chamada u2 usando backup0.tar.gz como fonte.\n"
+"\n"
+"incus import backup0.tar.gz -s pool1\n"
+"    Cria uma nova instância no pool de armazenamento pool1.\n"
+"    \n"
+"incus import backup0.tar.gz -d eth0,ipv4.address=10.0.0.10 -d "
+"eth0,ipv6.address=fd42::10\n"
+"    Cria uma nova instância, sobrescrevendo o endereço estático do seu "
+"dispositivo eth0 para corresponder à rede local.\n"
+"\n"
+"incus import backup0.tar.gz -c boot.autostart=true\n"
+"    Cria uma nova instância, sobrescrevendo uma das suas chaves de "
+"configuração."
 
 #: cmd/incus/info.go:46
 msgid ""
