@@ -79,7 +79,7 @@ func (op *operation) Get() api.Operation {
 // websocket secrets. The server returns them only in the synchronous create
 // response and strips them from later renders (events and queries), so keep
 // this in sync with the server's strip list.
-var connectSecretKeys = []string{api.SecretNameControl, api.SecretNameFilesystem, "fds"}
+var connectSecretKeys = []string{api.SecretNameControl, api.SecretNameFilesystem, api.SecretNameState, "fds"}
 
 // applyUpdate replaces the tracked operation, preserving the per-connection
 // websocket secrets delivered in the create response but absent from later renders.
