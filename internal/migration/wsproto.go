@@ -2,6 +2,7 @@ package migration
 
 import (
 	"errors"
+	"fmt"
 	"io"
 
 	"github.com/gorilla/websocket"
@@ -9,6 +10,9 @@ import (
 
 	internalIO "github.com/lxc/incus/v6/internal/io"
 )
+
+// MessageMaxSize is the maximum size of a single migration protocol message.
+const MessageMaxSize = 32 * 1024 * 1024
 
 // ProtoRecv gets a protobuf message from a websocket.
 func ProtoRecv(ws *websocket.Conn, msg proto.Message) error {
@@ -25,9 +29,14 @@ func ProtoRecv(ws *websocket.Conn, msg proto.Message) error {
 		return errors.New("Only binary messages allowed")
 	}
 
-	buf, err := io.ReadAll(r)
+	// Bound the message size, the peer isn't trusted.
+	buf, err := io.ReadAll(io.LimitReader(r, MessageMaxSize+1))
 	if err != nil {
 		return err
+	}
+
+	if len(buf) > MessageMaxSize {
+		return fmt.Errorf("Migration message exceeds the maximum size of %d bytes", MessageMaxSize)
 	}
 
 	err = proto.Unmarshal(buf, msg)
