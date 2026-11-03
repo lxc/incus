@@ -3,8 +3,6 @@ package main
 import (
 	"errors"
 	"fmt"
-	"os"
-	"sort"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -21,11 +19,6 @@ type cmdOperation struct {
 	global *cmdGlobal
 }
 
-type operationColumn struct {
-	Name string
-	Data func(api.Operation) string
-}
-
 func (c *cmdOperation) command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("operation")
@@ -40,7 +33,7 @@ func (c *cmdOperation) command() *cobra.Command {
 	cmd.AddCommand(operationDeleteCmd.command())
 
 	// List
-	operationListCmd := cmdOperationList{global: c.global, operation: c}
+	operationListCmd := cmdOperationList{global: c.global, operation: c, lister: &listable[api.Operation]{global: c.global}}
 	cmd.AddCommand(operationListCmd.command())
 
 	// Show
@@ -110,9 +103,8 @@ func (c *cmdOperationDelete) run(cmd *cobra.Command, args []string) error {
 type cmdOperationList struct {
 	global    *cmdGlobal
 	operation *cmdOperation
+	lister    *listable[api.Operation]
 
-	flagFormat      string
-	flagColumns     string
 	flagAllProjects bool
 }
 
@@ -123,78 +115,22 @@ func (c *cmdOperationList) command() *cobra.Command {
 	cmd.Use = cli.U("list", cmdOperationListUsage...)
 	cmd.Aliases = []string{"ls"}
 	cmd.Short = i18n.G("List background operations")
-	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
-		`List background operations
-
-Default column layout: itdscCL
-
-== Columns ==
-The -c option takes a comma separated list of arguments that control
-which attributes of background operations to output when displaying
-in table or csv format.
-
-Column arguments are either pre-defined shorthand chars (see below),
-or (extended) config keys.
-
-Commas between consecutive shorthand chars are optional.
-
-Pre-defined column shorthand chars:
-  i - ID
-  t - Type
-  d - Description
-  s - State
-  c - Cancelable
-  C - Created
-  L - Location of the operation (e.g. its cluster member)`,
-	))
-	cli.AddStringFlag(cmd.Flags(), &c.flagFormat, "format|f", c.global.defaultListFormat(), "", i18n.G(`Format (csv|json|table|yaml|compact|markdown), use suffix ",noheader" to disable headers and ",header" to enable it if missing, e.g. csv,header`))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G("List background operations"))
 	cli.AddBoolFlag(cmd.Flags(), &c.flagAllProjects, "all-projects", i18n.G("List operations from all projects"))
-	cli.AddStringFlag(cmd.Flags(), &c.flagColumns, "columns|c", defaultOperationColumns, "", i18n.G("Columns"))
 
-	cmd.PreRunE = func(cmd *cobra.Command, _ []string) error {
-		return cli.ValidateFlagFormatForListOutput(cmd.Flag("format").Value.String())
-	}
+	c.lister.init(cmd, "itdscC", map[rune]listColumn[api.Operation]{
+		'i': {i18n.G("ID"), i18n.G("ID"), c.operationIDcolumnData},
+		't': {i18n.G("TYPE"), i18n.G("Type"), c.typeColumnData},
+		'd': {i18n.G("DESCRIPTION"), i18n.G("Description"), c.descriptionColumnData},
+		's': {i18n.G("STATE"), i18n.G("State"), c.stateColumnData},
+		'c': {i18n.G("CANCELABLE"), i18n.G("Cancelable"), c.cancelableColumnData},
+		'C': {i18n.G("CREATED"), i18n.G("Creation date"), c.createdColumnData},
+		'L': {i18n.G("LOCATION"), i18n.G("Location (cluster member)"), c.locationColumnData},
+	}, locationToggle)
 
 	cmd.RunE = c.run
 
 	return cmd
-}
-
-const defaultOperationColumns = "itdscC"
-
-func (c *cmdOperationList) parseColumns(clustered bool) ([]operationColumn, error) {
-	columnsShorthandMap := map[rune]operationColumn{
-		'i': {i18n.G("ID"), c.operationIDcolumnData},
-		't': {i18n.G("TYPE"), c.typeColumnData},
-		'd': {i18n.G("DESCRIPTION"), c.descriptionColumnData},
-		's': {i18n.G("STATE"), c.stateColumnData},
-		'c': {i18n.G("CANCELABLE"), c.cancelableColumnData},
-		'C': {i18n.G("CREATED"), c.createdColumnData},
-		'L': {i18n.G("LOCATION"), c.locationColumnData},
-	}
-
-	columnList := strings.Split(c.flagColumns, ",")
-	columns := []operationColumn{}
-	if c.flagColumns == defaultOperationColumns && clustered {
-		columnList = append(columnList, "L")
-	}
-
-	for _, columnEntry := range columnList {
-		if columnEntry == "" {
-			return nil, fmt.Errorf(i18n.G("Empty column entry (redundant, leading or trailing command) in '%s'"), c.flagColumns)
-		}
-
-		for _, columnRune := range columnEntry {
-			column, ok := columnsShorthandMap[columnRune]
-			if !ok {
-				return nil, fmt.Errorf(i18n.G("Unknown column shorthand char '%c' in '%s'"), columnRune, columnEntry)
-			}
-
-			columns = append(columns, column)
-		}
-	}
-
-	return columns, nil
 }
 
 func (c *cmdOperationList) operationIDcolumnData(op api.Operation) string {
@@ -214,13 +150,7 @@ func (c *cmdOperationList) stateColumnData(op api.Operation) string {
 }
 
 func (c *cmdOperationList) cancelableColumnData(op api.Operation) string {
-	strCancelable := i18n.G("NO")
-
-	if op.MayCancel {
-		strCancelable = i18n.G("YES")
-	}
-
-	return strCancelable
+	return yesNo(op.MayCancel)
 }
 
 func (c *cmdOperationList) createdColumnData(op api.Operation) string {
@@ -239,6 +169,15 @@ func (c *cmdOperationList) run(cmd *cobra.Command, args []string) error {
 
 	d := parsed[0].RemoteServer
 
+	if c.global.flagProject != "" && c.flagAllProjects {
+		return errors.New(i18n.G("Can't specify --project with --all-projects"))
+	}
+
+	err = c.lister.toggle(locationToggle, d.IsClustered())
+	if err != nil {
+		return err
+	}
+
 	// Get operations
 	var operations []api.Operation
 	if c.flagAllProjects {
@@ -251,31 +190,7 @@ func (c *cmdOperationList) run(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	// Parse column flags.
-	columns, err := c.parseColumns(d.IsClustered())
-	if err != nil {
-		return err
-	}
-
-	// Render the table
-	data := [][]string{}
-	for _, op := range operations {
-		line := []string{}
-		for _, column := range columns {
-			line = append(line, column.Data(op))
-		}
-
-		data = append(data, line)
-	}
-
-	sort.Sort(cli.SortColumnsNaturally(data))
-
-	header := []string{}
-	for _, column := range columns {
-		header = append(header, column.Name)
-	}
-
-	return cli.RenderTable(os.Stdout, c.flagFormat, header, data, operations)
+	return c.lister.run(operations)
 }
 
 // Show.
