@@ -868,8 +868,8 @@ func osSetEnv(post *api.InstanceExecPost, env map[string]string) {
 // osStepClock moves the system clock forward by the given offset.
 func osStepClock(offset time.Duration) error {
 	_, err := unix.Adjtimex(&unix.Timex{
-		Modes: unix.ADJ_SETOFFSET | unix.ADJ_NANO,
-		Time:  unix.Timeval{Sec: int64(offset / time.Second), Usec: int64(offset % time.Second)},
+		Modes: unix.ADJ_SETOFFSET,
+		Time:  unix.NsecToTimeval(int64(offset)),
 	})
 
 	return err
