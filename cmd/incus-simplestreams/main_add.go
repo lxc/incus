@@ -10,6 +10,7 @@ import (
 	"io"
 	"io/fs"
 	"os"
+	"path"
 	"strings"
 	"time"
 
@@ -375,7 +376,7 @@ func (c *cmdAdd) run(cmd *cobra.Command, args []string) error {
 		var aliases []string
 		if !c.flagNoDefaultAlias {
 			// Generate a default alias
-			aliases = append(aliases, fmt.Sprintf("%s/%s/%s",
+			aliases = append(aliases, path.Join(
 				metadata.Properties["os"],
 				metadata.Properties["release"],
 				metadata.Properties["variant"]))
