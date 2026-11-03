@@ -137,10 +137,15 @@ func (d *lvm) sanlockVolumeGroups(excludeName string) ([]string, error) {
 	return vgNames, nil
 }
 
+// sanlockLVPath returns the device mapper path of the sanlock lease volume of the given shared volume group.
+func (d *lvm) sanlockLVPath(vgName string) string {
+	return filepath.Join("/dev/mapper", linux.PathNameEncode(vgName)+"-lvmlock")
+}
+
 // sanlockHasGlobalLock checks whether the given shared volume group hosts the sanlock global lock.
 // The volume group's sanlock lease volume must be active on the local system.
 func (d *lvm) sanlockHasGlobalLock(vgName string) (bool, error) {
-	devPath := filepath.Join("/dev/mapper", fmt.Sprintf("%s-lvmlock", strings.ReplaceAll(vgName, "-", "--")))
+	devPath := d.sanlockLVPath(vgName)
 
 	output, err := subprocess.RunCommand("sanlock", "direct", "dump", fmt.Sprintf("%s:0:134217728", devPath))
 	if err != nil {
@@ -154,6 +159,47 @@ func (d *lvm) sanlockHasGlobalLock(vgName string) (bool, error) {
 	}
 
 	return false, nil
+}
+
+// removeStaleSanlockLV removes the sanlock lease volume left behind when a shared volume group
+// disappeared while its lockspace was still started, as it blocks re-creating a volume group of the same name.
+func (d *lvm) removeStaleSanlockLV(vgName string) error {
+	devPath := d.sanlockLVPath(vgName)
+
+	if !linux.IsBlockdevPath(devPath) {
+		return nil
+	}
+
+	// Drop the lockspace lvmlockd and sanlock may still hold on the lease volume.
+	// This fails when no lockspace is left to drop, in which case nothing holds the volume.
+	_, err := subprocess.RunCommand("lvmlockctl", "--drop", vgName)
+	if err != nil {
+		d.logger.Warn("Failed to drop the lockspace of volume group", logger.Ctx{"vg_name": vgName, "err": err})
+	}
+
+	// Retry as it may take sanlock a moment to close the lease volume after the lockspace was dropped.
+	_, err = subprocess.RunCommand("dmsetup", "remove", "--retry", filepath.Base(devPath))
+	if err != nil {
+		return fmt.Errorf("Failed to remove the stale sanlock lease volume of volume group %q: %w", vgName, err)
+	}
+
+	d.logger.Warn("Removed stale sanlock lease volume", logger.Ctx{"vg_name": vgName})
+
+	// The lost volume group may have been hosting the sanlock global lock.
+	// Recovering it is best effort as the lease volume is already gone by now.
+	otherSanlockVGs, err := d.sanlockVolumeGroups(vgName)
+	if err != nil {
+		d.logger.Warn("Failed to list sanlock volume groups", logger.Ctx{"err": err})
+
+		return nil
+	}
+
+	err = d.restoreSanlockGlobalLock(otherSanlockVGs)
+	if err != nil {
+		d.logger.Warn("Failed to restore the sanlock global lock", logger.Ctx{"err": err})
+	}
+
+	return nil
 }
 
 // restoreSanlockGlobalLock re-enables the sanlock global lock in one of the given shared volume groups
