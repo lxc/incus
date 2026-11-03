@@ -30,11 +30,6 @@ type cmdNetwork struct {
 	flagType   string
 }
 
-type networkColumn struct {
-	Name string
-	Data func(api.Network) string
-}
-
 func (c *cmdNetwork) command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("network")
@@ -80,7 +75,7 @@ func (c *cmdNetwork) command() *cobra.Command {
 	cmd.AddCommand(networkInfoCmd.command())
 
 	// List
-	networkListCmd := cmdNetworkList{global: c.global, network: c}
+	networkListCmd := cmdNetworkList{global: c.global, network: c, lister: &listable[api.Network]{global: c.global}}
 	cmd.AddCommand(networkListCmd.command())
 
 	// List allocations
@@ -88,7 +83,7 @@ func (c *cmdNetwork) command() *cobra.Command {
 	cmd.AddCommand(networkListAllocationsCmd.command())
 
 	// List leases
-	networkListLeasesCmd := cmdNetworkListLeases{global: c.global, network: c}
+	networkListLeasesCmd := cmdNetworkListLeases{global: c.global, network: c, lister: &listable[api.NetworkLease]{global: c.global}}
 	cmd.AddCommand(networkListLeasesCmd.command())
 
 	// Rename
@@ -1010,9 +1005,8 @@ func (c *cmdNetworkInfo) run(cmd *cobra.Command, args []string) error {
 type cmdNetworkList struct {
 	global  *cmdGlobal
 	network *cmdNetwork
+	lister  *listable[api.Network]
 
-	flagFormat      string
-	flagColumns     string
 	flagAllProjects bool
 }
 
@@ -1023,8 +1017,7 @@ func (c *cmdNetworkList) command() *cobra.Command {
 	cmd.Use = cli.U("list", cmdNetworkListUsage...)
 	cmd.Aliases = []string{"ls"}
 	cmd.Short = i18n.G("List available networks")
-	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
-		`List available networks
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`List available networks
 
 Filters may be of the <key>=<value> form for property based filtering,
 or part of the network name. Filters must be delimited by a ','.
@@ -1032,33 +1025,22 @@ or part of the network name. Filters must be delimited by a ','.
 Examples:
   - "foo" lists all networks that start with the name foo
   - "name=foo" lists all networks that exactly have the name foo
-  - "type=bridge" lists all networks with the type bridge
+  - "type=bridge" lists all networks with the type bridge`))
 
-The -c option takes a (optionally comma-separated) list of arguments
-that control which networks attributes to output when displaying in table
-or csv format.
+	c.lister.init(cmd, "ntm46dus", map[rune]listColumn[api.Network]{
+		'e': {i18n.G("PROJECT"), i18n.G("Project"), c.projectColumnData},
+		'n': {i18n.G("NAME"), i18n.G("Name"), c.networkNameColumnData},
+		't': {i18n.G("TYPE"), i18n.G("Type"), c.typeColumnData},
+		'm': {i18n.G("MANAGED"), i18n.G("Whether the network is managed"), c.managedColumnData},
+		'4': {i18n.G("IPV4"), i18n.G("IPv4 address"), c.ipv4ColumnData},
+		'6': {i18n.G("IPV6"), i18n.G("IPv6 address"), c.ipv6ColumnData},
+		'd': {i18n.G("DESCRIPTION"), i18n.G("Description"), c.descriptionColumnData},
+		'u': {i18n.G("USED BY"), i18n.G("Number of references"), c.usedByColumnData},
+		's': {i18n.G("STATE"), i18n.G("State"), c.stateColumnData},
+	}, projectToggle)
 
-Default column layout is: ntm46dus
-Column shorthand chars:
-4 - IPv4 address
-6 - IPv6 address
-d - Description
-e - Project name
-m - Managed status
-n - Network Interface Name
-s - State
-t - Interface type
-u - Used by (count)`,
-	))
-
-	cli.AddStringFlag(cmd.Flags(), &c.flagColumns, "columns|c", defaultNetworkColumns, "", i18n.G("Columns"))
-	cli.AddStringFlag(cmd.Flags(), &c.flagFormat, "format|f", c.global.defaultListFormat(), "", i18n.G(`Format (csv|json|table|yaml|compact|markdown), use suffix ",noheader" to disable headers and ",header" to enable it if missing, e.g. csv,header`))
 	cli.AddBoolFlag(cmd.Flags(), &c.flagAllProjects, "all-projects", i18n.G("List networks in all projects"))
 	cli.AddStringFlag(cmd.Flags(), &c.network.flagTarget, "target", "", "", i18n.G("Cluster member name"))
-
-	cmd.PreRunE = func(cmd *cobra.Command, _ []string) error {
-		return cli.ValidateFlagFormatForListOutput(cmd.Flag("format").Value.String())
-	}
 
 	cmd.RunE = c.run
 
@@ -1073,47 +1055,6 @@ u - Used by (count)`,
 	return cmd
 }
 
-const defaultNetworkColumns = "ntm46dus"
-
-func (c *cmdNetworkList) parseColumns() ([]networkColumn, error) {
-	columnsShorthandMap := map[rune]networkColumn{
-		'e': {i18n.G("PROJECT"), c.projectColumnData},
-		'n': {i18n.G("NAME"), c.networkNameColumnData},
-		't': {i18n.G("TYPE"), c.typeColumnData},
-		'm': {i18n.G("MANAGED"), c.managedColumnData},
-		'4': {i18n.G("IPV4"), c.ipv4ColumnData},
-		'6': {i18n.G("IPV6"), c.ipv6ColumnData},
-		'd': {i18n.G("DESCRIPTION"), c.descriptionColumnData},
-		'u': {i18n.G("USED BY"), c.usedByColumnData},
-		's': {i18n.G("STATE"), c.stateColumnData},
-	}
-
-	if c.flagColumns == defaultNetworkColumns && c.flagAllProjects {
-		c.flagColumns = "entm46dus"
-	}
-
-	columnList := strings.Split(c.flagColumns, ",")
-
-	columns := []networkColumn{}
-
-	for _, columnEntry := range columnList {
-		if columnEntry == "" {
-			return nil, fmt.Errorf(i18n.G("Empty column entry (redundant, leading or trailing command) in '%s'"), c.flagColumns)
-		}
-
-		for _, columnRune := range columnEntry {
-			column, ok := columnsShorthandMap[columnRune]
-			if !ok {
-				return nil, fmt.Errorf(i18n.G("Unknown column shorthand char '%c' in '%s'"), columnRune, columnEntry)
-			}
-
-			columns = append(columns, column)
-		}
-	}
-
-	return columns, nil
-}
-
 func (c *cmdNetworkList) networkNameColumnData(network api.Network) string {
 	return network.Name
 }
@@ -1123,11 +1064,7 @@ func (c *cmdNetworkList) typeColumnData(network api.Network) string {
 }
 
 func (c *cmdNetworkList) managedColumnData(network api.Network) string {
-	if network.Managed {
-		return i18n.G("YES")
-	}
-
-	return i18n.G("NO")
+	return yesNo(network.Managed)
 }
 
 func (c *cmdNetworkList) projectColumnData(network api.Network) string {
@@ -1163,6 +1100,15 @@ func (c *cmdNetworkList) run(cmd *cobra.Command, args []string) error {
 	d := parsed[0].RemoteServer
 	filters := parsed[1].StringList
 
+	if c.global.flagProject != "" && c.flagAllProjects {
+		return errors.New(i18n.G("Can't specify --project with --all-projects"))
+	}
+
+	err = c.lister.toggle(projectToggle, c.flagAllProjects)
+	if err != nil {
+		return err
+	}
+
 	filters = prepareNetworkServerFilters(filters)
 	serverFilters, _ := getServerSupportedFilters(filters, []string{}, false)
 
@@ -1181,48 +1127,18 @@ func (c *cmdNetworkList) run(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	// Parse column flags.
-	columns, err := c.parseColumns()
-	if err != nil {
-		return err
-	}
-
-	data := [][]string{}
-	for _, network := range networks {
-		line := []string{}
-		for _, column := range columns {
-			line = append(line, column.Data(network))
-		}
-
-		data = append(data, line)
-	}
-
-	if len(data) == 0 {
+	if len(networks) == 0 {
 		u.HintMissingSpace(args, i18n.G("No matching network found"))
 	}
 
-	sort.Sort(cli.SortColumnsNaturally(data))
-
-	header := []string{}
-	for _, column := range columns {
-		header = append(header, column.Name)
-	}
-
-	return cli.RenderTable(os.Stdout, c.flagFormat, header, data, networks)
+	return c.lister.run(networks)
 }
 
 // List leases.
 type cmdNetworkListLeases struct {
 	global  *cmdGlobal
 	network *cmdNetwork
-
-	flagFormat  string
-	flagColumns string
-}
-
-type networkLeasesColumn struct {
-	Name string
-	Data func(api.NetworkLease) string
+	lister  *listable[api.NetworkLease]
 }
 
 var cmdNetworkListLeasesUsage = u.Usage{u.Network.Remote()}
@@ -1231,34 +1147,15 @@ func (c *cmdNetworkListLeases) command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("list-leases", cmdNetworkListLeasesUsage...)
 	cmd.Short = i18n.G("List DHCP leases")
-	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
-		`List DHCP leases
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G("List DHCP leases"))
 
-Default column layout: hmitL
-
-== Columns ==
-The -c option takes a comma separated list of arguments that control
-which DHCP leases attributes to output when displaying in table or csv
-format.
-
-Column arguments are either pre-defined shorthand chars (see below),
-or (extended) config keys.
-
-Commas between consecutive shorthand chars are optional.
-
-Pre-defined column shorthand chars:
-  h - Hostname
-  m - MAC Address
-  i - IP Address
-  t - Type
-  L - Location of the DHCP Lease (e.g. its cluster member)`,
-	))
-	cli.AddStringFlag(cmd.Flags(), &c.flagFormat, "format|f", c.global.defaultListFormat(), "", i18n.G(`Format (csv|json|table|yaml|compact|markdown), use suffix ",noheader" to disable headers and ",header" to enable it if missing, e.g. csv,header`))
-	cli.AddStringFlag(cmd.Flags(), &c.flagColumns, "columns|c", defaultNetworkListLeasesColumns, "", i18n.G("Columns"))
-
-	cmd.PreRunE = func(cmd *cobra.Command, _ []string) error {
-		return cli.ValidateFlagFormatForListOutput(cmd.Flag("format").Value.String())
-	}
+	c.lister.init(cmd, "hmit", map[rune]listColumn[api.NetworkLease]{
+		'h': {i18n.G("HOSTNAME"), i18n.G("Hostname"), c.hostnameColumnData},
+		'm': {i18n.G("MAC ADDRESS"), i18n.G("MAC address"), c.macAddressColumnData},
+		'i': {i18n.G("IP ADDRESS"), i18n.G("IP address"), c.ipAddressColumnData},
+		't': {i18n.G("TYPE"), i18n.G("Type"), c.typeColumnData},
+		'L': {i18n.G("LOCATION"), i18n.G("Location (cluster member)"), c.locationColumnData},
+	}, locationToggle)
 
 	cmd.RunE = c.run
 
@@ -1271,41 +1168,6 @@ Pre-defined column shorthand chars:
 	}
 
 	return cmd
-}
-
-const defaultNetworkListLeasesColumns = "hmit"
-
-func (c *cmdNetworkListLeases) parseColumns(clustered bool) ([]networkLeasesColumn, error) {
-	columnsShorthandMap := map[rune]networkLeasesColumn{
-		'h': {i18n.G("HOSTNAME"), c.hostnameColumnData},
-		'm': {i18n.G("MAC ADDRESS"), c.macAddressColumnData},
-		'i': {i18n.G("IP ADDRESS"), c.ipAddressColumnData},
-		't': {i18n.G("TYPE"), c.typeColumnData},
-		'L': {i18n.G("LOCATION"), c.locationColumnData},
-	}
-
-	columnList := strings.Split(c.flagColumns, ",")
-	columns := []networkLeasesColumn{}
-	if c.flagColumns == defaultNetworkListLeasesColumns && clustered {
-		columnList = append(columnList, "L")
-	}
-
-	for _, columnEntry := range columnList {
-		if columnEntry == "" {
-			return nil, fmt.Errorf(i18n.G("Empty column entry (redundant, leading or trailing command) in '%s'"), c.flagColumns)
-		}
-
-		for _, columnRune := range columnEntry {
-			column, ok := columnsShorthandMap[columnRune]
-			if !ok {
-				return nil, fmt.Errorf(i18n.G("Unknown column shorthand char '%c' in '%s'"), columnRune, columnEntry)
-			}
-
-			columns = append(columns, column)
-		}
-	}
-
-	return columns, nil
 }
 
 func (c *cmdNetworkListLeases) hostnameColumnData(lease api.NetworkLease) string {
@@ -1337,36 +1199,18 @@ func (c *cmdNetworkListLeases) run(cmd *cobra.Command, args []string) error {
 	d := parsed[0].RemoteServer
 	networkName := parsed[0].RemoteObject.String
 
+	err = c.lister.toggle(locationToggle, d.IsClustered())
+	if err != nil {
+		return err
+	}
+
 	// List DHCP leases
 	leases, err := d.GetNetworkLeases(networkName)
 	if err != nil {
 		return err
 	}
 
-	// Parse column flags.
-	columns, err := c.parseColumns(d.IsClustered())
-	if err != nil {
-		return err
-	}
-
-	data := [][]string{}
-	for _, lease := range leases {
-		line := []string{}
-		for _, column := range columns {
-			line = append(line, column.Data(lease))
-		}
-
-		data = append(data, line)
-	}
-
-	sort.Sort(cli.SortColumnsNaturally(data))
-
-	header := []string{}
-	for _, column := range columns {
-		header = append(header, column.Name)
-	}
-
-	return cli.RenderTable(os.Stdout, c.flagFormat, header, data, leases)
+	return c.lister.run(leases)
 }
 
 // Rename.
