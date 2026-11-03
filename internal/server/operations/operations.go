@@ -558,7 +558,7 @@ func (op *Operation) mayCancel() bool {
 // secrets. They're returned to the operation's creator in the synchronous create
 // response but stripped from every other render, so they're never broadcast on the
 // event stream or exposed through operation queries.
-var connectSecretKeys = []string{api.SecretNameControl, api.SecretNameFilesystem, "fds"}
+var connectSecretKeys = []string{api.SecretNameControl, api.SecretNameFilesystem, api.SecretNameState, "fds"}
 
 // Render renders the operation for events and API queries, with any websocket
 // connection secrets removed.
