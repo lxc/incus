@@ -10884,6 +10884,41 @@ func (d *qemu) MigrateReceive(args instance.MigrateReceiveArgs) error {
 	reverter := revert.New()
 	defer reverter.Fail()
 
+	// The source keeps running with its volatile config if the move fails, so put back what the start changed.
+	if args.ClusterMoveSourceName == d.name {
+		volatile := map[string]string{}
+		for k, v := range d.localConfig {
+			if strings.HasPrefix(k, internalInstance.ConfigVolatilePrefix) {
+				volatile[k] = v
+			}
+		}
+
+		reverter.Add(func() {
+			changes := map[string]string{}
+			for k := range d.localConfig {
+				_, ok := volatile[k]
+				if strings.HasPrefix(k, internalInstance.ConfigVolatilePrefix) && !ok {
+					changes[k] = ""
+				}
+			}
+
+			for k, v := range volatile {
+				if d.localConfig[k] != v {
+					changes[k] = v
+				}
+			}
+
+			if len(changes) == 0 {
+				return
+			}
+
+			err := d.VolatileSet(changes)
+			if err != nil {
+				d.logger.Warn("Failed restoring volatile config after failed migration", logger.Ctx{"err": err})
+			}
+		})
+	}
+
 	g, ctx := errgroup.WithContext(context.Background())
 
 	// Start control connection monitor.
