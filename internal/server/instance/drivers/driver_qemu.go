@@ -3052,6 +3052,16 @@ func (d *qemu) advertiseVsockAddress() error {
 	return nil
 }
 
+// resyncAgentClock reconnects the agent in the background so it can catch its clock up after a pause.
+func (d *qemu) resyncAgentClock() {
+	go func() {
+		err := d.advertiseVsockAddress()
+		if err != nil {
+			d.logger.Debug("Failed to advertise vsock address to instance agent", logger.Ctx{"err": err})
+		}
+	}()
+}
+
 // AgentCertificate returns the server certificate of the agent.
 func (d *qemu) AgentCertificate() *x509.Certificate {
 	agentCert := filepath.Join(d.Path(), "config", "agent.crt")
@@ -7598,6 +7608,7 @@ func (d *qemu) Unfreeze() error {
 		return err
 	}
 
+	d.resyncAgentClock()
 	d.state.Events.SendLifecycle(d.project.Name, lifecycle.InstanceResumed.Event(d, nil))
 	return nil
 }
@@ -7661,6 +7672,8 @@ func (d *qemu) snapshot(name string, expiry time.Time, stateful bool) error {
 		if err != nil {
 			return err
 		}
+
+		d.resyncAgentClock()
 	}
 
 	return nil
@@ -9967,6 +9980,8 @@ func (d *qemu) mergeEphemeralSnapshot(monitor *qmp.Monitor, overlayNode string) 
 	err := monitor.Start()
 	if err != nil {
 		d.logger.Warn("Failed resuming instance", logger.Ctx{"err": err})
+	} else {
+		d.resyncAgentClock()
 	}
 
 	// Merge the snapshot back into the source disk so we don't lose writes,
@@ -10549,6 +10564,8 @@ func (d *qemu) migrateSendLive(ctx context.Context, pool storagePools.Pool, clus
 		err := monitor.Start()
 		if err != nil {
 			d.logger.Error("Failed resuming instance after failed migration", logger.Ctx{"err": err})
+		} else {
+			d.resyncAgentClock()
 		}
 	})
 
@@ -10678,6 +10695,7 @@ func (d *qemu) migrateSendLive(ctx context.Context, pool storagePools.Pool, clus
 			return fmt.Errorf("Failed resuming instance: %w", err)
 		}
 
+		d.resyncAgentClock()
 		d.logger.Debug("Resumed instance")
 	}
 
