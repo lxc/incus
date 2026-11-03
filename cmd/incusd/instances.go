@@ -449,38 +449,10 @@ func instancesOnDisk(s *state.State) ([]instance.Instance, error) {
 			// Convert file name to project name and instance name.
 			projectName, instanceName := project.InstanceParts(file.Name())
 
-			var inst instance.Instance
-
-			// Try and parse the backup file (if instance is running).
-			// This allows us to stop VMs which require access to the vsock ID and volatile UUID.
-			// Also generally it ensures that all devices are stopped cleanly too.
-			backupYamlPath := filepath.Join(instancePaths[instanceType], file.Name(), "backup.yaml")
-			if util.PathExists(backupYamlPath) {
-				inst, err = instance.LoadFromBackup(s, projectName, filepath.Join(instancePaths[instanceType], file.Name()), false)
-				if err != nil {
-					logger.Warn("Failed loading instance", logger.Ctx{"project": projectName, "instance": instanceName, "backup_file": backupYamlPath, "err": err})
-				}
-			}
-
-			if inst == nil {
-				// Initialize dbArgs with a very basic config.
-				// This will not be sufficient to stop an instance cleanly.
-				instDBArgs := &db.InstanceArgs{
-					Type:    instanceType,
-					Project: projectName,
-					Name:    instanceName,
-					Config:  make(map[string]string),
-				}
-
-				emptyProject := api.Project{
-					Name: projectName,
-				}
-
-				inst, err = instance.Load(s, *instDBArgs, emptyProject)
-				if err != nil {
-					logger.Warn("Failed loading instance", logger.Ctx{"project": projectName, "instance": instanceName, "err": err})
-					continue
-				}
+			inst, err := instanceLoadFromDisk(s, instanceType, projectName, filepath.Join(instancePaths[instanceType], file.Name()))
+			if err != nil {
+				logger.Warn("Failed loading instance", logger.Ctx{"project": projectName, "instance": instanceName, "err": err})
+				continue
 			}
 
 			instances = append(instances, inst)
@@ -488,6 +460,39 @@ func instancesOnDisk(s *state.State) ([]instance.Instance, error) {
 	}
 
 	return instances, nil
+}
+
+// instanceLoadFromDisk loads an instance from its backup file, falling back to a basic config without the database.
+func instanceLoadFromDisk(s *state.State, instanceType instancetype.Type, projectName string, instancePath string) (instance.Instance, error) {
+	_, instanceName := project.InstanceParts(filepath.Base(instancePath))
+
+	// Try and parse the backup file (if instance is running).
+	// This allows us to stop VMs which require access to the vsock ID and volatile UUID.
+	// Also generally it ensures that all devices are stopped cleanly too.
+	backupYamlPath := filepath.Join(instancePath, "backup.yaml")
+	if util.PathExists(backupYamlPath) {
+		inst, err := instance.LoadFromBackup(s, projectName, instancePath, false)
+		if err == nil {
+			return inst, nil
+		}
+
+		logger.Warn("Failed loading instance from backup file", logger.Ctx{"project": projectName, "instance": instanceName, "backup_file": backupYamlPath, "err": err})
+	}
+
+	// Initialize dbArgs with a very basic config.
+	// This will not be sufficient to stop an instance cleanly.
+	instDBArgs := &db.InstanceArgs{
+		Type:    instanceType,
+		Project: projectName,
+		Name:    instanceName,
+		Config:  make(map[string]string),
+	}
+
+	emptyProject := api.Project{
+		Name: projectName,
+	}
+
+	return instance.Load(s, *instDBArgs, emptyProject)
 }
 
 func instancesShutdown(ctx context.Context, s *state.State, instances []instance.Instance, forceTimeout time.Duration) {
