@@ -66,7 +66,7 @@ func (d *lvm) load() error {
 	// Validate the required binaries.
 	tools := []string{"lvm"}
 	if d.clustered {
-		tools = append(tools, []string{"lvmlockctl", "sanlock", "btrfs"}...)
+		tools = append(tools, []string{"dmsetup", "lvmlockctl", "sanlock", "btrfs"}...)
 	}
 
 	for _, tool := range tools {
@@ -537,6 +537,15 @@ func (d *lvm) Delete(op *operations.Operation) error {
 		return err
 	}
 
+	// A shared VG that was wiped or lost while its lockspace was started leaves its sanlock
+	// lease volume mapped, which prevents a VG of the same name from being created again.
+	if d.clustered && !vgExists {
+		err := d.removeStaleSanlockLV(d.config["lvm.vg_name"])
+		if err != nil {
+			return err
+		}
+	}
+
 	removeVg := false
 	if vgExists && util.IsFalseOrEmpty(d.config["lvm.vg.force_reuse"]) {
 		// Count normal and thin volumes.
@@ -628,37 +637,10 @@ func (d *lvm) Delete(op *operations.Operation) error {
 
 			d.logger.Debug("Volume group removed", logger.Ctx{"vg_name": d.config["lvm.vg_name"]})
 
-			// If the removed VG was hosting the sanlock global lock, re-enable the global
-			// lock in one of the remaining shared VGs as it's otherwise permanently lost,
-			// preventing any future creation or deletion of shared VGs cluster-wide.
-			if len(otherSanlockVGs) > 0 {
-				hasGlobalLock := false
-				allChecked := true
-
-				for _, vgName := range otherSanlockVGs {
-					hosted, err := d.sanlockHasGlobalLock(vgName)
-					if err != nil {
-						d.logger.Warn("Failed to check for sanlock global lock", logger.Ctx{"vg_name": vgName, "err": err})
-						allChecked = false
-
-						continue
-					}
-
-					if hosted {
-						hasGlobalLock = true
-
-						break
-					}
-				}
-
-				if allChecked && !hasGlobalLock {
-					_, err = subprocess.TryRunCommand("lvmlockctl", "--gl-enable", otherSanlockVGs[0])
-					if err != nil {
-						return fmt.Errorf("Failed to move the sanlock global lock to volume group %q: %w", otherSanlockVGs[0], err)
-					}
-
-					d.logger.Info("Moved sanlock global lock", logger.Ctx{"vg_name": otherSanlockVGs[0]})
-				}
+			// The removed VG may have been hosting the sanlock global lock.
+			err = d.restoreSanlockGlobalLock(otherSanlockVGs)
+			if err != nil {
+				return err
 			}
 		} else {
 			// Otherwise just remove the lvmVgPoolMarker tag to indicate Incus no longer uses this VG.

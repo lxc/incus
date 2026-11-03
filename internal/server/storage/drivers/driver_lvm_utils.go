@@ -15,7 +15,6 @@ import (
 	"strings"
 	"time"
 
-	internalInstance "github.com/lxc/incus/v7/internal/instance"
 	"github.com/lxc/incus/v7/internal/linux"
 	"github.com/lxc/incus/v7/internal/server/locking"
 	"github.com/lxc/incus/v7/internal/server/operations"
@@ -137,10 +136,15 @@ func (d *lvm) sanlockVolumeGroups(excludeName string) ([]string, error) {
 	return vgNames, nil
 }
 
+// sanlockLVPath returns the device mapper path of the sanlock lease volume of the given shared volume group.
+func (d *lvm) sanlockLVPath(vgName string) string {
+	return filepath.Join("/dev/mapper", linux.PathNameEncode(vgName)+"-lvmlock")
+}
+
 // sanlockHasGlobalLock checks whether the given shared volume group hosts the sanlock global lock.
 // The volume group's sanlock lease volume must be active on the local system.
 func (d *lvm) sanlockHasGlobalLock(vgName string) (bool, error) {
-	devPath := filepath.Join("/dev/mapper", fmt.Sprintf("%s-lvmlock", strings.ReplaceAll(vgName, "-", "--")))
+	devPath := d.sanlockLVPath(vgName)
 
 	output, err := subprocess.RunCommand("sanlock", "direct", "dump", fmt.Sprintf("%s:0:134217728", devPath))
 	if err != nil {
@@ -154,6 +158,78 @@ func (d *lvm) sanlockHasGlobalLock(vgName string) (bool, error) {
 	}
 
 	return false, nil
+}
+
+// removeStaleSanlockLV removes the sanlock lease volume left behind when a shared volume group
+// disappeared while its lockspace was still started, as it blocks re-creating a volume group of the same name.
+func (d *lvm) removeStaleSanlockLV(vgName string) error {
+	devPath := d.sanlockLVPath(vgName)
+
+	if !linux.IsBlockdevPath(devPath) {
+		return nil
+	}
+
+	// Drop the lockspace lvmlockd and sanlock may still hold on the lease volume.
+	// This fails when no lockspace is left to drop, in which case nothing holds the volume.
+	_, err := subprocess.RunCommand("lvmlockctl", "--drop", vgName)
+	if err != nil {
+		d.logger.Warn("Failed to drop the lockspace of volume group", logger.Ctx{"vg_name": vgName, "err": err})
+	}
+
+	// Retry as it may take sanlock a moment to close the lease volume after the lockspace was dropped.
+	_, err = subprocess.RunCommand("dmsetup", "remove", "--retry", filepath.Base(devPath))
+	if err != nil {
+		return fmt.Errorf("Failed to remove the stale sanlock lease volume of volume group %q: %w", vgName, err)
+	}
+
+	d.logger.Warn("Removed stale sanlock lease volume", logger.Ctx{"vg_name": vgName})
+
+	// The lost volume group may have been hosting the sanlock global lock.
+	// Recovering it is best effort as the lease volume is already gone by now.
+	otherSanlockVGs, err := d.sanlockVolumeGroups(vgName)
+	if err != nil {
+		d.logger.Warn("Failed to list sanlock volume groups", logger.Ctx{"err": err})
+
+		return nil
+	}
+
+	err = d.restoreSanlockGlobalLock(otherSanlockVGs)
+	if err != nil {
+		d.logger.Warn("Failed to restore the sanlock global lock", logger.Ctx{"err": err})
+	}
+
+	return nil
+}
+
+// restoreSanlockGlobalLock re-enables the sanlock global lock in one of the given shared volume groups
+// if none of them hosts it, as it's otherwise permanently lost, preventing any future creation or
+// deletion of shared volume groups cluster-wide.
+func (d *lvm) restoreSanlockGlobalLock(vgNames []string) error {
+	if len(vgNames) == 0 {
+		return nil
+	}
+
+	for _, vgName := range vgNames {
+		hosted, err := d.sanlockHasGlobalLock(vgName)
+		if err != nil {
+			d.logger.Warn("Failed to check for sanlock global lock", logger.Ctx{"vg_name": vgName, "err": err})
+
+			return nil
+		}
+
+		if hosted {
+			return nil
+		}
+	}
+
+	_, err := subprocess.TryRunCommand("lvmlockctl", "--gl-enable", vgNames[0])
+	if err != nil {
+		return fmt.Errorf("Failed to move the sanlock global lock to volume group %q: %w", vgNames[0], err)
+	}
+
+	d.logger.Info("Moved sanlock global lock", logger.Ctx{"vg_name": vgNames[0]})
+
+	return nil
 }
 
 // pysicalVolumeExists checks if an LVM Physical Volume exists.
@@ -688,7 +764,7 @@ func (d *lvm) renameLogicalVolume(volDevPath string, newVolDevPath string) error
 // lvmValidateName refuses logical volume names whose device-mapper name would exceed the kernel limit.
 func lvmValidateName(vgName string, lvName string) error {
 	// DM_NAME_LEN is 128 bytes including the terminator and every "-" is escaped as "--".
-	dmName := fmt.Sprintf("%s-%s", strings.ReplaceAll(vgName, "-", "--"), strings.ReplaceAll(lvName, "-", "--"))
+	dmName := fmt.Sprintf("%s-%s", linux.PathNameEncode(vgName), linux.PathNameEncode(lvName))
 	if len(dmName) > 127 {
 		return fmt.Errorf("Logical volume name %q is too long for device-mapper", lvName)
 	}
@@ -714,7 +790,7 @@ func (d *lvm) lvmFullVolumeName(volType VolumeType, contentType ContentType, vol
 	}
 
 	// Escape the volume name to a name suitable for using as a logical volume.
-	lvName := strings.ReplaceAll(strings.ReplaceAll(volName, "-", lvmEscapedHyphen), internalInstance.SnapshotDelimiter, lvmSnapshotSeparator)
+	lvName := linux.PathNameEncode(volName)
 
 	return fmt.Sprintf("%s_%s%s", volType, lvName, contentTypeSuffix)
 }
