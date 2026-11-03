@@ -4,14 +4,17 @@
 
 Incus maintains different release branches in parallel:
 
-- Long term support (LTS) releases: 6.0
-- Feature releases: Incus 6.x
+- Long term support (LTS) releases: 7.0 and 6.0
+- Feature releases: Incus 7.x
 
 <!-- Include end release -->
 
-The Incus 6.0 LTS release will be supported until June 2029.
-The first 2 years of support will include bug and security fixes as well as minor usability improvements.
-The remaining 3 years of support (following Incus 7.0 LTS' release) will only feature security updates.
+Each LTS release is supported for 5 years.
+The first 2 years of support include bug and security fixes as well as minor usability improvements.
+The remaining 3 years, starting with the release of the next LTS, only feature security updates.
+
+The Incus 7.0 LTS release was made in May 2026 and will be supported until June 2031.
+The Incus 6.0 LTS release will be supported until June 2029 and is now in its security-only phase.
 
 Feature releases are pushed out about monthly and contain new features as well as bugfixes.
 The normal support length for those releases is until the next release comes out.
