@@ -156,6 +156,37 @@ func (d *lvm) sanlockHasGlobalLock(vgName string) (bool, error) {
 	return false, nil
 }
 
+// restoreSanlockGlobalLock re-enables the sanlock global lock in one of the given shared volume groups
+// if none of them hosts it, as it's otherwise permanently lost, preventing any future creation or
+// deletion of shared volume groups cluster-wide.
+func (d *lvm) restoreSanlockGlobalLock(vgNames []string) error {
+	if len(vgNames) == 0 {
+		return nil
+	}
+
+	for _, vgName := range vgNames {
+		hosted, err := d.sanlockHasGlobalLock(vgName)
+		if err != nil {
+			d.logger.Warn("Failed to check for sanlock global lock", logger.Ctx{"vg_name": vgName, "err": err})
+
+			return nil
+		}
+
+		if hosted {
+			return nil
+		}
+	}
+
+	_, err := subprocess.TryRunCommand("lvmlockctl", "--gl-enable", vgNames[0])
+	if err != nil {
+		return fmt.Errorf("Failed to move the sanlock global lock to volume group %q: %w", vgNames[0], err)
+	}
+
+	d.logger.Info("Moved sanlock global lock", logger.Ctx{"vg_name": vgNames[0]})
+
+	return nil
+}
+
 // pysicalVolumeExists checks if an LVM Physical Volume exists.
 func (d *lvm) pysicalVolumeExists(pvName string) (bool, error) {
 	_, err := subprocess.RunCommandCLocale("pvs", "-qq", "--noheadings", "-o", "pv_name", pvName)
