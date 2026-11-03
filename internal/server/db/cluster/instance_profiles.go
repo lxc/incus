@@ -77,3 +77,38 @@ func UpdateInstanceProfiles(ctx context.Context, tx *sql.Tx, instanceID int, pro
 
 	return nil
 }
+
+// GetAllInstanceProfiles returns the profiles of every instance in apply order, keyed by instance ID.
+func GetAllInstanceProfiles(ctx context.Context, tx *sql.Tx) (map[int][]Profile, error) {
+	stmt, err := StmtContext(ctx, tx, instanceProfileObjects)
+	if err != nil {
+		return nil, fmt.Errorf("Failed to get \"instanceProfileObjects\" prepared statement: %w", err)
+	}
+
+	links, err := getInstanceProfiles(ctx, stmt)
+	if err != nil {
+		return nil, err
+	}
+
+	profiles, err := GetProfiles(ctx, tx)
+	if err != nil {
+		return nil, err
+	}
+
+	profilesByID := make(map[int]Profile, len(profiles))
+	for _, profile := range profiles {
+		profilesByID[profile.ID] = profile
+	}
+
+	result := map[int][]Profile{}
+	for _, link := range links {
+		profile, ok := profilesByID[link.ProfileID]
+		if !ok {
+			return nil, fmt.Errorf("Instance %d references unknown profile %d", link.InstanceID, link.ProfileID)
+		}
+
+		result[link.InstanceID] = append(result[link.InstanceID], profile)
+	}
+
+	return result, nil
+}

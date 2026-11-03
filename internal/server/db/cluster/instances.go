@@ -76,11 +76,18 @@ type InstanceFilter struct {
 	Type    *instancetype.Type
 }
 
-// ToAPI converts the database Instance to API type.
-func (i *Instance) ToAPI(ctx context.Context, tx *sql.Tx, instanceDevices map[int][]Device, profileConfigs map[int]map[string]string, profileDevices map[int][]Device) (*api.Instance, error) {
-	profiles, err := GetInstanceProfiles(ctx, tx, i.ID)
-	if err != nil {
-		return nil, err
+// ToAPI converts the database Instance to API type, the maps hold prefetched data and may be nil.
+func (i *Instance) ToAPI(ctx context.Context, tx *sql.Tx, instanceConfigs map[int]map[string]string, instanceDevices map[int][]Device, instanceProfiles map[int][]Profile, profileConfigs map[int]map[string]string, profileDevices map[int][]Device) (*api.Instance, error) {
+	var err error
+	var profiles []Profile
+
+	if instanceProfiles != nil {
+		profiles = instanceProfiles[i.ID]
+	} else {
+		profiles, err = GetInstanceProfiles(ctx, tx, i.ID)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	if profileConfigs == nil {
@@ -126,9 +133,17 @@ func (i *Instance) ToAPI(ctx context.Context, tx *sql.Tx, instanceDevices map[in
 	apiDevices := DevicesToAPI(devices)
 	expandedDevices := ExpandInstanceDevices(config.NewDevices(apiDevices), apiProfiles)
 
-	instanceConfig, err := GetInstanceConfig(ctx, tx, i.ID)
-	if err != nil {
-		return nil, err
+	var instanceConfig map[string]string
+	if instanceConfigs != nil {
+		instanceConfig = instanceConfigs[i.ID]
+		if instanceConfig == nil {
+			instanceConfig = map[string]string{}
+		}
+	} else {
+		instanceConfig, err = GetInstanceConfig(ctx, tx, i.ID)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	expandedConfig := ExpandInstanceConfig(instanceConfig, apiProfiles)

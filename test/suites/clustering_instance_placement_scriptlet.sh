@@ -68,6 +68,28 @@ def instance_placement(request, candidate_members):
         if instance_resources.root_disk_size != 209715200:
                 return "Expecting root_disk_size of 209715200"
 
+        # Check the existing instances come with their expanded config and profiles.
+        for instance in get_instances(project="default"):
+                log_info("instance placement existing instance: ", instance)
+
+                if instance.location != "node2":
+                        return "Expecting location node2 for " + instance.name
+
+                if instance.expanded_config["limits.memory"] != "512MiB":
+                        return "Expecting expanded limits.memory of 512MiB for " + instance.name
+
+                if instance.expanded_devices["root"]["size"] != "200MiB":
+                        return "Expecting expanded root size of 200MiB for " + instance.name
+
+                if instance.name == "c1" and instance.profiles != ["default"]:
+                        return "Expecting profile default for c1"
+
+                if instance.name == "c2" and (instance.profiles != ["foo"] or "limits.memory" in instance.config):
+                        return "Expecting only profile foo for c2"
+
+        if request.name == "c3" and get_instances_count(project="default") != 2:
+                return "Expecting two existing instances"
+
         # Log info, state and resources for each candidate member.
         for member in candidate_members:
                 log_info("instance placement member: ", member)

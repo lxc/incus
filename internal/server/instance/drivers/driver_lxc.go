@@ -3580,11 +3580,8 @@ func (d *lxc) Stop(stateful bool) error {
 			return err
 		}
 
-		// Give onStop some time to complete the operation, it may never run if the daemon is shutting down.
-		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-		defer cancel()
-
-		waitErr := op.Wait(ctx)
+		// Let onStop finish the cleanup.
+		waitErr := d.waitStopHook(op)
 		if waitErr != nil {
 			op.Done(err)
 			return err
@@ -3615,6 +3612,20 @@ func (d *lxc) Stop(stateful bool) error {
 	}
 
 	return nil
+}
+
+// waitStopHook waits for onStop to complete the stop operation of an instance that already exited.
+func (d *lxc) waitStopHook(op *operationlock.InstanceOperation) error {
+	// The hook may never run during daemon shutdown as the database gets closed, so don't wait long then.
+	timeout := 5 * time.Minute
+	if d.state.ShutdownCtx.Err() != nil {
+		timeout = 30 * time.Second
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+
+	return op.Wait(ctx)
 }
 
 // Shutdown stops the instance.
@@ -3709,6 +3720,11 @@ func (d *lxc) Shutdown(timeout time.Duration) error {
 	// onStop which picks up the same lock and then marks it as Done after the instance stops and the devices
 	// have been cleaned up. However if the operation has failed for another reason we collect the error here.
 	err = op.Wait(ctx)
+	if err != nil && !cc.Running() {
+		// The instance exited in time, let onStop finish the cleanup.
+		err = d.waitStopHook(op)
+	}
+
 	status := d.statusCode()
 	if status != api.Stopped {
 		errPrefix := fmt.Errorf("Failed shutting down instance, status is %q", status)

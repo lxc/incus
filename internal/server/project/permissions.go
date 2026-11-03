@@ -1719,14 +1719,24 @@ func fetchProject(tx *db.ClusterTx, projectName string, skipIfNoLimits bool) (*p
 		dbInstanceIDs = append(dbInstanceIDs, dbInstance.ID)
 	}
 
+	dbInstanceConfigs, err := cluster.GetConfig(ctx, tx.Tx(), "instances", "instance", cluster.ConfigFilter{ReferenceID: dbInstanceIDs})
+	if err != nil {
+		return nil, fmt.Errorf("Fetch instance configs from database: %w", err)
+	}
+
 	dbInstanceDevices, err := cluster.GetDevices(ctx, tx.Tx(), "instances", "instance", cluster.DeviceFilter{ReferenceID: dbInstanceIDs})
 	if err != nil {
 		return nil, fmt.Errorf("Fetch instance devices from database: %w", err)
 	}
 
+	dbInstanceProfiles, err := cluster.GetAllInstanceProfiles(ctx, tx.Tx())
+	if err != nil {
+		return nil, fmt.Errorf("Fetch instance profiles from database: %w", err)
+	}
+
 	instances := make([]api.Instance, 0, len(dbInstances))
 	for _, inst := range dbInstances {
-		apiInstance, err := inst.ToAPI(ctx, tx.Tx(), dbInstanceDevices, dbProfileConfigs, dbProfileDevices)
+		apiInstance, err := inst.ToAPI(ctx, tx.Tx(), dbInstanceConfigs, dbInstanceDevices, dbInstanceProfiles, dbProfileConfigs, dbProfileDevices)
 		if err != nil {
 			return nil, fmt.Errorf("Failed to get API data for instance %q in project %q: %w", inst.Name, inst.Project, err)
 		}
