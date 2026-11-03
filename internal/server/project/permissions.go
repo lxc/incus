@@ -1399,7 +1399,7 @@ func checkRestrictedVolumeConfig(tx *db.ClusterTx, info *projectInfo, poolName s
 }
 
 // AllowVolumeConfig returns an error if any project-specific restriction is
-// violated by the effective config of a custom volume being created.
+// violated by the effective config of a volume being created.
 func AllowVolumeConfig(tx *db.ClusterTx, projectName string, poolName string, config map[string]string) error {
 	info, err := fetchProject(tx, projectName, true)
 	if err != nil {
