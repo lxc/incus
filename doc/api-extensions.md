@@ -3613,3 +3613,9 @@ is moved along with the virtual machine when it moves to another cluster member.
 ## `nic_sriov_migration_native`
 
 This adds a new `variant` configuration key to both `sriov` networks and NICs, allowing to set the VFIO driver to use (either no value to keep the generic `vfio-pci` driver, or `mlx5` for `mlx5_vfio_pci`). This allows native VFIO live-migration of SR-IOV NICs.
+
+## `pci_rebar`
+
+This adds support for PCIe resizable BARs to the `pci` and `gpu` (physical) devices of virtual machines.
+
+The new `rebar.<N>.size` configuration keys set the size of BAR `N` on the host before the device is passed to the VM, with the original size restored when the instance stops.

@@ -43,6 +43,14 @@ func (d *pci) validateConfig(instConf instance.ConfigReader, partialValidation b
 		"firmware": validate.Optional(validate.IsBool),
 	}
 
+	// gendoc:generate(entity=devices, group=pci, key=rebar.<N>.size)
+	//
+	// ---
+	//  type: string
+	//  required: no
+	//  shortdesc: Size to set resizable BAR `N` to before passing the device to the VM (for example `8GiB`)
+	rebarValidationRules(rules)
+
 	err := d.config.Validate(rules)
 	if err != nil {
 		return fmt.Errorf("Failed to validate config: %w", err)
@@ -105,6 +113,12 @@ func (d *pci) Start() (*deviceConfig.RunConfig, error) {
 		return nil, err
 	}
 
+	// Apply any requested BAR sizes while the device can still be unbound.
+	err = rebarApply(pciDev, d.config, saveData)
+	if err != nil {
+		return nil, err
+	}
+
 	err = pcidev.DeviceDriverOverride(pciDev, "vfio-pci")
 	if err != nil {
 		return nil, fmt.Errorf("Failed to override IOMMU group driver: %w", err)
@@ -142,14 +156,17 @@ func (d *pci) Stop() (*deviceConfig.RunConfig, error) {
 
 // postStop is run after the device is removed from the instance.
 func (d *pci) postStop() error {
+	v := d.volatileGet()
+
 	defer func() {
-		_ = d.volatileSet(map[string]string{
+		reset := map[string]string{
 			"last_state.pci.slot.name": "",
 			"last_state.pci.driver":    "",
-		})
-	}()
+		}
 
-	v := d.volatileGet()
+		rebarVolatileReset(reset)
+		_ = d.volatileSet(reset)
+	}()
 
 	// Unbind from vfio-pci and bind back to host driver.
 	if v["last_state.pci.slot.name"] != "" {
@@ -158,7 +175,13 @@ func (d *pci) postStop() error {
 			SlotName: v["last_state.pci.slot.name"],
 		}
 
-		err := pcidev.DeviceDriverOverride(pciDev, v["last_state.pci.driver"])
+		// Put the BARs back to their original sizes while the device is unbound.
+		err := rebarRestore(pciDev, v)
+		if err != nil {
+			return err
+		}
+
+		err = pcidev.DeviceDriverOverride(pciDev, v["last_state.pci.driver"])
 		if err != nil {
 			return err
 		}
