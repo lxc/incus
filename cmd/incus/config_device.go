@@ -12,6 +12,7 @@ import (
 	"github.com/lxc/incus/v7/cmd/incus/color"
 	u "github.com/lxc/incus/v7/cmd/incus/usage"
 	"github.com/lxc/incus/v7/internal/i18n"
+	"github.com/lxc/incus/v7/shared/api"
 	cli "github.com/lxc/incus/v7/shared/cmd"
 )
 
@@ -19,6 +20,12 @@ type cmdConfigDevice struct {
 	global  *cmdGlobal
 	config  *cmdConfig
 	profile *cmdProfile
+}
+
+type configDeviceRowData struct {
+	name      string
+	devType   string
+	inherited bool
 }
 
 func (c *cmdConfigDevice) formatUsage(usage u.Usage) u.Usage {
@@ -44,7 +51,7 @@ func (c *cmdConfigDevice) command() *cobra.Command {
 	cmd.AddCommand(configDeviceGetCmd.command())
 
 	// List
-	configDeviceListCmd := cmdConfigDeviceList{global: c.global, config: c.config, profile: c.profile, configDevice: c}
+	configDeviceListCmd := cmdConfigDeviceList{global: c.global, config: c.config, profile: c.profile, configDevice: c, lister: &listable[configDeviceRowData]{global: c.global}}
 	cmd.AddCommand(configDeviceListCmd.command())
 
 	// Override
@@ -290,17 +297,41 @@ type cmdConfigDeviceList struct {
 	config       *cmdConfig
 	configDevice *cmdConfigDevice
 	profile      *cmdProfile
+	lister       *listable[configDeviceRowData]
+
+	flagExpanded bool
 }
 
 var cmdConfigDeviceListUsage = u.Usage{}
+
+var expandedToggle = columnToggle{
+	column:    'i',
+	condition: i18n.G("with --expanded"),
+}
 
 func (c *cmdConfigDeviceList) command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("list", c.configDevice.formatUsage(cmdConfigDeviceListUsage)...)
 	cmd.Aliases = []string{"ls"}
-	cmd.Short = i18n.G("List instance devices")
-	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`List instance devices`))
 
+	columns := map[rune]listColumn[configDeviceRowData]{
+		'n': {i18n.G("NAME"), i18n.G("Name"), func(r configDeviceRowData) string { return r.name }},
+		't': {i18n.G("TYPE"), i18n.G("Type"), func(r configDeviceRowData) string { return r.devType }},
+	}
+
+	var toggles []columnToggle
+	if c.profile == nil {
+		cmd.Short = i18n.G("List instance devices")
+		cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G("List instance devices"))
+		columns['i'] = listColumn[configDeviceRowData]{i18n.G("INHERITED"), i18n.G("Whether the device is inherited"), func(r configDeviceRowData) string { return yesNo(r.inherited) }}
+		cli.AddBoolFlag(cmd.Flags(), &c.flagExpanded, "expanded|e", i18n.G("Access the expanded configuration"))
+		toggles = append(toggles, expandedToggle)
+	} else {
+		cmd.Short = i18n.G("List profile devices")
+		cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G("List profile devices"))
+	}
+
+	c.lister.init(cmd, "nt", columns, toggles...)
 	cmd.RunE = c.run
 
 	cmd.ValidArgsFunction = func(_ *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
@@ -327,16 +358,23 @@ func (c *cmdConfigDeviceList) run(cmd *cobra.Command, args []string) error {
 	d := parsed[0].RemoteServer
 	objectName := parsed[0].RemoteObject.String
 
+	err = c.lister.toggle(expandedToggle, c.flagExpanded)
+	if err != nil {
+		return err
+	}
+
 	// List the devices
-	var devices []string
+	var devices []configDeviceRowData
+	var rawDevices api.DevicesMap
 	if c.profile != nil {
 		profile, _, err := d.GetProfile(objectName)
 		if err != nil {
 			return err
 		}
 
-		for k := range profile.Devices {
-			devices = append(devices, k)
+		rawDevices = profile.Devices
+		for k, dev := range rawDevices {
+			devices = append(devices, configDeviceRowData{name: k, devType: dev["type"]})
 		}
 	} else {
 		inst, _, err := d.GetInstance(objectName)
@@ -344,14 +382,18 @@ func (c *cmdConfigDeviceList) run(cmd *cobra.Command, args []string) error {
 			return err
 		}
 
-		for k := range inst.Devices {
-			devices = append(devices, k)
+		rawDevices = inst.Devices
+		if c.flagExpanded {
+			rawDevices = inst.ExpandedDevices
+		}
+
+		for k, dev := range rawDevices {
+			_, ok := inst.Devices[k]
+			devices = append(devices, configDeviceRowData{name: k, devType: dev["type"], inherited: !ok})
 		}
 	}
 
-	fmt.Printf("%s\n", strings.Join(devices, "\n"))
-
-	return nil
+	return c.lister.run(devices, rawDevices)
 }
 
 // Override.
