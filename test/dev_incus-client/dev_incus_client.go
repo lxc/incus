@@ -204,6 +204,40 @@ func main() {
 			os.Exit(0)
 		}
 
+		if os.Args[1] == "image-export" {
+			url := fmt.Sprintf("http://meshuggah-rocks/1.0/images/%s/export?project=%s", os.Args[2], os.Args[3])
+
+			raw, err := c.Get(url)
+			if err != nil {
+				fmt.Println(err)
+				os.Exit(1)
+			}
+
+			defer func() { _ = raw.Body.Close() }()
+
+			fmt.Printf("status=%d\n", raw.StatusCode)
+			os.Exit(0)
+		}
+
+		if os.Args[1] == "meta-data" {
+			raw, err := c.Get("http://meshuggah-rocks/1.0/meta-data")
+			if err != nil {
+				fmt.Println(err)
+				os.Exit(1)
+			}
+
+			defer func() { _ = raw.Body.Close() }()
+
+			body, err := io.ReadAll(raw.Body)
+			if err != nil {
+				fmt.Println(err)
+				os.Exit(1)
+			}
+
+			fmt.Printf("%s", body)
+			os.Exit(0)
+		}
+
 		var path string
 		if os.Args[1] == "devices" {
 			path = "devices"

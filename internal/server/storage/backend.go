@@ -923,8 +923,9 @@ func (b *backend) CreateInstanceFromBackup(srcBackup backup.Info, srcData io.Rea
 			return nil, nil, err
 		}
 
+		// The volume is removed by the revert too, so the symlink can't be left in place.
 		importRevert.Add(func() {
-			_ = b.removeInstanceSnapshotSymlinkIfUnused(instanceType, srcBackup.Project, srcBackup.Name)
+			_ = os.Remove(InstancePath(instanceType, srcBackup.Project, srcBackup.Name, true))
 		})
 	}
 
@@ -2147,8 +2148,6 @@ func (b *backend) CreateInstanceFromImage(inst instance.Instance, fingerprint st
 		return err
 	}
 
-	// Leave reverting on failure to caller, they are expected to call DeleteInstance().
-
 	// If the driver doesn't support optimized image volumes or the optimized image volume should not be used,
 	// create a new empty volume and populate it with the contents of the image archive.
 	if !useOptimizedImage {
@@ -2216,10 +2215,14 @@ func (b *backend) CreateInstanceFromImage(inst instance.Instance, fingerprint st
 		}
 	}
 
+	reverter.Add(func() { _ = b.driver.DeleteVolume(vol, op) })
+
 	err = b.ensureInstanceSymlink(inst.Type(), inst.Project().Name, inst.Name(), vol.MountPath())
 	if err != nil {
 		return err
 	}
+
+	reverter.Add(func() { _ = b.removeInstanceSymlink(inst.Type(), inst.Project().Name, inst.Name()) })
 
 	// Strip unsafe symlinks introduced by the image.
 	err = b.stripInstanceMetadata(inst, op)
