@@ -668,9 +668,9 @@ func storagePoolBucketsPost(d *Daemon, r *http.Request) response.Response {
 		return createStoragePoolBucketFromBackup(s, r, request.ProjectParam(r), bucketProjectName, r.Body, poolName, r.Header.Get("X-Incus-name"))
 	}
 
-	// Parse the request into a record.
+	// Parse the request into a record, applying the usual size limit to the JSON body.
 	req := api.StorageBucketsPost{}
-	err = json.NewDecoder(r.Body).Decode(&req)
+	err = json.NewDecoder(http.MaxBytesReader(nil, r.Body, 1024*1024)).Decode(&req)
 	if err != nil {
 		return response.BadRequest(err)
 	}

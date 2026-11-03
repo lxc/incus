@@ -781,8 +781,8 @@ func storagePoolVolumesPost(d *Daemon, r *http.Request) response.Response {
 
 	req := api.StorageVolumesPost{}
 
-	// Parse the request.
-	err = json.NewDecoder(r.Body).Decode(&req)
+	// Parse the request, applying the usual size limit to the JSON body.
+	err = json.NewDecoder(http.MaxBytesReader(nil, r.Body, 1024*1024)).Decode(&req)
 	if err != nil {
 		return response.BadRequest(err)
 	}
