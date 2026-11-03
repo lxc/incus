@@ -1853,6 +1853,15 @@ func storageVolumePostClusteringMigrate(s *state.State, r *http.Request, srcPool
 
 // storagePoolVolumeTypePostMigration handles volume migration type POST requests.
 func storagePoolVolumeTypePostMigration(s *state.State, r *http.Request, requestProjectName string, projectName string, poolName string, volumeName string, req api.StorageVolumePost) response.Response {
+	if req.Target != nil {
+		err := s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
+			return project.AllowMigrationTarget(tx, requestProjectName)
+		})
+		if err != nil {
+			return response.SmartError(err)
+		}
+	}
+
 	ws, err := newStorageMigrationSource(req.VolumeOnly, req.Target)
 	if err != nil {
 		return response.InternalError(err)

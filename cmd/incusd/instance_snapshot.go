@@ -751,6 +751,15 @@ func snapshotPost(s *state.State, r *http.Request, snapInst instance.Instance) r
 			}
 		}
 
+		if req.Target != nil {
+			err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
+				return project.AllowMigrationTarget(tx, snapInst.Project().Name)
+			})
+			if err != nil {
+				return response.SmartError(err)
+			}
+		}
+
 		ws, err := newMigrationSource(snapInst, reqNew.Live, true, false, "", "", nil, nil, req.Target)
 		if err != nil {
 			return response.SmartError(err)
