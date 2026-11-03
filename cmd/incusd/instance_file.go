@@ -586,10 +586,14 @@ func fileSFTPPost(client *sftp.Client, path string, r *http.Request, onSuccess f
 		onSuccess()
 		return response.EmptySyncResponse
 	case "symlink":
-		// Figure out target.
-		target, err := io.ReadAll(r.Body)
+		// Figure out target, bounded to the maximum symlink length.
+		target, err := io.ReadAll(io.LimitReader(r.Body, 4097))
 		if err != nil {
 			return response.InternalError(err)
+		}
+
+		if len(target) > 4096 {
+			return response.BadRequest(errors.New("Symlink target is too long"))
 		}
 
 		// Check if already setup.

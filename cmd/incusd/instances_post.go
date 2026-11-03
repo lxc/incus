@@ -1327,9 +1327,9 @@ func instancesPost(d *Daemon, r *http.Request) response.Response {
 		return createFromBackup(s, r, targetProjectName, r.Body, r.Header.Get("X-Incus-pool"), r.Header.Get("X-Incus-name"), r.Header.Get("X-Incus-config"), r.Header.Get("X-Incus-devices"))
 	}
 
-	// Parse the request
+	// Parse the request, applying the usual size limit to the JSON body.
 	req := api.InstancesPost{}
-	err := json.NewDecoder(r.Body).Decode(&req)
+	err := json.NewDecoder(http.MaxBytesReader(nil, r.Body, 1024*1024)).Decode(&req)
 	if err != nil {
 		return response.BadRequest(err)
 	}
