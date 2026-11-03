@@ -14,6 +14,9 @@ import (
 // the chunk and trailer string-to-sign as the canonical-headers slot.
 var emptyStringSHA256 = sha256Hex(nil)
 
+// maxChunkSize bounds a single chunk, which has to be buffered to verify its signature.
+const maxChunkSize = 16 * 1024 * 1024
+
 // chunkSigningContext carries the data needed to verify per-chunk SigV4
 // signatures for STREAMING-AWS4-HMAC-SHA256-PAYLOAD[-TRAILER] payloads.
 type chunkSigningContext struct {
@@ -55,14 +58,19 @@ type chunkedReader struct {
 	// finished is set once the terminating zero-length chunk (and trailer,
 	// if any) has been fully consumed.
 	finished bool
+
+	// remaining is the declared decoded length still to be read, or -1 when unknown.
+	remaining int64
 }
 
 // newChunkedReader wraps r in an aws-chunked decoder. If sign is non-nil,
-// per-chunk signatures are verified.
-func newChunkedReader(r io.Reader, sign *chunkSigningContext) *chunkedReader {
+// per-chunk signatures are verified. A non-negative decodedLength caps the
+// total payload at the declared decoded content length.
+func newChunkedReader(r io.Reader, sign *chunkSigningContext, decodedLength int64) *chunkedReader {
 	return &chunkedReader{
-		br:   bufio.NewReader(r),
-		sign: sign,
+		br:        bufio.NewReader(r),
+		sign:      sign,
+		remaining: decodedLength,
 	}
 }
 
@@ -108,7 +116,19 @@ func (c *chunkedReader) nextChunk() error {
 		return fmt.Errorf("invalid chunk size %q", sizeField)
 	}
 
+	if size > maxChunkSize {
+		return fmt.Errorf("chunk size %d exceeds the maximum of %d", size, maxChunkSize)
+	}
+
+	if c.remaining >= 0 && size > c.remaining {
+		return errors.New("chunk size exceeds the declared decoded content length")
+	}
+
 	if size > 0 {
+		if c.remaining >= 0 {
+			c.remaining -= size
+		}
+
 		if cap(c.chunk) < int(size) {
 			c.chunk = make([]byte, size)
 		} else {
