@@ -141,6 +141,19 @@ If you do not specify an instance name, the original name of the exported instan
 If an instance with that name already (or still) exists in the specified storage pool, the command returns an error.
 In that case, either delete the existing instance before importing the backup or specify a different instance name for the import.
 
+The export file contains the full configuration of the instance, including its devices.
+When importing on a different server, some of that configuration might not be valid anymore.
+A common example is a NIC device with a static IP address that is not part of the subnet of the local network, which fails with an error like:
+
+    Error: Failed importing backup: Failed creating instance record: Failed initializing instance: Invalid devices: Device validation failed for "eth0": Device IP address "10.80.1.100" not within network "incusbr0" subnet
+
+Use the `--config` (`-c`) and `--device` (`-d`) flags to override configuration keys and device options during the import.
+For example, to set new static addresses on the `eth0` device:
+
+    incus import <file_path> -d eth0,ipv4.address=<new_ipv4_address> -d eth0,ipv6.address=<new_ipv6_address>
+
+Alternatively, remove the key entirely (`-d eth0,ipv4.address=`) to let the instance get an address from the local network instead.
+
 (instances-backup-copy)=
 ## Copy an instance to a backup server
 
