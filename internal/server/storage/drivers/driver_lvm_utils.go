@@ -15,7 +15,6 @@ import (
 	"strings"
 	"time"
 
-	internalInstance "github.com/lxc/incus/v7/internal/instance"
 	"github.com/lxc/incus/v7/internal/linux"
 	"github.com/lxc/incus/v7/internal/server/locking"
 	"github.com/lxc/incus/v7/internal/server/operations"
@@ -765,7 +764,7 @@ func (d *lvm) renameLogicalVolume(volDevPath string, newVolDevPath string) error
 // lvmValidateName refuses logical volume names whose device-mapper name would exceed the kernel limit.
 func lvmValidateName(vgName string, lvName string) error {
 	// DM_NAME_LEN is 128 bytes including the terminator and every "-" is escaped as "--".
-	dmName := fmt.Sprintf("%s-%s", strings.ReplaceAll(vgName, "-", "--"), strings.ReplaceAll(lvName, "-", "--"))
+	dmName := fmt.Sprintf("%s-%s", linux.PathNameEncode(vgName), linux.PathNameEncode(lvName))
 	if len(dmName) > 127 {
 		return fmt.Errorf("Logical volume name %q is too long for device-mapper", lvName)
 	}
@@ -791,7 +790,7 @@ func (d *lvm) lvmFullVolumeName(volType VolumeType, contentType ContentType, vol
 	}
 
 	// Escape the volume name to a name suitable for using as a logical volume.
-	lvName := strings.ReplaceAll(strings.ReplaceAll(volName, "-", lvmEscapedHyphen), internalInstance.SnapshotDelimiter, lvmSnapshotSeparator)
+	lvName := linux.PathNameEncode(volName)
 
 	return fmt.Sprintf("%s_%s%s", volType, lvName, contentTypeSuffix)
 }
