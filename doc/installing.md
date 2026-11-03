@@ -439,8 +439,8 @@ The Incus release tarballs bundle a complete dependency tree as well as a
 local copy of `libraft` and `libcowsql` for Incus' database setup.
 
 ```bash
-tar zxvf incus-6.0.0.tar.gz
-cd incus-6.0.0
+tar zxvf incus-7.0.0.tar.gz
+cd incus-7.0.0
 ```
 
 This will unpack the release tarball and place you inside of the source tree.
