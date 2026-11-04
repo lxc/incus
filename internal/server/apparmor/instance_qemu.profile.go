@@ -88,6 +88,7 @@ profile "{{ .name }}" flags=(attach_disconnected,mediate_deleted) {
   {{ .logPath }}/** rwk,
   {{ .runPath }}/** rwk,
   {{ .path }}/** rwk,
+  {{ .imageMetadataPath }}/** rwk,
   {{ .devicesPath }}/** rwk,
   /tmp/incus_screenshot_{{ .id }} rwk,
 
