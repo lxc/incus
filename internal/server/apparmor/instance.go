@@ -204,6 +204,14 @@ func instanceProfile(sysOS *sys.OS, inst instance, extraBinaries []string) (stri
 			return "", err
 		}
 
+		// The metadata images live outside of the instance volume while running.
+		varPath, err := filepath.EvalSymlinks(internalUtil.VarPath())
+		if err != nil {
+			return "", err
+		}
+
+		imageMetadataPath := filepath.Join(varPath, "virtual-machines-bitmaps", project.Instance(inst.Project().Name, inst.Name()))
+
 		var edk2Paths []string
 
 		edk2Path, err := edk2.GetenvEdk2Path()
@@ -280,20 +288,21 @@ func instanceProfile(sysOS *sys.OS, inst instance, extraBinaries []string) (stri
 		}
 
 		err = qemuProfileTpl.Execute(sb, map[string]any{
-			"devicesPath":      inst.DevicesPath(),
-			"gpuNativeContext": gpuNativeContext,
-			"exePath":          execPath,
-			"extra_config":     extraConfig,
-			"extra_binaries":   extraBinaries,
-			"libraryPath":      libraryPaths(),
-			"logPath":          logPath,
-			"runPath":          inst.RunPath(),
-			"id":               inst.ID(),
-			"name":             InstanceProfileName(inst),
-			"path":             path,
-			"raw":              rawContent.String(),
-			"edk2Paths":        edk2Paths,
-			"agentPath":        agentPath,
+			"devicesPath":       inst.DevicesPath(),
+			"gpuNativeContext":  gpuNativeContext,
+			"exePath":           execPath,
+			"extra_config":      extraConfig,
+			"extra_binaries":    extraBinaries,
+			"libraryPath":       libraryPaths(),
+			"logPath":           logPath,
+			"runPath":           inst.RunPath(),
+			"id":                inst.ID(),
+			"imageMetadataPath": imageMetadataPath,
+			"name":              InstanceProfileName(inst),
+			"path":              path,
+			"raw":               rawContent.String(),
+			"edk2Paths":         edk2Paths,
+			"agentPath":         agentPath,
 		})
 		if err != nil {
 			return "", err
