@@ -44,7 +44,7 @@ func (c *cmdSnapshot) command() *cobra.Command {
 	cmd.AddCommand(snapshotDeleteCmd.command())
 
 	// List.
-	snapshotListCmd := cmdSnapshotList{global: c.global, snapshot: c}
+	snapshotListCmd := cmdSnapshotList{global: c.global, snapshot: c, lister: &listable[api.InstanceSnapshot]{global: c.global}}
 	cmd.AddCommand(snapshotListCmd.command())
 
 	// Rename.
@@ -301,51 +301,24 @@ func (c *cmdSnapshotDelete) doDelete(d incus.InstanceServer, instName string, na
 type cmdSnapshotList struct {
 	global   *cmdGlobal
 	snapshot *cmdSnapshot
-
-	flagFormat  string
-	flagColumns string
+	lister   *listable[api.InstanceSnapshot]
 }
 
 var cmdSnapshotListUsage = u.Usage{u.Instance.Remote()}
-
-type snapshotColumn struct {
-	Name string
-	Data func(api.InstanceSnapshot) string
-}
 
 func (c *cmdSnapshotList) command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("list", cmdSnapshotListUsage...)
 	cmd.Aliases = []string{"ls"}
 	cmd.Short = i18n.G("List instance snapshots")
-	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
-		`List instance snapshots
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G("List instance snapshots"))
 
-Default column layout: nTEs
-
-== Columns ==
-The -c option takes a comma separated list of arguments that control
-which snapshots attributes to output when displaying in table or csv
-format.
-
-Column arguments are either pre-defined shorthand chars (see below),
-or (extended) config keys.
-
-Commas between consecutive shorthand chars are optional.
-
-Pre-defined column shorthand chars:
-  n - Name
-  T - Taken At
-  E - Expires At
-  s - Stateful`,
-	))
-
-	cli.AddStringFlag(cmd.Flags(), &c.flagFormat, "format|f", c.global.defaultListFormat(), "", i18n.G(`Format (csv|json|table|yaml|compact|markdown), use suffix ",noheader" to disable headers and ",header" to enable it if missing, e.g. csv,header`))
-	cli.AddStringFlag(cmd.Flags(), &c.flagColumns, "columns|c", defaultSnapshotColumns, "", i18n.G("Columns"))
-
-	cmd.PreRunE = func(cmd *cobra.Command, _ []string) error {
-		return cli.ValidateFlagFormatForListOutput(cmd.Flag("format").Value.String())
-	}
+	c.lister.init(cmd, "nTEs", map[rune]listColumn[api.InstanceSnapshot]{
+		'n': {i18n.G("NAME"), i18n.G("Name"), c.nameColumnData},
+		'T': {i18n.G("TAKEN"), i18n.G("Creation date"), c.takenAtColumnData},
+		'E': {i18n.G("EXPIRES"), i18n.G("Expiration date"), c.expiresAtColumnData},
+		's': {i18n.G("STATEFUL"), i18n.G("Whether the snapshot is stateful"), c.statefulColumnData},
+	})
 
 	cmd.RunE = c.run
 
@@ -358,37 +331,6 @@ Pre-defined column shorthand chars:
 	}
 
 	return cmd
-}
-
-const defaultSnapshotColumns = "nTEs"
-
-func (c *cmdSnapshotList) parseColumns() ([]snapshotColumn, error) {
-	columnsShorthandMap := map[rune]snapshotColumn{
-		'n': {i18n.G("NAME"), c.nameColumnData},
-		'T': {i18n.G("TAKEN AT"), c.takenAtColumnData},
-		'E': {i18n.G("EXPIRES AT"), c.expiresAtColumnData},
-		's': {i18n.G("STATEFUL"), c.statefulColumnData},
-	}
-
-	columnList := strings.Split(c.flagColumns, ",")
-	columns := []snapshotColumn{}
-
-	for _, columnEntry := range columnList {
-		if columnEntry == "" {
-			return nil, fmt.Errorf(i18n.G("Empty column entry (redundant, leading or trailing command) in '%s'"), c.flagColumns)
-		}
-
-		for _, columnRune := range columnEntry {
-			column, ok := columnsShorthandMap[columnRune]
-			if !ok {
-				return nil, fmt.Errorf(i18n.G("Unknown column shorthand char '%c' in '%s'"), columnRune, columnEntry)
-			}
-
-			columns = append(columns, column)
-		}
-	}
-
-	return columns, nil
 }
 
 func (c *cmdSnapshotList) nameColumnData(snapshot api.InstanceSnapshot) string {
@@ -412,12 +354,7 @@ func (c *cmdSnapshotList) expiresAtColumnData(snapshot api.InstanceSnapshot) str
 }
 
 func (c *cmdSnapshotList) statefulColumnData(snapshot api.InstanceSnapshot) string {
-	strStateful := "NO"
-	if snapshot.Stateful {
-		strStateful = "YES"
-	}
-
-	return strStateful
+	return yesNo(snapshot.Stateful)
 }
 
 func (c *cmdSnapshotList) run(cmd *cobra.Command, args []string) error {
@@ -434,28 +371,7 @@ func (c *cmdSnapshotList) run(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	// Parse column flags.
-	columns, err := c.parseColumns()
-	if err != nil {
-		return err
-	}
-
-	data := [][]string{}
-	for _, snap := range snapshots {
-		line := []string{}
-		for _, column := range columns {
-			line = append(line, column.Data(snap))
-		}
-
-		data = append(data, line)
-	}
-
-	header := []string{}
-	for _, column := range columns {
-		header = append(header, column.Name)
-	}
-
-	return cli.RenderTable(os.Stdout, c.flagFormat, header, data, snapshots)
+	return c.lister.run(snapshots)
 }
 
 // Rename.
