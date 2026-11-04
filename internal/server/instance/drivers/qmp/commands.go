@@ -1485,6 +1485,44 @@ func (m *Monitor) BlockNodeSize(nodeName string) (int64, error) {
 	return 0, fmt.Errorf("Block node %q not found", nodeName)
 }
 
+// BlockNodeFile describes the file behind a block node.
+type BlockNodeFile struct {
+	VirtualSize int64
+	ClusterSize int64
+	ExtendedL2  bool
+}
+
+// GetBlockNodeFile returns the file details of the given block node.
+func (m *Monitor) GetBlockNodeFile(nodeName string) (*BlockNodeFile, error) {
+	var resp struct {
+		Return []struct {
+			NodeName string `json:"node-name"`
+			Image    struct {
+				VirtualSize    int64 `json:"virtual-size"`
+				ClusterSize    int64 `json:"cluster-size"`
+				FormatSpecific struct {
+					Data struct {
+						ExtendedL2 bool `json:"extended-l2"`
+					} `json:"data"`
+				} `json:"format-specific"`
+			} `json:"image"`
+		} `json:"return"`
+	}
+
+	err := m.Run("query-named-block-nodes", nil, &resp)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, node := range resp.Return {
+		if node.NodeName == nodeName {
+			return &BlockNodeFile{VirtualSize: node.Image.VirtualSize, ClusterSize: node.Image.ClusterSize, ExtendedL2: node.Image.FormatSpecific.Data.ExtendedL2}, nil
+		}
+	}
+
+	return nil, fmt.Errorf("Block node %q not found", nodeName)
+}
+
 // BlockNodeDirtyBitmaps returns the dirty bitmaps of the given block node.
 func (m *Monitor) BlockNodeDirtyBitmaps(nodeName string) ([]BlockDirtyInfo, error) {
 	var resp struct {
