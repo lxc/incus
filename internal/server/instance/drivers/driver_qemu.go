@@ -6608,12 +6608,21 @@ func (d *qemu) addDriveConfig(qemuDev map[string]any, bootIndexes map[string]int
 					qemuDev["discard_granularity"] = imgInfo.ClusterSize
 				}
 
+				l2CacheSize, err := d.qcow2L2CacheSize(int64(imgInfo.VirtualSize), int64(imgInfo.ClusterSize), imgInfo.FormatSpecific.Data.ExtendedL2)
+				if err != nil {
+					return err
+				}
+
 				blockDev = map[string]any{
 					"driver":    "qcow2",
 					"discard":   "unmap", // Forward as an unmap request. This is the same as `discard=on` in the qemu config file.
 					"node-name": d.blockNodeName(escapedDeviceName),
 					"read-only": false,
 					"file":      blockDevFile,
+				}
+
+				if l2CacheSize > 0 {
+					blockDev["l2-cache-size"] = l2CacheSize
 				}
 
 				// Images stored directly on a block device must stay within their fully allocated size.
@@ -9920,6 +9929,11 @@ func (d *qemu) prepareEphemeralSnapshot(monitor *qmp.Monitor, diskName string, d
 
 	defer logger.WarnOnErrorExcept(func() error { return os.Remove(snapshotFile) }, []error{fs.ErrNotExist}, "Failed to remove snapshot file")
 
+	l2CacheSize, err := d.qcow2L2CacheSizeFromFile(snapshotFile)
+	if err != nil {
+		return "", "", nil, err
+	}
+
 	// Pass the snapshot file to the running QEMU process.
 	snapFile, err := os.OpenFile(snapshotFile, unix.O_RDWR, 0)
 	if err != nil {
@@ -9951,6 +9965,10 @@ func (d *qemu) prepareEphemeralSnapshot(monitor *qmp.Monitor, diskName string, d
 			"driver":   "file",
 			"filename": fmt.Sprintf("/dev/fdset/%d", info.ID),
 		},
+	}
+
+	if l2CacheSize > 0 {
+		blockDev["l2-cache-size"] = l2CacheSize
 	}
 
 	if backed {
@@ -13524,6 +13542,11 @@ func (d *qemu) CreateQcow2Snapshot(devPath string, devName string, snapshotName 
 
 	reverter.Add(func() { _ = monitor.RemoveFDFromFDSet(nextOverlayName) })
 
+	l2CacheSize, err := d.qcow2L2CacheSizeFromFile(devPath)
+	if err != nil {
+		return err
+	}
+
 	blockDev := map[string]any{
 		"driver":           "qcow2",
 		"discard":          "unmap", // Forward as an unmap request. This is the same as `discard=on` in the qemu config file.
@@ -13539,6 +13562,10 @@ func (d *qemu) CreateQcow2Snapshot(devPath string, devName string, snapshotName 
 				"no-flush": protocol.NoFlush,
 			},
 		},
+	}
+
+	if l2CacheSize > 0 {
+		blockDev["l2-cache-size"] = l2CacheSize
 	}
 
 	// Add overlay block dev.
@@ -13630,8 +13657,18 @@ func (d *qemu) DeleteQcow2Snapshot(devName string, snapshotIndex int, backingFil
 			backing = blockDevs[snapshotIndex-1]
 		}
 
+		file, err := monitor.GetBlockNodeFile(snapDevName)
+		if err != nil {
+			return err
+		}
+
+		l2CacheSize, err := d.qcow2L2CacheSize(file.VirtualSize, file.ClusterSize, file.ExtendedL2)
+		if err != nil {
+			return err
+		}
+
 		// Options left out are reset, so repeat the ones the node was added with.
-		err = monitor.BlockDevReopen([]map[string]any{{
+		options := map[string]any{
 			"driver":           "qcow2",
 			"node-name":        snapDevName,
 			"read-only":        false,
@@ -13639,7 +13676,13 @@ func (d *qemu) DeleteQcow2Snapshot(devName string, snapshotIndex int, backingFil
 			"discard-no-unref": true,
 			"file":             protocol.NodeName,
 			"backing":          backing,
-		}})
+		}
+
+		if l2CacheSize > 0 {
+			options["l2-cache-size"] = l2CacheSize
+		}
+
+		err = monitor.BlockDevReopen([]map[string]any{options})
 		if err != nil {
 			return fmt.Errorf("Failed flushing commit base: %w", err)
 		}
@@ -13771,6 +13814,52 @@ func (d *qemu) isQCOW2(devPath string) (bool, error) {
 	return imgInfo.Format == storageDrivers.BlockVolumeTypeQcow2, nil
 }
 
+// qcow2L2CacheSize returns the qcow2 L2 cache size keeping a qcow2 file fully mapped, capped to a share of the memory limit.
+func qcow2L2CacheSize(virtualSize int64, clusterSize int64, extendedL2 bool, memoryLimit int64) int64 {
+	if virtualSize <= 0 || clusterSize <= 0 {
+		return 0
+	}
+
+	// Each cluster takes an 8 byte L2 entry, 16 bytes with extended L2 entries.
+	entrySize := int64(8)
+	if extendedL2 {
+		entrySize = 16
+	}
+
+	// The cache is made of whole L2 tables, each one cluster in size.
+	needed := roundUpToBlockSize(((virtualSize+clusterSize-1)/clusterSize)*entrySize, clusterSize)
+
+	// Never go below QEMU's own 32MiB default, otherwise allow up to 1/32 of the memory limit per file.
+	limit := max(int64(32*1024*1024), memoryLimit/32)
+
+	return min(needed, limit)
+}
+
+// qcow2L2CacheSize returns the L2 cache size to open a qcow2 file of this instance with.
+func (d *qemu) qcow2L2CacheSize(virtualSize int64, clusterSize int64, extendedL2 bool) (int64, error) {
+	memoryLimitStr := qemudefault.MemSize
+	if d.expandedConfig["limits.memory"] != "" {
+		memoryLimitStr = d.expandedConfig["limits.memory"]
+	}
+
+	memoryLimit, err := ParseMemoryStr(memoryLimitStr)
+	if err != nil {
+		return 0, fmt.Errorf("Failed parsing memory limit: %w", err)
+	}
+
+	return qcow2L2CacheSize(virtualSize, clusterSize, extendedL2, memoryLimit), nil
+}
+
+// qcow2L2CacheSizeFromFile returns the L2 cache size to open the qcow2 file at the given path with.
+func (d *qemu) qcow2L2CacheSizeFromFile(path string) (int64, error) {
+	imgInfo, err := storageDrivers.Qcow2Info(path)
+	if err != nil {
+		return 0, fmt.Errorf("Failed getting qcow2 info for %q: %w", path, err)
+	}
+
+	return d.qcow2L2CacheSize(int64(imgInfo.VirtualSize), int64(imgInfo.ClusterSize), imgInfo.FormatSpecific.Data.ExtendedL2)
+}
+
 func (d *qemu) qcow2BlockDev(m *qmp.Monitor, nodeName string, aioMode string, directCache bool, noFlushCache bool, permissions int, readonly bool, backingPaths []string, iter int) (string, error) {
 	devName := backingPaths[0]
 	backingNodeName := qcow2BackingName(nodeName, iter)
@@ -13785,6 +13874,11 @@ func (d *qemu) qcow2BlockDev(m *qmp.Monitor, nodeName string, aioMode string, di
 	info, err := m.SendFileWithFDSet(backingNodeName, f, readonly)
 	if err != nil {
 		return "", fmt.Errorf("Failed sending file descriptor of %q for disk device %q: %w", f.Name(), devName, err)
+	}
+
+	l2CacheSize, err := d.qcow2L2CacheSizeFromFile(devName)
+	if err != nil {
+		return "", err
 	}
 
 	blockDev := map[string]any{
@@ -13802,6 +13896,10 @@ func (d *qemu) qcow2BlockDev(m *qmp.Monitor, nodeName string, aioMode string, di
 				"no-flush": noFlushCache,
 			},
 		},
+	}
+
+	if l2CacheSize > 0 {
+		blockDev["l2-cache-size"] = l2CacheSize
 	}
 
 	// If there are any children, load block information about them.
