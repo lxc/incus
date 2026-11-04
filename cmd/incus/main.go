@@ -351,7 +351,7 @@ Custom commands can be defined through aliases, use "incus alias" to control tho
 	app.AddCommand(versionCmd.command())
 
 	// top sub-command
-	topCmd := cmdTop{global: &globalCmd}
+	topCmd := cmdTop{global: &globalCmd, lister: &listable[displayData]{global: &globalCmd}}
 	app.AddCommand(topCmd.command())
 
 	// warning sub-command
