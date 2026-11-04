@@ -7,13 +7,11 @@ import (
 	"net/url"
 	"os"
 	"path"
-	"strings"
 	"time"
 
 	"github.com/spf13/cobra"
 	"go.yaml.in/yaml/v4"
 
-	incus "github.com/lxc/incus/v7/client"
 	"github.com/lxc/incus/v7/cmd/incus/color"
 	u "github.com/lxc/incus/v7/cmd/incus/usage"
 	"github.com/lxc/incus/v7/internal/i18n"
@@ -44,7 +42,7 @@ func (c *cmdStorageVolumeSnapshot) command() *cobra.Command {
 	cmd.AddCommand(storageVolumeSnapshotDeleteCmd.command())
 
 	// List
-	storageVolumeSnapshotListCmd := cmdStorageVolumeSnapshotList{global: c.global, storage: c.storage, storageVolume: c.storageVolume, storageVolumeSnapshot: c}
+	storageVolumeSnapshotListCmd := cmdStorageVolumeSnapshotList{global: c.global, storage: c.storage, storageVolume: c.storageVolume, storageVolumeSnapshot: c, lister: &listable[api.StorageVolumeSnapshot]{global: c.global}}
 	cmd.AddCommand(storageVolumeSnapshotListCmd.command())
 
 	// Rename
@@ -306,12 +304,7 @@ type cmdStorageVolumeSnapshotList struct {
 	storage               *cmdStorage
 	storageVolume         *cmdStorageVolume
 	storageVolumeSnapshot *cmdStorageVolumeSnapshot
-
-	flagFormat      string
-	flagColumns     string
-	flagAllProjects bool
-
-	defaultColumns string
+	lister                *listable[api.StorageVolumeSnapshot]
 }
 
 var cmdStorageVolumeSnapshotListUsage = u.Usage{u.Pool.Remote(), u.MakePath(u.StorageVolumeType.Optional(), u.Volume)}
@@ -321,28 +314,13 @@ func (c *cmdStorageVolumeSnapshotList) command() *cobra.Command {
 	cmd.Use = cli.U("list", cmdStorageVolumeSnapshotListUsage...)
 	cmd.Aliases = []string{"ls"}
 	cmd.Short = i18n.G("List storage volume snapshots")
-	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`List storage volume snapshots`))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G("List storage volume snapshots"))
 
-	c.defaultColumns = "nTE"
-	cli.AddStringFlag(cmd.Flags(), &c.flagColumns, "columns|c", c.defaultColumns, "", i18n.G("Columns"))
-	cli.AddBoolFlag(cmd.Flags(), &c.flagAllProjects, "all-projects", i18n.G("All projects"))
-	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
-		`List storage volume snapshots
-
-	The -c option takes a (optionally comma-separated) list of arguments
-	that control which storage volume snapshot attributes to output
-	when displaying in table or csv format.
-
-	Column shorthand chars:
-		n - Name
-		T - Taken at
-		E - Expiry`,
-	))
-	cli.AddStringFlag(cmd.Flags(), &c.flagFormat, "format|f", c.global.defaultListFormat(), "", i18n.G(`Format (csv|json|table|yaml|compact|markdown), use suffix ",noheader" to disable headers and ",header" to enable it if missing, e.g. csv,header`))
-
-	cmd.PreRunE = func(cmd *cobra.Command, _ []string) error {
-		return cli.ValidateFlagFormatForListOutput(cmd.Flag("format").Value.String())
-	}
+	c.lister.init(cmd, "nTE", map[rune]listColumn[api.StorageVolumeSnapshot]{
+		'n': {i18n.G("NAME"), i18n.G("Name"), c.nameColumnData},
+		'T': {i18n.G("TAKEN"), i18n.G("Creation date"), c.takenAtColumnData},
+		'E': {i18n.G("EXPIRES"), i18n.G("Expiration date"), c.expiresAtColumnData},
+	})
 
 	cmd.RunE = c.run
 
@@ -378,70 +356,12 @@ func (c *cmdStorageVolumeSnapshotList) run(cmd *cobra.Command, args []string) er
 		return err
 	}
 
-	return c.listSnapshots(d, poolName, volType, volName)
-}
-
-func (c *cmdStorageVolumeSnapshotList) listSnapshots(d incus.InstanceServer, poolName string, volumeType string, volumeName string) error {
-	snapshots, err := d.GetStoragePoolVolumeSnapshots(poolName, volumeType, volumeName)
+	snapshots, err := d.GetStoragePoolVolumeSnapshots(poolName, volType, volName)
 	if err != nil {
 		return err
 	}
 
-	// Parse column flags.
-	columns, err := c.parseColumns()
-	if err != nil {
-		return err
-	}
-
-	data := [][]string{}
-	for _, snap := range snapshots {
-		line := []string{}
-		for _, column := range columns {
-			line = append(line, column.Data(snap))
-		}
-
-		data = append(data, line)
-	}
-
-	header := []string{}
-	for _, column := range columns {
-		header = append(header, column.Name)
-	}
-
-	return cli.RenderTable(os.Stdout, c.flagFormat, header, data, snapshots)
-}
-
-type storageVolumeSnapshotColumn struct {
-	Name string
-	Data func(api.StorageVolumeSnapshot) string
-}
-
-func (c *cmdStorageVolumeSnapshotList) parseColumns() ([]storageVolumeSnapshotColumn, error) {
-	columnsShorthandMap := map[rune]storageVolumeSnapshotColumn{
-		'n': {i18n.G("NAME"), c.nameColumnData},
-		'T': {i18n.G("TAKEN AT"), c.takenAtColumnData},
-		'E': {i18n.G("EXPIRES AT"), c.expiresAtColumnData},
-	}
-
-	columnList := strings.Split(c.flagColumns, ",")
-	columns := []storageVolumeSnapshotColumn{}
-
-	for _, columnEntry := range columnList {
-		if columnEntry == "" {
-			return nil, fmt.Errorf(i18n.G("Empty column entry (redundant, leading or trailing command) in '%s'"), c.flagColumns)
-		}
-
-		for _, columnRune := range columnEntry {
-			column, ok := columnsShorthandMap[columnRune]
-			if !ok {
-				return nil, fmt.Errorf(i18n.G("Unknown column shorthand char '%c' in '%s'"), columnRune, columnEntry)
-			}
-
-			columns = append(columns, column)
-		}
-	}
-
-	return columns, nil
+	return c.lister.run(snapshots)
 }
 
 func (c *cmdStorageVolumeSnapshotList) nameColumnData(snapshot api.StorageVolumeSnapshot) string {
