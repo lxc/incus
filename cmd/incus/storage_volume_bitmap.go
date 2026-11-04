@@ -235,11 +235,6 @@ func (c *cmdStorageVolumeBitmapList) command() *cobra.Command {
 	return cmd
 }
 
-type storageVolumeBitmapColumn struct {
-	Name string
-	Data func(api.StorageVolumeBitmap) string
-}
-
 func (c *cmdStorageVolumeBitmapList) run(cmd *cobra.Command, args []string) error {
 	parsed, err := c.global.Parse(cmdStorageVolumeBitmapListUsage, cmd, args)
 	if err != nil {

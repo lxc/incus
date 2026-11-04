@@ -3,8 +3,6 @@ package main
 import (
 	"errors"
 	"fmt"
-	"os"
-	"sort"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -16,11 +14,6 @@ import (
 	"github.com/lxc/incus/v7/shared/api"
 	cli "github.com/lxc/incus/v7/shared/cmd"
 )
-
-type warningColumn struct {
-	Name string
-	Data func(api.Warning) string
-}
 
 type cmdWarning struct {
 	global *cmdGlobal
@@ -34,7 +27,7 @@ func (c *cmdWarning) command() *cobra.Command {
 	cmd.Hidden = true
 
 	// List
-	warningListCmd := cmdWarningList{global: c.global, warning: c}
+	warningListCmd := cmdWarningList{global: c.global, warning: c, lister: &listable[api.Warning]{global: c.global}}
 	cmd.AddCommand(warningListCmd.command())
 
 	// Acknowledge
@@ -59,13 +52,10 @@ func (c *cmdWarning) command() *cobra.Command {
 type cmdWarningList struct {
 	global  *cmdGlobal
 	warning *cmdWarning
+	lister  *listable[api.Warning]
 
-	flagColumns string
-	flagFormat  string
-	flagAll     bool
+	flagAll bool
 }
-
-const defaultWarningColumns = "utSscpLl"
 
 var cmdWarningListUsage = u.Usage{u.RemoteColonOpt}
 
@@ -74,34 +64,20 @@ func (c *cmdWarningList) command() *cobra.Command {
 	cmd.Use = cli.U("list", cmdWarningListUsage...)
 	cmd.Aliases = []string{"ls"}
 	cmd.Short = i18n.G("List warnings")
-	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
-		`List warnings
-
-The -c option takes a (optionally comma-separated) list of arguments
-that control which warning attributes to output when displaying in table
-or csv format.
-
-Default column layout is: utSscpLl
-
-Column shorthand chars:
-    c - Count
-    l - Last seen
-    L - Location
-    f - First seen
-    p - Project
-    s - Severity
-    S - Status
-    u - UUID
-    t - Type`,
-	))
-
-	cli.AddStringFlag(cmd.Flags(), &c.flagColumns, "columns|c", defaultWarningColumns, "", i18n.G("Columns"))
-	cli.AddStringFlag(cmd.Flags(), &c.flagFormat, "format|f", c.global.defaultListFormat(), "", i18n.G(`Format (csv|json|table|yaml|compact|markdown), use suffix ",noheader" to disable headers and ",header" to enable it if missing, e.g. csv,header`))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G("List warnings"))
 	cli.AddBoolFlag(cmd.Flags(), &c.flagAll, "all|a", i18n.G("List all warnings"))
 
-	cmd.PreRunE = func(cmd *cobra.Command, _ []string) error {
-		return cli.ValidateFlagFormatForListOutput(cmd.Flag("format").Value.String())
-	}
+	c.lister.init(cmd, "utSscpl", map[rune]listColumn[api.Warning]{
+		'c': {i18n.G("COUNT"), i18n.G("Count"), c.countColumnData},
+		'f': {i18n.G("FIRST SEEN"), i18n.G("First seen date"), c.firstSeenColumnData},
+		'l': {i18n.G("LAST SEEN"), i18n.G("Last seen date"), c.lastSeenColumnData},
+		'p': {i18n.G("PROJECT"), i18n.G("Project"), c.projectColumnData},
+		's': {i18n.G("SEVERITY"), i18n.G("Severity"), c.severityColumnData},
+		'S': {i18n.G("STATE"), i18n.G("State"), c.stateColumnData},
+		't': {i18n.G("TYPE"), i18n.G("Type"), c.typeColumnData},
+		'u': {i18n.G("UUID"), i18n.G("UUID"), c.uuidColumnData},
+		'L': {i18n.G("LOCATION"), i18n.G("Location (cluster member)"), c.locationColumnData},
+	}, locationToggle)
 
 	cmd.RunE = c.run
 
@@ -116,6 +92,11 @@ func (c *cmdWarningList) run(cmd *cobra.Command, args []string) error {
 
 	d := parsed[0].RemoteServer
 
+	err = c.lister.toggle(locationToggle, d.IsClustered())
+	if err != nil {
+		return err
+	}
+
 	allWarnings, err := d.GetWarnings()
 	if err != nil {
 		return err
@@ -123,7 +104,7 @@ func (c *cmdWarningList) run(cmd *cobra.Command, args []string) error {
 
 	// Per default, acknowledged and resolved warnings are not shown. Using the --all flag will show
 	// those as well.
-	var warnings []api.Warning
+	warnings := []api.Warning{}
 
 	if c.flagAll {
 		warnings = allWarnings
@@ -137,36 +118,7 @@ func (c *cmdWarningList) run(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	// Process the columns
-	columns, err := c.parseColumns(d.IsClustered())
-	if err != nil {
-		return err
-	}
-
-	// Render the table
-	data := [][]string{}
-	for _, warning := range warnings {
-		row := []string{}
-		for _, column := range columns {
-			row = append(row, column.Data(warning))
-		}
-
-		data = append(data, row)
-	}
-
-	sort.Sort(cli.StringList(data))
-
-	rawData := make([]*api.Warning, len(warnings))
-	for i := range warnings {
-		rawData[i] = &warnings[i]
-	}
-
-	headers := []string{}
-	for _, column := range columns {
-		headers = append(headers, column.Name)
-	}
-
-	return cli.RenderTable(os.Stdout, c.flagFormat, headers, data, rawData)
+	return c.lister.run(warnings)
 }
 
 func (c *cmdWarningList) countColumnData(warning api.Warning) string {
@@ -203,50 +155,6 @@ func (c *cmdWarningList) typeColumnData(warning api.Warning) string {
 
 func (c *cmdWarningList) uuidColumnData(warning api.Warning) string {
 	return warning.UUID
-}
-
-func (c *cmdWarningList) parseColumns(clustered bool) ([]warningColumn, error) {
-	columnsShorthandMap := map[rune]warningColumn{
-		'c': {i18n.G("COUNT"), c.countColumnData},
-		'f': {i18n.G("FIRST SEEN"), c.firstSeenColumnData},
-		'l': {i18n.G("LAST SEEN"), c.lastSeenColumnData},
-		'p': {i18n.G("PROJECT"), c.projectColumnData},
-		's': {i18n.G("SEVERITY"), c.severityColumnData},
-		'S': {i18n.G("STATE"), c.stateColumnData},
-		't': {i18n.G("TYPE"), c.typeColumnData},
-		'u': {i18n.G("UUID"), c.uuidColumnData},
-	}
-
-	if clustered {
-		columnsShorthandMap['L'] = warningColumn{i18n.G("LOCATION"), c.locationColumnData}
-	} else {
-		if c.flagColumns != defaultWarningColumns {
-			if strings.ContainsAny(c.flagColumns, "L") {
-				return nil, errors.New(i18n.G("Can't specify column L when not clustered"))
-			}
-		}
-		c.flagColumns = strings.ReplaceAll(c.flagColumns, "L", "")
-	}
-
-	columnList := strings.Split(c.flagColumns, ",")
-
-	columns := []warningColumn{}
-	for _, columnEntry := range columnList {
-		if columnEntry == "" {
-			return nil, fmt.Errorf(i18n.G("Empty column entry (redundant, leading or trailing command) in '%s'"), c.flagColumns)
-		}
-
-		for _, columnRune := range columnEntry {
-			column, ok := columnsShorthandMap[columnRune]
-			if !ok {
-				return nil, fmt.Errorf(i18n.G("Unknown column shorthand char '%c' in '%s'"), columnRune, columnEntry)
-			}
-
-			columns = append(columns, column)
-		}
-	}
-
-	return columns, nil
 }
 
 // Acknowledge.
