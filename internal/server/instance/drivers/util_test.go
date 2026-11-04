@@ -79,3 +79,29 @@ func TestExtractTrailingNumber(t *testing.T) {
 		t.Errorf("unexpected error message: got %q, want %q", err.Error(), expectedErr)
 	}
 }
+
+// Test qcow2L2CacheSize.
+func TestQcow2L2CacheSize(t *testing.T) {
+	const cluster int64 = 64 * 1024
+	const mib int64 = 1024 * 1024
+	const gib int64 = 1024 * mib
+
+	// A small file only needs its own tables (8 bytes per cluster).
+	require.Equal(t, 100*gib/cluster*8, qcow2L2CacheSize(100*gib, cluster, false, gib))
+
+	// A large file on a small VM stays at QEMU's 32MiB default.
+	require.Equal(t, 32*mib, qcow2L2CacheSize(1024*gib, cluster, false, gib))
+
+	// The cap grows with the memory limit.
+	require.Equal(t, 64*mib, qcow2L2CacheSize(1024*gib, cluster, false, 2*gib))
+	require.Equal(t, 128*mib, qcow2L2CacheSize(1024*gib, cluster, false, 16*gib))
+
+	// Extended L2 entries take 16 bytes per cluster.
+	require.Equal(t, 256*mib, qcow2L2CacheSize(1024*gib, cluster, true, 16*gib))
+
+	// Sizes round up to whole L2 tables.
+	require.Equal(t, 3*cluster, qcow2L2CacheSize(gib+1, cluster, false, gib))
+
+	// Unknown geometry gives no size.
+	require.Equal(t, int64(0), qcow2L2CacheSize(gib, 0, false, gib))
+}
