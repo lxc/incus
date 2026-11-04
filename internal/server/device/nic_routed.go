@@ -701,77 +701,14 @@ func (d *nicRouted) Start() (*deviceConfig.RunConfig, error) {
 			}
 		}
 
-		getTables := func() []string {
-			// New plural form – honour exactly what the user gives.
-			v := d.config[fmt.Sprintf("%s.host_tables", keyPrefix)]
-			if v != "" {
-				return util.SplitNTrimSpace(v, ",", -1, true)
-			}
-
-			// Legacy – single key: include it plus 254.
-			v = d.config[fmt.Sprintf("%s.host_table", keyPrefix)]
-			if v != "" {
-				if v == "254" {
-					return []string{"254"} // user asked for main only
+		// Add neighbor proxy entries on the parent interface.
+		if d.effectiveParentName != "" {
+			for _, addrStr := range addresses {
+				address := net.ParseIP(addrStr)
+				if address == nil {
+					return nil, fmt.Errorf("Invalid address %q", addrStr)
 				}
 
-				return []string{v, "254"} // custom + main
-			}
-
-			// Default – main only.
-			return []string{"254"}
-		}
-
-		tables := getTables()
-
-		// Perform per-address host-side configuration (static routes and neighbor proxy entries).
-		for _, addrStr := range addresses {
-			// Apply host-side static routes to main routing table or VRF.
-
-			address := net.ParseIP(addrStr)
-			if address == nil {
-				return nil, fmt.Errorf("Invalid address %q", addrStr)
-			}
-
-			// If a VRF is set we still add a route into the VRF's own table (empty Table value).
-			if d.config["vrf"] != "" {
-				r := ip.Route{
-					DevName: saveData["host_name"],
-					Route: &net.IPNet{
-						IP:   address,
-						Mask: net.CIDRMask(subnetSize, subnetSize),
-					},
-					Table:  "",
-					Family: ipFamilyArg,
-					VRF:    d.config["vrf"],
-				}
-
-				err = r.Add()
-				if err != nil {
-					return nil, fmt.Errorf("Failed adding host route %q: %w", r.Route, err)
-				}
-			}
-
-			// Add routes to all requested tables.
-			for _, tbl := range tables {
-				r := ip.Route{
-					DevName: saveData["host_name"],
-					Route: &net.IPNet{
-						IP:   address,
-						Mask: net.CIDRMask(subnetSize, subnetSize),
-					},
-					Table:  tbl,
-					Family: ipFamilyArg,
-				}
-
-				err = r.Add()
-				if err != nil {
-					return nil, fmt.Errorf("Failed adding host route %q to table %q: %w", r.Route, r.Table, err)
-				}
-			}
-
-			// If there is a parent interface, add neighbor proxy entry.
-			if d.effectiveParentName != "" {
 				np := ip.NeighProxy{
 					DevName: d.neighProxyDevice(address),
 					Addr:    address,
@@ -785,59 +722,6 @@ func (d *nicRouted) Start() (*deviceConfig.RunConfig, error) {
 				reverter.Add(func() { _ = np.Delete() })
 			}
 		}
-
-		if d.config[fmt.Sprintf("%s.routes", keyPrefix)] != "" {
-			routes := util.SplitNTrimSpace(d.config[fmt.Sprintf("%s.routes", keyPrefix)], ",", -1, true)
-
-			if len(addresses) == 0 {
-				return nil, fmt.Errorf("%s.routes requires %s.address to be set", keyPrefix, keyPrefix)
-			}
-
-			viaAddress := net.ParseIP(addresses[0])
-			if viaAddress == nil {
-				return nil, fmt.Errorf("Invalid address %q", addresses[0])
-			}
-
-			// Add routes
-			for _, routeStr := range routes {
-				route, err := ip.ParseIPNet(routeStr)
-				if err != nil {
-					return nil, fmt.Errorf("Invalid route %q: %w", routeStr, err)
-				}
-				// If a VRF is set we still add a route into the VRF's own table (empty Table value).
-				if d.config["vrf"] != "" {
-					r := ip.Route{
-						DevName: saveData["host_name"],
-						Route:   route,
-						Table:   "",
-						Family:  ipFamilyArg,
-						Via:     viaAddress,
-						VRF:     d.config["vrf"],
-					}
-
-					err = r.Add()
-					if err != nil {
-						return nil, fmt.Errorf("Failed adding route %q: %w", r.Route, err)
-					}
-				}
-
-				// Add routes to all requested tables.
-				for _, tbl := range tables {
-					r := ip.Route{
-						DevName: saveData["host_name"],
-						Route:   route,
-						Table:   tbl,
-						Family:  ipFamilyArg,
-						Via:     viaAddress,
-					}
-
-					err = r.Add()
-					if err != nil {
-						return nil, fmt.Errorf("Failed adding route %q to table %q: %w", r.Route, r.Table, err)
-					}
-				}
-			}
-		}
 	}
 
 	err = d.volatileSet(saveData)
@@ -847,6 +731,16 @@ func (d *nicRouted) Start() (*deviceConfig.RunConfig, error) {
 
 	// Perform instance NIC configuration.
 	runConf := deviceConfig.RunConfig{}
+
+	// The host routes attract traffic, so a VM only gets them once it runs (after a live migration's hand-over).
+	if d.inst.Type() == instancetype.VM {
+		runConf.PostHooks = []func() error{d.setupHostRoutes}
+	} else {
+		err = d.setupHostRoutes()
+		if err != nil {
+			return nil, err
+		}
+	}
 	runConf.NetworkInterface = []deviceConfig.RunConfigItem{
 		{Key: "type", Value: "phys"},
 		{Key: "name", Value: d.config["name"]},
@@ -901,6 +795,125 @@ func (d *nicRouted) Start() (*deviceConfig.RunConfig, error) {
 	reverter.Success()
 
 	return &runConf, nil
+}
+
+// hostTables returns the routing tables the host routes of an IP family go into.
+func (d *nicRouted) hostTables(keyPrefix string) []string {
+	// New plural form, honor exactly what the user gives.
+	v := d.config[fmt.Sprintf("%s.host_tables", keyPrefix)]
+	if v != "" {
+		return util.SplitNTrimSpace(v, ",", -1, true)
+	}
+
+	// Legacy single key, include it plus 254.
+	v = d.config[fmt.Sprintf("%s.host_table", keyPrefix)]
+	if v != "" {
+		if v == "254" {
+			return []string{"254"} // user asked for main only
+		}
+
+		return []string{v, "254"} // custom + main
+	}
+
+	// Default, main only.
+	return []string{"254"}
+}
+
+// setupHostRoutes adds the host routes for the instance's addresses and its static routes.
+func (d *nicRouted) setupHostRoutes() error {
+	for _, keyPrefix := range []string{"ipv4", "ipv6"} {
+		subnetSize := 32
+		ipFamilyArg := ip.FamilyV4
+		if keyPrefix == "ipv6" {
+			subnetSize = 128
+			ipFamilyArg = ip.FamilyV6
+		}
+
+		tables := d.hostTables(keyPrefix)
+		addresses := util.SplitNTrimSpace(d.config[fmt.Sprintf("%s.address", keyPrefix)], ",", -1, true)
+
+		for _, addrStr := range addresses {
+			address := net.ParseIP(addrStr)
+			if address == nil {
+				return fmt.Errorf("Invalid address %q", addrStr)
+			}
+
+			route := &net.IPNet{
+				IP:   address,
+				Mask: net.CIDRMask(subnetSize, subnetSize),
+			}
+
+			err := d.addHostRoute(route, nil, ipFamilyArg, tables)
+			if err != nil {
+				return err
+			}
+		}
+
+		if d.config[fmt.Sprintf("%s.routes", keyPrefix)] == "" {
+			continue
+		}
+
+		if len(addresses) == 0 {
+			return fmt.Errorf("%s.routes requires %s.address to be set", keyPrefix, keyPrefix)
+		}
+
+		viaAddress := net.ParseIP(addresses[0])
+		if viaAddress == nil {
+			return fmt.Errorf("Invalid address %q", addresses[0])
+		}
+
+		for _, routeStr := range util.SplitNTrimSpace(d.config[fmt.Sprintf("%s.routes", keyPrefix)], ",", -1, true) {
+			route, err := ip.ParseIPNet(routeStr)
+			if err != nil {
+				return fmt.Errorf("Invalid route %q: %w", routeStr, err)
+			}
+
+			err = d.addHostRoute(route, viaAddress, ipFamilyArg, tables)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
+// addHostRoute adds a route through the host interface to the VRF and to every requested table.
+// Existing routes are replaced so a leftover or learned route can't block the start.
+func (d *nicRouted) addHostRoute(route *net.IPNet, via net.IP, family ip.Family, tables []string) error {
+	// If a VRF is set we still add a route into the VRF's own table (empty Table value).
+	if d.config["vrf"] != "" {
+		r := ip.Route{
+			DevName: d.config["host_name"],
+			Route:   route,
+			Table:   "",
+			Family:  family,
+			Via:     via,
+			VRF:     d.config["vrf"],
+		}
+
+		err := r.Replace()
+		if err != nil {
+			return fmt.Errorf("Failed adding host route %q: %w", r.Route, err)
+		}
+	}
+
+	for _, tbl := range tables {
+		r := ip.Route{
+			DevName: d.config["host_name"],
+			Route:   route,
+			Table:   tbl,
+			Family:  family,
+			Via:     via,
+		}
+
+		err := r.Replace()
+		if err != nil {
+			return fmt.Errorf("Failed adding host route %q to table %q: %w", r.Route, r.Table, err)
+		}
+	}
+
+	return nil
 }
 
 // setupParentSysctls configures the required sysctls on the parent to allow l2proxy to work.
