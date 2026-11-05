@@ -903,6 +903,10 @@ func getImgPostInfo(ctx context.Context, s *state.State, r *http.Request, buildd
 		info.Properties = imageMeta.Properties
 	}
 
+	if info.Properties == nil {
+		info.Properties = map[string]string{}
+	}
+
 	if len(propHeaders) > 0 {
 		for _, ph := range propHeaders {
 			p, _ := url.ParseQuery(ph)
