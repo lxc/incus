@@ -504,7 +504,16 @@ func (d *qemu) agentClient(checkStarted bool) (*http.Client, error) {
 					TLSHandshakeTimeout:   time.Second * 3,
 				}
 
-				resp, err := client.Get("https://agent/")
+				// The guest answers the probe, don't let it hold the caller or the connection.
+				ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+				req, err := http.NewRequestWithContext(ctx, http.MethodGet, "https://agent/", nil)
+				if err != nil {
+					cancel()
+					return nil, err
+				}
+
+				resp, err := client.Do(req)
+				cancel()
 				if err == nil {
 					_ = resp.Body.Close()
 
