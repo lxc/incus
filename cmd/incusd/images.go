@@ -538,6 +538,10 @@ func imgPostInstanceInfo(ctx context.Context, s *state.State, r *http.Request, r
 	info.Fingerprint = fmt.Sprintf("%x", hash256.Sum(nil))
 	info.CreatedAt = time.Now().UTC()
 
+	// Only the check and record of the new image need serializing, not the export before it.
+	imagePublishLock.Lock()
+	defer imagePublishLock.Unlock()
+
 	err = s.DB.Cluster.Transaction(ctx, func(ctx context.Context, tx *db.ClusterTx) error {
 		_, _, err = tx.GetImage(ctx, info.Fingerprint, dbCluster.ImageFilter{Project: &projectName})
 
@@ -1460,9 +1464,7 @@ func imagesPost(d *Daemon, r *http.Request) response.Response {
 				info, err = imgPostURLInfo(context.TODO(), s, r, req, op, projectName, budget)
 			default:
 				/* Processing image creation from container */
-				imagePublishLock.Lock()
 				info, err = imgPostInstanceInfo(context.TODO(), s, r, req, op, builddir, budget)
-				imagePublishLock.Unlock()
 			}
 		}
 
