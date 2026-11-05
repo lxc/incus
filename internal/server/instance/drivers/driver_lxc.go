@@ -8546,11 +8546,16 @@ func (d *lxc) Exec(req api.InstanceExecPost, stdin *os.File, stdout *os.File, st
 		}
 	}
 
-	// Prepare the environment
-	envSlice := []string{}
-
+	// Prepare the environment, passed NUL separated over a pipe to keep it off the command line.
+	envBuf := []byte{}
 	for k, v := range req.Environment {
-		envSlice = append(envSlice, fmt.Sprintf("%s=%s", k, v))
+		entry := fmt.Sprintf("%s=%s", k, v)
+		if strings.ContainsRune(entry, 0) {
+			return nil, fmt.Errorf("Invalid environment variable %q", k)
+		}
+
+		envBuf = append(envBuf, entry...)
+		envBuf = append(envBuf, 0)
 	}
 
 	// Setup logfile
@@ -8576,10 +8581,6 @@ func (d *lxc) Exec(req api.InstanceExecPost, stdin *os.File, stdout *os.File, st
 	}
 
 	args = append(args, "0")
-
-	args = append(args, "--")
-	args = append(args, "env")
-	args = append(args, envSlice...)
 
 	args = append(args, "--")
 	args = append(args, "cmd")
@@ -8639,11 +8640,27 @@ func (d *lxc) Exec(req api.InstanceExecPost, stdin *os.File, stdout *os.File, st
 		return nil, err
 	}
 
-	cmd.ExtraFiles = []*os.File{stdin, stdout, stderr, wStatus}
-	err = cmd.Start()
-	_ = wStatus.Close()
+	// Setup the environment PIPE
+	rEnv, wEnv, err := os.Pipe()
 	if err != nil {
 		return nil, err
+	}
+
+	cmd.ExtraFiles = []*os.File{stdin, stdout, stderr, wStatus, rEnv}
+	err = cmd.Start()
+	_ = wStatus.Close()
+	_ = rEnv.Close()
+	if err != nil {
+		_ = wEnv.Close()
+		return nil, err
+	}
+
+	_, err = wEnv.Write(envBuf)
+	_ = wEnv.Close()
+	if err != nil {
+		_ = cmd.Process.Kill()
+		_ = cmd.Wait()
+		return nil, fmt.Errorf("Failed to pass the environment to forkexec: %w", err)
 	}
 
 	attachedPid := linux.ReadPid(rStatus)

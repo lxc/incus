@@ -140,6 +140,7 @@ restart:
 #define EXEC_STDOUT_FD 4
 #define EXEC_STDERR_FD 5
 #define EXEC_PIPE_FD 6
+#define EXEC_ENV_FD 7
 #define ARRAY_SIZE(arr) (sizeof(arr) / sizeof((arr)[0]))
 
 // We use a separate function because cleanup macros are called during stack
@@ -150,7 +151,10 @@ restart:
 __attribute__ ((noinline)) static int __forkexec(void)
 {
 	__do_close int status_pipe = EXEC_PIPE_FD;
+	__do_close int env_fd = EXEC_ENV_FD;
 	__do_free_string_list char **argvp = NULL, **envvp = NULL;
+	__do_free char *env_buf = NULL;
+	size_t env_len = 0, env_size = 0;
 	call_cleaner(lxc_container_put) struct lxc_container *c = NULL;
 	const char *config_path = NULL, *lxcpath = NULL, *name = NULL;
 	char *cwd = NULL;
@@ -188,6 +192,55 @@ __attribute__ ((noinline)) static int __forkexec(void)
 	if (coresched != 0 && coresched != 1)
 		_exit(EXIT_FAILURE);
 
+	// The environment comes NUL separated over a pipe so that it stays off the command line.
+	for (;;) {
+		ssize_t bytes;
+
+		if (env_len == env_size) {
+			char *new_buf;
+
+			env_size = env_size ? env_size * 2 : 4096;
+			new_buf = realloc(env_buf, env_size);
+			if (!new_buf)
+				return log_error(EXIT_FAILURE, "Failed to allocate the env buffer");
+
+			env_buf = new_buf;
+		}
+
+		bytes = read(env_fd, env_buf + env_len, env_size - env_len);
+		if (bytes < 0) {
+			if (errno == EINTR)
+				continue;
+
+			return log_errno(EXIT_FAILURE, "Failed to read the env pipe");
+		}
+
+		if (bytes == 0)
+			break;
+
+		env_len += bytes;
+	}
+
+	close(env_fd);
+	env_fd = -EBADF;
+
+	for (size_t off = 0; off < env_len; ) {
+		char *entry = env_buf + off;
+		size_t entry_len = strnlen(entry, env_len - off);
+
+		if (entry_len == env_len - off)
+			return log_error(EXIT_FAILURE, "Invalid env entry");
+
+		if (!strncmp(entry, "HOME=", STRLITERALLEN("HOME=")))
+			attach_options.initial_cwd = entry + STRLITERALLEN("HOME=");
+
+		ret = push_vargs(&envvp, entry);
+		if (ret < 0)
+			return log_error(ret, "Failed to add %s to env array", entry);
+
+		off += entry_len + 1;
+	}
+
 	for (char *arg = NULL, *section = NULL; (arg = advance_arg(false)); ) {
 		if (!strcmp(arg, "--") && (!section || strcmp(section, "cmd"))) {
 			section = NULL;
@@ -199,13 +252,7 @@ __attribute__ ((noinline)) static int __forkexec(void)
 			continue;
 		}
 
-		if (!strcmp(section, "env")) {
-			if (!strncmp(arg, "HOME=", STRLITERALLEN("HOME=")))
-				attach_options.initial_cwd = arg + STRLITERALLEN("HOME=");
-			ret = push_vargs(&envvp, arg);
-			if (ret < 0)
-				return log_error(ret, "Failed to add %s to env array", arg);
-		} else if (!strcmp(section, "cmd")) {
+		if (!strcmp(section, "cmd")) {
 			ret = push_vargs(&argvp, arg);
 			if (ret < 0)
 				return log_error(ret, "Failed to add %s to arg array", arg);
@@ -343,7 +390,7 @@ type cmdForkexec struct {
 func (c *cmdForkexec) command() *cobra.Command {
 	// Main subcommand
 	cmd := &cobra.Command{}
-	cmd.Use = "forkexec <container name> <containers path> <config> <cwd> <uid> <gid> <coresched> -- env [key=value...] -- cmd <args...>"
+	cmd.Use = "forkexec <container name> <containers path> <config> <cwd> <uid> <gid> <coresched> -- cmd <args...>"
 	cmd.Short = "Execute a task inside the container"
 	cmd.Long = `Description:
   Execute a task inside the container
