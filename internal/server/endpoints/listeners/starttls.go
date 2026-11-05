@@ -6,6 +6,7 @@ import (
 	"errors"
 	"net"
 	"sync"
+	"time"
 
 	"github.com/lxc/incus/v6/internal/server/util"
 	localtls "github.com/lxc/incus/v6/shared/tls"
@@ -33,9 +34,24 @@ func NewSTARTTLSListener(inner net.Listener, cert *localtls.CertInfo) *StarttlsL
 // Accept waits for and returns the next incoming TLS connection then use the
 // current TLS configuration to handle it.
 func (l *StarttlsListener) Accept() (net.Conn, error) {
-	c, err := l.Listener.Accept()
-	if err != nil {
-		return nil, err
+	var c net.Conn
+	var delay time.Duration
+
+	for {
+		var err error
+
+		c, err = l.Listener.Accept()
+		if err == nil {
+			break
+		}
+
+		// Only a closed listener is final, anything else is retried like net/http does.
+		if errors.Is(err, net.ErrClosed) {
+			return nil, err
+		}
+
+		delay = max(min(delay*2, time.Second), 5*time.Millisecond)
+		time.Sleep(delay)
 	}
 
 	// Setup buffered connection.
