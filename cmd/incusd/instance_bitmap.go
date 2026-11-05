@@ -13,6 +13,7 @@ import (
 	"github.com/lxc/incus/v7/internal/server/request"
 	"github.com/lxc/incus/v7/internal/server/response"
 	"github.com/lxc/incus/v7/shared/api"
+	"github.com/lxc/incus/v7/shared/validate"
 )
 
 // swagger:operation POST /1.0/instances/{name}/bitmaps instances instance_bitmaps_post
@@ -96,6 +97,11 @@ func instanceBitmapsPost(d *Daemon, r *http.Request) response.Response {
 	err = json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
 		return response.BadRequest(err)
+	}
+
+	err = validate.IsAPIName(req.Name, false)
+	if err != nil {
+		return response.BadRequest(fmt.Errorf("Invalid bitmap name: %w", err))
 	}
 
 	rootDiskName, _, err := internalInstance.GetRootDiskDevice(inst.ExpandedDevices().CloneNative())

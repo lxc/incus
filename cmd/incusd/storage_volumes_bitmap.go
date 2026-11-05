@@ -14,6 +14,7 @@ import (
 	localUtil "github.com/lxc/incus/v7/internal/server/util"
 	"github.com/lxc/incus/v7/internal/version"
 	"github.com/lxc/incus/v7/shared/api"
+	"github.com/lxc/incus/v7/shared/validate"
 )
 
 var storagePoolVolumeTypeBitmapsCmd = APIEndpoint{
@@ -407,6 +408,11 @@ func storagePoolVolumeTypeBitmapsPost(d *Daemon, r *http.Request) response.Respo
 	err = json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
 		return response.BadRequest(err)
+	}
+
+	err = validate.IsAPIName(req.Name, false)
+	if err != nil {
+		return response.BadRequest(fmt.Errorf("Invalid bitmap name: %w", err))
 	}
 
 	err = inst.CreateBitmap([]string{deviceName}, req)
