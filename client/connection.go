@@ -38,6 +38,9 @@ type ConnectionArgs struct {
 	// User agent string
 	UserAgent string
 
+	// Maximum size of an API response read from the server, 0 for no limit
+	MaxResponseSize int64
+
 	// Authentication type
 	AuthType string
 
@@ -135,6 +138,7 @@ func ConnectIncusHTTPWithContext(ctx context.Context, args *ConnectionArgs, clie
 		eventConns:         make(map[string]*websocket.Conn),
 		eventListeners:     make(map[string][]*EventListener),
 		skipEvents:         args.SkipGetEvents,
+		maxResponseSize:    args.MaxResponseSize,
 		tempPath:           args.TempPath,
 	}
 
@@ -224,6 +228,7 @@ func ConnectIncusUnixWithContext(ctx context.Context, path string, args *Connect
 		eventConns:         make(map[string]*websocket.Conn),
 		eventListeners:     make(map[string][]*EventListener),
 		skipEvents:         args.SkipGetEvents,
+		maxResponseSize:    args.MaxResponseSize,
 		project:            projectName,
 		tempPath:           args.TempPath,
 	}
@@ -301,6 +306,7 @@ func ConnectSimpleStreams(uri string, args *ConnectionArgs) (ImageServer, error)
 
 	// Get simplestreams client
 	ssClient := simplestreams.NewClient(uri, *httpClient, args.UserAgent)
+	ssClient.SetMaxSize(args.MaxResponseSize)
 	server.ssClient = ssClient
 
 	// Setup the cache
@@ -392,6 +398,7 @@ func httpsIncus(ctx context.Context, requestURL string, args *ConnectionArgs) (I
 		eventConns:         make(map[string]*websocket.Conn),
 		eventListeners:     make(map[string][]*EventListener),
 		skipEvents:         args.SkipGetEvents,
+		maxResponseSize:    args.MaxResponseSize,
 		tempPath:           args.TempPath,
 	}
 

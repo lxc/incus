@@ -1065,7 +1065,7 @@ func (r *ProtocolIncus) GetStorageVolumeBackupFile(pool string, volName string, 
 	defer close(doneCh)
 
 	if response.StatusCode != http.StatusOK {
-		_, _, err := incusParseResponse(response)
+		_, _, err := r.parseResponse(response)
 		if err != nil {
 			return nil, err
 		}
@@ -1137,7 +1137,7 @@ func (r *ProtocolIncus) CreateStorageVolumeBackupStream(pool string, volName str
 	defer close(doneCh)
 
 	if response.StatusCode != http.StatusOK {
-		_, _, err = incusParseResponse(response)
+		_, _, err = r.parseResponse(response)
 		if err != nil {
 			return err
 		}
@@ -1210,7 +1210,7 @@ func (r *ProtocolIncus) CreateStoragePoolVolumeFromISO(pool string, args Storage
 	defer func() { _ = resp.Body.Close() }()
 
 	// Handle errors.
-	response, _, err := incusParseResponse(resp)
+	response, _, err := r.parseResponse(resp)
 	if err != nil {
 		return nil, err
 	}
@@ -1269,7 +1269,7 @@ func (r *ProtocolIncus) CreateStoragePoolVolumeFromBackup(pool string, args Stor
 	defer func() { _ = resp.Body.Close() }()
 
 	// Handle errors.
-	response, _, err := incusParseResponse(resp)
+	response, _, err := r.parseResponse(resp)
 	if err != nil {
 		return nil, err
 	}
@@ -1357,7 +1357,7 @@ func (r *ProtocolIncus) GetStorageVolumeFile(pool string, volumeType string, vol
 
 	// Check the return value for a cleaner error
 	if resp.StatusCode != http.StatusOK {
-		_, _, err := incusParseResponse(resp)
+		_, _, err := r.parseResponse(resp)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -1452,7 +1452,7 @@ func (r *ProtocolIncus) CreateStorageVolumeFile(pool string, volumeType string, 
 	}
 
 	// Check the return value for a cleaner error
-	_, _, err = incusParseResponse(resp)
+	_, _, err = r.parseResponse(resp)
 	if err != nil {
 		return err
 	}
