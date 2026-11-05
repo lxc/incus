@@ -150,6 +150,12 @@ func (o *Verifier) Auth(ctx context.Context, w http.ResponseWriter, r *http.Requ
 		return username, nil
 	}
 
+	// An address the provider marks as unverified may belong to someone else.
+	verified, ok := claims.Claims["email_verified"].(bool)
+	if ok && !verified {
+		return claims.Subject, nil
+	}
+
 	user, ok := claims.Claims["email"]
 	if ok && user != nil && user.(string) != "" {
 		return user.(string), nil
