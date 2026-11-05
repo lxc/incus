@@ -3582,6 +3582,12 @@ The original MAC that was used when moving a physical device into an instance.
 Comma-separated list of the last used IP addresses of the network device.
 ```
 
+```{config:option} volatile.<name>.last_state.kind instance-volatile
+:shortdesc: "Network device original kind"
+:type: "string"
+The kind of physical device that was moved into an instance.
+```
+
 ```{config:option} volatile.<name>.last_state.migratable instance-volatile
 :shortdesc: "NIC original migratable capability"
 :type: "string"
