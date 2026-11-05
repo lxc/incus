@@ -3785,9 +3785,10 @@ func (d *lxc) Rebuild(img *api.Image, op *operations.Operation) error {
 // stopDHCPClient kills the forknet dhcp process if any and waits for it to
 // exit so the container's cgroup can be fully cleaned up.
 func (d *lxc) stopDHCPClient() {
-	pidPath := filepath.Join(d.Path(), "network", "dhcp.pid")
+	networkPath := filepath.Join(d.Path(), "network")
+	pidPath := filepath.Join(networkPath, "dhcp.pid")
 
-	dhcpPIDStr, err := os.ReadFile(pidPath)
+	dhcpPIDStr, err := readRegularFileInRoot(networkPath, "dhcp.pid")
 	if err != nil {
 		return
 	}
@@ -3804,9 +3805,9 @@ func (d *lxc) stopDHCPClient() {
 
 	defer func() { _ = pidFd.Close() }()
 
-	// Guard against PID reuse.
+	// Guard against PID reuse and a planted PID file, the helper names the instance's network path.
 	cmdline, err := os.ReadFile(fmt.Sprintf("/proc/%d/cmdline", dhcpPID))
-	if err != nil || (!strings.HasPrefix(string(cmdline), "[incus dhcp]") && !strings.Contains(string(cmdline), "forknet\x00dhcp")) {
+	if err != nil || !strings.Contains(string(cmdline), networkPath) || (!strings.HasPrefix(string(cmdline), "[incus dhcp]") && !strings.Contains(string(cmdline), "forknet\x00dhcp")) {
 		return
 	}
 
