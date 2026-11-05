@@ -16,15 +16,21 @@ func NewWrapper(conn *websocket.Conn) io.ReadWriteCloser {
 
 // wrapper implements ReadWriteCloser on top of a websocket connection.
 type wrapper struct {
-	conn   *websocket.Conn
-	reader io.Reader
-	mur    sync.Mutex
-	muw    sync.Mutex
+	conn    *websocket.Conn
+	reader  io.Reader
+	readErr error
+	mur     sync.Mutex
+	muw     sync.Mutex
 }
 
 func (w *wrapper) Read(p []byte) (n int, err error) {
 	w.mur.Lock()
 	defer w.mur.Unlock()
+
+	// A websocket must not be read again once a read failed.
+	if w.readErr != nil {
+		return 0, w.readErr
+	}
 
 	// Get new message if no active one.
 	if w.reader == nil {
@@ -32,6 +38,8 @@ func (w *wrapper) Read(p []byte) (n int, err error) {
 
 		mt, w.reader, err = w.conn.NextReader()
 		if err != nil {
+			w.readErr = err
+
 			if websocket.IsCloseError(err, websocket.CloseNormalClosure) {
 				logger.Debug("Websocket: Got normal closure", logger.Ctx{"address": w.conn.RemoteAddr().String()})
 				return 0, io.EOF
