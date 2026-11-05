@@ -11,6 +11,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"slices"
+	"sync/atomic"
 	"time"
 
 	incus "github.com/lxc/incus/v7/client"
@@ -61,6 +62,35 @@ func imageOperationLock(ctx context.Context, fingerprint string) (locking.Unlock
 	defer l.Debug("Lock acquired for image")
 
 	return locking.Lock(ctx, fmt.Sprintf("ImageOperation_%s", fingerprint))
+}
+
+// imageDownloadIdleTimeout is how long a download may go without data before it's cancelled.
+const imageDownloadIdleTimeout = time.Minute
+
+// activityFile records when a download last wrote to its file.
+type activityFile struct {
+	io.ReadWriteSeeker
+	touch func()
+}
+
+// Write records the activity and writes to the file.
+func (f *activityFile) Write(p []byte) (int, error) {
+	f.touch()
+
+	return f.ReadWriteSeeker.Write(p)
+}
+
+// activityReadCloser records when a download last received data.
+type activityReadCloser struct {
+	io.ReadCloser
+	touch func()
+}
+
+// Read records the activity and reads from the body.
+func (r *activityReadCloser) Read(p []byte) (int, error) {
+	r.touch()
+
+	return r.ReadCloser.Read(p)
 }
 
 // imageServerMaxResponseSize bounds the replies read from an image server, which the client chose.
@@ -442,11 +472,36 @@ func imageDownload(ctx context.Context, r *http.Request, s *state.State, op *ope
 		}
 	}
 
-	var canceler *cancel.HTTPRequestCanceller
+	canceler := cancel.NewHTTPRequestCanceller()
 	if op != nil {
-		canceler = cancel.NewHTTPRequestCanceller()
 		op.SetCanceler(canceler)
 	}
+
+	// The image lock is held for the whole transfer, give up on a remote that stops sending.
+	var lastActivity atomic.Int64
+	lastActivity.Store(time.Now().Unix())
+	touch := func() { lastActivity.Store(time.Now().Unix()) }
+
+	watchdogDone := make(chan struct{})
+	defer close(watchdogDone)
+
+	go func() {
+		ticker := time.NewTicker(10 * time.Second)
+		defer ticker.Stop()
+
+		for {
+			select {
+			case <-watchdogDone:
+				return
+			case <-ticker.C:
+				if time.Now().Unix()-lastActivity.Load() > int64(imageDownloadIdleTimeout.Seconds()) {
+					logger.Warn("Cancelling stalled image download", logger.Ctx{"server": args.Server, "fingerprint": fp})
+					_ = canceler.Cancel()
+					return
+				}
+			}
+		}
+	}()
 
 	if slices.Contains([]string{"incus", "lxd", "oci", "simplestreams"}, protocol) {
 		// Create the target files
@@ -495,8 +550,8 @@ func imageDownload(ctx context.Context, r *http.Request, s *state.State, op *ope
 		// Download the image
 		var resp *incus.ImageFileResponse
 		request := incus.ImageFileRequest{
-			MetaFile:        io.ReadWriteSeeker(dest),
-			RootfsFile:      io.ReadWriteSeeker(destRootfs),
+			MetaFile:        &activityFile{ReadWriteSeeker: dest, touch: touch},
+			RootfsFile:      &activityFile{ReadWriteSeeker: destRootfs, touch: touch},
 			ProgressHandler: progress,
 			MaxUnpackedSize: args.Budget,
 			Canceler:        canceler,
@@ -611,7 +666,7 @@ func imageDownload(ctx context.Context, r *http.Request, s *state.State, op *ope
 
 		// Progress handler
 		body := &ioprogress.ProgressReader{
-			ReadCloser: raw.Body,
+			ReadCloser: &activityReadCloser{ReadCloser: raw.Body, touch: touch},
 			Tracker: &ioprogress.ProgressTracker{
 				Length: raw.ContentLength,
 				Handler: func(percent int64, speed int64) {
