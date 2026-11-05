@@ -1170,6 +1170,32 @@ func instancesPost(d *Daemon, r *http.Request) response.Response {
 		}
 	}
 
+	// A refresh overwrites an existing instance, which requires edit access to it.
+	if req.Source.Refresh && req.Name != "" {
+		var exists bool
+
+		err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
+			id, err := tx.GetInstanceID(ctx, targetProjectName, req.Name)
+			if err != nil && !response.IsNotFoundError(err) {
+				return err
+			}
+
+			exists = err == nil && id > 0
+
+			return nil
+		})
+		if err != nil {
+			return response.SmartError(err)
+		}
+
+		if exists {
+			err = s.Authorizer.CheckPermission(r.Context(), r, auth.ObjectInstance(targetProjectName, req.Name), auth.EntitlementCanEdit)
+			if err != nil {
+				return response.SmartError(err)
+			}
+		}
+	}
+
 	err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
 		dbProject, err := dbCluster.GetProject(ctx, tx.Tx(), targetProjectName)
 		if err != nil {
