@@ -164,6 +164,60 @@ func AllowInstanceCreation(tx *db.ClusterTx, projectName string, req api.Instanc
 	return nil
 }
 
+// CheckLimits returns an error if the project's current instances and volumes exceed its limits.
+// It is meant to run inside the transaction recording a new instance or volume, closing the window
+// between the pre-creation check and the database insert.
+func CheckLimits(tx *db.ClusterTx, projectName string) error {
+	info, err := fetchProject(tx, projectName, true)
+	if err != nil {
+		return err
+	}
+
+	if info == nil {
+		return nil
+	}
+
+	count, limit, err := getTotalInstanceCountLimit(info)
+	if err != nil {
+		return err
+	}
+
+	if limit >= 0 && count > limit {
+		return fmt.Errorf("Reached maximum number of instances in project %q", projectName)
+	}
+
+	for _, instanceType := range []instancetype.Type{instancetype.Container, instancetype.VM} {
+		count, limit, err := getInstanceCountLimit(info, instanceType)
+		if err != nil {
+			return err
+		}
+
+		if limit >= 0 && count > limit {
+			return fmt.Errorf("Reached maximum number of instances of type %q in project %q", instanceType, projectName)
+		}
+	}
+
+	aggregateKeys := []string{}
+	for key := range info.Project.Config {
+		if slices.Contains(allAggregateLimits, key) {
+			aggregateKeys = append(aggregateKeys, key)
+		}
+	}
+
+	if len(aggregateKeys) == 0 {
+		return nil
+	}
+
+	instances, err := expandInstancesConfigAndDevices(info.Instances, info.Profiles)
+	if err != nil {
+		return err
+	}
+
+	info.Instances = instances
+
+	return checkAggregateLimits(info, aggregateKeys)
+}
+
 // AllowInstanceMigrationSource checks that the project restrictions allow the migration source of the request.
 func AllowInstanceMigrationSource(tx *db.ClusterTx, projectName string, req api.InstancesPost) error {
 	info, err := fetchProject(tx, projectName, true)
