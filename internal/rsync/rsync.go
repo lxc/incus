@@ -28,6 +28,33 @@ var Debug bool
 // RunWrapper is an optional function that's used to wrap rsync, useful for confinement like AppArmor.
 var RunWrapper func(cmd *exec.Cmd, source string, destination string) (func(), error)
 
+// maxOutput is how much of rsync's output is kept, the tree and the peer decide how much there is.
+const maxOutput = 64 * 1024
+
+// boundedBuffer keeps the beginning of a stream and drops the rest.
+type boundedBuffer struct {
+	bytes.Buffer
+}
+
+// Write keeps up to maxOutput bytes.
+func (b *boundedBuffer) Write(p []byte) (int, error) {
+	remaining := maxOutput - b.Len()
+	if remaining > 0 {
+		b.Buffer.Write(p[:min(len(p), remaining)])
+	}
+
+	return len(p), nil
+}
+
+// readOutput reads a stream to its end, keeping the beginning.
+func readOutput(r io.Reader) ([]byte, error) {
+	var b boundedBuffer
+
+	_, err := io.Copy(&b, r)
+
+	return b.Bytes(), err
+}
+
 // rsync is a wrapper for the rsync command which will respect RunWrapper.
 func rsync(args ...string) (string, error) {
 	if len(args) < 2 {
@@ -36,9 +63,9 @@ func rsync(args ...string) (string, error) {
 
 	// Setup the command.
 	cmd := exec.Command("rsync", args...)
-	var stderr bytes.Buffer
+	var stderr boundedBuffer
 	cmd.Stderr = &stderr
-	var stdout bytes.Buffer
+	var stdout boundedBuffer
 	cmd.Stdout = &stdout
 
 	// Call the wrapper if defined.
@@ -57,7 +84,7 @@ func rsync(args ...string) (string, error) {
 	// Run the command.
 	err := cmd.Run()
 	if err != nil {
-		return stdout.String(), subprocess.NewRunError("rsync", args, err, &stdout, &stderr)
+		return stdout.String(), subprocess.NewRunError("rsync", args, err, &stdout.Buffer, &stderr.Buffer)
 	}
 
 	return stdout.String(), nil
@@ -224,14 +251,14 @@ func sendSetup(name string, path string, bwlimit string, execPath string, featur
 	select {
 	case conn = <-chConn:
 		if conn == nil {
-			output, _ := io.ReadAll(stderr)
+			output, _ := readOutput(stderr)
 			_ = cmd.Process.Kill()
 			_ = cmd.Wait()
 			return nil, nil, nil, fmt.Errorf("Failed to connect to rsync socket (%s)", string(output))
 		}
 
 	case <-time.After(10 * time.Second):
-		output, _ := io.ReadAll(stderr)
+		output, _ := readOutput(stderr)
 		_ = cmd.Process.Kill()
 		_ = cmd.Wait()
 		return nil, nil, nil, fmt.Errorf("rsync failed to spawn after 10s (%s)", string(output))
@@ -277,7 +304,7 @@ func Send(name string, path string, conn io.ReadWriteCloser, tracker *ioprogress
 	}()
 
 	// Wait for rsync to complete.
-	output, err := io.ReadAll(stderr)
+	output, err := readOutput(stderr)
 	if err != nil {
 		_ = cmd.Process.Kill()
 		logger.Errorf("Rsync stderr read failed: %s: %v", path, err)
@@ -396,7 +423,7 @@ func Recv(path string, conn io.ReadWriteCloser, tracker *ioprogress.ProgressTrac
 		return err
 	}
 
-	output, err := io.ReadAll(stderr)
+	output, err := readOutput(stderr)
 	if err != nil {
 		logger.Errorf("Rsync stderr read failed: %s: %v", path, err)
 	}
