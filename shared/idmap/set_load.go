@@ -41,6 +41,9 @@ func NewSetFromJSON(data string) (*Set, error) {
 	return ret, nil
 }
 
+// maxIDMapEntries bounds the entries accepted from a textual ID map.
+const maxIDMapEntries = 1024
+
 // NewSetFromIncusIDMap parses an Incus raw.idmap into a new idmap Set.
 func NewSetFromIncusIDMap(value string) (*Set, error) {
 	getRange := func(r string) (int64, int64, error) {
@@ -73,6 +76,11 @@ func NewSetFromIncusIDMap(value string) (*Set, error) {
 	for _, line := range strings.Split(value, "\n") {
 		if line == "" {
 			continue
+		}
+
+		// Each entry is checked against all the others, keep the map small.
+		if len(ret.Entries) >= maxIDMapEntries {
+			return nil, fmt.Errorf("Too many ID map entries, at most %d are allowed", maxIDMapEntries)
 		}
 
 		entries := strings.Split(line, " ")
