@@ -420,16 +420,16 @@ func networksPost(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
-	networkCreateLock.Lock()
-	defer networkCreateLock.Unlock()
-
 	req := api.NetworksPost{}
 
-	// Parse the request.
+	// Parse the request before taking the lock, the client controls how long the read takes.
 	err = json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
 		return response.BadRequest(err)
 	}
+
+	networkCreateLock.Lock()
+	defer networkCreateLock.Unlock()
 
 	// Quick checks.
 	if req.Name == "" {
