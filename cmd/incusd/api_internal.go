@@ -888,6 +888,12 @@ func internalImportFromBackup(ctx context.Context, s *state.State, projectName s
 		backupConf.Container.ExpandedConfig[key] = value
 	}
 
+	// The root disk must stay on the pool the backup was imported to.
+	rootName, rootDev, _ := internalInstance.GetRootDiskDevice(backupConf.Container.Devices)
+	if rootName != "" && rootDev["pool"] != instancePoolName {
+		return fmt.Errorf("Root disk device pool %q doesn't match the import pool %q", rootDev["pool"], instancePoolName)
+	}
+
 	reverter := revert.New()
 	defer reverter.Fail()
 
