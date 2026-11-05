@@ -55,11 +55,12 @@ func storagePoolVolumeTypeFileHandler(d *Daemon, r *http.Request) response.Respo
 	}
 
 	// Redirect to correct server if needed.
-	resp := forwardedResponseIfVolumeIsRemote(s, r, poolName, volumeProjectName, volumeName, volumeType)
+	resp := forwardedResponseIfTargetIsRemote(s, r)
 	if resp != nil {
 		return resp
 	}
 
+	resp = forwardedResponseIfVolumeIsRemote(s, r, poolName, volumeProjectName, volumeName, volumeType)
 	if resp != nil {
 		return resp
 	}
