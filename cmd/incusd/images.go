@@ -574,6 +574,20 @@ func imgPostInstanceInfo(ctx context.Context, s *state.State, r *http.Request, r
 	return &info, nil
 }
 
+// imageCheckExistingEditable refuses to rewrite an existing image the caller may not edit.
+func imageCheckExistingEditable(ctx context.Context, s *state.State, r *http.Request, created bool, projectName string, fingerprint string) error {
+	if created || r == nil {
+		return nil
+	}
+
+	imageProjectName, err := projectutils.ImageProject(ctx, s.DB.Cluster, projectName)
+	if err != nil {
+		return err
+	}
+
+	return s.Authorizer.CheckPermission(ctx, r, auth.ObjectImage(imageProjectName, fingerprint), auth.EntitlementCanEdit)
+}
+
 func imgPostRemoteInfo(ctx context.Context, s *state.State, r *http.Request, req api.ImagesPost, op *operations.Operation, project string, budget int64) (*api.Image, error) {
 	var err error
 	var hash string
@@ -586,7 +600,7 @@ func imgPostRemoteInfo(ctx context.Context, s *state.State, r *http.Request, req
 		return nil, errors.New("must specify one of alias or fingerprint for init from image")
 	}
 
-	info, _, err := imageDownload(ctx, r, s, op, &imageDownloadArgs{
+	info, created, err := imageDownload(ctx, r, s, op, &imageDownloadArgs{
 		Server:            req.Source.Server,
 		Protocol:          req.Source.Protocol,
 		Certificate:       req.Source.Certificate,
@@ -606,6 +620,11 @@ func imgPostRemoteInfo(ctx context.Context, s *state.State, r *http.Request, req
 	// If just dealing with an internal copy, we're done here.
 	if isClusterNotification(r) && req.Source.Server == "" {
 		return info, nil
+	}
+
+	err = imageCheckExistingEditable(ctx, s, r, created, project, info.Fingerprint)
+	if err != nil {
+		return nil, err
 	}
 
 	err = s.DB.Cluster.Transaction(ctx, func(ctx context.Context, tx *db.ClusterTx) error {
@@ -719,7 +738,7 @@ func imgPostURLInfo(ctx context.Context, s *state.State, r *http.Request, req ap
 	}
 
 	// Download the image itself.
-	info, _, err := imageDownload(ctx, r, s, op, &imageDownloadArgs{
+	info, created, err := imageDownload(ctx, r, s, op, &imageDownloadArgs{
 		Server:      imageURL,
 		Protocol:    "direct",
 		Alias:       hash,
@@ -728,6 +747,11 @@ func imgPostURLInfo(ctx context.Context, s *state.State, r *http.Request, req ap
 		ProjectName: project,
 		Budget:      budget,
 	})
+	if err != nil {
+		return nil, err
+	}
+
+	err = imageCheckExistingEditable(ctx, s, r, created, project, info.Fingerprint)
 	if err != nil {
 		return nil, err
 	}
