@@ -129,7 +129,7 @@ func instanceMetadataGet(d *Daemon, r *http.Request) response.Response {
 
 	defer func() { _ = metadataFile.Close() }()
 
-	data, err := io.ReadAll(metadataFile)
+	data, err := io.ReadAll(io.LimitReader(metadataFile, instance.FileMaxSize))
 	if err != nil {
 		return response.InternalError(err)
 	}
@@ -240,7 +240,7 @@ func instanceMetadataPatch(d *Daemon, r *http.Request) response.Response {
 	if err == nil {
 		defer logger.WarnOnError(metadataFile.Close, "Failed to close metadata file")
 
-		data, err := io.ReadAll(metadataFile)
+		data, err := io.ReadAll(io.LimitReader(metadataFile, instance.FileMaxSize))
 		if err != nil {
 			return response.InternalError(err)
 		}
@@ -526,6 +526,15 @@ func instanceMetadataTemplatesGet(d *Daemon, r *http.Request) response.Response 
 	}
 
 	defer func() { _ = template.Close() }()
+
+	fi, err := template.Stat()
+	if err != nil {
+		return response.SmartError(err)
+	}
+
+	if !fi.Mode().IsRegular() || fi.Size() > instance.FileMaxSize {
+		return response.BadRequest(errors.New("Invalid template file"))
+	}
 
 	tempfile, err := os.CreateTemp("", "incus_template")
 	if err != nil {

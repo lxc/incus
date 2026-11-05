@@ -48,6 +48,9 @@ import (
 	"github.com/lxc/incus/v6/shared/validate"
 )
 
+// FileMaxSize bounds the files read whole from an instance volume, as images and backups supply them.
+const FileMaxSize = 32 * 1024 * 1024
+
 // ValidDevices is linked from instance/drivers.validDevices to validate device config.
 var ValidDevices func(state *state.State, p api.Project, instanceType instancetype.Type, localDevices deviceConfig.Devices, expandedDevices deviceConfig.Devices) error
 

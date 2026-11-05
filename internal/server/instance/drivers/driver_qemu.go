@@ -3515,7 +3515,7 @@ func (d *qemu) templateApplyNow(trigger instance.TemplateTrigger, path string) e
 	}
 
 	// Parse the metadata.
-	content, err := os.ReadFile(fname)
+	content, err := readRegularFileInRoot(d.Path(), "metadata.yaml")
 	if err != nil {
 		return fmt.Errorf("Failed to read metadata: %w", err)
 	}
