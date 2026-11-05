@@ -309,8 +309,8 @@ func GetAddressSetsForACLs(s *state.State, projectName string, ACLNames []string
 func ACLisInUseByDevice(d deviceConfig.Device, matchACLNames ...string) []string {
 	matchedACLNames := []string{}
 
-	// Only NICs linked to managed networks, and routed NICs, can use network ACLs.
-	if d["type"] != "nic" || (d["network"] == "" && !aclIsRoutedNIC(d)) {
+	// Only NICs linked to managed networks, routed NICs and bridged NICs can use network ACLs.
+	if d["type"] != "nic" || (d["network"] == "" && !aclIsRoutedNIC(d) && d["nictype"] != "bridged") {
 		return matchedACLNames
 	}
 
@@ -531,6 +531,11 @@ func ACLNetworkUsage(s *state.State, aclProjectName string, aclNames []string, a
 				return nil
 			}
 
+			// Bridged NICs that aren't linked to a managed network are tracked through the instances using the profile.
+			if nicConfig["network"] == "" {
+				return nil
+			}
+
 			networkID, network, _, err := tx.GetNetworkInAnyState(ctx, aclProjectName, nicConfig["network"])
 			if err != nil {
 				return fmt.Errorf("Failed to load network %q: %w", nicConfig["network"], err)
@@ -556,6 +561,23 @@ func ACLNetworkUsage(s *state.State, aclProjectName string, aclNames []string, a
 					Config:       nicConfig,
 					InstanceName: u.Name,
 					DeviceName:   devName,
+				}
+
+				return nil
+			}
+
+			// Bridged NICs that aren't linked to a managed network have no network record, record the NIC usage only.
+			if nicConfig["network"] == "" {
+				key := fmt.Sprintf("%s/%s/%s", nicConfig["parent"], u.Name, devName)
+
+				_, found := aclNets[key]
+				if !found {
+					aclNets[key] = NetworkACLUsage{
+						Name:         nicConfig["parent"],
+						Type:         "bridge",
+						InstanceName: u.Name,
+						DeviceName:   devName,
+					}
 				}
 
 				return nil
