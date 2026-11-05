@@ -1203,7 +1203,7 @@ func imagesPost(d *Daemon, r *http.Request) response.Response {
 		return response.Forbidden(nil)
 	} else {
 		// We need to invalidate the secret whether the source is trusted or not.
-		op, err := imageValidSecret(s, r, projectName, fingerprint, secret)
+		op, err := imageValidSecret(s, r, projectName, fingerprint, secret, operationtype.ImageUploadToken)
 		if err != nil {
 			return response.SmartError(err)
 		}
@@ -1302,7 +1302,7 @@ func imagesPost(d *Daemon, r *http.Request) response.Response {
 			"public":     req.Public,
 		}
 
-		return createTokenResponse(s, r, projectName, req.Source.Fingerprint, metadata)
+		return createTokenResponse(s, r, projectName, req.Source.Fingerprint, metadata, operationtype.ImageUploadToken)
 	}
 
 	if !imageUpload && !slices.Contains([]string{"container", "instance", "virtual-machine", "snapshot", "image", "url"}, req.Source.Type) {
@@ -3128,11 +3128,11 @@ func doImageGet(ctx context.Context, tx *db.ClusterTx, project, fingerprint stri
 	return imgInfo, nil
 }
 
-// imageValidSecret searches for an ImageToken operation running on any member in the default project that has an
+// imageValidSecret searches for a token operation of the given type running on any member in the default project that has an
 // images resource matching the specified fingerprint and the metadata secret field matches the specified secret.
 // If an operation is found it is returned and the operation is cancelled. Otherwise nil is returned if not found.
-func imageValidSecret(s *state.State, r *http.Request, projectName string, fingerprint string, secret string) (*api.Operation, error) {
-	ops, err := operationsGetByType(s, r, projectName, operationtype.ImageToken)
+func imageValidSecret(s *state.State, r *http.Request, projectName string, fingerprint string, secret string, opType operationtype.Type) (*api.Operation, error) {
+	ops, err := operationsGetByType(s, r, projectName, opType)
 	if err != nil {
 		return nil, fmt.Errorf("Failed getting image token operations: %w", err)
 	}
@@ -3299,7 +3299,7 @@ func imageGet(d *Daemon, r *http.Request) response.Response {
 	public := d.checkTrustedClient(r) != nil || !userCanViewImage
 	secret := r.FormValue("secret")
 
-	op, err := imageValidSecret(s, r, projectName, info.Fingerprint, secret)
+	op, err := imageValidSecret(s, r, projectName, info.Fingerprint, secret, operationtype.ImageToken)
 	if err != nil {
 		return response.SmartError(err)
 	}
@@ -4349,7 +4349,7 @@ func imageExport(d *Daemon, r *http.Request) response.Response {
 			return response.NotFound(fmt.Errorf("Image %q not found", fingerprint))
 		}
 	} else {
-		op, err := imageValidSecret(s, r, projectName, imgInfo.Fingerprint, secret)
+		op, err := imageValidSecret(s, r, projectName, imgInfo.Fingerprint, secret, operationtype.ImageToken)
 		if err != nil {
 			return response.SmartError(err)
 		}
@@ -4642,7 +4642,7 @@ func imageSecret(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
-	return createTokenResponse(s, r, projectName, imgInfo.Fingerprint, nil)
+	return createTokenResponse(s, r, projectName, imgInfo.Fingerprint, nil, operationtype.ImageToken)
 }
 
 func imageImportFromNode(imagesDir string, client incus.InstanceServer, fingerprint string) error {
@@ -5023,7 +5023,7 @@ func imageSyncBetweenNodes(ctx context.Context, s *state.State, r *http.Request,
 	return nil
 }
 
-func createTokenResponse(s *state.State, r *http.Request, projectName string, fingerprint string, metadata jmap.Map) response.Response {
+func createTokenResponse(s *state.State, r *http.Request, projectName string, fingerprint string, metadata jmap.Map, opType operationtype.Type) response.Response {
 	secret, err := internalUtil.RandomHexString(32)
 	if err != nil {
 		return response.InternalError(err)
@@ -5038,7 +5038,7 @@ func createTokenResponse(s *state.State, r *http.Request, projectName string, fi
 	resources := map[string][]api.URL{}
 	resources["images"] = []api.URL{*api.NewURL().Path(version.APIVersion, "images", fingerprint)}
 
-	op, err := operations.OperationCreate(s, projectName, operations.OperationClassToken, operationtype.ImageToken, resources, meta, nil, nil, nil, r)
+	op, err := operations.OperationCreate(s, projectName, operations.OperationClassToken, opType, resources, meta, nil, nil, nil, r)
 	if err != nil {
 		return response.InternalError(err)
 	}

@@ -79,6 +79,7 @@ const (
 	BucketBackupRemove
 	BucketBackupRename
 	BucketBackupRestore
+	ImageUploadToken
 )
 
 // Description return a human-readable description of the operation type.
@@ -142,6 +143,8 @@ func (t Type) Description() string {
 		return "Deleting image"
 	case ImageToken:
 		return "Image download token"
+	case ImageUploadToken:
+		return "Image upload token"
 	case ImageRefresh:
 		return "Refreshing image"
 	case VolumeCopy:
@@ -274,6 +277,8 @@ func (t Type) Permission() (auth.ObjectType, auth.Entitlement) {
 		return auth.ObjectTypeImage, auth.EntitlementCanEdit
 	case ImageToken:
 		return auth.ObjectTypeImage, auth.EntitlementCanEdit
+	case ImageUploadToken:
+		return auth.ObjectTypeProject, auth.EntitlementCanCreateImages
 	case ImageRefresh:
 		return auth.ObjectTypeImage, auth.EntitlementCanEdit
 	case ImagesUpdate:
