@@ -355,7 +355,7 @@ __attribute__((constructor)) void init(void) {
 		ret = unshare(CLONE_NEWNS);
 		if (ret < 0) {
 			fprintf(stderr, "Failed unshare of mount namespace: %s\n", strerror(errno));
-			return;
+			_exit(1);
 		}
 	}
 }
