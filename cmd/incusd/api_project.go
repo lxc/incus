@@ -2002,6 +2002,8 @@ func projectValidateConfig(s *state.State, config map[string]string) error {
 		// - When set to `block`, this option prevents using all network devices.
 		// - When set to `managed`, this option allows using network devices only if `network=` is set.
 		// - When set to `allow`, there is no restriction on which network devices can be used.
+		//
+		// Unless set to `allow`, the `host_name` option of network devices can't be set.
 		// ---
 		//  type: string
 		//  defaultdesc: `managed`

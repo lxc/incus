@@ -990,6 +990,11 @@ func checkRestrictions(project api.Project, instances []api.Instance, profiles [
 					}
 				}
 
+				// The host-side interface name is the host's to pick.
+				if restrictionValue != "allow" && device["host_name"] != "" {
+					return errors.New("Setting the host interface name is forbidden")
+				}
+
 				// Check if the NIC's parent/network setting is allowed based on the
 				// restricted.devices.nic and restricted.networks.access settings.
 				if device["network"] != "" {
