@@ -408,8 +408,9 @@ func storagePoolBucketBackupsPost(d *Daemon, r *http.Request) response.Response 
 		}
 
 		// Validate the name.
-		if strings.Contains(req.Name, "/") {
-			return response.BadRequest(errors.New("Backup names may not contain slashes"))
+		err = validate.IsAPIName(req.Name, false)
+		if err != nil {
+			return response.BadRequest(fmt.Errorf("Invalid backup name: %w", err))
 		}
 
 		fullName = bucketName + internalInstance.SnapshotDelimiter + req.Name

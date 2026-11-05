@@ -337,8 +337,9 @@ func instanceBackupsPost(d *Daemon, r *http.Request) response.Response {
 		}
 
 		// Validate the name.
-		if strings.Contains(req.Name, "/") {
-			return response.BadRequest(errors.New("Backup names may not contain slashes"))
+		err = validate.IsAPIName(req.Name, false)
+		if err != nil {
+			return response.BadRequest(fmt.Errorf("Invalid backup name: %w", err))
 		}
 
 		fullName = name + internalInstance.SnapshotDelimiter + req.Name
@@ -557,9 +558,10 @@ func instanceBackupPost(d *Daemon, r *http.Request) response.Response {
 		return response.BadRequest(err)
 	}
 
-	// Validate the name
-	if strings.Contains(req.Name, "/") {
-		return response.BadRequest(errors.New("Backup names may not contain slashes"))
+	// Validate the name.
+	err = validate.IsAPIName(req.Name, false)
+	if err != nil {
+		return response.BadRequest(fmt.Errorf("Invalid backup name: %w", err))
 	}
 
 	oldName := name + internalInstance.SnapshotDelimiter + backupName
