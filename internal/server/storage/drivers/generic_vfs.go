@@ -908,6 +908,18 @@ func genericVFSBackupUnpack(d Driver, sysOS *sys.OS, vol Volume, snapshots []str
 
 					defer func() { _ = to.Close() }()
 
+					// The project checked the declared size, bound the image to it with the migration path's rounding allowance.
+					if vol.ExpandedConfig("size") != "" {
+						sizeBytes, err := units.ParseByteSizeString(vol.ExpandedConfig("size"))
+						if err != nil {
+							return err
+						}
+
+						if sizeBytes > 0 && hdr.Size > sizeBytes+(4*1024*1024) {
+							return fmt.Errorf("Backup image size (%d) exceeds the volume size (%d)", hdr.Size, sizeBytes)
+						}
+					}
+
 					// Restore original size of volume from raw block backup file size.
 					d.Logger().Debug("Setting volume size from source", logger.Ctx{"source": srcFile, "target": targetPath, "size": hdr.Size})
 
