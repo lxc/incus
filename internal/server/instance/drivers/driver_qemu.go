@@ -12024,7 +12024,23 @@ func (d *qemu) FileSFTPConn() (net.Conn, error) {
 	req.Header["Upgrade"] = []string{"sftp"}
 	req.Header["Connection"] = []string{"Upgrade"}
 
+	return agentUpgradeConn(httpTransport, req, "sftp")
+}
+
+// agentUpgradeConn sends an upgrade request to the agent and returns the upgraded connection.
+func agentUpgradeConn(httpTransport *http.Transport, req *http.Request, protocol string) (net.Conn, error) {
 	conn, err := httpTransport.DialContext(context.Background(), "tcp", "8443")
+	if err != nil {
+		return nil, err
+	}
+
+	reverter := revert.New()
+	defer reverter.Fail()
+
+	reverter.Add(func() { _ = conn.Close() })
+
+	// The agent is controlled by the guest, bound the time it gets to answer.
+	err = conn.SetDeadline(time.Now().Add(30 * time.Second))
 	if err != nil {
 		return nil, err
 	}
@@ -12040,18 +12056,34 @@ func (d *qemu) FileSFTPConn() (net.Conn, error) {
 		return nil, err
 	}
 
-	resp, err := http.ReadResponse(bufio.NewReader(tlsConn), req)
+	// Bound the size of the answer too.
+	resp, err := http.ReadResponse(bufio.NewReader(localUtil.MaxBytesReader(tlsConn, 1024*1024)), req)
 	if err != nil {
 		return nil, err
 	}
 
 	if resp.StatusCode != http.StatusSwitchingProtocols {
+		// Try to surface the agent error.
+		apiResp := api.Response{}
+
+		err = json.NewDecoder(resp.Body).Decode(&apiResp)
+		if err == nil && apiResp.Error != "" {
+			return nil, errors.New(apiResp.Error)
+		}
+
 		return nil, fmt.Errorf("Dialing failed: expected status code 101 got %d", resp.StatusCode)
 	}
 
-	if resp.Header.Get("Upgrade") != "sftp" {
+	if resp.Header.Get("Upgrade") != protocol {
 		return nil, errors.New("Missing or unexpected Upgrade header in response")
 	}
+
+	err = conn.SetDeadline(time.Time{})
+	if err != nil {
+		return nil, err
+	}
+
+	reverter.Success()
 
 	return tlsConn, nil
 }
@@ -12126,44 +12158,7 @@ func (d *qemu) PortForwardConn(address string, port int) (net.Conn, error) {
 	req.Header["Connection"] = []string{"Upgrade"}
 	req.Header.Set("Content-Type", "application/json")
 
-	conn, err := httpTransport.DialContext(context.Background(), "tcp", "8443")
-	if err != nil {
-		return nil, err
-	}
-
-	tlsConn := tls.Client(conn, httpTransport.TLSClientConfig)
-	err = tlsConn.Handshake()
-	if err != nil {
-		return nil, err
-	}
-
-	err = req.Write(tlsConn)
-	if err != nil {
-		return nil, err
-	}
-
-	resp, err := http.ReadResponse(bufio.NewReader(tlsConn), req)
-	if err != nil {
-		return nil, err
-	}
-
-	if resp.StatusCode != http.StatusSwitchingProtocols {
-		// Try to surface the agent error.
-		apiResp := api.Response{}
-
-		err = json.NewDecoder(resp.Body).Decode(&apiResp)
-		if err == nil && apiResp.Error != "" {
-			return nil, errors.New(apiResp.Error)
-		}
-
-		return nil, fmt.Errorf("Dialing failed: expected status code 101 got %d", resp.StatusCode)
-	}
-
-	if resp.Header.Get("Upgrade") != "tcp" {
-		return nil, errors.New("Missing or unexpected Upgrade header in response")
-	}
-
-	return tlsConn, nil
+	return agentUpgradeConn(httpTransport, req, "tcp")
 }
 
 // Console gets access to the instance's console.
