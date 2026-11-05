@@ -530,6 +530,16 @@ func imageDownload(ctx context.Context, r *http.Request, s *state.State, op *ope
 			return nil, false, err
 		}
 
+		// The remote may skip the hash check by claiming an OCI image, so store what was received under its own hash.
+		if resp.Fingerprint != "" && resp.Fingerprint != fp {
+			if alias == fp {
+				alias = resp.Fingerprint
+			}
+
+			fp = resp.Fingerprint
+			info.Fingerprint = fp
+		}
+
 		// Truncate down to size
 		if resp.RootfsSize > 0 {
 			err = destRootfs.Truncate(resp.RootfsSize)

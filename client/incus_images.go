@@ -339,6 +339,8 @@ func incusDownloadImage(fingerprint string, uri string, userAgent string, do fun
 			return nil, fmt.Errorf("Image fingerprint doesn't match. Got %s expected %s", hash, fingerprint)
 		}
 
+		resp.Fingerprint = hash
+
 		return &resp, nil
 	}
 
@@ -367,6 +369,8 @@ func incusDownloadImage(fingerprint string, uri string, userAgent string, do fun
 	if imageType != "oci" && !strings.HasPrefix(hash, fingerprint) {
 		return nil, fmt.Errorf("Image fingerprint doesn't match. Got %s expected %s", hash, fingerprint)
 	}
+
+	resp.Fingerprint = hash
 
 	return &resp, nil
 }
