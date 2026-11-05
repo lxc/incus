@@ -704,9 +704,10 @@ const (
 )
 
 // CanIdmapMount checks if the provided path and filesystem can use VFS idmapped mounts.
-func CanIdmapMount(path string, fstype string) bool {
+// An error means the probe itself couldn't run, so the answer isn't known.
+func CanIdmapMount(path string, fstype string) (bool, error) {
 	if util.IsTrue(os.Getenv("INCUS_IDMAPPED_MOUNTS_DISABLE")) {
-		return false
+		return false, nil
 	}
 
 	cpath := C.CString(path)
@@ -714,5 +715,10 @@ func CanIdmapMount(path string, fstype string) bool {
 	cfstype := C.CString(fstype)
 	defer C.free(unsafe.Pointer(cfstype))
 
-	return bool(C.create_detached_idmapped_mount(cpath, cfstype) == 0)
+	ret := C.create_detached_idmapped_mount(cpath, cfstype)
+	if ret == -C.EBADF {
+		return false, errors.New("Failed to create the user namespace for the probe")
+	}
+
+	return ret == 0, nil
 }

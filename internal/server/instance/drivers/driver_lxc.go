@@ -1485,7 +1485,14 @@ func (d *lxc) IdmappedStorage(fspath string, fstype string) idmap.StorageType {
 		}
 	}
 
-	if idmap.CanIdmapMount(fspath, fstype) {
+	supported, err := idmap.CanIdmapMount(fspath, fstype)
+	if err != nil {
+		// Don't record an answer the probe couldn't give.
+		d.logger.Warn("Failed to probe for idmapped mount support", logger.Ctx{"path": fspath, "err": err})
+		return mode
+	}
+
+	if supported {
 		// Use idmapped mounts.
 		mode = idmap.StorageTypeIdmapped
 	}
