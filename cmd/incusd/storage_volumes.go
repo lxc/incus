@@ -927,6 +927,17 @@ func storagePoolVolumesPost(d *Daemon, r *http.Request) response.Response {
 			return response.SmartError(err)
 		}
 
+		// Neither side of the copy may be a volume holding the daemon's data.
+		err = storagePoolVolumeUsedByDaemon(s, srcProjectName, srcPoolName, req.Source.Name)
+		if err != nil {
+			return response.SmartError(err)
+		}
+
+		err = storagePoolVolumeUsedByDaemon(s, projectName, poolName, req.Name)
+		if err != nil {
+			return response.SmartError(err)
+		}
+
 		if dbVolume != nil {
 			return doCustomVolumeRefresh(s, r, request.ProjectParam(r), projectName, poolName, &req)
 		}
@@ -1257,6 +1268,11 @@ func storagePoolVolumePost(d *Daemon, r *http.Request) response.Response {
 	}
 
 	projectName, err := project.StorageVolumeProject(s.DB.Cluster, request.ProjectParam(r), db.StoragePoolVolumeTypeCustom)
+	if err != nil {
+		return response.SmartError(err)
+	}
+
+	err = storagePoolVolumeUsedByDaemon(s, projectName, srcPoolName, volumeName)
 	if err != nil {
 		return response.SmartError(err)
 	}

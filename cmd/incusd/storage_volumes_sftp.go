@@ -82,6 +82,11 @@ func storagePoolVolumeTypeSFTPHandler(d *Daemon, r *http.Request) response.Respo
 		return response.SmartError(err)
 	}
 
+	err = storagePoolVolumeUsedByDaemon(s, volumeProjectName, poolName, volumeName)
+	if err != nil {
+		return response.SmartError(err)
+	}
+
 	// The permission was checked on the targeted member's volume, so only serve that one.
 	target := request.QueryParam(r, "target")
 	if target != "" && target != s.ServerName {
