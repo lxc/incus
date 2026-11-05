@@ -14,17 +14,11 @@ import (
 // If a cluster certificate is found it will be loaded instead.
 // If neither a server or cluster certfificate exists, a new server certificate will be generated.
 func LoadCert(dir string) (*localtls.CertInfo, error) {
-	prefix := "server"
 	if util.PathExists(filepath.Join(dir, "cluster.crt")) {
-		prefix = "cluster"
+		return LoadClusterCert(dir)
 	}
 
-	cert, err := localtls.KeyPairAndCA(dir, prefix, localtls.CertServer, true)
-	if err != nil {
-		return nil, fmt.Errorf("failed to load TLS certificate: %w", err)
-	}
-
-	return cert, nil
+	return LoadServerCert(dir)
 }
 
 // LoadClusterCert reads the cluster certificate from the given var dir.
@@ -32,6 +26,14 @@ func LoadCert(dir string) (*localtls.CertInfo, error) {
 // If a cluster certificate doesn't exist, a new one is generated.
 func LoadClusterCert(dir string) (*localtls.CertInfo, error) {
 	prefix := "cluster"
+
+	// Members that joined a cluster may be missing the CA symlink.
+	if util.PathExists(filepath.Join(dir, "server.ca")) && !util.PathExists(filepath.Join(dir, "cluster.ca")) {
+		err := os.Symlink("server.ca", filepath.Join(dir, "cluster.ca"))
+		if err != nil {
+			return nil, fmt.Errorf("Failed to symlink server CA cert to cluster CA cert: %w", err)
+		}
+	}
 
 	cert, err := localtls.KeyPairAndCA(dir, prefix, localtls.CertServer, true)
 	if err != nil {
