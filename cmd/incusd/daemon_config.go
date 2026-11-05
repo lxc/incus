@@ -4,6 +4,7 @@ import (
 	"context"
 	"maps"
 	"net/http"
+	"strings"
 
 	clusterConfig "github.com/lxc/incus/v7/internal/server/cluster/config"
 	"github.com/lxc/incus/v7/internal/server/db"
@@ -35,6 +36,19 @@ func daemonConfigRender(s *state.State) (map[string]string, error) {
 	}
 
 	return config, nil
+}
+
+// daemonConfigHideSecrets removes the credentials from a rendered config.
+func daemonConfigHideSecrets(config map[string]string) {
+	for key := range config {
+		if clusterConfig.ConfigSchema[key].Hidden || node.ConfigSchema[key].Hidden {
+			delete(config, key)
+		}
+
+		if strings.HasPrefix(key, "logging.") && strings.HasSuffix(key, ".target.password") {
+			delete(config, key)
+		}
+	}
 }
 
 // daemonConfigETag returns the config used for ETag checks, excluding node-local keys on untargeted cluster requests.
