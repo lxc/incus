@@ -59,6 +59,7 @@ import (
 	"github.com/lxc/incus/v7/shared/ioprogress"
 	"github.com/lxc/incus/v7/shared/logger"
 	"github.com/lxc/incus/v7/shared/osarch"
+	"github.com/lxc/incus/v7/shared/revert"
 	"github.com/lxc/incus/v7/shared/util"
 	"github.com/lxc/incus/v7/shared/validate"
 )
@@ -545,20 +546,20 @@ func imgPostInstanceInfo(ctx context.Context, s *state.State, r *http.Request, r
 		return &info, fmt.Errorf("The image already exists: %s", info.Fingerprint)
 	}
 
-	/* rename the file to the expected name so our caller can use it */
-	metaFinalName := internalUtil.VarPath("images", info.Fingerprint)
-	err = internalUtil.FileMove(metaFile.Name(), metaFinalName)
+	// Store the files under the fingerprint so our caller can use them.
+	rootfsPath := ""
+	if imageType == "split" {
+		rootfsPath = rootfsFile.Name()
+	}
+
+	storeRevert, err := imageStoreFiles(info.Fingerprint, metaFile.Name(), rootfsPath)
 	if err != nil {
 		return nil, err
 	}
 
-	if imageType == "split" {
-		rootfsFinalName := internalUtil.VarPath("images", info.Fingerprint+".rootfs")
-		err = internalUtil.FileMove(rootfsFile.Name(), rootfsFinalName)
-		if err != nil {
-			return nil, err
-		}
-	}
+	reverter := revert.New()
+	defer reverter.Fail()
+	reverter.Add(storeRevert)
 
 	info.Architecture, _ = osarch.ArchitectureName(c.Architecture())
 	info.Properties = meta.Properties
@@ -570,6 +571,8 @@ func imgPostInstanceInfo(ctx context.Context, s *state.State, r *http.Request, r
 	if err != nil {
 		return nil, err
 	}
+
+	reverter.Success()
 
 	return &info, nil
 }
@@ -784,10 +787,63 @@ func imgPostURLInfo(ctx context.Context, s *state.State, r *http.Request, req ap
 	return info, nil
 }
 
+// imageSameSize reports whether both paths are missing or are files of the same size.
+func imageSameSize(a string, b string) bool {
+	fa, errA := os.Stat(a)
+	fb, errB := os.Stat(b)
+	if errA != nil || errB != nil {
+		return errors.Is(errA, fs.ErrNotExist) && errors.Is(errB, fs.ErrNotExist)
+	}
+
+	return fa.Size() == fb.Size()
+}
+
+// imageStoreFiles moves an image into the shared image store, never replacing a stored copy.
+// The returned hook removes the files again if they were newly stored.
+func imageStoreFiles(fingerprint string, metaPath string, rootfsPath string) (revert.Hook, error) {
+	imgPath := internalUtil.VarPath("images", fingerprint)
+	rootfsImgPath := imgPath + ".rootfs"
+
+	if util.PathExists(imgPath) || util.PathExists(rootfsImgPath) {
+		// Same fingerprint and sizes means the same split, so the stored copy is reused.
+		if !imageSameSize(imgPath, metaPath) || !imageSameSize(rootfsImgPath, rootfsPath) {
+			return nil, api.StatusErrorf(http.StatusConflict, "Image %q already exists in a different format", fingerprint)
+		}
+
+		_ = os.Remove(metaPath)
+		if rootfsPath != "" {
+			_ = os.Remove(rootfsPath)
+		}
+
+		return func() {}, nil
+	}
+
+	err := internalUtil.FileMove(metaPath, imgPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if rootfsPath != "" {
+		err = internalUtil.FileMove(rootfsPath, rootfsImgPath)
+		if err != nil {
+			_ = os.Remove(imgPath)
+			return nil, err
+		}
+	}
+
+	return func() {
+		_ = os.Remove(imgPath)
+		_ = os.Remove(rootfsImgPath)
+	}, nil
+}
+
 func getImgPostInfo(ctx context.Context, s *state.State, r *http.Request, builddir string, project string, post *os.File, metadata map[string]any) (*api.Image, error) {
 	info := api.Image{}
 	var imageMeta *api.ImageMetadata
 	l := logger.AddContext(logger.Ctx{"function": "getImgPostInfo"})
+
+	reverter := revert.New()
+	defer reverter.Fail()
 
 	info.Public = util.IsTrue(r.Header.Get("X-Incus-public"))
 	propHeaders := r.Header[http.CanonicalHeaderKey("X-Incus-properties")]
@@ -870,6 +926,12 @@ func getImgPostInfo(ctx context.Context, s *state.State, r *http.Request, buildd
 			return nil, err
 		}
 
+		// An empty part would only move the split of an existing image.
+		if size == 0 {
+			l.Error("Invalid multipart image")
+			return nil, errors.New("Invalid multipart image")
+		}
+
 		info.Filename = part.FileName()
 		info.Fingerprint = fmt.Sprintf("%x", hash256.Sum(nil))
 
@@ -885,27 +947,13 @@ func getImgPostInfo(ctx context.Context, s *state.State, r *http.Request, buildd
 			return nil, err
 		}
 
-		imgfname := internalUtil.VarPath("images", info.Fingerprint)
-		err = internalUtil.FileMove(imageTarf.Name(), imgfname)
+		storeRevert, err := imageStoreFiles(info.Fingerprint, imageTarf.Name(), rootfsTarf.Name())
 		if err != nil {
-			l.Error("Failed to move the image tarfile", logger.Ctx{
-				"err":    err,
-				"source": imageTarf.Name(),
-				"dest":   imgfname,
-			})
+			l.Error("Failed to store the image", logger.Ctx{"err": err})
 			return nil, err
 		}
 
-		rootfsfname := internalUtil.VarPath("images", info.Fingerprint+".rootfs")
-		err = internalUtil.FileMove(rootfsTarf.Name(), rootfsfname)
-		if err != nil {
-			l.Error("Failed to move the rootfs tarfile", logger.Ctx{
-				"err":    err,
-				"source": rootfsTarf.Name(),
-				"dest":   imgfname,
-			})
-			return nil, err
-		}
+		reverter.Add(storeRevert)
 	} else {
 		_, err = post.Seek(0, io.SeekStart)
 		if err != nil {
@@ -942,16 +990,13 @@ func getImgPostInfo(ctx context.Context, s *state.State, r *http.Request, buildd
 
 		info.Type = imageType
 
-		imgfname := internalUtil.VarPath("images", info.Fingerprint)
-		err = internalUtil.FileMove(post.Name(), imgfname)
+		storeRevert, err := imageStoreFiles(info.Fingerprint, post.Name(), "")
 		if err != nil {
-			l.Error("Failed to move the tarfile", logger.Ctx{
-				"err":    err,
-				"source": post.Name(),
-				"dest":   imgfname,
-			})
+			l.Error("Failed to store the image", logger.Ctx{"err": err})
 			return nil, err
 		}
+
+		reverter.Add(storeRevert)
 	}
 
 	info.Architecture = imageMeta.Architecture
@@ -1079,6 +1124,8 @@ func getImgPostInfo(ctx context.Context, s *state.State, r *http.Request, buildd
 			return nil, err
 		}
 	}
+
+	reverter.Success()
 
 	return &info, nil
 }
