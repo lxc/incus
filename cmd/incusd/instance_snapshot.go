@@ -13,6 +13,7 @@ import (
 
 	internalInstance "github.com/lxc/incus/v7/internal/instance"
 	"github.com/lxc/incus/v7/internal/jmap"
+	"github.com/lxc/incus/v7/internal/server/auth"
 	"github.com/lxc/incus/v7/internal/server/db"
 	"github.com/lxc/incus/v7/internal/server/db/cluster"
 	"github.com/lxc/incus/v7/internal/server/db/operationtype"
@@ -743,6 +744,12 @@ func snapshotPost(s *state.State, r *http.Request, snapInst instance.Instance) r
 		err = json.NewDecoder(rdr3).Decode(&req)
 		if err != nil {
 			return response.BadRequest(err)
+		}
+
+		// Migrating a snapshot exposes the instance content.
+		err = s.Authorizer.CheckPermission(r.Context(), r, auth.ObjectInstance(snapInst.Project().Name, parentName), auth.EntitlementCanEdit)
+		if err != nil {
+			return response.SmartError(err)
 		}
 
 		if reqNew.Live {
