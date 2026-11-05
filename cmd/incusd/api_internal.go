@@ -463,8 +463,8 @@ func internalContainerOnStart(d *Daemon, r *http.Request) response.Response {
 }
 
 func internalContainerOnStopNS(d *Daemon, r *http.Request) response.Response {
-	// Wait until daemon is fully started.
-	<-d.waitReady.Done()
+	// Wait until the daemon state is ready, autostart may still be in progress.
+	<-d.stateReady.Done()
 
 	s := d.State()
 
@@ -496,8 +496,8 @@ func internalContainerOnStopNS(d *Daemon, r *http.Request) response.Response {
 }
 
 func internalContainerOnStop(d *Daemon, r *http.Request) response.Response {
-	// Wait until daemon is fully started.
-	<-d.waitReady.Done()
+	// Wait until the daemon state is ready, autostart may still be in progress.
+	<-d.stateReady.Done()
 
 	s := d.State()
 
@@ -526,8 +526,8 @@ func internalContainerOnStop(d *Daemon, r *http.Request) response.Response {
 }
 
 func internalVirtualMachineOnResize(d *Daemon, r *http.Request) response.Response {
-	// Wait until daemon is fully started.
-	<-d.waitReady.Done()
+	// Wait until the daemon state is ready, autostart may still be in progress.
+	<-d.stateReady.Done()
 
 	s := d.State()
 
