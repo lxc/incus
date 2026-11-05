@@ -310,6 +310,11 @@ func instanceSnapshotsPost(d *Daemon, r *http.Request) response.Response {
 
 	var expiry time.Time
 	if req.ExpiresAt != nil {
+		err = db.CheckTime(*req.ExpiresAt)
+		if err != nil {
+			return response.BadRequest(err)
+		}
+
 		expiry = *req.ExpiresAt
 	} else {
 		duration := inst.ExpandedConfig()["snapshots.expiry.manual"]
@@ -490,6 +495,11 @@ func snapshotPut(s *state.State, r *http.Request, snapInst instance.Instance) re
 		configRaw := api.InstanceSnapshotPut{}
 
 		err = json.Unmarshal(body, &configRaw)
+		if err != nil {
+			return response.BadRequest(err)
+		}
+
+		err = db.CheckTime(configRaw.ExpiresAt)
 		if err != nil {
 			return response.BadRequest(err)
 		}

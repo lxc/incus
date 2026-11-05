@@ -254,6 +254,11 @@ func storagePoolVolumeSnapshotsTypePost(d *Daemon, r *http.Request) response.Res
 	// Fill in the expiry.
 	var expiry time.Time
 	if req.ExpiresAt != nil {
+		err = db.CheckTime(*req.ExpiresAt)
+		if err != nil {
+			return response.BadRequest(err)
+		}
+
 		expiry = *req.ExpiresAt
 	} else {
 		duration := parentDBVolume.Config["snapshots.expiry.manual"]
@@ -1056,6 +1061,11 @@ func storagePoolVolumeSnapshotTypePatch(d *Daemon, r *http.Request) response.Res
 func doStoragePoolVolumeSnapshotUpdate(s *state.State, r *http.Request, poolName string, projectName string, volName string, volumeType int, req api.StorageVolumeSnapshotPut) response.Response {
 	expiry := time.Time{}
 	if req.ExpiresAt != nil {
+		err := db.CheckTime(*req.ExpiresAt)
+		if err != nil {
+			return response.BadRequest(err)
+		}
+
 		expiry = *req.ExpiresAt
 	}
 
