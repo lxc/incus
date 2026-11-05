@@ -89,6 +89,32 @@ var storagePoolVolumeTypeFileCmd = APIEndpoint{
 	Post:   APIEndpointAction{Handler: storagePoolVolumeTypeFileHandler, AccessHandler: allowPermission(auth.ObjectTypeStorageVolume, auth.EntitlementCanAccessFiles, "poolName", "type", "volumeName", "location"), LargeRequest: true},
 }
 
+// storageVolumeAuthLocation returns the location used in a volume's authorization object.
+func storageVolumeAuthLocation(ctx context.Context, s *state.State, poolName string, projectName string, volumeName string, volumeType int) string {
+	// The location is only relevant in clusters.
+	if !s.ServerClustered {
+		return ""
+	}
+
+	var nodes []db.NodeInfo
+
+	err := s.DB.Cluster.Transaction(ctx, func(ctx context.Context, tx *db.ClusterTx) error {
+		poolID, err := tx.GetStoragePoolID(ctx, poolName)
+		if err != nil {
+			return err
+		}
+
+		nodes, err = tx.GetStorageVolumeNodes(ctx, poolID, projectName, volumeName, volumeType)
+
+		return err
+	})
+	if err != nil || len(nodes) != 1 {
+		return ""
+	}
+
+	return nodes[0].Name
+}
+
 // swagger:operation GET /1.0/storage-pools/{poolName}/volumes storage storage_pool_volumes_get
 //
 //  Get the storage volumes

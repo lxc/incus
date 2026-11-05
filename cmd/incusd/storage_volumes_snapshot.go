@@ -620,6 +620,13 @@ func storagePoolVolumeSnapshotTypePost(d *Daemon, r *http.Request) response.Resp
 
 	// This is a migration request so send back requested secrets.
 	if req.Migration {
+		// Migrating a snapshot exposes the volume content.
+		location := storageVolumeAuthLocation(r.Context(), s, poolName, projectName, volumeName, volumeType)
+		err = s.Authorizer.CheckPermission(r.Context(), r, auth.ObjectStorageVolume(projectName, poolName, db.StoragePoolVolumeTypeNameCustom, volumeName, location), auth.EntitlementCanEdit)
+		if err != nil {
+			return response.SmartError(err)
+		}
+
 		req := api.StorageVolumePost{
 			Name:   req.Name,
 			Target: req.Target,

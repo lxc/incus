@@ -23,7 +23,6 @@ import (
 	"github.com/lxc/incus/v6/internal/server/locking"
 	"github.com/lxc/incus/v6/internal/server/operations"
 	"github.com/lxc/incus/v6/internal/server/project"
-	"github.com/lxc/incus/v6/internal/server/response"
 	"github.com/lxc/incus/v6/internal/server/state"
 	storagePools "github.com/lxc/incus/v6/internal/server/storage"
 	"github.com/lxc/incus/v6/internal/server/task"
@@ -814,30 +813,7 @@ func checkAttachedAccess(s *state.State, r *http.Request, projectName string, pr
 		}
 
 		volName, _, _ := api.GetParentAndSnapshotName(dev["source"])
-
-		// Only a volume on a single member carries a location.
-		var location string
-		if s.ServerClustered {
-			var nodes []db.NodeInfo
-
-			err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
-				poolID, err := tx.GetStoragePoolID(ctx, dev["pool"])
-				if err != nil {
-					return err
-				}
-
-				nodes, err = tx.GetStorageVolumeNodes(ctx, poolID, volProject, volName, db.StoragePoolVolumeTypeCustom)
-
-				return err
-			})
-			if err != nil && !response.IsNotFoundError(err) {
-				return err
-			}
-
-			if len(nodes) == 1 {
-				location = nodes[0].Name
-			}
-		}
+		location := storageVolumeAuthLocation(r.Context(), s, dev["pool"], volProject, volName, db.StoragePoolVolumeTypeCustom)
 
 		err = s.Authorizer.CheckPermission(r.Context(), r, auth.ObjectStorageVolume(volProject, dev["pool"], db.StoragePoolVolumeTypeNameCustom, volName, location), auth.EntitlementCanView)
 		if err != nil {
