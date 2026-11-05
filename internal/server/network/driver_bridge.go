@@ -1987,6 +1987,11 @@ func (n *bridge) setup(oldConfig map[string]string) error {
 			dnsmasqCmd = append(dnsmasqCmd, "-S", fmt.Sprintf("/%s/", dnsDomain))
 		}
 
+		// Only use the generated names in managed mode, ignoring those supplied by DHCP clients.
+		if n.config["dns.mode"] == "" || n.config["dns.mode"] == "managed" {
+			dnsmasqCmd = append(dnsmasqCmd, "--dhcp-ignore-names")
+		}
+
 		// Don't serve the host's /etc/hosts entries.
 		if util.IsFalse(n.config["dns.include_hosts"]) {
 			dnsmasqCmd = append(dnsmasqCmd, "--no-hosts")
