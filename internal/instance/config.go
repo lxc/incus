@@ -9,11 +9,23 @@ import (
 	"strings"
 	"time"
 
+	"github.com/flosch/pongo2/v6"
+
 	scriptletLoad "github.com/lxc/incus/v7/internal/server/scriptlet/load"
 	"github.com/lxc/incus/v7/shared/api"
 	"github.com/lxc/incus/v7/shared/units"
 	"github.com/lxc/incus/v7/shared/validate"
 )
+
+// IsSnapshotPattern checks that a snapshot name pattern is a valid template.
+func IsSnapshotPattern(value string) error {
+	_, err := pongo2.FromString(value)
+	if err != nil {
+		return fmt.Errorf("Invalid snapshot pattern: %w", err)
+	}
+
+	return nil
+}
 
 // IsUserConfig returns true if the config key is a user configuration.
 func IsUserConfig(key string) bool {
@@ -495,7 +507,7 @@ var InstanceConfigKeysAny = map[string]func(value string) error{
 	//  defaultdesc: `snap%d`
 	//  liveupdate: no
 	//  shortdesc: Template for the snapshot name
-	"snapshots.pattern": validate.IsAny,
+	"snapshots.pattern": IsSnapshotPattern,
 
 	// gendoc:generate(entity=instance, group=snapshots, key=snapshots.expiry)
 	// Specify an expression like `1M 2H 3d 4w 5m 6y`.

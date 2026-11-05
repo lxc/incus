@@ -107,16 +107,11 @@ func cronSpecIsNow(spec string) (bool, error) {
 	// the time comparison below.
 	now = now.Truncate(time.Minute)
 
-	// Calculate the next scheduled time based on the snapshots.schedule
-	// pattern and the time now.
-	next, err := gronx.NextTickAfter(spec, now, false)
+	// Check whether the schedule matches the coming minute, searching for the next tick is far costlier.
+	due, err := gronx.New().IsDue(spec, now.Add(time.Minute))
 	if err != nil {
 		return false, fmt.Errorf("Could not parse cron '%s': %w", spec, err)
 	}
 
-	if !now.Add(time.Minute).Equal(next) {
-		return false, nil
-	}
-
-	return true, nil
+	return due, nil
 }

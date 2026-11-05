@@ -790,8 +790,12 @@ func IsCron(aliases []string) func(value string) error {
 
 		// Can be comma+space separated (just commas are valid cron pattern).
 		value = strings.ToLower(value)
-		triggers := strings.SplitSeq(value, ", ")
-		for trigger := range triggers {
+		triggers := strings.Split(value, ", ")
+		if len(triggers) > 64 {
+			return errors.New("Too many cron expressions, at most 64 are allowed")
+		}
+
+		for _, trigger := range triggers {
 			err := isValid(trigger)
 			if err != nil {
 				return err

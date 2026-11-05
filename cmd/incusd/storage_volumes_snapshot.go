@@ -1677,16 +1677,21 @@ func pruneExpiredCustomVolumeSnapshots(ctx context.Context, s *state.State, expi
 			continue // Deletion of this snapshot is already running, skip.
 		}
 
+		l := logger.AddContext(logger.Ctx{"project": v.ProjectName, "pool": v.PoolName, "volume": v.Name})
+
+		// One volume's failure must not keep the others' snapshots around.
 		pool, err := storagePools.LoadByName(s, v.PoolName)
 		if err != nil {
 			customVolSnapshotsPruneRunning.Delete(v.ID)
-			return fmt.Errorf("Error loading pool for volume snapshot %q (project %q, pool %q): %w", v.Name, v.ProjectName, v.PoolName, err)
+			l.Error("Error loading pool for volume snapshot", logger.Ctx{"err": err})
+			continue
 		}
 
 		err = pool.DeleteCustomVolumeSnapshot(v.ProjectName, v.Name, nil)
 		customVolSnapshotsPruneRunning.Delete(v.ID)
 		if err != nil {
-			return fmt.Errorf("Error deleting custom volume snapshot %q (project %q, pool %q): %w", v.Name, v.ProjectName, v.PoolName, err)
+			l.Error("Error deleting custom volume snapshot", logger.Ctx{"err": err})
+			continue
 		}
 	}
 
@@ -1701,24 +1706,31 @@ func autoCreateCustomVolumeSnapshots(ctx context.Context, s *state.State, volume
 			return err // Stop if context is cancelled.
 		}
 
+		l := logger.AddContext(logger.Ctx{"project": v.ProjectName, "pool": v.PoolName, "volume": v.Name})
+
+		// One volume's failure must not cost the others their snapshot.
 		snapshotName, err := volumeDetermineNextSnapshotName(ctx, s, v, "snap%d")
 		if err != nil {
-			return fmt.Errorf("Error retrieving next snapshot name for volume %q (project %q, pool %q): %w", v.Name, v.ProjectName, v.PoolName, err)
+			l.Error("Error retrieving next snapshot name", logger.Ctx{"err": err})
+			continue
 		}
 
 		expiry, err := internalInstance.GetExpiry(time.Now(), v.Config["snapshots.expiry"])
 		if err != nil {
-			return fmt.Errorf("Error getting snapshot expiry for volume %q (project %q, pool %q): %w", v.Name, v.ProjectName, v.PoolName, err)
+			l.Error("Error getting snapshot expiry", logger.Ctx{"err": err})
+			continue
 		}
 
 		pool, err := storagePools.LoadByName(s, v.PoolName)
 		if err != nil {
-			return fmt.Errorf("Error loading pool for volume %q (project %q, pool %q): %w", v.Name, v.ProjectName, v.PoolName, err)
+			l.Error("Error loading pool for volume", logger.Ctx{"err": err})
+			continue
 		}
 
 		err = pool.CreateCustomVolumeSnapshot(v.ProjectName, v.Name, snapshotName, expiry, false, nil)
 		if err != nil {
-			return fmt.Errorf("Error creating snapshot for volume %q (project %q, pool %q): %w", v.Name, v.ProjectName, v.PoolName, err)
+			l.Error("Error creating snapshot", logger.Ctx{"err": err})
+			continue
 		}
 	}
 
