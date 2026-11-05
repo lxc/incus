@@ -1400,10 +1400,11 @@ func projectHasLimitsOrRestrictions(project api.Project) bool {
 // Hold information associated with the project, such as profiles and
 // instances.
 type projectInfo struct {
-	Project   api.Project
-	Profiles  []api.Profile
-	Instances []api.Instance
-	Volumes   []db.StorageVolumeArgs
+	Project    api.Project
+	Profiles   []api.Profile
+	Instances  []api.Instance
+	Volumes    []db.StorageVolumeArgs
+	ImagesSize int64
 }
 
 // Fetch the given project from the database along with its profiles, instances
@@ -1497,6 +1498,21 @@ func fetchProject(tx *db.ClusterTx, projectName string, skipIfNoLimits bool) (*p
 		Volumes:   volumes,
 	}
 
+	// The project's own images count against its disk limit.
+	if projectName == api.ProjectDefaultName || util.IsTrue(project.Config["features.images"]) {
+		images, err := cluster.GetImages(ctx, tx.Tx(), cluster.ImageFilter{Project: &projectName})
+		if err != nil {
+			return nil, fmt.Errorf("Fetch project images from database: %w", err)
+		}
+
+		for _, image := range images {
+			info.ImagesSize, err = addLimit(info.ImagesSize, image.Size)
+			if err != nil {
+				return nil, fmt.Errorf("Invalid size for image %q in project %q: %w", image.Fingerprint, projectName, err)
+			}
+		}
+	}
+
 	return info, nil
 }
 
@@ -1543,6 +1559,10 @@ func getTotalsAcrossProjectEntities(info *projectInfo, keys []string, skipUnset 
 
 	for _, key := range keys {
 		totals[key] = 0
+		if key == "limits.disk" {
+			totals[key] = info.ImagesSize
+		}
+
 		if key == "limits.disk" || strings.HasPrefix(key, projectLimitDiskPool) {
 			poolName := ""
 			fields := strings.SplitN(key, projectLimitDiskPool, 2)
