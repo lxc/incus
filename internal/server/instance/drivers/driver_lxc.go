@@ -5872,7 +5872,13 @@ func (d *lxc) Update(args db.InstanceArgs, userRequested bool) error {
 			profileNames = append(profileNames, profile.Name)
 		}
 
-		return cluster.UpdateInstanceProfiles(ctx, tx.Tx(), object.ID, object.Project, profileNames)
+		err = cluster.UpdateInstanceProfiles(ctx, tx.Tx(), object.ID, object.Project, profileNames)
+		if err != nil {
+			return err
+		}
+
+		// Re-check the project limits with the new config recorded, concurrent updates each passed on the old one.
+		return project.CheckLimits(tx, d.project.Name)
 	})
 	if err != nil {
 		return fmt.Errorf("Failed to update database: %w", err)
