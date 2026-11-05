@@ -2,12 +2,15 @@ package main
 
 import (
 	"context"
+	"net/http"
 	"slices"
 	"strings"
 
 	"github.com/lxc/incus/v7/internal/server/backup"
 	"github.com/lxc/incus/v7/internal/server/db"
 	"github.com/lxc/incus/v7/internal/server/instance"
+	"github.com/lxc/incus/v7/internal/server/project"
+	"github.com/lxc/incus/v7/internal/server/response"
 	"github.com/lxc/incus/v7/internal/server/state"
 	storagePools "github.com/lxc/incus/v7/internal/server/storage"
 	"github.com/lxc/incus/v7/internal/version"
@@ -191,4 +194,29 @@ func storagePoolVolumeBackupLoadByName(ctx context.Context, s *state.State, proj
 	volBackup := backup.NewVolumeBackup(s, projectName, poolName, volumeName, b.ID, b.Name, b.CreationDate, b.ExpiryDate, b.VolumeOnly, b.OptimizedStorage)
 
 	return volBackup, nil
+}
+
+// storagePoolMemberAllowed checks that the project may place member-local storage on this cluster member.
+func storagePoolMemberAllowed(s *state.State, r *http.Request, poolName string, projectName string) response.Response {
+	if !s.ServerClustered {
+		return nil
+	}
+
+	pool, err := storagePools.LoadByName(s, poolName)
+	if err != nil {
+		return response.SmartError(err)
+	}
+
+	if pool.Driver().Info().Remote {
+		return nil
+	}
+
+	err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
+		return project.CheckMemberAllowed(ctx, tx, projectName, s.ServerName)
+	})
+	if err != nil {
+		return response.SmartError(err)
+	}
+
+	return nil
 }

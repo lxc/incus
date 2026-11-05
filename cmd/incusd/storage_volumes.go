@@ -872,6 +872,12 @@ func storagePoolVolumesPost(d *Daemon, r *http.Request) response.Response {
 		return resp
 	}
 
+	// Local volumes live on this member, so the project must be allowed to use it.
+	resp = storagePoolMemberAllowed(s, r, poolName, projectName)
+	if resp != nil {
+		return resp
+	}
+
 	// If we're getting binary content, process separately.
 	if r.Header.Get("Content-Type") == "application/octet-stream" {
 		if r.Header.Get("X-Incus-type") == "iso" {
@@ -1965,6 +1971,16 @@ func storagePoolVolumeTypePostMove(s *state.State, r *http.Request, poolName str
 	})
 	if err != nil {
 		return response.SmartError(err)
+	}
+
+	// The volume stays on its member, so the target project must be allowed to use it.
+	if s.ServerClustered && vol.Location != "" {
+		err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
+			return project.CheckMemberAllowed(ctx, tx, projectName, vol.Location)
+		})
+		if err != nil {
+			return response.SmartError(err)
+		}
 	}
 
 	run := func(op *operations.Operation) error {
