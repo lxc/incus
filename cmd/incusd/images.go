@@ -1394,6 +1394,15 @@ func imagesPost(d *Daemon, r *http.Request) response.Response {
 		return response.Forbidden(nil)
 	}
 
+	// Aliases are a separate entitlement from images.
+	if trusted && (len(req.Aliases) > 0 || r.Header.Get("X-Incus-aliases") != "") {
+		err = s.Authorizer.CheckPermission(r.Context(), r, auth.ObjectProject(imageProjectName), auth.EntitlementCanCreateImageAliases)
+		if err != nil {
+			cleanup(builddir, post)
+			return response.SmartError(err)
+		}
+	}
+
 	if !imageUpload && req.Source.Mode == "push" {
 		cleanup(builddir, post)
 
@@ -1504,8 +1513,8 @@ func imagesPost(d *Daemon, r *http.Request) response.Response {
 				if ok {
 					req.Aliases = aliases
 				}
-			} else if len(info.Aliases) > 0 {
-				// Used to get aliases from HTTP headers on raw image imports.
+			} else if trusted && len(info.Aliases) > 0 {
+				// Used to get aliases from HTTP headers on raw image imports, a token only carries its own.
 				req.Aliases = info.Aliases
 			}
 		}
