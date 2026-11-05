@@ -494,6 +494,7 @@ func imageDownload(ctx context.Context, r *http.Request, s *state.State, op *ope
 			MetaFile:        io.ReadWriteSeeker(dest),
 			RootfsFile:      io.ReadWriteSeeker(destRootfs),
 			ProgressHandler: progress,
+			MaxUnpackedSize: args.Budget,
 			Canceler:        canceler,
 			DeltaSourceRetriever: func(fingerprint string, file string) string {
 				// The base name comes from the remote server; only offer an image the project already holds.
