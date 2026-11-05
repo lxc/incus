@@ -383,6 +383,13 @@ func instanceMetadataPut(d *Daemon, r *http.Request) response.Response {
 }
 
 func doInstanceMetadataUpdate(s *state.State, inst instance.Instance, metadata api.ImageMetadata, r *http.Request) response.Response {
+	// Every template needs a definition.
+	for tplPath, tpl := range metadata.Templates {
+		if tpl == nil {
+			return response.BadRequest(fmt.Errorf("Template %q has no definition", tplPath))
+		}
+	}
+
 	// Convert YAML.
 	data, err := yaml.Dump(metadata, yaml.WithV2Defaults())
 	if err != nil {
