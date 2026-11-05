@@ -11,6 +11,7 @@ import (
 	"github.com/gorilla/websocket"
 
 	"github.com/lxc/incus/v7/shared/api"
+	"github.com/lxc/incus/v7/shared/ws"
 )
 
 // Event handling functions
@@ -86,6 +87,8 @@ func (r *ProtocolIncus) getEvents(allProjects bool, eventTypes []string) (*Event
 	if err != nil {
 		return nil, err
 	}
+
+	wsConn.SetReadLimit(ws.EventMessageMaxSize)
 
 	r.eventConnsLock.Lock()
 	r.eventConns[listener.projectName] = wsConn // Save for others to use.

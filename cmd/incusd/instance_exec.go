@@ -508,6 +508,8 @@ func (s *execWs) do(op *operations.Operation) error {
 					// where the control connection isn't used by the client and so we need to
 					// detect when the client disconnects to avoid leaving the command running
 					// in the background.
+					conn.SetReadLimit(ws.ControlMessageMaxSize)
+
 					go func() {
 						_, _, err := conn.ReadMessage()
 
@@ -534,6 +536,8 @@ func (s *execWs) do(op *operations.Operation) error {
 					// Consume data (e.g. websocket pings) from stderr too to
 					// avoid a situation where we hit an inactivity timeout on
 					// stderr during long exec sessions
+					conn.SetReadLimit(ws.ControlMessageMaxSize)
+
 					go func() {
 						var err error
 						for err == nil {

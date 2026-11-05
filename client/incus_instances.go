@@ -1343,6 +1343,9 @@ func (r *ProtocolIncus) ExecInstance(instanceName string, exec api.InstanceExecP
 	if conns[api.SecretNameControl] != nil {
 		conn := conns[api.SecretNameControl]
 
+		// The server only sends pings on this connection.
+		conn.SetReadLimit(ws.ControlMessageMaxSize)
+
 		go func() {
 			_, _, _ = conn.ReadMessage() // Consume pings from server.
 		}()
@@ -1379,6 +1382,9 @@ func (r *ProtocolIncus) ExecInstance(instanceName string, exec api.InstanceExecP
 		// Handle stdin
 		if conns["0"] != nil {
 			conn := conns["0"]
+
+			// The server only sends pings on this connection.
+			conn.SetReadLimit(ws.ControlMessageMaxSize)
 
 			go func() {
 				_, _, _ = conn.ReadMessage() // Consume pings from server.
