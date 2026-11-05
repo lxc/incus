@@ -4119,6 +4119,9 @@ test_clustering_healing() {
     ! grep -q cluster-member-healed "${TEST_DIR}/events.log" || false
     INCUS_DIR="${INCUS_ONE_DIR}" incus cluster list -f csv | grep node3 | grep -q OFFLINE
 
+    # Healing must also recover a member which died during its own evacuation.
+    INCUS_DIR="${INCUS_ONE_DIR}" incus admin sql global "UPDATE nodes SET state=3 WHERE name='node3'"
+
     # The evacuation only starts once the delay has elapsed.
     for _ in $(seq 240); do
         grep -q cluster-member-healed "${TEST_DIR}/events.log" && break
