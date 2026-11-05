@@ -454,6 +454,11 @@ func storagePoolVolumeTypeCustomBackupsPost(d *Daemon, r *http.Request) response
 		return response.BadRequest(err)
 	}
 
+	err = db.CheckTime(req.ExpiresAt)
+	if err != nil {
+		return response.BadRequest(err)
+	}
+
 	direct := r.Header.Get("Accept") == "application/octet-stream"
 
 	if direct && req.Target != nil {

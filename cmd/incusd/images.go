@@ -261,6 +261,11 @@ func imgPostInstanceInfo(ctx context.Context, s *state.State, r *http.Request, r
 		return nil, errors.New("No source provided")
 	}
 
+	err := db.CheckTime(req.ExpiresAt)
+	if err != nil {
+		return nil, err
+	}
+
 	if imageType != "" && imageType != "unified" && imageType != "split" {
 		return nil, errors.New("Invalid image format")
 	}
@@ -1004,6 +1009,11 @@ func getImgPostInfo(ctx context.Context, s *state.State, r *http.Request, buildd
 		info.CreatedAt = time.Unix(imageMeta.CreationDate, 0)
 	}
 
+	err = db.CheckTime(info.CreatedAt)
+	if err != nil {
+		return nil, fmt.Errorf("Invalid creation date: %w", err)
+	}
+
 	expiresAt, ok := metadata["expires_at"]
 	if ok {
 		expiry, ok := expiresAt.(time.Time)
@@ -1012,6 +1022,11 @@ func getImgPostInfo(ctx context.Context, s *state.State, r *http.Request, buildd
 		}
 	} else if imageMeta.ExpiryDate > 0 {
 		info.ExpiresAt = time.Unix(imageMeta.ExpiryDate, 0)
+	}
+
+	err = db.CheckTime(info.ExpiresAt)
+	if err != nil {
+		return nil, fmt.Errorf("Invalid expiry date: %w", err)
 	}
 
 	properties, ok := metadata["properties"]
@@ -3646,6 +3661,11 @@ func imagePut(d *Daemon, r *http.Request) response.Response {
 
 	// Get ExpiresAt
 	if !req.ExpiresAt.IsZero() {
+		err = db.CheckTime(req.ExpiresAt)
+		if err != nil {
+			return response.BadRequest(err)
+		}
+
 		info.ExpiresAt = req.ExpiresAt
 	}
 
