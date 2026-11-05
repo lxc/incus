@@ -400,9 +400,13 @@ func (c *ClusterTx) instanceConfigFill(ctx context.Context, snapshotsMode bool, 
 		return err
 	}
 
-	for instanceID, config := range configs {
-		inst := instances[instanceID]
-		inst.Config = config
+	// Walk the instances rather than the rows so one without config gets an empty map.
+	for instanceID, inst := range instances {
+		inst.Config = configs[instanceID]
+		if inst.Config == nil {
+			inst.Config = map[string]string{}
+		}
+
 		instances[instanceID] = inst
 	}
 
