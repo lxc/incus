@@ -294,7 +294,55 @@ func updateCertificateCache(d *Daemon) {
 		// continue functioning, and hopefully the write will succeed on next update.
 	}
 
+	oldCerts := d.clientCerts.GetAPICertificates()
 	d.clientCerts.SetCertificates(certs)
+
+	// Connections opened with a certificate that lost trust or changed scope end here.
+	changed := []string{}
+	for fingerprint, oldCert := range oldCerts {
+		newCert, ok := d.clientCerts.GetAPICertificates()[fingerprint]
+		if !ok {
+			changed = append(changed, fingerprint)
+			continue
+		}
+
+		// Gaining access doesn't need the connections closed.
+		lostProject := slices.ContainsFunc(oldCert.Projects, func(project string) bool {
+			return !slices.Contains(newCert.Projects, project)
+		})
+
+		if newCert.Restricted && (!oldCert.Restricted || lostProject) {
+			changed = append(changed, fingerprint)
+		}
+	}
+
+	if len(changed) == 0 {
+		return
+	}
+
+	match := func(protocol string, username string) bool {
+		return protocol == api.AuthenticationMethodTLS && slices.Contains(changed, username)
+	}
+
+	s.Events.CloseListeners(match)
+	response.CloseUpgradedConnections(func(r *http.Request) bool {
+		return match(requestIdentity(r))
+	})
+}
+
+// requestIdentity returns the protocol and user name a request was authenticated with.
+func requestIdentity(r *http.Request) (string, string) {
+	protocol, ok := r.Context().Value(request.CtxProtocol).(string)
+	if !ok {
+		return "", ""
+	}
+
+	username, ok := r.Context().Value(request.CtxUsername).(string)
+	if !ok {
+		return protocol, ""
+	}
+
+	return protocol, username
 }
 
 // certificateCacheProjectRemoved reloads the trust cache everywhere after a project name was deleted or renamed.

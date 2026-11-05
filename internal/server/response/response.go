@@ -657,6 +657,23 @@ type upgradeResponse struct {
 	cleanup  func()
 }
 
+var (
+	upgradedConnsMu sync.Mutex
+	upgradedConns   = map[*upgradeResponse]net.Conn{}
+)
+
+// CloseUpgradedConnections closes the hijacked connections whose request matches.
+func CloseUpgradedConnections(match func(r *http.Request) bool) {
+	upgradedConnsMu.Lock()
+	defer upgradedConnsMu.Unlock()
+
+	for resp, conn := range upgradedConns {
+		if match(resp.req) {
+			_ = conn.Close()
+		}
+	}
+}
+
 // String returns the response type name.
 func (r *upgradeResponse) String() string {
 	return r.protocol + " handler"
@@ -686,6 +703,17 @@ func (r *upgradeResponse) Render(w http.ResponseWriter) error {
 	}
 
 	defer logger.WarnOnErrorExcept(remoteConn.Close, []error{net.ErrClosed}, "Failed to close remote connection")
+
+	// Keep track of it so a lost trust can end it.
+	upgradedConnsMu.Lock()
+	upgradedConns[r] = remoteConn
+	upgradedConnsMu.Unlock()
+
+	defer func() {
+		upgradedConnsMu.Lock()
+		delete(upgradedConns, r)
+		upgradedConnsMu.Unlock()
+	}()
 
 	remoteTCP, _ := tcp.ExtractConn(remoteConn)
 	if remoteTCP != nil {
