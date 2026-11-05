@@ -743,6 +743,12 @@ func storagePoolBucketsPost(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
+	// Local buckets live on this member, so the project must be allowed to use it.
+	resp = storagePoolMemberAllowed(s, r, poolName, bucketProjectName)
+	if resp != nil {
+		return resp
+	}
+
 	if r.Header.Get("Content-Type") == "application/octet-stream" {
 		return createStoragePoolBucketFromBackup(s, r, request.ProjectParam(r), bucketProjectName, r.Body, poolName, r.Header.Get("X-Incus-name"))
 	}
