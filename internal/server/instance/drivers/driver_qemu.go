@@ -14008,7 +14008,10 @@ func (d *qemu) postCPUHotplug(monitor *qmp.Monitor) error {
 	return nil
 }
 
-// ConsoleLog returns all output sent to the instance's console's ring buffer since startup.
+// qemuConsoleLogMaxSize bounds the console log kept while the VM runs.
+const qemuConsoleLogMaxSize = 8 * 1024 * 1024
+
+// ConsoleLog returns the most recent output sent to the instance's console's ring buffer.
 func (d *qemu) ConsoleLog() (string, error) {
 	// Setup a new operation, retrying if a concurrent retrieval just completed.
 	var op *operationlock.InstanceOperation
@@ -14057,8 +14060,8 @@ func (d *qemu) ConsoleLog() (string, error) {
 		}
 	}
 
-	// Read and return the complete log for this instance.
-	fullLog, err := os.ReadFile(d.ConsoleBufferLogPath())
+	// Read and return the end of the log for this instance.
+	fullLog, err := d.consoleLogTail()
 	if err != nil {
 		if errors.Is(err, fs.ErrNotExist) {
 			// If there's no log file yet, such as right at VM creation, return an empty string.
@@ -14068,7 +14071,43 @@ func (d *qemu) ConsoleLog() (string, error) {
 		return "", err
 	}
 
-	return string(fullLog), nil
+	return fullLog, nil
+}
+
+// consoleLogTail returns the last qemuConsoleLogMaxSize bytes of the console log, trimming the file to them.
+func (d *qemu) consoleLogTail() (string, error) {
+	logFile, err := os.OpenFile(d.ConsoleBufferLogPath(), os.O_RDWR, 0)
+	if err != nil {
+		return "", err
+	}
+
+	defer logger.WarnOnError(logFile.Close, "Failed to close log file")
+
+	fi, err := logFile.Stat()
+	if err != nil {
+		return "", err
+	}
+
+	offset := max(fi.Size()-qemuConsoleLogMaxSize, 0)
+	tail, err := io.ReadAll(io.NewSectionReader(logFile, offset, qemuConsoleLogMaxSize))
+	if err != nil {
+		return "", err
+	}
+
+	// Keep the file itself bounded too, it isn't rotated while the VM runs.
+	if offset > 0 {
+		err = logFile.Truncate(0)
+		if err != nil {
+			return "", err
+		}
+
+		_, err = logFile.WriteAt(tail, 0)
+		if err != nil {
+			return "", err
+		}
+	}
+
+	return string(tail), nil
 }
 
 // consoleSwapRBWithSocket swaps the qemu backend for the instance's console to a unix socket.
