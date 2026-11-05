@@ -5076,7 +5076,7 @@
 					{
 						"restricted.devices.nic": {
 							"defaultdesc": "`managed`",
-							"longdesc": "Possible values are `allow`, `block`, or `managed`.\n\n- When set to `block`, this option prevents using all network devices.\n- When set to `managed`, this option allows using network devices only if `network=` is set.\n- When set to `allow`, there is no restriction on which network devices can be used.",
+							"longdesc": "Possible values are `allow`, `block`, or `managed`.\n\n- When set to `block`, this option prevents using all network devices.\n- When set to `managed`, this option allows using network devices only if `network=` is set.\n- When set to `allow`, there is no restriction on which network devices can be used.\n\nUnless set to `allow`, the `host_name` option of network devices can't be set.",
 							"shortdesc": "Which network devices can be used",
 							"type": "string"
 						}
