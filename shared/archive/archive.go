@@ -24,8 +24,22 @@ import (
 // RunWrapper is an optional function that's used to wrap rsync, useful for confinement like AppArmor.
 var RunWrapper func(cmd *exec.Cmd, output string, allowedCmds []string) (func(), error)
 
+// maxErrorOutput is how much of a command's error output is kept, the archive controls how much there is.
+const maxErrorOutput = 1024 * 1024
+
+// nullWriteCloser keeps the beginning of a command's error output and drops the rest.
 type nullWriteCloser struct {
-	*bytes.Buffer
+	buffer *bytes.Buffer
+}
+
+// Write keeps up to maxErrorOutput bytes.
+func (nwc *nullWriteCloser) Write(p []byte) (int, error) {
+	remaining := maxErrorOutput - nwc.buffer.Len()
+	if remaining > 0 {
+		nwc.buffer.Write(p[:min(len(p), remaining)])
+	}
+
+	return len(p), nil
 }
 
 // Close closes the writer.
@@ -248,7 +262,7 @@ func Unpack(file string, path string, blockBackend bool, maxMemory int64, tracke
 			}
 
 			stdErr := runError.StdErr().String()
-			if stdErr == "" {
+			if stdErr == "" || len(stdErr) >= maxErrorOutput {
 				return err
 			}
 
