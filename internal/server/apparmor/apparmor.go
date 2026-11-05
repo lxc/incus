@@ -184,7 +184,13 @@ func unloadProfile(sysOS *sys.OS, fullName string, name string) error {
 
 // deleteProfile unloads and delete profile and cache for a profile.
 func deleteProfile(sysOS *sys.OS, fullName string, name string) error {
+	// The profile file is written whether or not AppArmor is in use.
 	if !sysOS.AppArmorAvailable || !sysOS.AppArmorAdmin {
+		err := os.Remove(filepath.Join(aaPath, "profiles", name))
+		if err != nil && !errors.Is(err, fs.ErrNotExist) {
+			return fmt.Errorf("Failed to remove %s: %w", filepath.Join(aaPath, "profiles", name), err)
+		}
+
 		return nil
 	}
 
