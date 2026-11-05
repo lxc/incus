@@ -384,7 +384,7 @@ func internalServerCertificatePut(d *Daemon, r *http.Request) response.Response 
 		return response.BadRequest(errors.New("Private key must be a PEM encoded key"))
 	}
 
-	cert, err := localtls.KeyPairFromRaw(certBytes, keyBytes)
+	_, err = localtls.KeyPairFromRaw(certBytes, keyBytes)
 	if err != nil {
 		return response.BadRequest(fmt.Errorf("Invalid certificate or key: %w", err))
 	}
@@ -395,6 +395,12 @@ func internalServerCertificatePut(d *Daemon, r *http.Request) response.Response 
 	err = internalUtil.WriteCert(s.OS.VarDir, "server", certBytes, keyBytes, nil)
 	if err != nil {
 		return response.SmartError(fmt.Errorf("Failed to write new server certificate: %w", err))
+	}
+
+	// Load it back from disk so the CA and CRL come along.
+	cert, err := internalUtil.LoadServerCert(s.OS.VarDir)
+	if err != nil {
+		return response.SmartError(err)
 	}
 
 	s.Endpoints.NetworkUpdateCert(cert)
