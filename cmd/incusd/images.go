@@ -2119,7 +2119,7 @@ func autoUpdateImages(ctx context.Context, s *state.State) error {
 				if errors.Is(err, context.Canceled) {
 					return nil
 				}
-			} else {
+			} else if newInfo != nil {
 				deleteIDs = append(deleteIDs, image.ID)
 			}
 
@@ -2131,8 +2131,29 @@ func autoUpdateImages(ctx context.Context, s *state.State) error {
 		}
 
 		if newImage != nil {
+			// Look up all current references, the auto-update list misses projects holding the fingerprint without it.
+			var oldImages []dbCluster.Image
+			err = s.DB.Cluster.Transaction(ctx, func(ctx context.Context, tx *db.ClusterTx) error {
+				var err error
+				oldImages, err = dbCluster.GetImages(ctx, tx.Tx(), dbCluster.ImageFilter{Fingerprint: &fingerprint})
+				return err
+			})
+			if err != nil {
+				logger.Error("Failed to get old image records", logger.Ctx{"err": err, "fingerprint": fingerprint})
+				continue
+			}
+
+			// The old image volumes can only go once every remaining reference is about to be deleted.
+			pruneOld := true
+			for _, oldImage := range oldImages {
+				if !slices.Contains(deleteIDs, oldImage.ID) {
+					pruneOld = false
+					break
+				}
+			}
+
 			if len(nodes) > 1 {
-				err := distributeImage(ctx, s, nodes, fingerprint, newImage)
+				err := distributeImage(ctx, s, nodes, fingerprint, newImage, pruneOld)
 				if err != nil {
 					logger.Error("Failed to distribute new image", logger.Ctx{"err": err, "fingerprint": newImage.Fingerprint})
 
@@ -2154,13 +2175,17 @@ func autoUpdateImages(ctx context.Context, s *state.State) error {
 				return nil
 			})
 
+			err = imageDeleteUnreferenced(ctx, s, nil, fingerprint)
+			if err != nil {
+				logger.Error("Error deleting old image", logger.Ctx{"err": err, "fingerprint": fingerprint})
+			}
 		}
 	}
 
 	return nil
 }
 
-func distributeImage(ctx context.Context, s *state.State, nodes []string, oldFingerprint string, newImage *api.Image) error {
+func distributeImage(ctx context.Context, s *state.State, nodes []string, oldFingerprint string, newImage *api.Image, pruneOld bool) error {
 	// Get config of all nodes (incl. own) and check for storage.images_volume.
 	// If the setting is missing, distribute the image to the node.
 	// If the option is set, only distribute the image once to nodes with this
@@ -2350,6 +2375,11 @@ func distributeImage(ctx context.Context, s *state.State, nodes []string, oldFin
 			_, _, err = client.RawQuery("POST", "/internal/image-optimize", req, "")
 			if err != nil {
 				logger.Error("Failed creating new image in storage pool", logger.Ctx{"err": err, "remote": nodeAddress, "pool": poolName, "fingerprint": newImage.Fingerprint})
+			}
+
+			// The old volume stays while another project still uses the image.
+			if !pruneOld {
+				continue
 			}
 
 			err = client.DeleteStoragePoolVolume(poolName, "image", oldFingerprint)
@@ -2560,21 +2590,6 @@ func autoUpdateImage(ctx context.Context, s *state.State, op *operations.Operati
 			logger.Error("Copying default profiles", logger.Ctx{"err": err, "fingerprint": hash})
 		}
 
-		// If we do have optimized pools, make sure we remove the volumes associated with the image.
-		if poolName != "" {
-			pool, err := storagePools.LoadByName(s, poolName)
-			if err != nil {
-				logger.Error("Error loading storage pool to delete image", logger.Ctx{"err": err, "pool": poolName, "fingerprint": fingerprint})
-				continue
-			}
-
-			err = pool.DeleteImage(fingerprint, op)
-			if err != nil {
-				logger.Error("Error deleting image from storage pool", logger.Ctx{"err": err, "pool": pool.Name(), "fingerprint": fingerprint})
-				continue
-			}
-		}
-
 		// Add the image to the authorizer.
 		err = s.Authorizer.AddImage(s.ShutdownCtx, projectName, info.Fingerprint)
 		if err != nil {
@@ -2593,24 +2608,6 @@ func autoUpdateImage(ctx context.Context, s *state.State, op *operations.Operati
 	if hash == fingerprint {
 		setRefreshResult(false)
 		return nil, nil
-	}
-
-	// Remove main image file.
-	fname := filepath.Join(s.OS.VarDir, "images", fingerprint)
-	if util.PathExists(fname) {
-		err = os.Remove(fname)
-		if err != nil {
-			logger.Error("Error deleting image file", logger.Ctx{"fingerprint": fingerprint, "file": fname, "err": err})
-		}
-	}
-
-	// Remove the rootfs file for the image.
-	fname = filepath.Join(s.OS.VarDir, "images", fingerprint) + ".rootfs"
-	if util.PathExists(fname) {
-		err = os.Remove(fname)
-		if err != nil {
-			logger.Error("Error deleting image rootfs file", logger.Ctx{"fingerprint": fingerprint, "file": fname, "err": err})
-		}
 	}
 
 	setRefreshResult(true)
@@ -3138,6 +3135,63 @@ func imageDelete(d *Daemon, r *http.Request) response.Response {
 	}
 
 	return operations.OperationResponse(op)
+}
+
+// imageDeleteUnreferenced removes an image's volumes and files once no project refers to it anymore.
+func imageDeleteUnreferenced(ctx context.Context, s *state.State, op *operations.Operation, fingerprint string) error {
+	unlock, err := imageOperationLock(ctx, fingerprint)
+	if err != nil {
+		return err
+	}
+
+	defer unlock()
+
+	var referenced bool
+	var poolNames []string
+
+	err = s.DB.Cluster.Transaction(ctx, func(ctx context.Context, tx *db.ClusterTx) error {
+		remaining, err := dbCluster.GetImages(ctx, tx.Tx(), dbCluster.ImageFilter{Fingerprint: &fingerprint})
+		if err != nil {
+			return err
+		}
+
+		referenced = len(remaining) > 0
+		if referenced {
+			return nil
+		}
+
+		poolIDs, err := tx.GetPoolsWithImage(ctx, fingerprint)
+		if err != nil {
+			return err
+		}
+
+		poolNames, err = tx.GetPoolNamesFromIDs(ctx, poolIDs)
+
+		return err
+	})
+	if err != nil {
+		return err
+	}
+
+	if referenced {
+		return nil
+	}
+
+	for _, poolName := range poolNames {
+		pool, err := storagePools.LoadByName(s, poolName)
+		if err != nil {
+			return fmt.Errorf("Error loading storage pool %q to delete image volume %q: %w", poolName, fingerprint, err)
+		}
+
+		err = pool.DeleteImage(fingerprint, op)
+		if err != nil {
+			return fmt.Errorf("Error deleting image volume %q from storage pool %q: %w", fingerprint, pool.Name(), err)
+		}
+	}
+
+	imageDeleteFromDisk(fingerprint)
+
+	return nil
 }
 
 // Helper to delete an image file from the local images directory.
@@ -4828,8 +4882,18 @@ func imageRefresh(d *Daemon, r *http.Request) response.Response {
 		}
 
 		if newImage != nil {
+			// The old image volumes can only go once no other project refers to the old fingerprint.
+			var referenced bool
+			err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+				referenced, err = tx.ImageIsReferencedByOtherProjects(ctx, projectName, fingerprint)
+				return err
+			})
+			if err != nil {
+				return err
+			}
+
 			if len(nodes) > 1 {
-				err := distributeImage(context.TODO(), s, nodes, fingerprint, newImage)
+				err := distributeImage(context.TODO(), s, nodes, fingerprint, newImage, !referenced)
 				if err != nil {
 					return fmt.Errorf("Failed to distribute new image %q: %w", newImage.Fingerprint, err)
 				}
@@ -4841,6 +4905,12 @@ func imageRefresh(d *Daemon, r *http.Request) response.Response {
 			})
 			if err != nil {
 				logger.Error("Error deleting old image from database", logger.Ctx{"err": err, "fingerprint": fingerprint, "ID": imageID})
+				return err
+			}
+
+			err = imageDeleteUnreferenced(context.TODO(), s, op, fingerprint)
+			if err != nil {
+				return err
 			}
 		}
 
