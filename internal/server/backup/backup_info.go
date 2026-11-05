@@ -57,8 +57,8 @@ type Info struct {
 	Config           *config.Config `json:"config,omitempty" yaml:"config,omitempty"`                     // Equivalent of backup.yaml but embedded in index for quick retrieval.
 }
 
-// GetInfo extracts backup information from a given ReadSeeker.
-func GetInfo(r io.ReadSeeker, sysOS *sys.OS, outputPath string) (*Info, error) {
+// GetInfo extracts backup information from a given ReadSeeker, reading at most maxSize decompressed bytes.
+func GetInfo(r io.ReadSeeker, sysOS *sys.OS, outputPath string, maxSize int64) (*Info, error) {
 	result := Info{}
 	hasIndexFile := false
 	hasOptimizedHeader := false
@@ -68,7 +68,7 @@ func GetInfo(r io.ReadSeeker, sysOS *sys.OS, outputPath string) (*Info, error) {
 	optimizedHeaderFalse := false
 
 	// Extract.
-	tr, cancelFunc, err := TarReader(r, sysOS, outputPath)
+	tr, cancelFunc, err := TarReader(r, sysOS, outputPath, maxSize)
 	if err != nil {
 		return nil, err
 	}

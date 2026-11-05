@@ -22,7 +22,8 @@ import (
 )
 
 // TarReader rewinds backup file handle r and returns new tar reader and process cleanup function.
-func TarReader(r io.ReadSeeker, sysOS *sys.OS, outputPath string) (*tar.Reader, context.CancelFunc, error) {
+// A non-negative maxSize bounds the decompressed data.
+func TarReader(r io.ReadSeeker, sysOS *sys.OS, outputPath string, maxSize int64) (*tar.Reader, context.CancelFunc, error) {
 	_, err := r.Seek(0, io.SeekStart)
 	if err != nil {
 		return nil, nil, err
@@ -37,7 +38,7 @@ func TarReader(r io.ReadSeeker, sysOS *sys.OS, outputPath string) (*tar.Reader, 
 		return nil, nil, errors.New("Unsupported backup compression")
 	}
 
-	tr, cancelFunc, err := archive.CompressedTarReader(context.Background(), r, unpacker, outputPath)
+	tr, cancelFunc, err := archive.CompressedTarReader(context.Background(), r, unpacker, outputPath, maxSize)
 	if err != nil {
 		return nil, nil, err
 	}

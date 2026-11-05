@@ -127,7 +127,7 @@ func (t TransferManager) UploadAllFiles(bucketName string, srcData io.ReadSeeker
 	defer func() { _ = os.RemoveAll(mountPath) }()
 	logger.Debugf("Created temp mount path %s", mountPath)
 
-	tr, cancelFunc, err := backup.TarReader(srcData, nil, mountPath)
+	tr, cancelFunc, err := backup.TarReader(srcData, nil, mountPath, -1)
 	if err != nil {
 		return err
 	}

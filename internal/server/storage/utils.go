@@ -573,8 +573,36 @@ func validateVolumeCommonRules(vol drivers.Volume) map[string]func(string) error
 	return rules
 }
 
-// tarballContentSize returns the total size of the entries in a possibly compressed tarball.
-func tarballContentSize(path string, outputPath string) (int64, error) {
+// ImageVirtualSize returns the virtual size of a qcow2 image file.
+func ImageVirtualSize(sysOS *sys.OS, imgPath string) (int64, error) {
+	// Force the qcow2 format rather than trusting qemu-img's detection and cap its CPU time and
+	// address space, as the image may be malicious.
+	cmd := []string{"prlimit", "--cpu=2", "--as=1073741824", "qemu-img", "info", "-f", "qcow2", "--output=json", imgPath}
+	imgJSON, err := apparmor.QemuImg(sysOS, cmd, imgPath, "", nil)
+	if err != nil {
+		return -1, fmt.Errorf("Failed reading image info %q: %w", imgPath, err)
+	}
+
+	imgInfo := struct {
+		Format      string `json:"format"`
+		VirtualSize int64  `json:"virtual-size"`
+	}{}
+
+	err = json.Unmarshal([]byte(imgJSON), &imgInfo)
+	if err != nil {
+		return -1, fmt.Errorf("Failed unmarshalling image info %q: %w (%q)", imgPath, err, imgJSON)
+	}
+
+	// Belt and braces qcow2 check.
+	if imgInfo.Format != drivers.BlockVolumeTypeQcow2 {
+		return -1, fmt.Errorf("Unexpected image format %q", imgInfo.Format)
+	}
+
+	return imgInfo.VirtualSize, nil
+}
+
+// tarballContentSize returns the total size of the entries in a possibly compressed tarball, giving up past maxSize.
+func tarballContentSize(path string, outputPath string, maxSize int64) (int64, error) {
 	f, err := os.Open(path)
 	if err != nil {
 		return -1, err
@@ -587,7 +615,7 @@ func tarballContentSize(path string, outputPath string) (int64, error) {
 		return -1, err
 	}
 
-	tr, cancelFunc, err := archive.CompressedTarReader(context.Background(), f, unpacker, outputPath)
+	tr, cancelFunc, err := archive.CompressedTarReader(context.Background(), f, unpacker, outputPath, maxSize)
 	if err != nil {
 		return -1, err
 	}
@@ -918,7 +946,7 @@ func ImageUnpack(imageFile string, vol drivers.Volume, destBlockFile string, sys
 				return -1, err
 			}
 
-			contentSize, err := tarballContentSize(imageFile, tempDir)
+			contentSize, err := tarballContentSize(imageFile, tempDir, sizeBytes+(4*1024*1024))
 			if err != nil {
 				return -1, err
 			}

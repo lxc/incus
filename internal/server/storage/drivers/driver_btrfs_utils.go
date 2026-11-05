@@ -588,7 +588,7 @@ func (d *btrfs) loadOptimizedBackupHeader(r io.ReadSeeker, mountPath string) (*B
 	header := BTRFSMetaDataHeader{}
 
 	// Extract.
-	tr, cancelFunc, err := backup.TarReader(r, d.state.OS, mountPath)
+	tr, cancelFunc, err := backup.TarReader(r, d.state.OS, mountPath, -1)
 	if err != nil {
 		return nil, err
 	}

@@ -866,7 +866,7 @@ func genericVFSBackupUnpack(d Driver, sysOS *sys.OS, vol Volume, snapshots []str
 
 			srcFile := fmt.Sprintf("%s.%s", srcPrefix, genericVolumeBlockExtension)
 
-			tr, cancelFunc, err := archive.CompressedTarReader(context.Background(), r, unpacker, mountPath)
+			tr, cancelFunc, err := archive.CompressedTarReader(context.Background(), r, unpacker, mountPath, -1)
 			if err != nil {
 				return err
 			}

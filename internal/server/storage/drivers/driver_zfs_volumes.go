@@ -401,7 +401,7 @@ func (d *zfs) CreateVolumeFromBackup(vol Volume, srcBackup backup.Info, srcData 
 		d.Logger().Debug("Unpacking optimized volume", logger.Ctx{"source": srcFile, "target": target})
 
 		targetPath := fmt.Sprintf("%s/storage-pools/%s", internalUtil.VarPath(""), target)
-		tr, cancelFunc, err := archive.CompressedTarReader(context.Background(), r, unpacker, targetPath)
+		tr, cancelFunc, err := archive.CompressedTarReader(context.Background(), r, unpacker, targetPath, -1)
 		if err != nil {
 			return err
 		}
