@@ -218,6 +218,10 @@ chain in{{.chainSeparator}}{{.deviceLabel}} {
 	iifname "{{.hostName}}" ether type ip6 icmpv6 type 136 @nh,528,48 != {{.hwAddrHex}} drop
 	{{ end }}
 
+	{{ if .filterUnwantedFrames }}
+	iifname "{{.hostName}}" ether type != {arp, ip, ip6} drop
+	{{ end }}
+
 	{{ if or .aclInDropRules .aclInRejectRules .aclInAcceptRules .aclOutDropRules .aclOutAcceptRules .aclInDefaultRule .ipv4NetsList }}
 	iifname "{{.hostName}}" ether type ip ip saddr 0.0.0.0 ip daddr 255.255.255.255 udp dport 67 accept
 	{{ end }}
@@ -280,10 +284,6 @@ chain in{{.chainSeparator}}{{.deviceLabel}} {
 	{{.}}
 	{{ end }}
 
-	{{ if .filterUnwantedFrames }}
-	iifname "{{.hostName}}" ether type != {arp, ip, ip6} drop
-	{{ end }}
-
 	{{.aclInDefaultRule}}
 }
 
@@ -295,6 +295,10 @@ chain fwd{{.chainSeparator}}{{.deviceLabel}} {
 	iifname "{{.hostName}}" ether saddr != {{.hwAddr}} drop
 	iifname "{{.hostName}}" ether type arp arp saddr ether != {{.hwAddr}} drop
 	iifname "{{.hostName}}" ether type ip6 icmpv6 type 136 @nh,528,48 != {{.hwAddrHex}} drop
+	{{ end }}
+
+	{{ if .filterUnwantedFrames }}
+	iifname "{{.hostName}}" ether type != {arp, ip, ip6} drop
 	{{ end }}
 
 	# IPv4 filtering
@@ -341,10 +345,6 @@ chain fwd{{.chainSeparator}}{{.deviceLabel}} {
 
 	{{ range .aclOutAcceptRules }}
 	{{.}}
-	{{ end }}
-
-	{{ if .filterUnwantedFrames }}
-	iifname "{{.hostName}}" ether type != {arp, ip, ip6} drop
 	{{ end }}
 
 	{{ if or .aclInDropRules .aclInRejectRulesConverted .aclInAcceptRules .aclOutDropRules .aclOutAcceptRules .aclInDefaultRuleConverted .aclOutDefaultRule }}
