@@ -586,6 +586,14 @@ func instanceCreateAsCopy(s *state.State, opts instanceCreateAsCopyOpts, op *ope
 				CreationDate: srcSnap.CreationDate(),
 			}
 
+			// The snapshot config comes from the source, check it against the project.
+			err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+				return project.AllowSnapshotImport(tx, snapInstArgs.Project, snapInstArgs)
+			})
+			if err != nil {
+				return nil, err
+			}
+
 			// Create the snapshots.
 			_, snapInstOp, cleanup, err := instance.CreateInternal(s, snapInstArgs, op, true, false, false)
 			if err != nil {

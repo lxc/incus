@@ -2270,6 +2270,36 @@ func AllowBackupTarget(tx *db.ClusterTx, projectName string) error {
 	return nil
 }
 
+// AllowSnapshotImport checks the project's restrictions against a snapshot received through a copy or migration.
+func AllowSnapshotImport(tx *db.ClusterTx, projectName string, args db.InstanceArgs) error {
+	info, err := fetchProject(tx, projectName, true)
+	if err != nil {
+		return err
+	}
+
+	if info == nil || !util.IsTrue(info.Project.Config["restricted"]) {
+		return nil
+	}
+
+	profiles := make([]string, 0, len(args.Profiles))
+	for _, profile := range args.Profiles {
+		profiles = append(profiles, profile.Name)
+	}
+
+	snap := api.Instance{
+		Name:    args.Name,
+		Project: projectName,
+		Type:    args.Type.String(),
+		InstancePut: api.InstancePut{
+			Config:   args.Config,
+			Devices:  args.Devices.CloneNative(),
+			Profiles: profiles,
+		},
+	}
+
+	return checkRestrictions(info.Project, []api.Instance{snap}, nil)
+}
+
 // AllowSnapshotCreation returns an error if any project-specific restriction is violated
 // when creating a new snapshot in a project.
 func AllowSnapshotCreation(p *api.Project) error {
