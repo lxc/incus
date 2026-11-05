@@ -4580,6 +4580,7 @@ Specify a comma-delimited list of network integrations that can be used by netwo
 :type: "string"
 Specify a comma-delimited list of network subnets from the uplink networks that are allocated for use in this project.
 Use the form `<uplink>:<subnet>`.
+Host-side routes on bridged NICs must fall within the subnets listed for their network.
 ```
 
 ```{config:option} restricted.networks.uplinks project-restricted

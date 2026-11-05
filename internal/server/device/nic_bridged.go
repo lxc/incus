@@ -464,6 +464,12 @@ func (d *nicBridged) validateConfig(instConf instance.ConfigReader) error {
 			return err
 		}
 
+		// Host-side routes are restricted to the project's allowed subnets.
+		err = nicCheckRestrictedRoutes(instConf.Project(), d.config, d.config["network"])
+		if err != nil {
+			return err
+		}
+
 		// Apply network settings to NIC.
 		netConfig := d.network.Config()
 

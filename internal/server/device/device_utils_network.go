@@ -24,6 +24,7 @@ import (
 	"github.com/lxc/incus/v6/internal/server/ip"
 	"github.com/lxc/incus/v6/internal/server/network"
 	"github.com/lxc/incus/v6/internal/server/state"
+	"github.com/lxc/incus/v6/shared/api"
 	"github.com/lxc/incus/v6/shared/logger"
 	"github.com/lxc/incus/v6/shared/revert"
 	"github.com/lxc/incus/v6/shared/units"
@@ -402,6 +403,54 @@ func networkVethFillFromVolatile(device deviceConfig.Device, volatile map[string
 	if device["hwaddr"] == "" {
 		device["hwaddr"] = volatile["hwaddr"]
 	}
+}
+
+// nicCheckRestrictedRoutes checks a NIC's host-side routes against the project's restricted.networks.subnets.
+func nicCheckRestrictedRoutes(p api.Project, config deviceConfig.Device, networkName string) error {
+	if !util.IsTrue(p.Config["restricted"]) || p.Config["restricted.devices.nic"] == "allow" {
+		return nil
+	}
+
+	var err error
+	var routes []*net.IPNet
+	for _, k := range []string{"ipv4.routes", "ipv6.routes", "ipv4.routes.external", "ipv6.routes.external"} {
+		if config[k] == "" {
+			continue
+		}
+
+		routes, err = network.SubnetParseAppend(routes, util.SplitNTrimSpace(config[k], ",", -1, false)...)
+		if err != nil {
+			return err
+		}
+	}
+
+	if len(routes) == 0 {
+		return nil
+	}
+
+	// Only the subnets listed for this network apply.
+	var allowed []*net.IPNet
+	for _, subnetRaw := range util.SplitNTrimSpace(p.Config["restricted.networks.subnets"], ",", -1, true) {
+		subnetNetwork, subnetStr, ok := strings.Cut(subnetRaw, ":")
+		if !ok || subnetNetwork != networkName {
+			continue
+		}
+
+		_, subnet, err := net.ParseCIDR(subnetStr)
+		if err != nil {
+			return err
+		}
+
+		allowed = append(allowed, subnet)
+	}
+
+	for _, route := range routes {
+		if !slices.ContainsFunc(allowed, func(subnet *net.IPNet) bool { return network.SubnetContains(subnet, route) }) {
+			return fmt.Errorf("Route %q not allowed in project", route.String())
+		}
+	}
+
+	return nil
 }
 
 // networkNICRouteAdd applies any static host-side routes configured for an instance NIC.

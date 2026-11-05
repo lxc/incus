@@ -5160,7 +5160,7 @@
 					{
 						"restricted.networks.subnets": {
 							"defaultdesc": "`block`",
-							"longdesc": "Specify a comma-delimited list of network subnets from the uplink networks that are allocated for use in this project.\nUse the form `\u003cuplink\u003e:\u003csubnet\u003e`.",
+							"longdesc": "Specify a comma-delimited list of network subnets from the uplink networks that are allocated for use in this project.\nUse the form `\u003cuplink\u003e:\u003csubnet\u003e`.\nHost-side routes on bridged NICs must fall within the subnets listed for their network.",
 							"shortdesc": "Which network subnets are allocated for use in this project",
 							"type": "string"
 						}
