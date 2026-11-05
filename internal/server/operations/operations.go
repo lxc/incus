@@ -302,9 +302,12 @@ func (op *Operation) Start() error {
 
 	op.status = api.Running
 
-	if op.onRun != nil {
+	// Capture the handler under the lock, done() clears it once the operation finishes.
+	onRun := op.onRun
+
+	if onRun != nil {
 		go func(op *Operation) {
-			err := op.onRun(op)
+			err := onRun(op)
 			if err != nil {
 				op.lock.Lock()
 				op.status = api.Failure
