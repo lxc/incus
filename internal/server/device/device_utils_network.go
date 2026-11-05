@@ -93,6 +93,32 @@ func NetworkSetDevMAC(devName string, mac string) error {
 	return nil
 }
 
+// networkNICUsesVLANDevice checks whether a NIC uses the given parent and VLAN, resolving managed networks.
+func networkNICUsesVLANDevice(s *state.State, dev deviceConfig.Device, parent string, vlanID string, networks map[string]map[string]string) bool {
+	if dev["type"] != "nic" {
+		return false
+	}
+
+	devParent := dev["parent"]
+	devVLAN := dev["vlan"]
+	if dev["network"] != "" {
+		netConfig, found := networks[dev["network"]]
+		if !found {
+			n, err := network.LoadByName(s, api.ProjectDefaultName, dev["network"])
+			if err == nil {
+				netConfig = n.Config()
+			}
+
+			networks[dev["network"]] = netConfig
+		}
+
+		devParent = netConfig["parent"]
+		devVLAN = netConfig["vlan"]
+	}
+
+	return devParent == parent && devVLAN == vlanID
+}
+
 // networkRemoveInterfaceIfNeeded removes a network interface by name but only if no other instance is using it.
 func networkRemoveInterfaceIfNeeded(s *state.State, nic string, current instance.Instance, parent string, vlanID string) error {
 	// Check if it's used by another instance.
@@ -101,13 +127,14 @@ func networkRemoveInterfaceIfNeeded(s *state.State, nic string, current instance
 		return err
 	}
 
+	networks := map[string]map[string]string{}
 	for _, inst := range instances {
 		if inst.Name() == current.Name() && inst.Project().Name == current.Project().Name {
 			continue
 		}
 
 		for devName, dev := range inst.ExpandedDevices() {
-			if dev["type"] != "nic" || dev["vlan"] != vlanID || dev["parent"] != parent {
+			if !networkNICUsesVLANDevice(s, dev, parent, vlanID, networks) {
 				continue
 			}
 
@@ -139,9 +166,10 @@ func networkCreateVlanDeviceIfNeeded(s *state.State, parent string, vlanDevice s
 			return "", err
 		}
 
+		networks := map[string]map[string]string{}
 		for _, inst := range instances {
 			for devName, dev := range inst.ExpandedDevices() {
-				if dev["type"] != "nic" || dev["vlan"] != vlanID || dev["parent"] != parent {
+				if !networkNICUsesVLANDevice(s, dev, parent, vlanID, networks) {
 					continue
 				}
 
