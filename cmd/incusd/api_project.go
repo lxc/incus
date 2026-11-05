@@ -1045,6 +1045,12 @@ func projectPost(d *Daemon, r *http.Request) response.Response {
 		projectUpdateShares(s.ShutdownCtx, s, name, projectConfig, nil)
 		projectUpdateShares(s.ShutdownCtx, s, req.Name, nil, projectConfig)
 
+		// Restricted certificates are cached by project name.
+		err = certificateCacheProjectRemoved(s.ShutdownCtx, s, name)
+		if err != nil {
+			return err
+		}
+
 		requestor := request.CreateRequestor(r)
 		s.Events.SendLifecycle(req.Name, lifecycle.ProjectRenamed.Event(req.Name, requestor, logger.Ctx{"old_name": name}))
 
@@ -1447,6 +1453,12 @@ func projectDelete(d *Daemon, r *http.Request) response.Response {
 	}
 
 	projectUpdateShares(r.Context(), s, name, projectConfig, nil)
+
+	// Restricted certificates are cached by project name.
+	err = certificateCacheProjectRemoved(r.Context(), s, name)
+	if err != nil {
+		return response.SmartError(err)
+	}
 
 	requestor := request.CreateRequestor(r)
 	s.Events.SendLifecycle(name, lifecycle.ProjectDeleted.Event(name, requestor, nil))
