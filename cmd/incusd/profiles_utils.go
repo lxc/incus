@@ -4,10 +4,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"maps"
 
 	internalInstance "github.com/lxc/incus/v6/internal/instance"
 	"github.com/lxc/incus/v6/internal/server/db"
 	"github.com/lxc/incus/v6/internal/server/db/cluster"
+	"github.com/lxc/incus/v6/internal/server/device"
 	deviceConfig "github.com/lxc/incus/v6/internal/server/device/config"
 	"github.com/lxc/incus/v6/internal/server/instance"
 	"github.com/lxc/incus/v6/internal/server/instance/instancetype"
@@ -82,6 +84,46 @@ func doProfileUpdate(ctx context.Context, s *state.State, p api.Project, profile
 			})
 			if err != nil {
 				return err
+			}
+		}
+	}
+
+	// Validate the changed devices against the local instances before saving, as a change an
+	// instance refuses would otherwise stay recorded without being applied.
+	for _, inst := range insts {
+		if inst.Node != "" && inst.Node != s.ServerName {
+			continue
+		}
+
+		newProfiles := make([]api.Profile, 0, len(inst.Profiles))
+		for _, profile := range inst.Profiles {
+			if profile.Name == profileName && profile.Project == p.Name {
+				profile.Config = req.Config
+				profile.Devices = req.Devices
+			}
+
+			newProfiles = append(newProfiles, profile)
+		}
+
+		oldDevices := db.ExpandInstanceDevices(inst.Devices, inst.Profiles)
+		newDevices := db.ExpandInstanceDevices(inst.Devices, newProfiles)
+
+		var loaded instance.Instance
+		for name, conf := range newDevices {
+			if maps.Equal(oldDevices[name], conf) {
+				continue
+			}
+
+			if loaded == nil {
+				loaded, err = instance.LoadByProjectAndName(s, inst.Project, inst.Name)
+				if err != nil {
+					return err
+				}
+			}
+
+			_, err = device.New(loaded, s, name, conf, func() map[string]string { return map[string]string{} }, func(map[string]string) error { return nil })
+			if err != nil {
+				return fmt.Errorf("Invalid device %q for instance %q: %w", name, inst.Name, err)
 			}
 		}
 	}
