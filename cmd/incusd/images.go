@@ -4420,6 +4420,14 @@ func imageExportPost(d *Daemon, r *http.Request) response.Response {
 		response.SmartError(err)
 	}
 
+	// Check if the project allows using the target server.
+	err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
+		return projectutils.AllowImageDownload(tx, projectName, req.Target)
+	})
+	if err != nil {
+		return response.SmartError(err)
+	}
+
 	// Connect to the target and push the image
 	args := &incus.ConnectionArgs{
 		TLSServerCert: req.Certificate,
