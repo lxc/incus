@@ -234,6 +234,12 @@ func instanceSnapRestore(s *state.State, projectName string, name string, snap s
 		snap = name + internalInstance.SnapshotDelimiter + snap
 	}
 
+	// Only the instance's own snapshots can be restored.
+	parentName, _, _ := api.GetParentAndSnapshotName(snap)
+	if parentName != name {
+		return fmt.Errorf("Snapshot %q doesn't belong to instance %q", snap, name)
+	}
+
 	inst, err := instance.LoadByProjectAndName(s, projectName, name)
 	if err != nil {
 		return err
