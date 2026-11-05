@@ -23,6 +23,7 @@ import (
 	"github.com/lxc/incus/v6/internal/server/db"
 	dbCluster "github.com/lxc/incus/v6/internal/server/db/cluster"
 	"github.com/lxc/incus/v6/internal/server/network/acl"
+	"github.com/lxc/incus/v6/internal/server/project"
 	"github.com/lxc/incus/v6/internal/server/state"
 	internalUtil "github.com/lxc/incus/v6/internal/util"
 	"github.com/lxc/incus/v6/internal/version"
@@ -173,6 +174,7 @@ func (n *common) validateZoneNames(config map[string]string) error {
 
 	var err error
 	var zones []dbCluster.NetworkZone
+	var p *api.Project
 	zoneProjects := make(map[string]string)
 
 	err = n.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
@@ -185,7 +187,14 @@ func (n *common) validateZoneNames(config map[string]string) error {
 			zoneProjects[zone.Name] = zone.Project
 		}
 
-		return nil
+		dbProject, err := dbCluster.GetProject(ctx, tx.Tx(), n.project)
+		if err != nil {
+			return err
+		}
+
+		p, err = dbProject.ToAPI(ctx, tx.Tx())
+
+		return err
 	})
 	if err != nil {
 		return err
@@ -205,6 +214,11 @@ func (n *common) validateZoneNames(config map[string]string) error {
 			zoneProjectName, found := zoneProjects[keyZoneName]
 			if !found {
 				return fmt.Errorf("Invalid %q, network zone %q not found", keyName, keyZoneName)
+			}
+
+			// A restricted project may only publish into the zones it was given.
+			if !project.NetworkZoneAllowed(p.Config, keyZoneName) {
+				return fmt.Errorf("Invalid %q, network zone %q not allowed in project", keyName, keyZoneName)
 			}
 
 			_, zoneProjectUsed := zoneProjectsUsed[zoneProjectName]

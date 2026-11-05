@@ -204,6 +204,22 @@ func NetworkProjectFromRecord(p *api.Project) string {
 	return api.ProjectDefaultName
 }
 
+// NetworkZoneAllowed returns whether a restricted project may use the named DNS zone.
+func NetworkZoneAllowed(reqProjectConfig map[string]string, zoneName string) bool {
+	if util.IsFalseOrEmpty(reqProjectConfig["restricted"]) {
+		return true
+	}
+
+	for entry := range strings.SplitSeq(reqProjectConfig["restricted.networks.zones"], ",") {
+		entry = strings.TrimSpace(entry)
+		if entry != "" && (zoneName == entry || strings.HasSuffix(zoneName, "."+entry)) {
+			return true
+		}
+	}
+
+	return false
+}
+
 // NetworkAllowed returns whether access is allowed to a particular network based on projectConfig.
 func NetworkAllowed(reqProjectConfig map[string]string, networkName string, isManaged bool) bool {
 	// If project is not restricted, then access to network is allowed.
