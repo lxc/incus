@@ -37,6 +37,7 @@ import (
 	"github.com/lxc/incus/v6/shared/archive"
 	"github.com/lxc/incus/v6/shared/ioprogress"
 	"github.com/lxc/incus/v6/shared/logger"
+	"github.com/lxc/incus/v6/shared/units"
 	"github.com/lxc/incus/v6/shared/util"
 	"github.com/lxc/incus/v6/shared/validate"
 )
@@ -572,6 +573,44 @@ func validateVolumeCommonRules(vol drivers.Volume) map[string]func(string) error
 	return rules
 }
 
+// tarballContentSize returns the total size of the entries in a possibly compressed tarball.
+func tarballContentSize(path string, outputPath string) (int64, error) {
+	f, err := os.Open(path)
+	if err != nil {
+		return -1, err
+	}
+
+	defer func() { _ = f.Close() }()
+
+	_, _, unpacker, err := archive.DetectCompressionFile(f)
+	if err != nil {
+		return -1, err
+	}
+
+	tr, cancelFunc, err := archive.CompressedTarReader(context.Background(), f, unpacker, outputPath)
+	if err != nil {
+		return -1, err
+	}
+
+	defer cancelFunc()
+
+	var total int64
+	for {
+		hdr, err := tr.Next()
+		if errors.Is(err, io.EOF) {
+			break
+		}
+
+		if err != nil {
+			return -1, err
+		}
+
+		total += hdr.Size
+	}
+
+	return total, nil
+}
+
 // ImageUnpack unpacks a filesystem image into the destination path.
 // There are several formats that images can come in:
 // Container Format A: Separate metadata tarball and root squashfs file.
@@ -871,6 +910,23 @@ func ImageUnpack(imageFile string, vol drivers.Volume, destBlockFile string, sys
 		}
 
 		defer func() { _ = os.RemoveAll(tempDir) }()
+
+		// Only the compressed image was held to the project's budget, bound what gets unpacked.
+		if vol.ExpandedConfig("size") != "" {
+			sizeBytes, err := units.ParseByteSizeString(vol.ExpandedConfig("size"))
+			if err != nil {
+				return -1, err
+			}
+
+			contentSize, err := tarballContentSize(imageFile, tempDir)
+			if err != nil {
+				return -1, err
+			}
+
+			if sizeBytes > 0 && contentSize > sizeBytes+(4*1024*1024) {
+				return -1, fmt.Errorf("Image content size (%d) exceeds the volume size (%d)", contentSize, sizeBytes)
+			}
+		}
 
 		// Unpack the whole image.
 		err = archive.Unpack(imageFile, tempDir, vol.IsBlockBacked(), maxMemory, tracker)
