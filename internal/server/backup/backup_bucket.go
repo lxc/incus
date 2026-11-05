@@ -62,7 +62,7 @@ func (b *BucketBackup) Delete() error {
 
 	// Remove the database record.
 	err := b.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
-		return tx.DeleteStoragePoolBucketBackup(ctx, b.name)
+		return tx.DeleteStoragePoolBucketBackup(ctx, b.id)
 	})
 	if err != nil {
 		return err
@@ -114,7 +114,7 @@ func (b *BucketBackup) Rename(newName string) error {
 
 	// Rename the database record.
 	err = b.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
-		return tx.RenameBucketBackup(ctx, b.name, newName)
+		return tx.RenameBucketBackup(ctx, b.id, newName)
 	})
 	if err != nil {
 		return err
