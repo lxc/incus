@@ -318,11 +318,14 @@ func (op *Operation) Start() error {
 
 	op.status = api.Running
 
-	if op.onRun != nil {
+	// Capture the handler under the lock, done() clears it once the operation finishes.
+	onRun := op.onRun
+
+	if onRun != nil {
 		op.running = true
 
 		go func(op *Operation) {
-			err := op.onRun(op)
+			err := onRun(op)
 			if err != nil {
 				// A cancelled operation still records why its run ended.
 				op.lock.Lock()
