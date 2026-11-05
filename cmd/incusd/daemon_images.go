@@ -162,6 +162,12 @@ func imageDownload(ctx context.Context, r *http.Request, s *state.State, op *ope
 
 			fp = info.Fingerprint
 		}
+
+		// The remote's answer is looked up by prefix below, so only accept a full fingerprint.
+		err = validate.IsSHA256(fp)
+		if err != nil {
+			return nil, false, errors.New("Invalid image fingerprint")
+		}
 	}
 
 	// Ensure we are the only ones operating on this image.
@@ -252,8 +258,9 @@ func imageDownload(ctx context.Context, r *http.Request, s *state.State, op *ope
 		if err == nil {
 			// Only reuse another project's image when the caller may see it,
 			// otherwise download it (proving access) and dedupe on disk.
-			reuse := otherImg.Public || r == nil
-			if !reuse {
+			// Internal callers have no request to check against, so they only reuse public images.
+			reuse := otherImg.Public
+			if !reuse && r != nil {
 				err = s.Authorizer.CheckPermission(ctx, r, auth.ObjectImage(otherImg.Project, otherImg.Fingerprint), auth.EntitlementCanView)
 				if err == nil {
 					reuse = true
@@ -371,6 +378,11 @@ func imageDownload(ctx context.Context, r *http.Request, s *state.State, op *ope
 
 		logger.Debug("Created image on storage pool", ctxMap)
 		return info, linked, nil
+	}
+
+	// Nothing to download from.
+	if args.Server == "" {
+		return nil, false, api.StatusErrorf(http.StatusNotFound, "Image not found")
 	}
 
 	// Begin downloading
