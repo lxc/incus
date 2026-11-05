@@ -1206,6 +1206,8 @@ func instancesPost(d *Daemon, r *http.Request) response.Response {
 		}
 	}
 
+	var allMembers []db.NodeInfo
+
 	err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
 		dbProject, err := dbCluster.GetProject(ctx, tx.Tx(), targetProjectName)
 		if err != nil {
@@ -1216,8 +1218,6 @@ func instancesPost(d *Daemon, r *http.Request) response.Response {
 		if err != nil {
 			return err
 		}
-
-		var allMembers []db.NodeInfo
 
 		if s.ServerClustered && !clusterNotification {
 			allMembers, err = tx.GetNodes(ctx)
@@ -1363,40 +1363,6 @@ func instancesPost(d *Daemon, r *http.Request) response.Response {
 			}
 		}
 
-		if s.ServerClustered && !clusterNotification && targetMemberInfo == nil {
-			architectures, err := instance.SuitableArchitectures(ctx, s, tx, targetProjectName, sourceInst, sourceImageRef, req)
-			if err != nil {
-				return err
-			}
-
-			// If no architectures have been ascertained from the source then use the default
-			// architecture from project or global config if available.
-			if len(architectures) < 1 {
-				defaultArch := targetProject.Config["images.default_architecture"]
-				if defaultArch == "" {
-					defaultArch = s.GlobalConfig.ImagesDefaultArchitecture()
-				}
-
-				if defaultArch != "" {
-					defaultArchID, err := osarch.ArchitectureID(defaultArch)
-					if err != nil {
-						return err
-					}
-
-					architectures = append(architectures, defaultArchID)
-				} else {
-					architectures = nil // Don't exclude candidate members based on architecture.
-				}
-			}
-
-			clusterGroupsAllowed := project.GetRestrictedClusterGroups(targetProject)
-
-			candidateMembers, err = tx.GetCandidateMembers(ctx, allMembers, architectures, targetGroupName, clusterGroupsAllowed, s.GlobalConfig.OfflineThreshold())
-			if err != nil {
-				return err
-			}
-		}
-
 		if !clusterNotification {
 			// Check that the project's limits are not violated. Note this check is performed after
 			// automatically generated config values (such as ones from an InstanceType) have been set.
@@ -1410,6 +1376,45 @@ func instancesPost(d *Daemon, r *http.Request) response.Response {
 	})
 	if err != nil {
 		return response.SmartError(err)
+	}
+
+	// Contact the image server outside of the transaction, after the project checks.
+	if s.ServerClustered && !clusterNotification && targetMemberInfo == nil {
+		architectures, err := instance.SuitableArchitectures(r.Context(), s, targetProjectName, sourceInst, sourceImageRef, req)
+		if err != nil {
+			return response.SmartError(err)
+		}
+
+		// Use the default architecture from project or global config when the source
+		// doesn't dictate one or offers several (multi-architecture image aliases).
+		defaultArch := targetProject.Config["images.default_architecture"]
+		if defaultArch == "" {
+			defaultArch = s.GlobalConfig.ImagesDefaultArchitecture()
+		}
+
+		if defaultArch != "" {
+			defaultArchID, err := osarch.ArchitectureID(defaultArch)
+			if err != nil {
+				return response.SmartError(err)
+			}
+
+			if len(architectures) < 1 || slices.Contains(architectures, defaultArchID) {
+				architectures = []int{defaultArchID}
+			}
+		} else if len(architectures) < 1 {
+			architectures = nil // Don't exclude candidate members based on architecture.
+		}
+
+		clusterGroupsAllowed := project.GetRestrictedClusterGroups(targetProject)
+
+		err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
+			candidateMembers, err = tx.GetCandidateMembers(ctx, allMembers, architectures, targetGroupName, clusterGroupsAllowed, s.GlobalConfig.OfflineThreshold())
+
+			return err
+		})
+		if err != nil {
+			return response.SmartError(err)
+		}
 	}
 
 	// A local image may only be used by a caller allowed to view it.
