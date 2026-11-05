@@ -33,6 +33,7 @@ type Bitmap struct {
 type FormatData struct {
 	Bitmaps       []Bitmap `json:"bitmaps"`
 	LazyRefcounts bool     `json:"lazy-refcounts"`
+	ExtendedL2    bool     `json:"extended-l2"`
 }
 
 // FormatSpecific contains format dependent metadata.
