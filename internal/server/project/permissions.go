@@ -1694,6 +1694,11 @@ var aggregateLimitConfigValueParsers = map[string]func(string) (int64, error){
 			return -1, err
 		}
 
+		// A negative value disables the instance limit and would lower the total.
+		if limit < 0 {
+			return -1, fmt.Errorf("Invalid value %q", value)
+		}
+
 		return int64(limit), nil
 	},
 	"limits.cpu": func(value string) (int64, error) {
