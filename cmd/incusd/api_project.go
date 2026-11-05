@@ -2083,6 +2083,7 @@ func projectValidateConfig(s *state.State, config map[string]string) error {
 		// gendoc:generate(entity=project, group=restricted, key=restricted.networks.subnets)
 		// Specify a comma-delimited list of network subnets from the uplink networks that are allocated for use in this project.
 		// Use the form `<uplink>:<subnet>`.
+		// Host-side routes on bridged NICs must fall within the subnets listed for their network.
 		// ---
 		//  type: string
 		//  defaultdesc: `block`
