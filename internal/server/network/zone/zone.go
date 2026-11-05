@@ -149,6 +149,32 @@ func (d *zone) Etag() []any {
 	return []any{d.info.Name, d.info.Description, d.info.Config}
 }
 
+// validateContact checks a contact, which may be written as an e-mail address.
+func validateContact(contact string) error {
+	return validateDomainName(strings.Replace(contact, "@", ".", 1))
+}
+
+// validateDomainName checks that every label of a name fits on a zone file line.
+func validateDomainName(name string) error {
+	for label := range strings.SplitSeq(strings.TrimSuffix(name, "."), ".") {
+		if label == "*" {
+			continue
+		}
+
+		if len(label) == 0 || len(label) > 63 {
+			return fmt.Errorf("Invalid DNS name %q", name)
+		}
+
+		for _, r := range label {
+			if r != '-' && r != '_' && (r < '0' || r > '9') && (r < 'a' || r > 'z') && (r < 'A' || r > 'Z') {
+				return fmt.Errorf("Invalid DNS name %q", name)
+			}
+		}
+	}
+
+	return nil
+}
+
 // validateName checks name is valid.
 func (d *zone) validateName(name string) error {
 	// Allow root records.
@@ -156,10 +182,13 @@ func (d *zone) validateName(name string) error {
 		return nil
 	}
 
-	// Allow wildcards.
-	if strings.HasPrefix(name, "*.") {
-		return nil
+	err := validateDomainName(name)
+	if err != nil {
+		return err
 	}
+
+	// Allow wildcards.
+	name = strings.TrimPrefix(name, "*.")
 
 	// Allow underscore prefix (SRV, TXT and other service records).
 	name = strings.TrimPrefix(name, "_")
@@ -179,7 +208,7 @@ func (d *zone) validateConfig(info *api.NetworkZonePut) error {
 	//  type: string set
 	//  required: no
 	//  shortdesc: Comma-separated list of DNS server FQDNs (for NS records)
-	rules["dns.nameservers"] = validate.IsListOf(validate.IsAny)
+	rules["dns.nameservers"] = validate.Optional(validate.IsListOf(validateDomainName))
 
 	// gendoc:generate(entity=network_zone, group=common, key=dns.contact)
 	//
@@ -187,7 +216,7 @@ func (d *zone) validateConfig(info *api.NetworkZonePut) error {
 	//  type: string
 	//  required: no
 	//  shortdesc: Admin contact email for DNS server
-	rules["dns.contact"] = validate.Optional(validate.IsAny)
+	rules["dns.contact"] = validate.Optional(validateContact)
 
 	// gendoc:generate(entity=network_zone, group=common, key=network.nat)
 	//
@@ -494,6 +523,12 @@ func (d *zone) Content() (*strings.Builder, error) {
 			isReverse := isReverse4 || isReverse6
 
 			genRecord := func(name string, ip net.IP) map[string]string {
+				// Skip names that can't be written to the zone file as they are.
+				err := validateDomainName(name)
+				if err != nil {
+					return nil
+				}
+
 				isV4 := ip.To4() != nil
 
 				// Skip disabled families.
