@@ -66,6 +66,22 @@ func (s *Server) SetLocalLocation(location string) {
 	s.location = location
 }
 
+// CloseListeners closes the listeners opened by a matching identity.
+func (s *Server) CloseListeners(match func(protocol string, username string) bool) {
+	s.lock.Lock()
+	defer s.lock.Unlock()
+
+	for _, listener := range s.listeners {
+		listener.lock.Lock()
+		matched := listener.username != "" && match(listener.protocol, listener.username)
+		listener.lock.Unlock()
+
+		if matched {
+			listener.Close()
+		}
+	}
+}
+
 // AddListener creates and returns a new event listener.
 func (s *Server) AddListener(projectName string, allProjects bool, serverEvents bool, projectPermissionFunc auth.PermissionChecker, connection EventListenerConnection, messageTypes []string, excludeSources []EventSource, recvFunc EventHandler, excludeLocations []string) (*Listener, error) {
 	if allProjects && projectName != "" {
@@ -243,4 +259,15 @@ type Listener struct {
 	projectPermissionFunc auth.PermissionChecker
 	excludeSources        []EventSource
 	excludeLocations      []string
+	protocol              string
+	username              string
+}
+
+// SetRequestor records the identity the listener was opened with.
+func (l *Listener) SetRequestor(protocol string, username string) {
+	l.lock.Lock()
+	defer l.lock.Unlock()
+
+	l.protocol = protocol
+	l.username = username
 }
