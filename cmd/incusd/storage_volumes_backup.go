@@ -399,6 +399,15 @@ func storagePoolVolumeTypeCustomBackupsPost(d *Daemon, r *http.Request) response
 		return response.BadRequest(errors.New("application/octet-stream is not a valid content type when a target is defined"))
 	}
 
+	if req.Target != nil {
+		err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
+			return project.AllowBackupTarget(tx, request.ProjectParam(r))
+		})
+		if err != nil {
+			return response.SmartError(err)
+		}
+	}
+
 	if req.CompressionAlgorithm != "" {
 		err := validate.IsCompressionAlgorithm(req.CompressionAlgorithm)
 		if err != nil {
