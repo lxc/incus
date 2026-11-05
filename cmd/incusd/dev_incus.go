@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"net"
 	"net/http"
 	"os"
@@ -456,6 +457,18 @@ func containerNameFromCgroup(content string) (string, bool) {
 	return "", false
 }
 
+// readCmdline reads the start of a process command line, which the process itself controls.
+func readCmdline(pid int32) ([]byte, error) {
+	f, err := os.Open(fmt.Sprintf("/proc/%d/cmdline", pid))
+	if err != nil {
+		return nil, err
+	}
+
+	defer func() { _ = f.Close() }()
+
+	return io.ReadAll(io.LimitReader(f, 16*1024))
+}
+
 func findContainerForPid(pid int32, s *state.State) (instance.Container, error) {
 	/*
 	 * Try and figure out which container a pid is in. There is probably a
@@ -477,7 +490,7 @@ func findContainerForPid(pid int32, s *state.State) (instance.Container, error) 
 	origpid := pid
 
 	for pid > 1 {
-		cmdline, err := os.ReadFile(fmt.Sprintf("/proc/%d/cmdline", pid))
+		cmdline, err := readCmdline(pid)
 		if err != nil {
 			return nil, err
 		}
