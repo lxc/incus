@@ -1056,6 +1056,11 @@ func OVNPortGroupDeleteIfUnused(s *state.State, l logger.Logger, client *ovn.NB,
 				return nil
 			}
 
+			// NICs that aren't linked to a managed network can't be using an OVN network.
+			if nicConfig["network"] == "" {
+				return nil
+			}
+
 			netID, network, _, err := tx.GetNetworkInAnyState(ctx, aclProjectName, nicConfig["network"])
 			if err != nil {
 				return fmt.Errorf("Failed to load network %q: %w", nicConfig["network"], err)
@@ -1113,6 +1118,11 @@ func OVNPortGroupDeleteIfUnused(s *state.State, l logger.Logger, client *ovn.NB,
 			// from. In case DB record is not updated until the update process has completed otherwise
 			// we would still consider it using the ACL.
 			if isIgnoreProfile && ignoreProfile.Name == u.Name && ignoreProfile.Project == u.Project && ignoreUsageNicName == nicName {
+				return nil
+			}
+
+			// NICs that aren't linked to a managed network can't be using an OVN network.
+			if nicConfig["network"] == "" {
 				return nil
 			}
 

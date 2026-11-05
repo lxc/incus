@@ -12,7 +12,13 @@ import (
 func BridgeUpdateACLs(s *state.State, l logger.Logger, aclProjectName string, aclNetDevices map[string]NetworkACLUsage) error {
 	// Update of the bridge NICs affected by the ACL change
 	for _, aclNetDevice := range aclNetDevices {
-		inst, err := instance.LoadByProjectAndName(s, aclProjectName, aclNetDevice.InstanceName)
+		// Handle instances in a different project than their ACL.
+		instProject := aclNetDevice.InstanceProject
+		if instProject == "" {
+			instProject = aclProjectName
+		}
+
+		inst, err := instance.LoadByProjectAndName(s, instProject, aclNetDevice.InstanceName)
 		if err != nil {
 			return err
 		}
