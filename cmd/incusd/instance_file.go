@@ -6,11 +6,13 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
+	"net"
 	"net/http"
 	"os"
 	"path/filepath"
 	"slices"
 	"strings"
+	"sync/atomic"
 	"time"
 
 	"github.com/pkg/sftp"
@@ -153,16 +155,52 @@ func instanceFileGet(s *state.State, inst instance.Instance, path string, r *htt
 	defer reverter.Fail()
 
 	// Get a SFTP client.
-	client, err := inst.FileSFTP()
+	conn, err := inst.FileSFTPConn()
+	if err != nil {
+		return response.InternalError(err)
+	}
+
+	client, listing, err := fileSFTPListingClient(conn)
 	if err != nil {
 		return response.InternalError(err)
 	}
 
 	reverter.Add(func() { _ = client.Close() })
 
-	return fileSFTPGet(client, path, r, reverter, func() {
+	return fileSFTPGet(client, listing, path, r, reverter, func() {
 		s.Events.SendLifecycle(inst.Project().Name, lifecycle.InstanceFileRetrieved.Event(inst, logger.Ctx{"path": path}))
 	})
+}
+
+// sftpListingConn bounds what is read back while a directory is being listed.
+type sftpListingConn struct {
+	net.Conn
+
+	listing   atomic.Bool
+	remaining atomic.Int64
+}
+
+// Read reads from the connection, failing once a listing has returned too much.
+func (c *sftpListingConn) Read(p []byte) (int, error) {
+	n, err := c.Conn.Read(p)
+	if c.listing.Load() && c.remaining.Add(-int64(n)) < 0 {
+		return n, errors.New("Directory listing too large")
+	}
+
+	return n, err
+}
+
+// fileSFTPListingClient returns a SFTP client whose directory listings can be bounded.
+func fileSFTPListingClient(conn net.Conn) (*sftp.Client, *sftpListingConn, error) {
+	listing := &sftpListingConn{Conn: conn}
+
+	client, err := sftp.NewClientPipe(listing, conn)
+	if err != nil {
+		_ = conn.Close()
+		return nil, nil, err
+	}
+
+	return client, listing, nil
 }
 
 // swagger:operation HEAD /1.0/instances/{name}/files instances instance_files_head
@@ -373,7 +411,7 @@ func instanceFileDelete(s *state.State, inst instance.Instance, path string, r *
 	})
 }
 
-func fileSFTPGet(client *sftp.Client, path string, r *http.Request, reverter *revert.Reverter, onSuccess func()) response.Response {
+func fileSFTPGet(client *sftp.Client, listing *sftpListingConn, path string, r *http.Request, reverter *revert.Reverter, onSuccess func()) response.Response {
 	// Get the file stats.
 	stat, err := client.Lstat(path)
 	if err != nil {
@@ -462,8 +500,11 @@ func fileSFTPGet(client *sftp.Client, path string, r *http.Request, reverter *re
 	case "directory":
 		dirEnts := []string{}
 
-		// List the directory.
-		entries, err := client.ReadDir(path)
+		// List the directory, the instance decides how long it is.
+		listing.remaining.Store(32 * 1024 * 1024)
+		listing.listing.Store(true)
+		entries, err := client.ReadDirContext(r.Context(), path)
+		listing.listing.Store(false)
 		if err != nil {
 			return response.SmartError(err)
 		}
