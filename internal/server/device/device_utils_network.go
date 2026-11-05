@@ -1284,6 +1284,9 @@ func isIPAvailable(ctx context.Context, address net.IP, parentInterface string) 
 	return false, nil
 }
 
+// networkVLANListMax bounds a VLAN list to the number of VLAN IDs.
+const networkVLANListMax = 4095
+
 // networkVLANListExpand takes in a list of raw VLAN values (string) that includes
 // different VLAN formats ("number" and "start-end") and convert them into a list of
 // expanded VLAN values in integer.
@@ -1293,6 +1296,11 @@ func networkVLANListExpand(rawVLANValues []string) ([]int, error) {
 		start, count, err := validate.ParseNetworkVLANRange(vlan)
 		if err != nil {
 			return nil, err
+		}
+
+		// There are only so many VLAN IDs.
+		if len(networkVLANList)+count > networkVLANListMax {
+			return nil, fmt.Errorf("Too many VLAN IDs (maximum is %d)", networkVLANListMax)
 		}
 
 		for i := start; i < start+count; i++ {
