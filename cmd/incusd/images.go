@@ -1230,6 +1230,12 @@ func imagesPost(d *Daemon, r *http.Request) response.Response {
 		imageUpload = true
 	}
 
+	// A token only admits the raw upload it was issued for.
+	if !trusted && !imageUpload {
+		cleanup(builddir, post)
+		return response.Forbidden(nil)
+	}
+
 	if !imageUpload && req.Source.Mode == "push" {
 		cleanup(builddir, post)
 
