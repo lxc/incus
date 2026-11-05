@@ -328,7 +328,7 @@ func (c *ClusterTx) instanceConfigFill(ctx context.Context, snapshotsMode bool, 
 
 	q.WriteString(`)`)
 
-	return query.Scan(ctx, c.Tx(), q.String(), func(scan func(dest ...any) error) error {
+	err := query.Scan(ctx, c.Tx(), q.String(), func(scan func(dest ...any) error) error {
 		var instanceID int
 		var key, value string
 
@@ -357,6 +357,19 @@ func (c *ClusterTx) instanceConfigFill(ctx context.Context, snapshotsMode bool, 
 
 		return nil
 	})
+	if err != nil {
+		return err
+	}
+
+	// An instance with no config rows at all still needs an empty map.
+	for instanceID, inst := range instances {
+		if inst.Config == nil {
+			inst.Config = map[string]string{}
+			instances[instanceID] = inst
+		}
+	}
+
+	return nil
 }
 
 // instanceDevicesFill loads the device config for all instances specified in a single query and then updates
