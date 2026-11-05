@@ -192,6 +192,11 @@ func instancePatch(d *Daemon, r *http.Request) response.Response {
 		}
 	}
 
+	err = checkAttachedAccess(s, r, projectName, req.Profiles, profileNames, req.Devices, c.LocalDevices().CloneNative())
+	if err != nil {
+		return response.SmartError(err)
+	}
+
 	// Check project limits.
 	apiProfiles := make([]api.Profile, 0, len(req.Profiles))
 	err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {

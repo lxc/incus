@@ -1733,6 +1733,11 @@ func instancesPost(d *Daemon, r *http.Request) response.Response {
 		}
 	}
 
+	err = checkAttachedAccess(s, r, targetProjectName, nil, nil, req.Devices, nil)
+	if err != nil {
+		return response.SmartError(err)
+	}
+
 	err = instance.ValidName(req.Name, false)
 	if err != nil {
 		return response.BadRequest(err)
