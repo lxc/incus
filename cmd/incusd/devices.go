@@ -526,7 +526,8 @@ func deviceTaskBalance(s *state.State) {
 			// Pinned
 			containerCpus, err := resources.ParseCpuset(cpulimit)
 			if err != nil {
-				return
+				logger.Warn("Skipping instance with an invalid CPU set", logger.Ctx{"instance": c.Name(), "project": c.Project().Name, "cpuset": cpulimit, "err": err})
+				continue
 			}
 
 			if conf["limits.cpu"] != "" && len(numaCpus) > 0 {
