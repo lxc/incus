@@ -252,17 +252,6 @@ func profilesGet(d *Daemon, r *http.Request) response.Response {
 
 				apiProfile.UsedBy = project.FilterUsedBy(s.Authorizer, r, apiProfile.UsedBy)
 
-				if clauses != nil && len(clauses.Clauses) > 0 {
-					match, err := filter.Match(*apiProfile, *clauses)
-					if err != nil {
-						return err
-					}
-
-					if !match {
-						continue
-					}
-				}
-
 				fullResults = append(fullResults, *apiProfile)
 				linkResults = append(linkResults, apiProfile.URL(version.APIVersion, profile.Project).String())
 			}
@@ -287,6 +276,28 @@ func profilesGet(d *Daemon, r *http.Request) response.Response {
 	})
 	if err != nil {
 		return response.SmartError(err)
+	}
+
+	// Match the filter outside the transaction, the client decides how expensive it is.
+	if mustLoadObjects && clauses != nil && len(clauses.Clauses) > 0 {
+		matched := make([]api.Profile, 0, len(fullResults))
+		linkResults = make([]string, 0, len(fullResults))
+
+		for _, apiProfile := range fullResults {
+			match, err := filter.Match(apiProfile, *clauses)
+			if err != nil {
+				return response.SmartError(err)
+			}
+
+			if !match {
+				continue
+			}
+
+			matched = append(matched, apiProfile)
+			linkResults = append(linkResults, apiProfile.URL(version.APIVersion, apiProfile.Project).String())
+		}
+
+		fullResults = matched
 	}
 
 	if recursion {
