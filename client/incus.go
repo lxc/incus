@@ -56,6 +56,8 @@ type ProtocolIncus struct {
 	oidcClient *oidcClient
 
 	tempPath string
+
+	maxResponseSize int64
 }
 
 // Disconnect gets rid of any background goroutines.
@@ -241,6 +243,15 @@ func (r *ProtocolIncus) RawOperation(method string, path string, data any, ETag 
 }
 
 // Internal functions.
+// parseResponse parses a response, bounding how much of it is read when a limit is set.
+func (r *ProtocolIncus) parseResponse(resp *http.Response) (*api.Response, string, error) {
+	if r.maxResponseSize > 0 {
+		resp.Body = http.MaxBytesReader(nil, resp.Body, r.maxResponseSize)
+	}
+
+	return incusParseResponse(resp)
+}
+
 func incusParseResponse(resp *http.Response) (*api.Response, string, error) {
 	// Get the ETag
 	etag := resp.Header.Get("ETag")
@@ -348,7 +359,7 @@ func (r *ProtocolIncus) rawQuery(method string, url string, data any, ETag strin
 
 	defer logger.WarnOnError(resp.Body.Close, "Failed to close response body")
 
-	return incusParseResponse(resp)
+	return r.parseResponse(resp)
 }
 
 // setURLQueryAttributes modifies the supplied URL's query string with the client's current target and project.
@@ -498,7 +509,7 @@ func (r *ProtocolIncus) rawWebsocket(url string) (*websocket.Conn, error) {
 	conn, resp, err := r.DoWebsocket(dialer, url, req)
 	if err != nil {
 		if resp != nil {
-			apiResp, _, parseErr := incusParseResponse(resp)
+			apiResp, _, parseErr := r.parseResponse(resp)
 			if apiResp != nil && apiResp.Type == api.ErrorResponse {
 				// The server's error is more useful than the generic handshake failure.
 				return nil, parseErr
@@ -562,6 +573,7 @@ func (r *ProtocolIncus) WithContext(ctx context.Context) InstanceServer {
 		skipEvents:           r.getSkipEvents(),
 		oidcClient:           r.oidcClient,
 		tempPath:             r.tempPath,
+		maxResponseSize:      r.maxResponseSize,
 	}
 }
 

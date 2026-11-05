@@ -245,6 +245,9 @@ func incusDownloadImage(fingerprint string, uri string, userAgent string, do fun
 	defer close(doneCh)
 
 	if response.StatusCode != http.StatusOK {
+		// Only an error message is expected, bound it.
+		response.Body = http.MaxBytesReader(nil, response.Body, 1024*1024)
+
 		_, _, err := incusParseResponse(response)
 		if err != nil {
 			return nil, err
@@ -622,7 +625,7 @@ func (r *ProtocolIncus) CreateImage(image api.ImagesPost, args *ImageCreateArgs)
 	defer logger.WarnOnError(resp.Body.Close, "Failed to close response body")
 
 	// Handle errors
-	response, _, err := incusParseResponse(resp)
+	response, _, err := r.parseResponse(resp)
 	if err != nil {
 		return nil, err
 	}

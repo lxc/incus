@@ -58,6 +58,13 @@ type SimpleStreams struct {
 
 	cachePath   string
 	cacheExpiry time.Duration
+
+	maxSize int64
+}
+
+// SetMaxSize bounds the size of the index and product files read from the server, 0 for no limit.
+func (s *SimpleStreams) SetMaxSize(size int64) {
+	s.maxSize = size
 }
 
 // SetCache configures the on-disk cache.
@@ -159,7 +166,12 @@ func (s *SimpleStreams) cachedDownload(path string) ([]byte, error) {
 		return nil, fmt.Errorf("Unable to fetch %s: %s", uri, r.Status)
 	}
 
-	body, err := io.ReadAll(r.Body)
+	var reader io.Reader = r.Body
+	if s.maxSize > 0 {
+		reader = http.MaxBytesReader(nil, r.Body, s.maxSize)
+	}
+
+	body, err := io.ReadAll(reader)
 	if err != nil {
 		return nil, err
 	}

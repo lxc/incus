@@ -63,6 +63,9 @@ func imageOperationLock(ctx context.Context, fingerprint string) (locking.Unlock
 	return locking.Lock(ctx, fmt.Sprintf("ImageOperation_%s", fingerprint))
 }
 
+// imageServerMaxResponseSize bounds the replies read from an image server, which the client chose.
+const imageServerMaxResponseSize = 64 * 1024 * 1024
+
 // imageDownload resolves the image fingerprint and if not in the database, downloads it or links it from another project.
 func imageDownload(ctx context.Context, r *http.Request, s *state.State, op *operations.Operation, args *imageDownloadArgs) (*api.Image, bool, error) {
 	var err error
@@ -100,14 +103,15 @@ func imageDownload(ctx context.Context, r *http.Request, s *state.State, op *ope
 	// Attempt to resolve the alias
 	if args.Server != "" && slices.Contains([]string{"incus", "lxd", "oci", "simplestreams"}, protocol) {
 		clientArgs := &incus.ConnectionArgs{
-			TLSServerCert: args.Certificate,
-			UserAgent:     version.UserAgent,
-			Proxy:         s.Proxy,
-			CachePath:     s.OS.CacheDir,
-			CacheExpiry:   time.Hour,
-			SkipGetEvents: true,
-			SkipGetServer: true,
-			TempPath:      internalUtil.VarPath("images"),
+			TLSServerCert:   args.Certificate,
+			UserAgent:       version.UserAgent,
+			Proxy:           s.Proxy,
+			CachePath:       s.OS.CacheDir,
+			CacheExpiry:     time.Hour,
+			SkipGetEvents:   true,
+			SkipGetServer:   true,
+			TempPath:        internalUtil.VarPath("images"),
+			MaxResponseSize: imageServerMaxResponseSize,
 		}
 
 		if slices.Contains([]string{"incus", "lxd"}, protocol) {
