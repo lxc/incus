@@ -936,6 +936,32 @@ func GetNeighborAddresses(interfaceName string, hwaddr net.HardwareAddr, version
 		return nil, err
 	}
 
+	// The neighbor entries are written by the instance, only trust those within the interface's subnets.
+	iface, err := net.InterfaceByName(interfaceName)
+	if err != nil {
+		return nil, fmt.Errorf("Failed to get interface %q: %w", interfaceName, err)
+	}
+
+	ifaceAddrs, err := iface.Addrs()
+	if err != nil {
+		return nil, fmt.Errorf("Failed to get addresses of interface %q: %w", interfaceName, err)
+	}
+
+	onLink := func(addr net.IP) bool {
+		for _, ifaceAddr := range ifaceAddrs {
+			ipNet, ok := ifaceAddr.(*net.IPNet)
+			if !ok || ipNet.IP.Equal(addr) {
+				continue
+			}
+
+			if ipNet.Contains(addr) {
+				return true
+			}
+		}
+
+		return false
+	}
+
 	addresses := make([]net.IP, 0, len(neighIPs))
 	for _, neighIP := range neighIPs {
 		// Skip entries that don't represent a usable address.
@@ -954,6 +980,10 @@ func GetNeighborAddresses(interfaceName string, hwaddr net.HardwareAddr, version
 		}
 
 		if len(versions) > 0 && !slices.Contains(versions, ipVersion) {
+			continue
+		}
+
+		if !onLink(neighIP.Addr) {
 			continue
 		}
 
