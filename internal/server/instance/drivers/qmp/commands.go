@@ -1069,7 +1069,14 @@ func (m *Monitor) AddSecret(id string, secret string) error {
 		"format":   "base64",
 	}
 
-	err := m.Run("object-add", &args, nil)
+	// Keep the secret out of the QMP log, which is served to instance viewers.
+	reqID := m.IncreaseID()
+	request, err := json.Marshal(qmpCommand{ID: reqID, Execute: "object-add", Arguments: &args})
+	if err != nil {
+		return err
+	}
+
+	err = m.RunJSON(request, nil, false, reqID)
 	if err != nil && !strings.Contains(err.Error(), "attempt to add duplicate property") {
 		return fmt.Errorf("Failed adding object: %w", err)
 	}
