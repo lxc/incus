@@ -12,6 +12,7 @@ import (
 	"os/exec"
 	"os/signal"
 	"path"
+	"path/filepath"
 	"reflect"
 	"slices"
 	"sort"
@@ -754,6 +755,18 @@ func normalizePath(p string) (string, bool) {
 // isStdin returns whether the provided path looks like stdin.
 func isStdin(p string) bool {
 	return slices.Contains([]string{"-", "/dev/stdin", "/dev/fd/0"}, p)
+}
+
+// createLocalFile opens a file like os.OpenFile, refusing to follow a symlink out of its directory.
+func createLocalFile(name string, flag int, perm os.FileMode) (*os.File, error) {
+	root, err := os.OpenRoot(filepath.Dir(name))
+	if err != nil {
+		return nil, err
+	}
+
+	defer logger.WarnOnError(root.Close, "Failed to close directory")
+
+	return root.OpenFile(filepath.Base(name), flag, perm)
 }
 
 // isStdout returns whether the provided path looks like stdout.
