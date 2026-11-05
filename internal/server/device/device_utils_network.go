@@ -195,7 +195,25 @@ func networkSnapshotPhysicalNIC(hostName string, volatile map[string]string) err
 	}
 
 	volatile["last_state.hwaddr"] = mac
+
+	// Store the kind of device so that what comes back can be compared against it.
+	linkInfo, err := ip.LinkByName(hostName)
+	if err != nil {
+		return err
+	}
+
+	volatile["last_state.kind"] = networkLinkKind(linkInfo)
+
 	return nil
+}
+
+// networkLinkKind returns the kind of a link, using "physical" for those which don't have one.
+func networkLinkKind(linkInfo ip.LinkInfo) string {
+	if linkInfo.Kind == "" {
+		return "physical"
+	}
+
+	return linkInfo.Kind
 }
 
 // networkRestorePhysicalNIC restores NIC properties from volatile to what they were before it was attached.
@@ -203,6 +221,19 @@ func networkRestorePhysicalNIC(hostName string, volatile map[string]string) erro
 	// If we created the "physical" device and then it should be removed.
 	if util.IsTrue(volatile["last_state.created"]) {
 		return network.InterfaceRemove(hostName)
+	}
+
+	// Refuse a device of another kind handed back in place of the one the instance was given.
+	if volatile["last_state.kind"] != "" {
+		linkInfo, err := ip.LinkByName(hostName)
+		if err != nil {
+			return fmt.Errorf("Failed to get link info for %q: %w", hostName, err)
+		}
+
+		if networkLinkKind(linkInfo) != volatile["last_state.kind"] {
+			_ = network.InterfaceRemove(hostName)
+			return fmt.Errorf("Interface %q isn't the device given to the instance", hostName)
+		}
 	}
 
 	// Bring the interface down, as this is sometimes needed to change settings on the nic.

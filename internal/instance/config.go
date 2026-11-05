@@ -1590,6 +1590,13 @@ var ConfigDeviceVolatileKeys = map[string]func(value string) error{
 	//  shortdesc: Last used IP addresses
 	"last_state.ip_addresses": validate.IsListOf(validate.IsNetworkAddress),
 
+	// gendoc:generate(entity=instance, group=volatile, key=volatile.<name>.last_state.kind)
+	// The kind of physical device that was moved into an instance.
+	// ---
+	//  type: string
+	//  shortdesc: Network device original kind
+	"last_state.kind": validate.IsAny,
+
 	// gendoc:generate(entity=instance, group=volatile, key=volatile.<name>.last_state.mtu)
 	// The original MTU that was used when moving a physical device into an instance.
 	// ---
