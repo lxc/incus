@@ -348,7 +348,7 @@ func isVolatileConfigRestricted(project api.Project, instanceType instancetype.T
 
 // isSafeVolatileKey returns whether a volatile.* key may be set in restricted projects.
 func isSafeVolatileKey(key string) bool {
-	if slices.Contains([]string{"volatile.apply_template", "volatile.base_image", "volatile.last_state.power", "volatile.selinux.context"}, key) {
+	if slices.Contains([]string{"volatile.apply_template", "volatile.base_image", "volatile.last_state.power"}, key) {
 		return true
 	}
 
