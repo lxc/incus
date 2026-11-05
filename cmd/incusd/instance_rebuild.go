@@ -11,6 +11,7 @@ import (
 	"github.com/gorilla/mux"
 
 	internalInstance "github.com/lxc/incus/v6/internal/instance"
+	"github.com/lxc/incus/v6/internal/server/auth"
 	"github.com/lxc/incus/v6/internal/server/db"
 	dbCluster "github.com/lxc/incus/v6/internal/server/db/cluster"
 	"github.com/lxc/incus/v6/internal/server/db/operationtype"
@@ -119,6 +120,14 @@ func instanceRebuildPost(d *Daemon, r *http.Request) response.Response {
 	})
 	if err != nil {
 		return response.SmartError(err)
+	}
+
+	// A local image may only be used by a caller allowed to view it.
+	if sourceImage != nil && req.Source.Server == "" {
+		err = s.Authorizer.CheckPermission(r.Context(), r, auth.ObjectImage(targetProject.Name, sourceImage.Fingerprint), auth.EntitlementCanView)
+		if err != nil {
+			return response.SmartError(err)
+		}
 	}
 
 	inst, err = instance.LoadByProjectAndName(s, targetProject.Name, name)
