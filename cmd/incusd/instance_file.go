@@ -59,7 +59,7 @@ func instanceFileHandler(d *Daemon, r *http.Request) response.Response {
 	}
 
 	// Parse and cleanup the path.
-	path := r.FormValue("path")
+	path := request.QueryParam(r, "path")
 	if path == "" {
 		return response.BadRequest(errors.New("Missing path argument"))
 	}

@@ -82,7 +82,7 @@ func storagePoolVolumeTypeFileHandler(d *Daemon, r *http.Request) response.Respo
 	vol := pool.GetVolume(storageDrivers.VolumeTypeCustom, storageDrivers.ContentTypeFS, diskVolName, volumeDB.Config)
 
 	// Parse the path.
-	path := r.FormValue("path")
+	path := request.QueryParam(r, "path")
 	if path == "" {
 		return response.BadRequest(errors.New("Missing path argument"))
 	}
