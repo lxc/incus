@@ -82,6 +82,11 @@ func networkAllocationsGet(d *Daemon, r *http.Request) response.Response {
 
 	allProjects := util.IsTrue(request.QueryParam(r, "all-projects"))
 
+	reqProjects, err := networkRequestProjects(s, r, reqProject, allProjects)
+	if err != nil {
+		return response.SmartError(err)
+	}
+
 	var projectNames []string
 	if allProjects {
 		err = d.db.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
@@ -133,7 +138,7 @@ func networkAllocationsGet(d *Daemon, r *http.Request) response.Response {
 
 		// Get all the networks, their attached instances, their network forwards and their network load balancers.
 		for _, networkName := range networkNames {
-			ok, err := canAccessNetwork(s, r, projectName, reqProject.Config, networkName, true)
+			ok, err := canAccessNetwork(s, r, projectName, reqProjects, networkName, true)
 			if err != nil {
 				return response.SmartError(err)
 			}

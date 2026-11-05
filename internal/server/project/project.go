@@ -204,6 +204,47 @@ func NetworkProjectFromRecord(p *api.Project) string {
 	return api.ProjectDefaultName
 }
 
+// NetworkSharedFromDefault returns whether the network is shared into the project from the default project.
+// This only applies to restricted projects with "features.networks" enabled and the network listed in restricted.networks.access.
+func NetworkSharedFromDefault(p *api.Project, networkName string) bool {
+	if p.Name == api.ProjectDefaultName || util.IsFalseOrEmpty(p.Config["features.networks"]) {
+		return false
+	}
+
+	if util.IsFalseOrEmpty(p.Config["restricted"]) || p.Config["restricted.networks.access"] == "" {
+		return false
+	}
+
+	allowedRestrictedNetworks := util.SplitNTrimSpace(p.Config["restricted.networks.access"], ",", -1, false)
+	return slices.Contains(allowedRestrictedNetworks, networkName)
+}
+
+// NetworkProjectForNameFromRecord returns the project name to use for the given network based on the supplied project.
+// Networks shared from the default project resolve to the default project.
+func NetworkProjectForNameFromRecord(p *api.Project, networkName string) string {
+	if NetworkSharedFromDefault(p, networkName) {
+		return api.ProjectDefaultName
+	}
+
+	return NetworkProjectFromRecord(p)
+}
+
+// NetworkProjectForName returns the effective project name to use for the given network based on the requested project.
+// Networks shared from the default project resolve to the default project.
+// The second return value is always the requested project's info.
+func NetworkProjectForName(c *db.Cluster, projectName string, networkName string) (string, *api.Project, error) {
+	effectiveProjectName, p, err := NetworkProject(c, projectName)
+	if err != nil {
+		return "", nil, err
+	}
+
+	if NetworkSharedFromDefault(p, networkName) {
+		effectiveProjectName = api.ProjectDefaultName
+	}
+
+	return effectiveProjectName, p, nil
+}
+
 // NetworkZoneAllowed returns whether a restricted project may use the named DNS zone.
 func NetworkZoneAllowed(reqProjectConfig map[string]string, zoneName string) bool {
 	if util.IsFalseOrEmpty(reqProjectConfig["restricted"]) {
