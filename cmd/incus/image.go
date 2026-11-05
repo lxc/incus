@@ -38,6 +38,9 @@ import (
 	"github.com/lxc/incus/v7/shared/util"
 )
 
+// fingerprintRegexp matches a full or partial image fingerprint.
+var fingerprintRegexp = regexp.MustCompile("^[0-9a-f]{1,64}$")
+
 type cmdImage struct {
 	global *cmdGlobal
 }
@@ -564,26 +567,34 @@ func (c *cmdImageExport) run(cmd *cobra.Command, args []string) error {
 
 	fingerprint := c.image.dereferenceAlias(remoteServer, imageType, imageName)
 
+	// The fingerprint names the local files, don't take a path from the server.
+	if !fingerprintRegexp.MatchString(fingerprint) {
+		return fmt.Errorf(i18n.G("Invalid image fingerprint %q"), fingerprint)
+	}
+
 	// Default target is current directory
 	targetMeta := fingerprint
+	create := createLocalFile
 	if hasTarget {
 		if internalUtil.IsDir(target) {
 			targetMeta = filepath.Join(target, targetMeta)
 		} else {
+			// Only a path picked by the user may be a symlink to somewhere else.
 			targetMeta = target
+			create = os.OpenFile
 		}
 	}
 	targetRootfs := targetMeta + ".root"
 
 	// Prepare the files
-	dest, err := os.Create(targetMeta)
+	dest, err := create(targetMeta, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0o666)
 	if err != nil {
 		return err
 	}
 
 	defer logger.WarnOnError(dest.Close, "Failed to close file")
 
-	destRootfs, err := os.Create(targetRootfs)
+	destRootfs, err := create(targetRootfs, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0o666)
 	if err != nil {
 		return err
 	}
