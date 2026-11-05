@@ -8610,6 +8610,28 @@ func (d *lxc) Exec(req api.InstanceExecPost, stdin *os.File, stdout *os.File, st
 		cmd.Env = append(os.Environ(), "LXC_MEMFD_REXEC=1")
 	}
 
+	// Every stream needs an open file, forkexec attaches them by descriptor number.
+	if stdin == nil || stdout == nil || stderr == nil {
+		devNull, err := os.OpenFile("/dev/null", os.O_RDWR, 0)
+		if err != nil {
+			return nil, err
+		}
+
+		defer logger.WarnOnError(devNull.Close, "Failed to close /dev/null")
+
+		if stdin == nil {
+			stdin = devNull
+		}
+
+		if stdout == nil {
+			stdout = devNull
+		}
+
+		if stderr == nil {
+			stderr = devNull
+		}
+	}
+
 	// Setup communication PIPE
 	rStatus, wStatus, err := os.Pipe()
 	defer logger.WarnOnError(rStatus.Close, "Failed to close pipe")
