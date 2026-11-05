@@ -240,6 +240,7 @@ func networkACLsGet(d *Daemon, r *http.Request) response.Response {
 
 				netACLInfo := netACL.Info()
 				netACLInfo.UsedBy, _ = netACL.UsedBy() // Ignore errors in UsedBy, will return nil.
+				netACLInfo.UsedBy = project.FilterUsedBy(s.Authorizer, r, netACLInfo.UsedBy)
 
 				if clauses != nil && len(clauses.Clauses) > 0 {
 					match, err := filter.Match(*netACLInfo, *clauses)
@@ -466,6 +467,8 @@ func networkACLGet(d *Daemon, r *http.Request) response.Response {
 	if err != nil {
 		return response.SmartError(err)
 	}
+
+	info.UsedBy = project.FilterUsedBy(s.Authorizer, r, info.UsedBy)
 
 	return response.SyncResponseETag(true, info, netACL.Etag())
 }
