@@ -4397,7 +4397,18 @@ func (d *qemu) nvramFileName() (string, error) {
 		return "", err
 	}
 
-	return filepath.Base(target), nil
+	// The volume content isn't trusted, only a firmware variables name may be used.
+	name := filepath.Base(target)
+	names, err := d.nvramRunNames()
+	if err != nil {
+		return "", err
+	}
+
+	if !slices.Contains(names, name) {
+		return "", fmt.Errorf("Unexpected UEFI variables file name %q", name)
+	}
+
+	return name, nil
 }
 
 // nvramRunPath returns the local copy of the UEFI variables used while the VM runs.
@@ -7763,6 +7774,11 @@ func (d *qemu) qemuUID() (uint32, error) {
 func (d *qemu) qemuProcessMatches(cmdLine []byte) bool {
 	// The QEMU binary name varies by distribution (e.g. qemu-kvm on EL systems).
 	isQemu := bytes.Contains(cmdLine, []byte("qemu-system")) || bytes.Contains(cmdLine, []byte("qemu-kvm"))
+
+	// Without a UUID there is nothing to match the process against.
+	if d.localConfig["volatile.uuid"] == "" {
+		return false
+	}
 
 	return isQemu && bytes.Contains(cmdLine, []byte(d.localConfig["volatile.uuid"]))
 }
