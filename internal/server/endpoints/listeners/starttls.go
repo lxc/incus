@@ -42,13 +42,24 @@ func NewSTARTTLSListener(inner net.Listener, cert *localtls.CertInfo) *StarttlsL
 // acceptLoop accepts connections and classifies each one in its own goroutine,
 // so a client that hasn't sent anything yet can't hold up the others.
 func (l *StarttlsListener) acceptLoop() {
+	var delay time.Duration
+
 	for {
 		c, err := l.Listener.Accept()
 		if err != nil {
-			l.err = err
-			close(l.done)
-			return
+			// Only a closed listener is final, anything else is retried like net/http does.
+			if errors.Is(err, net.ErrClosed) {
+				l.err = err
+				close(l.done)
+				return
+			}
+
+			delay = max(min(delay*2, time.Second), 5*time.Millisecond)
+			time.Sleep(delay)
+			continue
 		}
+
+		delay = 0
 
 		go func() {
 			conn, err := l.classify(c)
