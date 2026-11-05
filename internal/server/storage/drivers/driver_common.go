@@ -485,10 +485,26 @@ func (d *common) UpdateBucket(bucket Volume, changedConfig map[string]string) er
 	return ErrNotSupported
 }
 
+// bucketKeyValueRegex matches bucket key names and credentials, which may not start with a dash.
+var bucketKeyValueRegex = regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9+/=._-]*$`)
+
 // ValidateBucketKey validates the supplied bucket key config.
 func (d *common) ValidateBucketKey(keyName string, creds S3Credentials, roleName string) error {
 	if keyName == "" {
 		return errors.New("Key name is required")
+	}
+
+	// The values end up on command lines, keep them to plain words.
+	if !bucketKeyValueRegex.MatchString(keyName) {
+		return errors.New("Invalid key name")
+	}
+
+	if creds.AccessKey != "" && !bucketKeyValueRegex.MatchString(creds.AccessKey) {
+		return errors.New("Invalid access key")
+	}
+
+	if creds.SecretKey != "" && !bucketKeyValueRegex.MatchString(creds.SecretKey) {
+		return errors.New("Invalid secret key")
 	}
 
 	validRoles := []string{"admin", "read-only"}
