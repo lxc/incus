@@ -536,6 +536,12 @@ func UpdateDNSMasqStatic(s *state.State, networkName string) error {
 				continue
 			}
 
+			// Skip entries that would break the dnsmasq host file.
+			_, err = net.ParseMAC(d["hwaddr"])
+			if err != nil {
+				continue
+			}
+
 			// Treat "none" and static in-instance (CIDR) addresses as not set for DHCP purposes.
 			for _, key := range []string{"ipv4.address", "ipv6.address"} {
 				if d[key] == "none" || strings.Contains(d[key], "/") {
