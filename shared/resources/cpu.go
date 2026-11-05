@@ -47,6 +47,9 @@ func GetCPUIsolated() []int64 {
 	return isolatedCpusInt
 }
 
+// maxRangedListSize bounds the entries a CPU or NUMA set may expand to.
+const maxRangedListSize = 65536
+
 // parseRangedListToInt64Slice takes an `input` of the form "1,2,8-10,5-7" and returns a slice of int64s
 // containing the expanded list of numbers. In this example, the returned slice would be [1,2,8,9,10,5,6,7].
 // The elements in the output slice are meant to represent hardware entity identifiers (e.g, either CPU or NUMA node IDs).
@@ -69,6 +72,11 @@ func parseRangedListToInt64Slice(input string) ([]int64, error) {
 			high, err := strconv.ParseInt(fields[1], 10, 64)
 			if err != nil {
 				return nil, fmt.Errorf("Invalid CPU/NUMA set value: %w", err)
+			}
+
+			// Refuse what no system can have before expanding.
+			if high >= maxRangedListSize || int64(len(res))+high-low+1 > maxRangedListSize {
+				return nil, fmt.Errorf("Invalid CPU/NUMA set value: %q", input)
 			}
 
 			for i := low; i <= high; i++ {

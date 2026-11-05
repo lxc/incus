@@ -968,6 +968,9 @@ func IsYAML(value string) error {
 	return nil
 }
 
+// maxCPUSetSize bounds the entries a CPU set may expand to.
+const maxCPUSetSize = 65536
+
 // IsValidCPUSet checks value is a valid CPU set.
 func IsValidCPUSet(value string) error {
 	// Validate the CPU set syntax.
@@ -989,6 +992,7 @@ func IsValidCPUSet(value string) error {
 	// Handle complex values.
 	cpus := make(map[int64]int)
 	chunks := strings.SplitSeq(value, ",")
+	count := int64(0)
 
 	for chunk := range chunks {
 		if strings.Contains(chunk, "-") {
@@ -1005,6 +1009,12 @@ func IsValidCPUSet(value string) error {
 
 			high, err := strconv.ParseInt(fields[1], 10, 64)
 			if err != nil {
+				return fmt.Errorf("Invalid cpuset value: %s", value)
+			}
+
+			// Refuse what no system can have before expanding.
+			count += high - low + 1
+			if high >= maxCPUSetSize || count > maxCPUSetSize {
 				return fmt.Errorf("Invalid cpuset value: %s", value)
 			}
 
