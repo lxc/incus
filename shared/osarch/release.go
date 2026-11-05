@@ -3,6 +3,7 @@ package osarch
 import (
 	"errors"
 	"fmt"
+	"io"
 	"io/fs"
 	"os"
 	"strings"
@@ -10,11 +11,26 @@ import (
 	"github.com/lxc/incus/v6/shared/util"
 )
 
+// releaseFileMaxSize bounds the release files, which may be an instance's when read from a helper.
+const releaseFileMaxSize = 64 * 1024
+
+// readReleaseFile reads at most releaseFileMaxSize bytes of a release file.
+func readReleaseFile(path string) ([]byte, error) {
+	f, err := os.Open(path)
+	if err != nil {
+		return nil, err
+	}
+
+	defer func() { _ = f.Close() }()
+
+	return io.ReadAll(io.LimitReader(f, releaseFileMaxSize))
+}
+
 // GetOSRelease returns a map with Linux distribution information.
 func GetOSRelease() (map[string]string, error) {
 	// Handle TrueNAS.
 	if util.PathExists("/usr/share/truenas") {
-		content, err := os.ReadFile("/etc/version")
+		content, err := readReleaseFile("/etc/version")
 		if err == nil {
 			return map[string]string{
 				"NAME":       "TrueNAS Scale",
@@ -25,7 +41,7 @@ func GetOSRelease() (map[string]string, error) {
 
 	// Add chromebook info
 	if util.PathExists("/run/cros_milestone") {
-		content, err := os.ReadFile("/run/cros_milestone")
+		content, err := readReleaseFile("/run/cros_milestone")
 		if err == nil {
 			return map[string]string{
 				"NAME":       "Chrome OS",
@@ -67,7 +83,7 @@ func GetOSRelease() (map[string]string, error) {
 func getOSRelease(filename string) (map[string]string, error) {
 	osRelease := make(map[string]string)
 
-	data, err := os.ReadFile(filename)
+	data, err := readReleaseFile(filename)
 	if err != nil {
 		if errors.Is(err, fs.ErrNotExist) {
 			return osRelease, nil
