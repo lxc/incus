@@ -324,7 +324,8 @@ func devIncusAPI(d *Daemon, f hoistFunc) http.Handler {
 		router.HandleFunc(handler.path, f(handler.f, d))
 	}
 
-	return router
+	// Limit request body size like the main API.
+	return http.MaxBytesHandler(router, 1024*1024)
 }
 
 /*
