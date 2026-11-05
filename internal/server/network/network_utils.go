@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"context"
 	cryptoRand "crypto/rand"
+	"crypto/sha256"
 	"encoding/hex"
 	"errors"
 	"fmt"
@@ -871,9 +872,10 @@ func GetHostDevice(parent string, vlan string) string {
 	// If no VLANs are configured, use the default pattern.
 	defaultVlan := fmt.Sprintf("%s.%s", parent, vlan)
 
-	// Handle long interface names.
+	// Handle long interface names, keeping the name unique per parent.
 	if len(defaultVlan) > 15 {
-		defaultVlan = fmt.Sprintf("incus-vlan-%s", vlan)
+		parentHash := sha256.Sum256([]byte(parent))
+		defaultVlan = fmt.Sprintf("iv%s-%s", hex.EncodeToString(parentHash[:])[:6], vlan)
 	}
 
 	if !util.PathExists("/proc/net/vlan/config") {
@@ -1179,6 +1181,16 @@ func VLANInterfaceCreate(parent string, vlanDevice string, vlanID string, gvrp b
 	}
 
 	if InterfaceExists(vlanDevice) {
+		// Make sure the existing interface is the VLAN we'd have created.
+		linkInfo, err := ip.LinkByName(vlanDevice)
+		if err != nil {
+			return false, fmt.Errorf("Failed to get link info for %q: %w", vlanDevice, err)
+		}
+
+		if linkInfo.Kind != "vlan" || linkInfo.Parent != parent || strconv.Itoa(linkInfo.VlanID) != vlanID {
+			return false, fmt.Errorf("Interface %q isn't VLAN %q on %q", vlanDevice, vlanID, parent)
+		}
+
 		return false, nil
 	}
 
