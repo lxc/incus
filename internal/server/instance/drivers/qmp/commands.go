@@ -1524,7 +1524,8 @@ func (m *Monitor) RingbufRead(device string) (string, error) {
 
 	var sb strings.Builder
 
-	for {
+	// Stop after a ring buffer's worth, the guest can refill it faster than it's drained.
+	for sb.Len() < ConsoleRingbufSize {
 		err := m.Run("ringbuf-read", args, &readResp)
 		if err != nil {
 			return "", err
@@ -1594,7 +1595,7 @@ func (m *Monitor) ChardevChange(device string, info ChardevChangeInfo) error {
 
 		args.ID = device
 		args.Backend.Type = info.Type
-		args.Backend.Data.Size = 1048576
+		args.Backend.Data.Size = ConsoleRingbufSize
 
 		return m.Run("chardev-change", args, nil)
 	}
