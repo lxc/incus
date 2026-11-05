@@ -644,8 +644,7 @@ func getBucketFull(ctx context.Context, s *state.State, pool storagePools.Pool, 
 		}
 
 		for _, entry := range bucketBackups {
-			_, backupName, _ := api.GetParentAndSnapshotName(entry.Name)
-			resp.Backups = append(resp.Backups, *backup.NewBucketBackup(s, bucket.Project, pool.Name(), bucket.Name, entry.ID, backupName, entry.CreationDate, entry.ExpiryDate).Render())
+			resp.Backups = append(resp.Backups, *backup.NewBucketBackup(s, bucket.Project, pool.Name(), bucket.Name, entry.ID, entry.Name, entry.CreationDate, entry.ExpiryDate).Render())
 		}
 
 		return nil

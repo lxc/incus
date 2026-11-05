@@ -243,8 +243,7 @@ func storagePoolBucketBackupsGet(d *Daemon, r *http.Request) response.Response {
 	backups := make([]*backup.BucketBackup, len(bucketBackups))
 
 	for i, b := range bucketBackups {
-		_, backupName, _ := api.GetParentAndSnapshotName(b.Name)
-		backups[i] = backup.NewBucketBackup(s, projectName, poolName, bucketName, b.ID, backupName, b.CreationDate, b.ExpiryDate)
+		backups[i] = backup.NewBucketBackup(s, projectName, poolName, bucketName, b.ID, b.Name, b.CreationDate, b.ExpiryDate)
 	}
 
 	resultString := []string{}
@@ -1033,8 +1032,9 @@ func storagePoolBucketBackupLoadByName(ctx context.Context, s *state.State, proj
 		return nil, err
 	}
 
-	bucketName, snapName, _ := api.GetParentAndSnapshotName(b.Name)
-	entry := backup.NewBucketBackup(s, projectName, poolName, bucketName, b.ID, snapName, b.CreationDate, b.ExpiryDate)
+	// The backup keeps its full <bucket>/<backup> name, its paths derive from it.
+	bucketName, _, _ := api.GetParentAndSnapshotName(b.Name)
+	entry := backup.NewBucketBackup(s, projectName, poolName, bucketName, b.ID, b.Name, b.CreationDate, b.ExpiryDate)
 
 	return entry, nil
 }
