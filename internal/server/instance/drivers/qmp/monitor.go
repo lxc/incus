@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"maps"
 	"path/filepath"
 	"slices"
 	"strings"
@@ -499,7 +500,16 @@ func (m *Monitor) GetInstanceState() *api.InstanceState {
 	m.stateMu.Lock()
 	defer m.stateMu.Unlock()
 
-	return m.instanceState
+	if m.instanceState == nil {
+		return nil
+	}
+
+	// Callers modify the state, so give each of them its own copy.
+	state := *m.instanceState
+	state.Disk = maps.Clone(state.Disk)
+	state.Network = maps.Clone(state.Network)
+
+	return &state
 }
 
 // SetInstanceState updates the recorded instance state.
