@@ -3052,7 +3052,7 @@ func createStoragePoolVolumeFromBackup(s *state.State, r *http.Request, requestP
 		return response.InternalError(err)
 	}
 
-	tarFile, err := convertSquashfsBackup(backupFile)
+	tarFile, err := convertSquashfsBackup(backupFile, budget)
 	if err != nil {
 		return response.InternalError(err)
 	}
@@ -3093,7 +3093,7 @@ func createStoragePoolVolumeFromBackup(s *state.State, r *http.Request, requestP
 }
 
 // convertSquashfsBackup converts a squashfs backup to a tarball, removing the original.
-func convertSquashfsBackup(backupFile *os.File) (*os.File, error) {
+func convertSquashfsBackup(backupFile *os.File, budget int64) (*os.File, error) {
 	_, err := backupFile.Seek(0, io.SeekStart)
 	if err != nil {
 		return nil, err
@@ -3117,8 +3117,8 @@ func convertSquashfsBackup(backupFile *os.File) (*os.File, error) {
 		return nil, err
 	}
 
-	// Decompress to tarFile temporary file.
-	err = archive.ExtractWithFds(decomArgs[0], decomArgs[1:], nil, nil, tarFile)
+	// Decompress to tarFile temporary file, within the project's disk budget.
+	err = backupDecompress(decomArgs, tarFile, budget)
 	if err != nil {
 		_ = tarFile.Close()
 		_ = os.Remove(tarFile.Name())
@@ -3355,7 +3355,7 @@ func doVolumeCreateFromBackupSource(s *state.State, r *http.Request, requestProj
 			return redactURLError(err)
 		}
 
-		tarFile, err := convertSquashfsBackup(backupFile)
+		tarFile, err := convertSquashfsBackup(backupFile, budget)
 		if err != nil {
 			return err
 		}
