@@ -4576,11 +4576,28 @@ func (n *ovn) deleteExternalInterfaces() error {
 			return fmt.Errorf("Failed detaching external interface %q: %w", entry, err)
 		}
 
-		if len(entryParts) == 3 {
-			err = InterfaceRemove(entry)
-			if err != nil {
-				return fmt.Errorf("Failed removing external interface %q: %w", entry, err)
-			}
+		if len(entryParts) != 3 {
+			continue
+		}
+
+		// Only remove the VLAN interface the extended syntax describes, never a pre-existing one.
+		vlanID, err := strconv.Atoi(strings.TrimSpace(entryParts[2]))
+		if err != nil {
+			continue
+		}
+
+		linkInfo, err := ip.LinkByName(entry)
+		if err != nil {
+			return fmt.Errorf("Failed to get link info for external interface %q", entry)
+		}
+
+		if linkInfo.Kind != "vlan" || linkInfo.Parent != strings.TrimSpace(entryParts[1]) || linkInfo.VlanID != vlanID {
+			continue
+		}
+
+		err = InterfaceRemove(entry)
+		if err != nil {
+			return fmt.Errorf("Failed removing external interface %q: %w", entry, err)
 		}
 	}
 
@@ -4610,7 +4627,8 @@ func (n *ovn) Delete(clientType request.ClientType) error {
 	}
 
 	// Detach the external interfaces, removing those created from the extended syntax.
-	if n.config["bridge.external_interfaces"] != "" {
+	// A locally pending network never attached anything, so leave the host alone.
+	if n.config["bridge.external_interfaces"] != "" && n.LocalStatus() != api.NetworkStatusPending {
 		err = n.deleteExternalInterfaces()
 		if err != nil {
 			n.logger.Warn("Failed cleaning up external interfaces during delete, continuing with deletion", logger.Ctx{"err": err})
