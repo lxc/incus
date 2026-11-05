@@ -1011,6 +1011,15 @@ func (n *ovn) Validate(config map[string]string, clientType request.ClientType) 
 		return fmt.Errorf("Failed to load network restrictions from project %q: %w", n.project, err)
 	}
 
+	// Host interfaces and tunnels attach host traffic to the network, which a restricted project can't be trusted with.
+	if util.IsTrue(p.Config["restricted"]) {
+		for k := range config {
+			if k == "bridge.external_interfaces" || strings.HasPrefix(k, "tunnel.") {
+				return fmt.Errorf("Option %q isn't allowed in a restricted project", k)
+			}
+		}
+	}
+
 	// Check uplink network is valid and allowed in project.
 	var uplink *api.Network
 	projectRestrictedSubnets := []*net.IPNet{}
