@@ -1043,6 +1043,11 @@ func checkRestrictions(project api.Project, instances []api.Instance, profiles [
 					return fmt.Errorf("Storage pool %q is not accessible from this project", device["pool"])
 				}
 
+				// A dependent volume is deleted with the instance, so it can't be borrowed from another project.
+				if device["pool"] != "" && util.IsTrue(device["dependent"]) && StorageVolumeProjectFromRecord(&project, db.StoragePoolVolumeTypeCustom) != project.Name {
+					return errors.New("Dependent disks are forbidden when using the storage volumes of another project")
+				}
+
 				return nil
 			}
 
