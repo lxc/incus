@@ -13,6 +13,7 @@ import (
 	"strconv"
 	"strings"
 
+	internalIO "github.com/lxc/incus/v7/internal/io"
 	"github.com/lxc/incus/v7/internal/server/sys"
 	"github.com/lxc/incus/v7/shared/ioprogress"
 	"github.com/lxc/incus/v7/shared/subprocess"
@@ -27,6 +28,9 @@ func (nwc *nullWriteCloser) Close() error {
 	return nil
 }
 
+// qemuImgMaxOutput bounds what is kept of the qemu-img output.
+const qemuImgMaxOutput = 1024 * 1024
+
 type writerFunc func([]byte) (int, error)
 
 func (w writerFunc) Write(b []byte) (n int, err error) {
@@ -36,7 +40,11 @@ func (w writerFunc) Write(b []byte) (n int, err error) {
 func handleWriter(out io.Writer, hand func(int64, int64)) io.Writer {
 	var current int64
 	return writerFunc(func(b []byte) (int, error) {
-		n, _ := out.Write(b)
+		n, err := out.Write(b)
+		if err != nil {
+			return n, err
+		}
+
 		ss := strings.Split(strings.Trim(string(b), "(%) \t\n\v\f\r"), "/")
 		f, err := strconv.ParseFloat(ss[0], 64)
 		if err != nil {
@@ -98,14 +106,15 @@ func QemuImg(sysOS *sys.OS, cmd []string, imgPath string, dstPath string, tracke
 		_ = deleteProfile(sysOS, profileName, profileName)
 	}()
 
+	// The output size depends on the image, which may not be trusted.
 	var buffer bytes.Buffer
 	var output bytes.Buffer
-	var writer io.Writer = &output
+	var writer io.Writer = internalIO.NewQuotaWriter(&output, qemuImgMaxOutput)
 	if tracker != nil && tracker.Handler != nil {
-		writer = handleWriter(&output, tracker.Handler)
+		writer = handleWriter(writer, tracker.Handler)
 	}
 
-	p := subprocess.NewProcessWithFds(cmd[0], cmd[1:], nil, &nullWriteCloser{writer}, &nullWriteCloser{&buffer})
+	p := subprocess.NewProcessWithFds(cmd[0], cmd[1:], nil, &nullWriteCloser{writer}, &nullWriteCloser{internalIO.NewQuotaWriter(&buffer, qemuImgMaxOutput)})
 	p.SetApparmor(profileName)
 
 	err = p.Start(context.Background())
