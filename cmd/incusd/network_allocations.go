@@ -90,8 +90,18 @@ func networkAllocationsGet(d *Daemon, r *http.Request) response.Response {
 
 	allProjects := util.IsTrue(request.QueryParam(r, "all-projects"))
 
+	// Judge the listing by the caller's own projects, not by every project on the server.
+	reqProjects, err := networkRequestProjects(s, r, reqProject, allProjects)
+	if err != nil {
+		return response.SmartError(err)
+	}
+
 	// Get the projects to report on and the networks of every network project they rely on.
-	projects := []api.Project{*reqProject}
+	projects := make([]api.Project, 0, len(reqProjects))
+	for _, p := range reqProjects {
+		projects = append(projects, *p)
+	}
+
 	projectNetworks := map[string][]string{}
 
 	// OVN networks keyed by the name of their uplink network.
@@ -104,23 +114,6 @@ func networkAllocationsGet(d *Daemon, r *http.Request) response.Response {
 	routers := map[string][]allocationRouter{}
 
 	err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
-		if allProjects {
-			dbProjects, err := dbCluster.GetProjects(ctx, tx.Tx())
-			if err != nil {
-				return fmt.Errorf("Failed loading projects: %w", err)
-			}
-
-			projects = make([]api.Project, 0, len(dbProjects))
-			for _, dbProject := range dbProjects {
-				p, err := dbProject.ToAPI(ctx, tx.Tx())
-				if err != nil {
-					return fmt.Errorf("Failed loading project %q: %w", dbProject.Name, err)
-				}
-
-				projects = append(projects, *p)
-			}
-		}
-
 		for _, p := range projects {
 			for _, networkProjectName := range []string{project.NetworkProjectFromRecord(&p), api.ProjectDefaultName} {
 				_, ok := projectNetworks[networkProjectName]
