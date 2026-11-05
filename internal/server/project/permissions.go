@@ -1136,6 +1136,17 @@ func checkRestrictions(project api.Project, instances []api.Instance, profiles [
 				return fmt.Errorf("Use of low-level config %q on %s %q of project %q is forbidden", key, entityTypeLabel, entityName, project.Name)
 			}
 
+			// A percentage above 100 raises the CPU weight above every other instance's default.
+			if isContainerOrProfile && !allowContainerLowLevel && key == "limits.cpu.allowance" {
+				percent, isPercent := strings.CutSuffix(value, "%")
+				if isPercent {
+					n, err := strconv.Atoi(percent)
+					if err == nil && n > 100 {
+						return fmt.Errorf(`Use of "limits.cpu.allowance" above 100%% on %s %q of project %q is forbidden`, entityTypeLabel, entityName, project.Name)
+					}
+				}
+			}
+
 			if isVMOrProfile && !allowVMLowLevel && isVMLowLevelOptionForbidden(key) {
 				return fmt.Errorf("Use of low-level config %q on %s %q of project %q is forbidden", key, entityTypeLabel, entityName, project.Name)
 			}
