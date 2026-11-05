@@ -12,6 +12,7 @@ import (
 	"gopkg.in/yaml.v2"
 
 	"github.com/lxc/incus/v6/internal/instancewriter"
+	internalIO "github.com/lxc/incus/v6/internal/io"
 	"github.com/lxc/incus/v6/internal/server/backup"
 	"github.com/lxc/incus/v6/internal/server/db"
 	dbCluster "github.com/lxc/incus/v6/internal/server/db/cluster"
@@ -27,6 +28,7 @@ import (
 	"github.com/lxc/incus/v6/internal/server/task"
 	internalUtil "github.com/lxc/incus/v6/internal/util"
 	"github.com/lxc/incus/v6/shared/api"
+	"github.com/lxc/incus/v6/shared/archive"
 	"github.com/lxc/incus/v6/shared/idmap"
 	"github.com/lxc/incus/v6/shared/ioprogress"
 	"github.com/lxc/incus/v6/shared/logger"
@@ -34,6 +36,56 @@ import (
 	"github.com/lxc/incus/v6/shared/units"
 	"github.com/lxc/incus/v6/shared/util"
 )
+
+// quotaWriteCloser bounds a stored backup by the project's disk budget.
+type quotaWriteCloser struct {
+	io.Writer
+	io.Closer
+}
+
+// backupQuotaWriter wraps a stored backup's file in the project's remaining disk budget.
+func backupQuotaWriter(s *state.State, projectName string, f io.WriteCloser) (io.WriteCloser, error) {
+	var budget int64
+
+	err := s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		var err error
+
+		budget, err = project.GetSpaceBudget(tx, projectName)
+
+		return err
+	})
+	if err != nil {
+		_ = f.Close()
+		return nil, err
+	}
+
+	return &quotaWriteCloser{Writer: internalIO.NewQuotaWriter(f, budget), Closer: f}, nil
+}
+
+// backupDecompress runs a decompressor into the file, bounded by the project's disk budget.
+func backupDecompress(decomArgs []string, tarFile *os.File, budget int64) error {
+	pipeReader, pipeWriter, err := os.Pipe()
+	if err != nil {
+		return err
+	}
+
+	chCopy := make(chan error, 1)
+	go func() {
+		_, err := io.Copy(internalIO.NewQuotaWriter(tarFile, budget), pipeReader)
+		_ = pipeReader.Close()
+		chCopy <- err
+	}()
+
+	err = archive.ExtractWithFds(decomArgs[0], decomArgs[1:], nil, nil, pipeWriter)
+	_ = pipeWriter.Close()
+
+	copyErr := <-chCopy
+	if copyErr != nil {
+		return copyErr
+	}
+
+	return err
+}
 
 // Create a new backup.
 func backupCreate(s *state.State, args db.InstanceBackup, sourceInst instance.Instance, op *operations.Operation, writer *io.PipeWriter) error {
@@ -137,6 +189,12 @@ func backupCreate(s *state.State, args db.InstanceBackup, sourceInst instance.In
 		tarFileWriter, err = os.OpenFile(target, os.O_CREATE|os.O_WRONLY, 0o600)
 		if err != nil {
 			return fmt.Errorf("Error opening backup tarball for writing %q: %w", target, err)
+		}
+
+		// Hold the stored backup to the project's disk budget.
+		tarFileWriter, err = backupQuotaWriter(s, sourceInst.Project().Name, tarFileWriter)
+		if err != nil {
+			return err
 		}
 
 		reverter.Add(func() { _ = os.Remove(target) })
@@ -499,6 +557,12 @@ func volumeBackupCreate(s *state.State, args db.StoragePoolVolumeBackup, project
 			return fmt.Errorf("Error opening backup file for writing %q: %w", target, err)
 		}
 
+		// Hold the stored backup to the project's disk budget.
+		fileWriter, err = backupQuotaWriter(s, projectName, fileWriter)
+		if err != nil {
+			return err
+		}
+
 		reverter.Add(func() { _ = os.Remove(target) })
 	} else {
 		fileWriter = writer
@@ -761,6 +825,12 @@ func bucketBackupCreate(s *state.State, args db.StoragePoolBucketBackup, project
 		tarFileWriter, err = os.OpenFile(target, os.O_CREATE|os.O_WRONLY, 0o600)
 		if err != nil {
 			return fmt.Errorf("Error opening backup tarball for writing %q: %w", target, err)
+		}
+
+		// Hold the stored backup to the project's disk budget.
+		tarFileWriter, err = backupQuotaWriter(s, projectName, tarFileWriter)
+		if err != nil {
+			return err
 		}
 
 		reverter.Add(func() { _ = os.Remove(target) })
