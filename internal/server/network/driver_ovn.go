@@ -2083,7 +2083,13 @@ func (n *ovn) allocateUplinkPortIPs(uplinkNet Network, routerMAC net.HardwareAdd
 
 	// Decide whether we need to allocate new IP(s) and go to the expense of retrieving all allocated IPs.
 	if (uplinkIPv4Net != nil && routerExtPortIPv4 == nil) || (uplinkIPv6Net != nil && routerExtPortIPv6 == nil) {
-		err := n.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		// Forwards, load balancers and external routes may also use addresses from the uplink ranges.
+		externalSubnetsInUse, err := n.getExternalSubnetInUse(uplinkNet.Name())
+		if err != nil {
+			return nil, err
+		}
+
+		err = n.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
 			allAllocatedIPv4, allAllocatedIPv6, err := n.uplinkAllAllocatedIPs(ctx, tx, uplinkNet.Name())
 			if err != nil {
 				return fmt.Errorf("Failed to get all allocated IPs for uplink: %w", err)
@@ -2108,7 +2114,7 @@ func (n *ovn) allocateUplinkPortIPs(uplinkNet Network, routerMAC net.HardwareAdd
 					return fmt.Errorf("Failed to parse uplink IPv4 OVN ranges: %w", err)
 				}
 
-				routerExtPortIPv4, err = n.uplinkAllocateIP(ipRanges, allAllocatedIPv4)
+				routerExtPortIPv4, err = n.uplinkAllocateIP(ipRanges, allAllocatedIPv4, externalSubnetsInUse)
 				if err != nil {
 					return fmt.Errorf("Failed to allocate uplink IPv4 address: %w", err)
 				}
@@ -2133,7 +2139,7 @@ func (n *ovn) allocateUplinkPortIPs(uplinkNet Network, routerMAC net.HardwareAdd
 						return fmt.Errorf("Failed to parse uplink IPv6 OVN ranges: %w", err)
 					}
 
-					routerExtPortIPv6, err = n.uplinkAllocateIP(ipRanges, allAllocatedIPv6)
+					routerExtPortIPv6, err = n.uplinkAllocateIP(ipRanges, allAllocatedIPv6, externalSubnetsInUse)
 					if err != nil {
 						return fmt.Errorf("Failed to allocate uplink IPv6 address: %w", err)
 					}
@@ -2221,7 +2227,7 @@ func (n *ovn) uplinkAllAllocatedIPs(ctx context.Context, tx *db.ClusterTx, uplin
 }
 
 // uplinkAllocateIP allocates a free IP from one of the IP ranges.
-func (n *ovn) uplinkAllocateIP(ipRanges []*iprange.Range, allAllocated []net.IP) (net.IP, error) {
+func (n *ovn) uplinkAllocateIP(ipRanges []*iprange.Range, allAllocated []net.IP, externalSubnetsInUse []externalSubnetUsage) (net.IP, error) {
 	for _, ipRange := range ipRanges {
 		inc := big.NewInt(1)
 
@@ -2252,6 +2258,17 @@ func (n *ovn) uplinkAllocateIP(ipRanges []*iprange.Range, allAllocated []net.IP)
 			}
 
 			if !freeIP {
+				startBig.Add(startBig, inc)
+				continue
+			}
+
+			// Skip past any external subnet in use that contains the IP.
+			subnetIndex := slices.IndexFunc(externalSubnetsInUse, func(usage externalSubnetUsage) bool {
+				return SubnetContainsIP(&usage.subnet, ipAddress)
+			})
+
+			if subnetIndex >= 0 {
+				startBig.SetBytes(dhcpalloc.GetIP(&externalSubnetsInUse[subnetIndex].subnet, -1))
 				startBig.Add(startBig, inc)
 				continue
 			}
