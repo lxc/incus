@@ -2224,6 +2224,14 @@ func (b *backend) CreateInstanceFromImage(inst instance.Instance, fingerprint st
 
 	reverter.Add(func() { _ = b.removeInstanceSymlink(inst.Type(), inst.Project().Name, inst.Name()) })
 
+	// Keep the volume mounted for the rest of the setup so remote pools only attach it once.
+	_, err = b.MountInstance(inst, op)
+	if err != nil {
+		return err
+	}
+
+	defer func() { _ = b.UnmountInstance(inst, op) }()
+
 	// Strip unsafe symlinks introduced by the image.
 	err = b.stripInstanceMetadata(inst, op)
 	if err != nil {
@@ -2231,6 +2239,11 @@ func (b *backend) CreateInstanceFromImage(inst instance.Instance, fingerprint st
 	}
 
 	err = inst.DeferTemplateApply(instance.TemplateTriggerCreate)
+	if err != nil {
+		return err
+	}
+
+	err = b.UpdateInstanceBackupFile(inst, false, op)
 	if err != nil {
 		return err
 	}

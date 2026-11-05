@@ -201,17 +201,17 @@ func instanceCreateFromImage(ctx context.Context, s *state.State, img *api.Image
 
 	reverter.Add(func() { _ = inst.Delete(true, true) })
 
-	// If dealing with an OCI image, parse the configuration.
+	// If dealing with an OCI image, parse the configuration and refresh the backup file.
 	if args.Type == instancetype.Container && inst.LocalConfig()["image.type"] == "oci" {
 		err = instanceApplyOCIConfig(inst, pool, nil)
 		if err != nil {
 			return err
 		}
-	}
 
-	err = inst.UpdateBackupFile()
-	if err != nil {
-		return err
+		err = inst.UpdateBackupFile()
+		if err != nil {
+			return err
+		}
 	}
 
 	reverter.Success()

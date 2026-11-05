@@ -19,10 +19,12 @@ import (
 
 	"github.com/lxc/incus/v7/internal/migration"
 	localMigration "github.com/lxc/incus/v7/internal/server/migration"
+	"github.com/lxc/incus/v7/internal/version"
 	"github.com/lxc/incus/v7/shared/api"
 	"github.com/lxc/incus/v7/shared/logger"
 	"github.com/lxc/incus/v7/shared/revert"
 	"github.com/lxc/incus/v7/shared/subprocess"
+	"github.com/lxc/incus/v7/shared/units"
 	"github.com/lxc/incus/v7/shared/util"
 )
 
@@ -1073,14 +1075,29 @@ func (d *linstor) copyVolume(vol Volume, srcVol Volume) error {
 		return err
 	}
 
-	// The controller may have created the target even when the request fails, so clean up on any error from here.
-	rev.Add(func() { _ = linstor.Client.ResourceDefinitions.Delete(context.TODO(), targetResourceDefinitionName) })
-
-	_, err = linstor.Client.ResourceDefinitions.Clone(context.TODO(), srcResourceDefinition.Name, linstorClient.ResourceDefinitionCloneRequest{
+	cloneRequest := linstorClient.ResourceDefinitionCloneRequest{
 		Name:               targetResourceDefinitionName,
 		ResourceGroup:      d.config[LinstorResourceGroupNameConfigKey],
 		GenericPropsModify: linstorClient.GenericPropsModify{OverrideProps: overrideProps},
-	})
+	}
+
+	// Grow the volume as part of the clone when the controller supports it, as a later
+	// resize has to wait for the clone to finish syncing.
+	growBytes, err := d.cloneGrowSize(vol, srcVol)
+	if err != nil {
+		return err
+	}
+
+	if growBytes > 0 {
+		// The exact size property prevents resizing and is dropped by any resize anyway.
+		cloneRequest.VolumeSizes = []int64{growBytes / 1024}
+		cloneRequest.DeleteProps = []string{"DrbdOptions/ExactSize"}
+	}
+
+	// The controller may have created the target even when the request fails, so clean up on any error from here.
+	rev.Add(func() { _ = linstor.Client.ResourceDefinitions.Delete(context.TODO(), targetResourceDefinitionName) })
+
+	_, err = linstor.Client.ResourceDefinitions.Clone(context.TODO(), srcResourceDefinition.Name, cloneRequest)
 	if err != nil {
 		return fmt.Errorf("Unable to start cloning resource definition: %w", err)
 	}
@@ -1133,9 +1150,75 @@ loop:
 		}
 	}
 
+	// A grown VM disk needs its GPT alt header moved to the new end of the disk.
+	if growBytes > 0 && vol.IsVMBlock() {
+		devPath, err := d.getLinstorDevPath(vol)
+		if err != nil {
+			return err
+		}
+
+		err = d.moveGPTAltHeader(devPath)
+		if err != nil {
+			return err
+		}
+	}
+
 	rev.Success()
 
 	return nil
+}
+
+// cloneGrowSize returns the size in bytes to grow a clone of srcVol to during the clone, or 0 to keep the source size.
+func (d *linstor) cloneGrowSize(vol Volume, srcVol Volume) (int64, error) {
+	if vol.config["size"] == "" || vol.config["size"] == "0" {
+		return 0, nil
+	}
+
+	sizeBytes, err := units.ParseByteSizeString(vol.config["size"])
+	if err != nil {
+		return 0, err
+	}
+
+	if sizeBytes <= 0 {
+		return 0, nil
+	}
+
+	sizeBytes, err = d.roundVolumeBlockSizeBytes(vol, sizeBytes)
+	if err != nil {
+		return 0, err
+	}
+
+	srcSizeBytes, err := d.getVolumeSize(srcVol)
+	if err != nil {
+		return 0, err
+	}
+
+	// Shrinking is left to the regular resize so it reports the usual error.
+	if sizeBytes <= srcSizeBytes {
+		return 0, nil
+	}
+
+	// Resizing during the clone needs LINSTOR 1.35.0.
+	linstor, err := d.state.Linstor()
+	if err != nil {
+		return 0, err
+	}
+
+	controller, err := linstor.Client.Controller.GetVersion(context.TODO())
+	if err != nil {
+		return 0, fmt.Errorf("Unable to get the controller version: %w", err)
+	}
+
+	ver, err := version.Parse(controller.Version)
+	if err != nil {
+		return 0, nil
+	}
+
+	if ver.Major < 1 || (ver.Major == 1 && ver.Minor < 35) {
+		return 0, nil
+	}
+
+	return sizeBytes, nil
 }
 
 func (d *linstor) getVolumeSize(vol Volume) (int64, error) {
