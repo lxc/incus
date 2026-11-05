@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"slices"
 
+	"google.golang.org/protobuf/proto"
+
 	"github.com/lxc/incus/v6/internal/migration"
 	backupConfig "github.com/lxc/incus/v6/internal/server/backup/config"
 	"github.com/lxc/incus/v6/internal/server/operations"
@@ -249,6 +251,40 @@ func MatchTypes(offer *migration.MigrationHeader, fallbackType migration.Migrati
 	}
 
 	return matchedTypes, nil
+}
+
+// RequestedSnapshots returns the requested snapshot names that were offered, the target can't add any.
+func RequestedSnapshots(offered []string, requested []string) []string {
+	snapshots := make([]string, 0, len(requested))
+	for _, name := range requested {
+		if slices.Contains(offered, name) {
+			snapshots = append(snapshots, name)
+		}
+	}
+
+	return snapshots
+}
+
+// VolumeSnapshotToProtobuf converts an api.StorageVolumeSnapshot into a migration.Snapshot.
+func VolumeSnapshotToProtobuf(vol *api.StorageVolumeSnapshot) *migration.Snapshot {
+	config := []*migration.Config{}
+	for k, v := range vol.Config {
+		kCopy := string(k)
+		vCopy := string(v)
+		config = append(config, &migration.Config{Key: &kCopy, Value: &vCopy})
+	}
+
+	return &migration.Snapshot{
+		Name:         &vol.Name,
+		LocalConfig:  config,
+		Profiles:     []string{},
+		Ephemeral:    new(false),
+		LocalDevices: []*migration.Device{},
+		Architecture: proto.Int32(0),
+		Stateful:     new(false),
+		CreationDate: new(vol.CreatedAt.UnixNano()),
+		ExpiryDate:   new(vol.CreatedAt.UnixNano()),
+	}
 }
 
 func progressWrapperRender(op *operations.Operation, key string, description string, progressInt int64, speedInt int64) {
