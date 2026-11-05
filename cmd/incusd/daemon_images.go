@@ -30,6 +30,7 @@ import (
 	"github.com/lxc/incus/v6/shared/cancel"
 	"github.com/lxc/incus/v6/shared/ioprogress"
 	"github.com/lxc/incus/v6/shared/logger"
+	"github.com/lxc/incus/v6/shared/revert"
 	"github.com/lxc/incus/v6/shared/units"
 	"github.com/lxc/incus/v6/shared/util"
 	"github.com/lxc/incus/v6/shared/validate"
@@ -386,12 +387,18 @@ func ImageDownload(ctx context.Context, r *http.Request, s *state.State, op *ope
 	destName := filepath.Join(destDir, fp+".download")
 
 	failure := true
+	var storeRevert revert.Hook
 	cleanup := func() {
 		if failure {
 			_ = os.Remove(destName)
 			_ = os.Remove(destName + ".rootfs")
+
+			if storeRevert != nil {
+				storeRevert()
+			}
 		}
 	}
+
 	defer cleanup()
 
 	// Setup a progress handler
@@ -643,6 +650,17 @@ func ImageDownload(ctx context.Context, r *http.Request, s *state.State, op *ope
 		return nil, false, errors.New("Invalid image fingerprint")
 	}
 
+	// Store the files, reusing an identical on-disk copy if present.
+	rootfsName := ""
+	if util.PathExists(destName + ".rootfs") {
+		rootfsName = destName + ".rootfs"
+	}
+
+	storeRevert, err = imageStoreFiles(fp, destName, rootfsName)
+	if err != nil {
+		return nil, false, err
+	}
+
 	// Override visibility
 	info.Public = args.Public
 
@@ -663,25 +681,6 @@ func ImageDownload(ctx context.Context, r *http.Request, s *state.State, op *ope
 
 	// Image is in the DB now, don't wipe on-disk files on failure
 	failure = false
-
-	// Reuse an existing on-disk copy if present, otherwise move ours into place.
-	newDestName := filepath.Join(destDir, fp)
-	if util.PathExists(newDestName) {
-		_ = os.Remove(destName)
-		_ = os.Remove(destName + ".rootfs")
-	} else {
-		err = internalUtil.FileMove(destName, newDestName)
-		if err != nil {
-			return nil, false, err
-		}
-
-		if util.PathExists(destName + ".rootfs") {
-			err = internalUtil.FileMove(destName+".rootfs", newDestName+".rootfs")
-			if err != nil {
-				return nil, false, err
-			}
-		}
-	}
 
 	// Record the image source
 	if alias != fp {
