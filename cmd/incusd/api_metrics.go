@@ -107,7 +107,15 @@ func metricsGet(d *Daemon, r *http.Request) response.Response {
 	err := s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
 		// Figure out the projects to retrieve.
 		if projectName != "" {
-			projectNames = []string{projectName}
+			// Only existing projects get a cache entry.
+			exists, err := dbCluster.ProjectExists(ctx, tx.Tx(), projectName)
+			if err != nil {
+				return err
+			}
+
+			if exists {
+				projectNames = []string{projectName}
+			}
 		} else {
 			// Get all project names if no specific project requested.
 			projects, err := dbCluster.GetProjects(ctx, tx.Tx())
@@ -273,6 +281,13 @@ func metricsGet(d *Daemon, r *http.Request) response.Response {
 
 	if metricsCache == nil {
 		metricsCache = map[string]metricsCacheEntry{}
+	}
+
+	// Drop the entries of projects that aren't scraped anymore.
+	for project, entry := range metricsCache {
+		if entry.expiry.Before(time.Now()) {
+			delete(metricsCache, project)
+		}
 	}
 
 	updatedProjects := []string{}
