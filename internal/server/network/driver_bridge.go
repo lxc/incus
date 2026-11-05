@@ -3507,7 +3507,8 @@ func (n *bridge) Leases(projectName string, clientType request.ClientType) ([]ap
 			mac := GetMACSlice(fields[1])
 			macStr := strings.Join(mac, ":")
 
-			if len(macStr) < 17 && fields[4] != "" {
+			// A short hardware address may be a DHCPv6 IAID, the MAC then ends the DUID.
+			if len(macStr) < 17 && len(fields[4]) >= 17 {
 				macStr = fields[4][len(fields[4])-17:]
 			}
 
