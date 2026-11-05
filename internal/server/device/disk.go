@@ -774,8 +774,8 @@ func (d *disk) validateConfig(instConf instance.ConfigReader, partialValidation 
 				return err
 			}
 
-			// Check that the dependent disk is attached to exactly one instance.
-			if util.IsTrue(dbVolume.Config["dependent"]) {
+			// Check that the dependent disk is attached to exactly one instance, including when claimed here.
+			if util.IsTrue(dbVolume.Config["dependent"]) || util.IsTrue(d.config["dependent"]) {
 				count, err := d.getAttachedInstanceCount(storageProjectName, dbVolume)
 				if err != nil {
 					return err
