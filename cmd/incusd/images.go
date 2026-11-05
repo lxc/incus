@@ -1310,7 +1310,8 @@ func imagesPost(d *Daemon, r *http.Request) response.Response {
 		return response.InternalError(err)
 	}
 
-	decoder := json.NewDecoder(post)
+	// The JSON form of the request is small, the spool is for tarballs.
+	decoder := json.NewDecoder(io.LimitReader(post, 1024*1024))
 	imageUpload := false
 
 	req := api.ImagesPost{}
@@ -5140,10 +5141,28 @@ func imageSyncBetweenNodes(ctx context.Context, s *state.State, r *http.Request,
 	return nil
 }
 
+// imageTokenExpiry is how long an image token stays valid.
+const imageTokenExpiry = time.Hour
+
+// imageTokenMax bounds the pending image tokens per project.
+const imageTokenMax = 64
+
 func createTokenResponse(s *state.State, r *http.Request, projectName string, fingerprint string, metadata jmap.Map, opType operationtype.Type) response.Response {
 	secret, err := internalUtil.RandomHexString(32)
 	if err != nil {
 		return response.InternalError(err)
+	}
+
+	// Bound how many tokens a project can hold open.
+	count := 0
+	for _, op := range operations.Clone() {
+		if op.Project() == projectName && (op.Type() == operationtype.ImageToken || op.Type() == operationtype.ImageUploadToken) {
+			count++
+		}
+	}
+
+	if count >= imageTokenMax {
+		return response.Unavailable(errors.New("Too many pending image tokens"))
 	}
 
 	meta := jmap.Map{}
@@ -5151,6 +5170,7 @@ func createTokenResponse(s *state.State, r *http.Request, projectName string, fi
 	maps.Copy(meta, metadata)
 
 	meta["secret"] = secret
+	meta["expiresAt"] = time.Now().Add(imageTokenExpiry)
 
 	resources := map[string][]api.URL{}
 	resources["images"] = []api.URL{*api.NewURL().Path(version.APIVersion, "images", fingerprint)}
