@@ -323,7 +323,7 @@ func imageDownload(ctx context.Context, r *http.Request, s *state.State, op *ope
 			// Transfer image if needed (after database record has been created above).
 			if nodeAddress != "" {
 				// The image is available from another node, let's try to import it.
-				err = instanceImageTransfer(s, r, args.ProjectName, info.Fingerprint, nodeAddress)
+				err = instanceImageTransfer(s, r, args.ProjectName, imgInfo.Fingerprint, nodeAddress)
 				if err != nil {
 					return nil, false, fmt.Errorf("Failed transferring image: %w", err)
 				}
