@@ -914,6 +914,12 @@ func projectPost(d *Daemon, r *http.Request) response.Response {
 			logger.Error("Failed to rename project in authorizer", logger.Ctx{"name": name, "new_name": req.Name, "err": err})
 		}
 
+		// Restricted certificates are cached by project name.
+		err = certificateCacheProjectRemoved(s.ShutdownCtx, s, name)
+		if err != nil {
+			return err
+		}
+
 		requestor := request.CreateRequestor(r)
 		s.Events.SendLifecycle(req.Name, lifecycle.ProjectRenamed.Event(req.Name, requestor, logger.Ctx{"old_name": name}))
 
@@ -1254,6 +1260,12 @@ func projectDelete(d *Daemon, r *http.Request) response.Response {
 	err = s.Authorizer.DeleteProject(r.Context(), id, name)
 	if err != nil {
 		logger.Error("Failed to remove project from authorizer", logger.Ctx{"name": name, "err": err})
+	}
+
+	// Restricted certificates are cached by project name.
+	err = certificateCacheProjectRemoved(r.Context(), s, name)
+	if err != nil {
+		return response.SmartError(err)
 	}
 
 	requestor := request.CreateRequestor(r)

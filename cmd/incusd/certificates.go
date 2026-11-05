@@ -333,6 +333,52 @@ func requestIdentity(r *http.Request) (string, string) {
 	return protocol, username
 }
 
+// certificateCacheProjectRemoved reloads the trust cache everywhere after a project name was deleted or renamed.
+func certificateCacheProjectRemoved(ctx context.Context, s *state.State, projectName string) error {
+	var stale *api.Certificate
+
+	err := s.DB.Cluster.Transaction(ctx, func(ctx context.Context, tx *db.ClusterTx) error {
+		dbCerts, err := dbCluster.GetCertificates(ctx, tx.Tx())
+		if err != nil {
+			return err
+		}
+
+		for _, dbCert := range dbCerts {
+			cert, err := dbCert.ToAPI(ctx, tx.Tx())
+			if err != nil {
+				return err
+			}
+
+			if slices.Contains(cert.Projects, projectName) {
+				stale = cert
+				return nil
+			}
+		}
+
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+
+	// The cached project lists are what matter, the database link is already gone.
+	s.UpdateCertificateCache()
+
+	if stale == nil {
+		return nil
+	}
+
+	// Other members reload their cache on a certificate update notification.
+	notifier, err := cluster.NewNotifier(s, s.Endpoints.NetworkCert(), s.ServerCert(), cluster.NotifyAlive)
+	if err != nil {
+		return err
+	}
+
+	return notifier(func(client incus.InstanceServer) error {
+		return client.UpdateCertificate(stale.Fingerprint, stale.Writable(), "")
+	})
+}
+
 // updateCertificateCacheFromLocal loads trusted server certificates from local database into memory.
 func updateCertificateCacheFromLocal(d *Daemon) error {
 	s := d.State()
