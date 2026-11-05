@@ -468,19 +468,19 @@ func imgPostInstanceInfo(ctx context.Context, s *state.State, r *http.Request, r
 
 		info.Size += rootfsFi.Size()
 
-		metaData, err := os.ReadFile(metaFile.Name())
-		if err != nil {
-			return nil, err
+		// Stream the files through the hash, the rootfs can be large.
+		for _, name := range []string{metaFile.Name(), rootfsFile.Name()} {
+			f, err := os.Open(name)
+			if err != nil {
+				return nil, err
+			}
+
+			_, err = io.Copy(hash256, f)
+			_ = f.Close()
+			if err != nil {
+				return nil, err
+			}
 		}
-
-		hash256.Write(metaData)
-
-		rootfsData, err := os.ReadFile(rootfsFile.Name())
-		if err != nil {
-			return nil, err
-		}
-
-		hash256.Write(rootfsData)
 	}
 
 	info.Fingerprint = fmt.Sprintf("%x", hash256.Sum(nil))
