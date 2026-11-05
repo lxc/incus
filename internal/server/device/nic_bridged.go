@@ -649,6 +649,19 @@ func (d *nicBridged) checkAddressConflict() error {
 			return nil
 		}
 
+		// Another project's instance only holds its addresses while running, so a stopped one
+		// can't be used to block instances outside of its project.
+		if inst.Project != d.inst.Project().Name {
+			otherInst, err := instance.LoadByProjectAndName(d.state, inst.Project, inst.Name)
+			if err != nil {
+				return err
+			}
+
+			if !otherInst.IsRunning() {
+				return nil
+			}
+		}
+
 		// Skip NICs connected to other VLANs (not perfect though as one NIC could
 		// explicitly specify the default untagged VLAN and these would be connected to
 		// same L2 even though the values are different, and there is a different default
