@@ -525,10 +525,10 @@ func (c *migrationSink) DoStorage(state *state.State, projectName string, poolNa
 				return errors.New(msg.GetMessage())
 			}
 
-			// The source can only tell us it failed (e.g. if
-			// checkpointing failed). We have to tell the source
-			// whether or not the restore was successful.
-			logger.Warn("Unknown message from migration source", logger.Ctx{"message": msg.GetMessage()})
+			// The source can only tell us it failed, anything else ends the migration.
+			c.disconnect()
+
+			return errors.New("Unexpected message from migration source")
 		}
 	}
 }
