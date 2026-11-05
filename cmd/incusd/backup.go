@@ -261,6 +261,9 @@ func backupWriteIndex(sourceInst instance.Instance, pool storagePools.Pool, opti
 		return fmt.Errorf("Failed generating instance backup config: %w", err)
 	}
 
+	// Those allowed to export the instance may not be allowed to see the pool config.
+	config.StripPoolConfig()
+
 	indexInfo := backup.Info{
 		Name:             sourceInst.Name(),
 		Pool:             pool.Name(),

@@ -16,3 +16,17 @@ type Config struct {
 	Bucket           *api.StorageBucket           `yaml:"bucket,omitempty"`
 	BucketKeys       []*api.StorageBucketKey      `yaml:"bucket_keys,omitempty"`
 }
+
+// StripPoolConfig drops the pool config, which may hold credentials, from the config and its dependent volumes.
+func (c *Config) StripPoolConfig() {
+	if c.Pool != nil {
+		// Copy the record as it may be the backend's own.
+		pool := *c.Pool
+		pool.Config = nil
+		c.Pool = &pool
+	}
+
+	for _, vol := range c.DependentVolumes {
+		vol.StripPoolConfig()
+	}
+}

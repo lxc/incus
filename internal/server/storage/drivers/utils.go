@@ -1129,6 +1129,11 @@ func BackupVolume(d Driver, v Volume, writer instancewriter.InstanceWriter, moun
 					return nil
 				}
 
+				// Snapshot backup files hold the pool config.
+				if v.IsSnapshot() && srcPath == filepath.Join(mountPath, "backup.yaml") {
+					return nil
+				}
+
 				name := filepath.Join(prefix, strings.TrimPrefix(srcPath, mountPath))
 				err = writer.WriteFile(name, srcPath, fi, false)
 				if err != nil {
@@ -1214,6 +1219,11 @@ func BackupVolume(d Driver, v Volume, writer instancewriter.InstanceWriter, moun
 			}
 
 			return fmt.Errorf("Error walking file during export: %q: %w", srcPath, err)
+		}
+
+		// Snapshot backup files hold the pool config.
+		if v.IsSnapshot() && srcPath == filepath.Join(mountPath, "backup.yaml") {
+			return nil
 		}
 
 		name := filepath.Join(prefix, strings.TrimPrefix(srcPath, mountPath))

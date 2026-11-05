@@ -2693,6 +2693,12 @@ func (b *backend) CreateInstanceFromMigration(inst instance.Instance, conn io.Re
 		if err != nil {
 			return err
 		}
+
+		// The source's backup file isn't transferred, write our own.
+		err = b.UpdateInstanceBackupFile(inst, true, op)
+		if err != nil {
+			return err
+		}
 	}
 
 	reverter.Success()
@@ -3111,6 +3117,18 @@ func (b *backend) MigrateInstance(inst instance.Instance, conn io.ReadWriteClose
 		}
 	}
 
+	// Leave the pool config out of the backup file during the transfer, the peer may not be allowed to see it.
+	if !args.ClusterMove && !args.FinalSync {
+		err = b.writeInstanceBackupFile(inst, true, true, op)
+		if err != nil {
+			return err
+		}
+
+		defer func() {
+			_ = b.UpdateInstanceBackupFile(inst, true, nil)
+		}()
+	}
+
 	// Detect if source pool driver doesn't support cheap temporary snapshots that allow consistent copy when
 	// running, or if the negotiated protocol is VM non-optimized, meaning a complete raw copy of the active
 	// volume is being sent.
@@ -3272,8 +3290,8 @@ func (b *backend) BackupInstance(inst instance.Instance, tarWriter *instancewrit
 		return err
 	}
 
-	// Ensure the backup file reflects current config.
-	err = b.UpdateInstanceBackupFile(inst, snapshots, op)
+	// Refresh the backup file, leaving out the pool config as the exporter may not be allowed to see it.
+	err = b.writeInstanceBackupFile(inst, snapshots, true, op)
 	if err != nil {
 		return err
 	}
@@ -6271,6 +6289,11 @@ func (b *backend) migrationIndexHeaderSend(l logger.Logger, indexHeaderVersion u
 
 	// Send migration index header frame to target if applicable and wait for receipt.
 	if indexHeaderVersion > 0 {
+		// Those allowed to migrate the instance may not be allowed to see the pool config.
+		if info.Config != nil {
+			info.Config.StripPoolConfig()
+		}
+
 		headerJSON, err := json.Marshal(info)
 		if err != nil {
 			return nil, fmt.Errorf("Failed encoding migration index header: %w", err)
@@ -8137,6 +8160,11 @@ func (b *backend) UpdateInstanceBackupFile(inst instance.Instance, snapshots boo
 	l.Debug("UpdateInstanceBackupFile started")
 	defer l.Debug("UpdateInstanceBackupFile finished")
 
+	return b.writeInstanceBackupFile(inst, snapshots, false, op)
+}
+
+// writeInstanceBackupFile writes the instance's backup.yaml file, optionally without the pool config.
+func (b *backend) writeInstanceBackupFile(inst instance.Instance, snapshots bool, stripPoolConfig bool, op *operations.Operation) error {
 	// We only write backup files out for actual instances.
 	if inst.IsSnapshot() {
 		return nil
@@ -8145,6 +8173,10 @@ func (b *backend) UpdateInstanceBackupFile(inst instance.Instance, snapshots boo
 	config, err := b.GenerateInstanceBackupConfig(inst, snapshots, true, op)
 	if err != nil {
 		return err
+	}
+
+	if stripPoolConfig {
+		config.StripPoolConfig()
 	}
 
 	data, err := yaml.Dump(config, yaml.WithV2Defaults())
@@ -10116,6 +10148,11 @@ func (b *backend) qcow2MigrateVolume(s *state.State, vol drivers.Volume, project
 		rsyncArgs = []string{"--exclude", "root.img"}
 	} else if vol.ContentType() == drivers.ContentTypeBlock && volSrcArgs.MigrationType.FSType != migration.MigrationFSType_BLOCK_AND_RSYNC || vol.ContentType() == drivers.ContentTypeFS && volSrcArgs.MigrationType.FSType != migration.MigrationFSType_RSYNC {
 		return drivers.ErrNotSupported
+	}
+
+	// The instance backup file holds the pool config, the target writes its own.
+	if vol.Type() == drivers.VolumeTypeContainer || vol.Type() == drivers.VolumeTypeVM {
+		rsyncArgs = append(rsyncArgs, "--exclude", "/backup.yaml")
 	}
 
 	// Convert the volume type name to our internal integer representation.
