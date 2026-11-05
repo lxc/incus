@@ -555,6 +555,10 @@ func readRegularFileInRoot(dir string, name string) ([]byte, error) {
 		return nil, fmt.Errorf("%q isn't a regular file", name)
 	}
 
+	if fi.Size() > instance.FileMaxSize {
+		return nil, fmt.Errorf("%q is too large", name)
+	}
+
 	f, err := root.Open(name)
 	if err != nil {
 		return nil, err
@@ -562,7 +566,7 @@ func readRegularFileInRoot(dir string, name string) ([]byte, error) {
 
 	defer func() { _ = f.Close() }()
 
-	return io.ReadAll(f)
+	return io.ReadAll(io.LimitReader(f, instance.FileMaxSize))
 }
 
 // StoragePool returns the storage pool name.

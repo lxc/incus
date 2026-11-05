@@ -4995,7 +4995,7 @@ func (d *qemu) templateApplyNow(trigger instance.TemplateTrigger, path string) e
 	}
 
 	// Parse the metadata.
-	content, err := os.ReadFile(fname)
+	content, err := readRegularFileInRoot(d.Path(), "metadata.yaml")
 	if err != nil {
 		return fmt.Errorf("Failed to read metadata: %w", err)
 	}
@@ -15512,7 +15512,13 @@ func buildDataFileInfo(nodeName string, m *qmp.Monitor, driveConf deviceConfig.M
 // getNVRAM gets the NVRAM assuming the config volume is mounted and the NVRAM already has been
 // initialized.
 func (d *qemu) getNVRAM() (*uefi.Store, error) {
-	nvRAM, err := os.ReadFile(d.nvramEditPath())
+	// The NVRAM path is a link, only a known firmware variables file is read.
+	name, err := d.nvramFileName()
+	if err != nil {
+		return nil, fmt.Errorf("Failed opening NVRAM file: %w", err)
+	}
+
+	nvRAM, err := readRegularFileInRoot(filepath.Dir(d.nvramEditPath()), name)
 	if err != nil {
 		return nil, fmt.Errorf("Failed opening NVRAM file: %w", err)
 	}
