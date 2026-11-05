@@ -516,6 +516,9 @@ type ImageFileRequest struct {
 	// Path retriever for image delta downloads
 	// If set, it must return the path to the image file or an empty string if not available
 	DeltaSourceRetriever func(fingerprint string, file string) string
+
+	// Maximum unpacked size of an OCI image (0 for no limit)
+	MaxUnpackedSize int64
 }
 
 // The ImageFileResponse struct is used as the response for image downloads.
