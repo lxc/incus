@@ -1329,11 +1329,19 @@ func ParsePortRange(r string) (int64, int64, error) {
 		return -1, -1, err
 	}
 
+	if base < 0 || base > 65535 {
+		return -1, -1, fmt.Errorf("Invalid port %q", entries[0])
+	}
+
 	size := int64(1)
 	if len(entries) > 1 {
 		size, err = strconv.ParseInt(entries[1], 10, 64)
 		if err != nil {
 			return -1, -1, err
+		}
+
+		if size > 65535 {
+			return -1, -1, fmt.Errorf("Invalid port %q", entries[1])
 		}
 
 		if size <= base {
@@ -1474,6 +1482,11 @@ func ProxyParseAddr(data string) (*deviceConfig.ProxyAddress, error) {
 		portFirst, portRange, err := ParsePortRange(p)
 		if err != nil {
 			return nil, err
+		}
+
+		// Repeated ranges would expand without limit.
+		if int64(len(newProxyAddr.Ports))+portRange > 65536 {
+			return nil, errors.New("Too many ports")
 		}
 
 		for i := range portRange {
