@@ -985,6 +985,25 @@ func doCertificateUpdate(d *Daemon, dbInfo api.Certificate, req api.CertificateP
 	s := d.State()
 
 	if clientType == clusterRequest.ClientTypeNormal {
+		// The record was loaded before the body was read, which the client controls the timing of.
+		err := s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
+			dbCert, err := dbCluster.GetCertificate(ctx, tx.Tx(), dbInfo.Fingerprint)
+			if err != nil {
+				return err
+			}
+
+			current, err := dbCert.ToAPI(ctx, tx.Tx())
+			if err != nil {
+				return err
+			}
+
+			dbInfo = *current
+			return nil
+		})
+		if err != nil {
+			return response.SmartError(err)
+		}
+
 		// Prevent any type change.
 		if dbInfo.Type != req.Type {
 			return response.BadRequest(errors.New("The certificate type cannot be changed"))
