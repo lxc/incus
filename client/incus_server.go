@@ -122,6 +122,7 @@ func (r *ProtocolIncus) UseProject(name string) InstanceServer {
 		skipEvents:           r.getSkipEvents(),
 		oidcClient:           r.oidcClient,
 		tempPath:             r.tempPath,
+		maxResponseSize:      r.maxResponseSize,
 	}
 }
 
@@ -148,6 +149,7 @@ func (r *ProtocolIncus) UseTarget(name string) InstanceServer {
 		oidcClient:           r.oidcClient,
 		clusterTarget:        name,
 		tempPath:             r.tempPath,
+		maxResponseSize:      r.maxResponseSize,
 	}
 }
 

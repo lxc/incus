@@ -589,7 +589,7 @@ func (r *ProtocolIncus) CreateInstanceFromBackup(args InstanceBackupArgs) (Opera
 	defer logger.WarnOnError(resp.Body.Close, "Failed to close response body")
 
 	// Handle errors
-	response, _, err := incusParseResponse(resp)
+	response, _, err := r.parseResponse(resp)
 	if err != nil {
 		return nil, err
 	}
@@ -1578,7 +1578,7 @@ func (r *ProtocolIncus) GetInstanceFile(instanceName string, filePath string) (i
 
 	// Check the return value for a cleaner error
 	if resp.StatusCode != http.StatusOK {
-		_, _, err := incusParseResponse(resp)
+		_, _, err := r.parseResponse(resp)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -1699,7 +1699,7 @@ func (r *ProtocolIncus) CreateInstanceFile(instanceName string, filePath string,
 	}
 
 	// Check the return value for a cleaner error
-	_, _, err = incusParseResponse(resp)
+	_, _, err = r.parseResponse(resp)
 	if err != nil {
 		return err
 	}
@@ -1814,7 +1814,7 @@ func (r *ProtocolIncus) rawConn(method string, apiURL *url.URL, protocol string,
 	}
 
 	if resp.StatusCode != http.StatusSwitchingProtocols {
-		_, _, err := incusParseResponse(resp)
+		_, _, err := r.parseResponse(resp)
 		if err != nil {
 			return nil, err
 		}
@@ -2448,7 +2448,7 @@ func (r *ProtocolIncus) GetInstanceLogfile(name string, filename string) (io.Rea
 
 	// Check the return value for a cleaner error
 	if resp.StatusCode != http.StatusOK {
-		_, _, err := incusParseResponse(resp)
+		_, _, err := r.parseResponse(resp)
 		if err != nil {
 			return nil, err
 		}
@@ -2508,7 +2508,7 @@ func (r *ProtocolIncus) getInstanceExecOutputLogFile(name string, filename strin
 
 	// Check the return value for a cleaner error
 	if resp.StatusCode != http.StatusOK {
-		_, _, err := incusParseResponse(resp)
+		_, _, err := r.parseResponse(resp)
 		if err != nil {
 			return nil, err
 		}
@@ -2633,7 +2633,7 @@ func (r *ProtocolIncus) GetInstanceTemplateFile(instanceName string, templateNam
 
 	// Check the return value for a cleaner error
 	if resp.StatusCode != http.StatusOK {
-		_, _, err := incusParseResponse(resp)
+		_, _, err := r.parseResponse(resp)
 		if err != nil {
 			return nil, err
 		}
@@ -2680,7 +2680,7 @@ func (r *ProtocolIncus) CreateInstanceTemplateFile(instanceName string, template
 	resp, err := r.DoHTTP(req)
 	// Check the return value for a cleaner error
 	if resp.StatusCode != http.StatusOK {
-		_, _, err := incusParseResponse(resp)
+		_, _, err := r.parseResponse(resp)
 		if err != nil {
 			return err
 		}
@@ -2928,7 +2928,7 @@ func (r *ProtocolIncus) GetInstanceConsoleLog(instanceName string, _ *InstanceCo
 
 	// Check the return value for a cleaner error
 	if resp.StatusCode != http.StatusOK {
-		_, _, err := incusParseResponse(resp)
+		_, _, err := r.parseResponse(resp)
 		if err != nil {
 			return nil, err
 		}
@@ -3120,7 +3120,7 @@ func (r *ProtocolIncus) GetInstanceBackupFile(instanceName string, name string, 
 	defer close(doneCh)
 
 	if response.StatusCode != http.StatusOK {
-		_, _, err := incusParseResponse(response)
+		_, _, err := r.parseResponse(response)
 		if err != nil {
 			return nil, err
 		}
@@ -3197,7 +3197,7 @@ func (r *ProtocolIncus) CreateInstanceBackupStream(instanceName string, backup a
 	defer close(doneCh)
 
 	if response.StatusCode != http.StatusOK {
-		_, _, err = incusParseResponse(response)
+		_, _, err = r.parseResponse(response)
 		if err != nil {
 			return err
 		}
@@ -3335,7 +3335,7 @@ func (r *ProtocolIncus) GetInstanceDebugMemory(name string, format string) (io.R
 
 	// Check the return value for a cleaner error
 	if resp.StatusCode != http.StatusOK {
-		_, _, err := incusParseResponse(resp)
+		_, _, err := r.parseResponse(resp)
 		if err != nil {
 			return nil, err
 		}
@@ -3413,7 +3413,7 @@ func (r *ProtocolIncus) getInstanceNVRAM(name string, guid string, varName strin
 
 	// Check the return value for a cleaner error
 	if resp.StatusCode != http.StatusOK {
-		_, _, err := incusParseResponse(resp)
+		_, _, err := r.parseResponse(resp)
 		if err != nil {
 			return nil, err
 		}
@@ -3585,7 +3585,7 @@ func (r *ProtocolIncus) UpdateRawInstanceNVRAMGUIDVar(name string, guid string, 
 	}
 
 	// Handle errors
-	_, _, err = incusParseResponse(resp)
+	_, _, err = r.parseResponse(resp)
 	if err != nil {
 		return err
 	}

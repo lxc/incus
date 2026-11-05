@@ -477,7 +477,7 @@ func (r *ProtocolIncus) GetStoragePoolBucketBackupFile(pool string, bucketName s
 	defer close(doneCh)
 
 	if response.StatusCode != http.StatusOK {
-		_, _, err := incusParseResponse(response)
+		_, _, err := r.parseResponse(response)
 		if err != nil {
 			return nil, err
 		}
@@ -549,7 +549,7 @@ func (r *ProtocolIncus) CreateStoragePoolBucketBackupStream(poolName string, buc
 	defer close(doneCh)
 
 	if response.StatusCode != http.StatusOK {
-		_, _, err = incusParseResponse(response)
+		_, _, err = r.parseResponse(response)
 		if err != nil {
 			return err
 		}
@@ -606,7 +606,7 @@ func (r *ProtocolIncus) CreateStoragePoolBucketFromBackup(pool string, args Stor
 	defer logger.WarnOnError(resp.Body.Close, "Failed to close response body")
 
 	// Handle errors.
-	response, _, err := incusParseResponse(resp)
+	response, _, err := r.parseResponse(resp)
 	if err != nil {
 		return nil, err
 	}

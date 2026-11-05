@@ -4879,13 +4879,14 @@ func imageExportPost(d *Daemon, r *http.Request) response.Response {
 
 	// Connect to the target and push the image
 	args := &incus.ConnectionArgs{
-		TLSServerCert: req.Certificate,
-		UserAgent:     version.UserAgent,
-		Proxy:         s.Proxy,
-		CachePath:     s.OS.CacheDir,
-		CacheExpiry:   time.Hour,
-		SkipGetEvents: true,
-		SkipGetServer: true,
+		TLSServerCert:   req.Certificate,
+		UserAgent:       version.UserAgent,
+		Proxy:           s.Proxy,
+		CachePath:       s.OS.CacheDir,
+		CacheExpiry:     time.Hour,
+		SkipGetEvents:   true,
+		SkipGetServer:   true,
+		MaxResponseSize: imageServerMaxResponseSize,
 	}
 
 	// Setup client
