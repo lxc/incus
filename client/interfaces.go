@@ -531,6 +531,9 @@ type ImageFileResponse struct {
 
 	// Size of the rootfs file
 	RootfsSize int64
+
+	// SHA-256 of the downloaded files, when computed
+	Fingerprint string
 }
 
 // The ImageCopyArgs struct is used to pass additional options during image copy.
