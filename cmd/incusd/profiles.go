@@ -789,10 +789,28 @@ func profilePatch(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
+	err = doProfileUpdate(r.Context(), s, *p, name, profile, req)
+	if err != nil {
+		return response.SmartError(err)
+	}
+
+	// Notify all other nodes. If a node is down, it will be ignored.
+	notifier, err := cluster.NewNotifier(s, s.Endpoints.NetworkCert(), s.ServerCert(), cluster.NotifyAlive)
+	if err != nil {
+		return response.SmartError(err)
+	}
+
+	err = notifier(func(client incus.InstanceServer) error {
+		return client.UseProject(p.Name).UpdateProfile(name, profile.ProfilePut, "")
+	})
+	if err != nil {
+		return response.SmartError(err)
+	}
+
 	requestor := request.CreateRequestor(r)
 	s.Events.SendLifecycle(p.Name, lifecycle.ProfileUpdated.Event(name, p.Name, requestor, nil))
 
-	return response.SmartError(doProfileUpdate(r.Context(), s, *p, name, profile, req))
+	return response.EmptySyncResponse
 }
 
 // swagger:operation POST /1.0/profiles/{name} profiles profile_post
