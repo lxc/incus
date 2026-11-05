@@ -8354,13 +8354,21 @@ func (d *lxc) PortForwardConn(address string, port int) (net.Conn, error) {
 	childFile := os.NewFile(uintptr(fds[1]), "forknet-child")
 	defer func() { _ = childFile.Close() }()
 
+	// The pidfd pins the namespace to the current init, a reused PID would otherwise be followed.
+	pidFd, err := d.InitPidFd()
+	if err != nil {
+		return nil, err
+	}
+
+	defer logger.WarnOnError(pidFd.Close, "Failed to close PID fd")
+
 	// Spawn forknet to establish the connection from within the network namespace.
 	var stderr bytes.Buffer
 
 	forknet := exec.Cmd{
 		Path:       d.state.OS.ExecPath,
-		Args:       []string{d.state.OS.ExecPath, "forknet", "connect", "--", fmt.Sprintf("/proc/%d/ns/net", d.InitPID()), address, strconv.Itoa(port)},
-		ExtraFiles: []*os.File{childFile},
+		Args:       []string{d.state.OS.ExecPath, "forknet", "connect", "--", strconv.Itoa(d.InitPID()), "4", address, strconv.Itoa(port)},
+		ExtraFiles: []*os.File{childFile, pidFd},
 		Stderr:     &stderr,
 	}
 
