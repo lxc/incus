@@ -29,7 +29,7 @@ func nicValidationRules(requiredFields []string, optionalFields []string, instCo
 		"vlan.tagged":                          validate.IsAny,
 		"gvrp":                                 validate.Optional(validate.IsBool),
 		"hwaddr":                               validate.IsNetworkMAC,
-		"host_name":                            validate.IsAny,
+		"host_name":                            validate.Optional(validate.IsInterfaceName),
 		"limits.ingress":                       validate.IsAny,
 		"limits.egress":                        validate.IsAny,
 		"limits.max":                           validate.IsAny,

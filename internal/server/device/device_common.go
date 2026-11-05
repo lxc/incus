@@ -141,12 +141,15 @@ func (d *deviceCommon) generateAndPersistHostName(saveData map[string]string, pr
 		}
 	}
 
+	// Only an interface this device recorded earlier may be removed.
+	stale := d.volatileGet()["host_name"] == saveData["host_name"]
+
 	err := d.volatileSet(map[string]string{"host_name": saveData["host_name"]})
 	if err != nil {
 		return err
 	}
 
-	if network.InterfaceExists(saveData["host_name"]) {
+	if stale && network.InterfaceExists(saveData["host_name"]) {
 		err = network.InterfaceRemove(saveData["host_name"])
 		if err != nil {
 			return fmt.Errorf("Failed to remove stale interface %q: %w", saveData["host_name"], err)
