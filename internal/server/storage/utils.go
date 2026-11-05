@@ -498,7 +498,7 @@ func poolAndVolumeCommonRules(vol *drivers.Volume) map[string]func(string) error
 			return err
 		},
 		"snapshots.schedule": validate.Optional(validate.IsCron([]string{"@hourly", "@daily", "@midnight", "@weekly", "@monthly", "@annually", "@yearly"})),
-		"snapshots.pattern":  validate.IsAny,
+		"snapshots.pattern":  internalInstance.IsSnapshotPattern,
 	}
 
 	// Options relevant for custom filesystem volumes.
