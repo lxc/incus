@@ -1460,6 +1460,21 @@ func AllowVolumeConfig(tx *db.ClusterTx, projectName string, poolName string, co
 	return checkRestrictedVolumeConfig(tx, info, poolName, config, nil)
 }
 
+// hasDiskLimit returns whether the project sets limits.disk or a pool-specific disk limit.
+func hasDiskLimit(config map[string]string) bool {
+	if config["limits.disk"] != "" {
+		return true
+	}
+
+	for key := range config {
+		if strings.HasPrefix(key, projectLimitDiskPool) {
+			return true
+		}
+	}
+
+	return false
+}
+
 // AllowVolumeUpdate returns an error if any project-specific limit or
 // restriction is violated when updating an existing custom volume.
 func AllowVolumeUpdate(tx *db.ClusterTx, projectName string, poolName string, volumeName string, req api.StorageVolumePut, currentConfig map[string]string) error {
@@ -1477,8 +1492,8 @@ func AllowVolumeUpdate(tx *db.ClusterTx, projectName string, poolName string, vo
 		return err
 	}
 
-	// If "limits.disk" is not set, there's nothing to do.
-	if info.Project.Config["limits.disk"] == "" {
+	// Without a disk limit there's nothing to do.
+	if !hasDiskLimit(info.Project.Config) {
 		return nil
 	}
 
