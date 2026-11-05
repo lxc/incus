@@ -2539,6 +2539,23 @@ func autoUpdateImage(ctx context.Context, s *state.State, op *operations.Operati
 		}
 	}
 
+	// Hold the replacement to the project's disk budget, the image it replaces still counts.
+	var budget int64
+	err = s.DB.Cluster.Transaction(ctx, func(ctx context.Context, tx *db.ClusterTx) error {
+		var err error
+
+		budget, err = projectutils.GetImageSpaceBudget(tx, projectName)
+
+		return err
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	if budget >= 0 {
+		budget += info.Size
+	}
+
 	// Update the image on each pool where it currently exists.
 	hash := fingerprint
 	var newInfo *api.Image
@@ -2560,7 +2577,7 @@ func autoUpdateImage(ctx context.Context, s *state.State, op *operations.Operati
 			Public:      info.Public,
 			StoragePool: poolName,
 			ProjectName: projectName,
-			Budget:      -1,
+			Budget:      budget,
 		})
 		if err != nil {
 			logger.Error("Failed to update the image", logger.Ctx{"err": err, "fingerprint": fingerprint})
