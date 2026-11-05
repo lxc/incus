@@ -19,11 +19,18 @@ import (
 	"github.com/lxc/incus/v7/shared/util"
 )
 
+// linkMapMaxSize bounds the memory spent tracking hard links, past it links are stored as plain files.
+const linkMapMaxSize = 64 * 1024 * 1024
+
+// linkMapEntrySize is the estimated overhead of a link map entry beyond its name.
+const linkMapEntrySize = 64
+
 // InstanceTarWriter provides an InstanceWriter implementation that handles ID shifting and hardlink tracking.
 type InstanceTarWriter struct {
-	tarWriter *tar.Writer
-	idmapSet  *idmap.Set
-	linkMap   map[uint64]string
+	tarWriter   *tar.Writer
+	idmapSet    *idmap.Set
+	linkMap     map[uint64]string
+	linkMapSize int
 }
 
 // NewInstanceTarWriter returns an InstanceTarWriter for the provided target Writer and id map.
@@ -39,6 +46,7 @@ func NewInstanceTarWriter(writer io.Writer, idmapSet *idmap.Set) *InstanceTarWri
 // So that the hard link map doesn't work across different instances/snapshots.
 func (ctw *InstanceTarWriter) ResetHardLinkMap() {
 	ctw.linkMap = map[uint64]string{}
+	ctw.linkMapSize = 0
 }
 
 // WriteFile adds a file to the tarball with the specified name using the srcPath file as the contents of the file.
@@ -131,8 +139,9 @@ func (ctw *InstanceTarWriter) WriteFile(name string, srcPath string, fi os.FileI
 			hdr.Typeflag = tar.TypeLink
 			hdr.Linkname = firstPath
 			hdr.Size = 0
-		} else {
+		} else if ctw.linkMapSize+len(hdr.Name)+linkMapEntrySize <= linkMapMaxSize {
 			ctw.linkMap[ino] = hdr.Name
+			ctw.linkMapSize += len(hdr.Name) + linkMapEntrySize
 		}
 	}
 
