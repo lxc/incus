@@ -702,20 +702,22 @@ func (c *ClusterTx) storageVolumeConfigGet(ctx context.Context, volumeID int64, 
 //
 // Note, the code below doesn't deal with snapshots of snapshots.
 // To do that, we'll need to weed out based on # slashes in names.
-func (c *ClusterTx) GetNextStorageVolumeSnapshotIndex(ctx context.Context, pool, name string, typ int, pattern string) int {
+func (c *ClusterTx) GetNextStorageVolumeSnapshotIndex(ctx context.Context, projectName string, pool, name string, typ int, pattern string) int {
 	remoteDrivers := StorageRemoteDriverNames()
 
 	q := fmt.Sprintf(`
 SELECT storage_volumes_snapshots.name FROM storage_volumes_snapshots
   JOIN storage_volumes ON storage_volumes_snapshots.storage_volume_id=storage_volumes.id
   JOIN storage_pools ON storage_volumes.storage_pool_id=storage_pools.id
+  JOIN projects ON storage_volumes.project_id=projects.id
  WHERE storage_volumes.type=?
    AND storage_volumes.name=?
    AND storage_pools.name=?
+   AND projects.name=?
    AND (storage_volumes.node_id=? OR storage_volumes.node_id IS NULL AND storage_pools.driver IN %s)
 `, query.Params(len(remoteDrivers)))
 	var numstr string
-	inargs := []any{typ, name, pool, c.nodeID}
+	inargs := []any{typ, name, pool, projectName, c.nodeID}
 	outfmt := []any{numstr}
 
 	for _, driver := range remoteDrivers {
