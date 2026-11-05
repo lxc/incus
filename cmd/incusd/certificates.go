@@ -367,6 +367,41 @@ func updateCertificateCacheFromLocal(d *Daemon) error {
 	return nil
 }
 
+// tokenOperationCheckExpiry fails if a token operation has expired.
+func tokenOperationCheckExpiry(s *state.State, op *api.Operation) error {
+	expiresAt, ok := op.Metadata["expiresAt"]
+	if !ok {
+		return nil
+	}
+
+	var expiry time.Time
+
+	// Depending on whether it's a local operation or not, expiry will either be a time.Time or a string.
+	if s.ServerName == op.Location {
+		expiry, ok = expiresAt.(time.Time)
+		if !ok {
+			return api.StatusErrorf(http.StatusInternalServerError, "Invalid expiry metadata")
+		}
+	} else {
+		expiryStr, ok := expiresAt.(string)
+		if !ok {
+			return api.StatusErrorf(http.StatusInternalServerError, "Invalid expiry metadata")
+		}
+
+		var err error
+		expiry, err = time.Parse(time.RFC3339Nano, expiryStr)
+		if err != nil {
+			return api.StatusErrorf(http.StatusInternalServerError, "Invalid expiry metadata")
+		}
+	}
+
+	if time.Now().After(expiry) {
+		return api.StatusErrorf(http.StatusForbidden, "Token has expired")
+	}
+
+	return nil
+}
+
 // clusterMemberJoinTokenValid searches for cluster join token that matches the join token provided.
 // Returns matching operation if found and cancels the operation, otherwise returns nil.
 func clusterMemberJoinTokenValid(s *state.State, r *http.Request, projectName string, joinToken *api.ClusterMemberJoinToken) (*api.Operation, error) {
@@ -408,21 +443,9 @@ func clusterMemberJoinTokenValid(s *state.State, r *http.Request, projectName st
 			return nil, fmt.Errorf("Failed to cancel operation %q: %w", foundOp.ID, err)
 		}
 
-		expiresAt, ok := foundOp.Metadata["expiresAt"]
-		if ok {
-			var expiry time.Time
-
-			// Depending on whether it's a local operation or not, expiry will either be a time.Time or a string.
-			if s.ServerName == foundOp.Location {
-				expiry, _ = expiresAt.(time.Time)
-			} else {
-				expiry, _ = time.Parse(time.RFC3339Nano, expiresAt.(string))
-			}
-
-			// Check if token has expired.
-			if time.Now().After(expiry) {
-				return nil, api.StatusErrorf(http.StatusForbidden, "Token has expired")
-			}
+		err = tokenOperationCheckExpiry(s, foundOp)
+		if err != nil {
+			return nil, err
 		}
 
 		return foundOp, nil
@@ -464,14 +487,9 @@ func certificateTokenValid(s *state.State, r *http.Request, addToken *api.Certif
 			return nil, fmt.Errorf("Failed to cancel operation %q: %w", foundOp.ID, err)
 		}
 
-		expiresAt, ok := foundOp.Metadata["expiresAt"]
-		if ok {
-			expiry, _ := expiresAt.(time.Time)
-
-			// Check if token has expired.
-			if time.Now().After(expiry) {
-				return nil, api.StatusErrorf(http.StatusForbidden, "Token has expired")
-			}
+		err = tokenOperationCheckExpiry(s, foundOp)
+		if err != nil {
+			return nil, err
 		}
 
 		return foundOp, nil
