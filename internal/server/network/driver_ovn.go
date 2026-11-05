@@ -1095,14 +1095,35 @@ func (n *ovn) Validate(config map[string]string, clientType request.ClientType) 
 			continue
 		}
 
-		// Skip if unchanged and already created
-		if config[key] == n.config[key] && n.status == api.NetworkStatusCreated {
+		// Skip if unchanged on a network this member has already created.
+		if config[key] == n.config[key] && n.LocalStatus() == api.NetworkStatusCreated {
 			continue
 		}
 
 		ipAddress := net.ParseIP(config[key])
 		if ipAddress == nil {
-			continue
+			return fmt.Errorf("Invalid uplink address %q", config[key])
+		}
+
+		// A client-supplied address must come from the uplink's allocation ranges.
+		if clientType == request.ClientTypeNormal {
+			rangesKey := "ipv4.ovn.ranges"
+			if key == ovnVolatileUplinkIPv6 {
+				rangesKey = "ipv6.ovn.ranges"
+			}
+
+			if uplink.Config[rangesKey] == "" {
+				return fmt.Errorf("Uplink address %q can't be set without %q on the uplink", config[key], rangesKey)
+			}
+
+			ipRanges, err := parseIPRanges(uplink.Config[rangesKey])
+			if err != nil {
+				return err
+			}
+
+			if !ipInPointerRanges(ipAddress, ipRanges) {
+				return fmt.Errorf("Uplink address %q isn't within the uplink's %q", config[key], rangesKey)
+			}
 		}
 
 		err = n.validateUplinkAddressNotInUse(uplink.Name, ipAddress)
