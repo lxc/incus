@@ -85,10 +85,14 @@ struct ifaddrs_storage {
 	char name[IFNAMSIZ + 1];
 };
 
+/* Interfaces plus addresses, the namespace owner controls how many there are. */
+#define IFADDRS_MAX_ENTRIES 8192
+
 struct ifaddrs_ctx {
 	struct ifaddrs_storage *first;
 	struct ifaddrs_storage *last;
 	struct ifaddrs_storage *hash[IFADDRS_HASH_SIZE];
+	size_t count;
 };
 
 static void netns_freeifaddrs(struct netns_ifaddrs *ifp)
@@ -196,11 +200,18 @@ static int nl_msg_to_ifaddr(void *pctx, bool *netnsid_aware, struct nlmsghdr *h)
 			return 0;
 	}
 
+	if (ctx->count >= IFADDRS_MAX_ENTRIES) {
+		errno = E2BIG;
+		return -1;
+	}
+
 	ifs = calloc(1, sizeof(struct ifaddrs_storage) + stats_len);
 	if (!ifs) {
 		errno = ENOMEM;
 		return -1;
 	}
+
+	ctx->count++;
 
 	if (h->nlmsg_type == RTM_NEWLINK) {
 		ifs->index = ifi->ifi_index;
