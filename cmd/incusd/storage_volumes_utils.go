@@ -196,6 +196,24 @@ func storagePoolVolumeBackupLoadByName(ctx context.Context, s *state.State, proj
 	return volBackup, nil
 }
 
+// storagePoolVolumeUsedByDaemon refuses access to a custom volume holding the daemon's own data.
+func storagePoolVolumeUsedByDaemon(s *state.State, projectName string, poolName string, volumeName string) error {
+	if projectName != api.ProjectDefaultName {
+		return nil
+	}
+
+	frag, err := storagePools.VolumeUsedByDaemon(s, poolName, volumeName)
+	if err != nil {
+		return err
+	}
+
+	if frag != "" {
+		return api.StatusErrorf(http.StatusForbidden, "Volume is used by Incus itself")
+	}
+
+	return nil
+}
+
 // storagePoolMemberAllowed checks that the project may place member-local storage on this cluster member.
 func storagePoolMemberAllowed(s *state.State, r *http.Request, poolName string, projectName string) response.Response {
 	if !s.ServerClustered {
