@@ -337,6 +337,18 @@ func ProtobufToDependentVolume(volume *migration.DependentVolume, migrationType 
 	}
 }
 
+// RequestedSnapshots returns the requested snapshot names that were offered, the target can't add any.
+func RequestedSnapshots(offered []string, requested []string) []string {
+	snapshots := make([]string, 0, len(requested))
+	for _, name := range requested {
+		if slices.Contains(offered, name) {
+			snapshots = append(snapshots, name)
+		}
+	}
+
+	return snapshots
+}
+
 // VolumeSnapshotToProtobuf converts an api.StorageVolumeSnapshot into a migration.Snapshot.
 func VolumeSnapshotToProtobuf(vol *api.StorageVolumeSnapshot) *migration.Snapshot {
 	config := []*migration.Config{}

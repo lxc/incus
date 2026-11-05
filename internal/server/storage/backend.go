@@ -11113,7 +11113,17 @@ func (b *backend) migrateDependentVolumes(inst instance.Instance, conn io.ReadWr
 
 		snapshotNames := []string{}
 		if !args.VolumeOnly {
+			offered := make([]string, 0, len(diskConfig.VolumeSnapshots))
+			for _, snap := range diskConfig.VolumeSnapshots {
+				offered = append(offered, snap.Name)
+			}
+
 			for _, snap := range dependentVol.Snapshots {
+				// The target can only pick from the snapshots the volume has.
+				if !slices.Contains(offered, snap.GetName()) {
+					continue
+				}
+
 				// During a refresh only the new snapshots should be transferred. The root
 				// volume's args.Snapshots list has already been reduced to the snapshots the
 				// target is missing, and dependent volume snapshots share the same names, so

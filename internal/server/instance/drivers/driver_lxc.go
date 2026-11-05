@@ -6559,7 +6559,7 @@ func (d *lxc) MigrateSend(args instance.MigrateSendArgs) error {
 
 	// Only send the snapshots that the target requests when refreshing.
 	if respHeader.GetRefresh() {
-		volSourceArgs.Snapshots = respHeader.GetSnapshotNames()
+		volSourceArgs.Snapshots = localMigration.RequestedSnapshots(offerHeader.SnapshotNames, respHeader.GetSnapshotNames())
 		allSnapshots := volSourceArgs.Info.Config.VolumeSnapshots
 
 		// Ensure that only the requested snapshots are included in the migration index header.
