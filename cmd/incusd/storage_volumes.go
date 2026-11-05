@@ -1023,6 +1023,17 @@ func storagePoolVolumesPost(d *Daemon, r *http.Request) response.Response {
 			return response.SmartError(err)
 		}
 
+		// Neither side of the copy may be a volume holding the daemon's data.
+		err = storagePoolVolumeUsedByDaemon(s, srcProjectName, srcPoolName, req.Source.Name)
+		if err != nil {
+			return response.SmartError(err)
+		}
+
+		err = storagePoolVolumeUsedByDaemon(s, projectName, poolName, req.Name)
+		if err != nil {
+			return response.SmartError(err)
+		}
+
 		// A volume attached to an instance on another member may be locked by it, so copy it through that member.
 		_, _, srcIsSnapshot := api.GetParentAndSnapshotName(req.Source.Name)
 		if s.ServerClustered && req.Source.Location == "" && !srcIsSnapshot {
@@ -1419,6 +1430,11 @@ func storagePoolVolumePost(d *Daemon, r *http.Request) response.Response {
 	}
 
 	projectName, err := project.StorageVolumeProject(s.DB.Cluster, request.ProjectParam(r), db.StoragePoolVolumeTypeCustom)
+	if err != nil {
+		return response.SmartError(err)
+	}
+
+	err = storagePoolVolumeUsedByDaemon(s, projectName, srcPoolName, volumeName)
 	if err != nil {
 		return response.SmartError(err)
 	}

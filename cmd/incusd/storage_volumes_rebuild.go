@@ -120,6 +120,11 @@ func storagePoolVolumeTypeRebuildPost(d *Daemon, r *http.Request) response.Respo
 		return response.SmartError(err)
 	}
 
+	err = storagePoolVolumeUsedByDaemon(s, volumeProjectName, poolName, volumeName)
+	if err != nil {
+		return response.SmartError(err)
+	}
+
 	// Check that the storage volume type is valid.
 	if !slices.Contains(supportedVolumeTypes, volumeType) {
 		return response.BadRequest(fmt.Errorf("Invalid storage volume type %q", volumeTypeName))

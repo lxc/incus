@@ -768,6 +768,18 @@ func (d *disk) validateConfig(instConf instance.ConfigReader, partialValidation 
 				return fmt.Errorf("Failed loading custom volume: %w", err)
 			}
 
+			// Volumes holding the daemon's own data can't be attached.
+			if storageProjectName == api.ProjectDefaultName {
+				frag, err := storagePools.VolumeUsedByDaemon(d.state, d.pool.Name(), volName)
+				if err != nil {
+					return err
+				}
+
+				if frag != "" {
+					return errors.New("Volumes used by Incus itself cannot be attached")
+				}
+			}
+
 			// Check that block volumes are *only* attached to VM instances.
 			contentType, err := storagePools.VolumeContentTypeNameToContentType(dbVolume.ContentType)
 			if err != nil {

@@ -54,6 +54,11 @@ func storagePoolVolumeTypeFileHandler(d *Daemon, r *http.Request) response.Respo
 		return response.SmartError(err)
 	}
 
+	err = storagePoolVolumeUsedByDaemon(s, volumeProjectName, poolName, volumeName)
+	if err != nil {
+		return response.SmartError(err)
+	}
+
 	// Redirect to correct server if needed.
 	resp := forwardedResponseIfTargetIsRemote(s, r)
 	if resp != nil {
