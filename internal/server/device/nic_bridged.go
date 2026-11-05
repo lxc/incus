@@ -539,7 +539,7 @@ func (d *nicBridged) validateConfig(instConf instance.ConfigReader) error {
 		}
 
 		// The NIC's network may be a non-default project, so lookup project and get network's project name.
-		networkProjectName, _, err := project.NetworkProject(d.state.DB.Cluster, instConf.Project().Name)
+		networkProjectName, _, err := project.NetworkProjectForName(d.state.DB.Cluster, instConf.Project().Name, d.config["network"])
 		if err != nil {
 			return fmt.Errorf("Failed loading network project name: %w", err)
 		}
@@ -1508,7 +1508,7 @@ func (d *nicBridged) setFilters() (err error) {
 
 	var aclRules []firewallDrivers.ACLRule
 	if config["security.acls"] != "" {
-		networkProjectName, _, err := project.NetworkProject(d.state.DB.Cluster, d.inst.Project().Name)
+		networkProjectName, _, err := project.NetworkProjectForName(d.state.DB.Cluster, d.inst.Project().Name, d.config["network"])
 		if err != nil {
 			return err
 		}
