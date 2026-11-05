@@ -9,6 +9,7 @@ import (
 	"os"
 	"os/exec"
 	"os/signal"
+	"path/filepath"
 	"reflect"
 	"slices"
 	"sort"
@@ -744,4 +745,16 @@ func sshSFTPServer(ctx context.Context, sftpConn func() (net.Conn, error), authN
 			}
 		}()
 	}
+}
+
+// createLocalFile opens a file like os.OpenFile, refusing to follow a symlink out of its directory.
+func createLocalFile(name string, flag int, perm os.FileMode) (*os.File, error) {
+	root, err := os.OpenRoot(filepath.Dir(name))
+	if err != nil {
+		return nil, err
+	}
+
+	defer func() { _ = root.Close() }()
+
+	return root.OpenFile(filepath.Base(name), flag, perm)
 }
