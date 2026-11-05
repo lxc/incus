@@ -1522,6 +1522,13 @@ func (srv *Server) HandleSetxattrSyscall(c Instance, siov *Iovec) int {
 	// int flags
 	args.flags = C.int(siov.req.data.args[4])
 
+	// The policy only intercepts a one byte value.
+	if args.size != 1 {
+		ctx["syscall_continue"] = "true"
+		C.seccomp_notify_update_response(siov.resp, 0, C.uint32_t(seccompUserNotifFlagContinue))
+		return 0
+	}
+
 	buf := make([]byte, args.size)
 	_, err = C.pread(C.int(siov.memFd), unsafe.Pointer(&buf[0]), C.size_t(args.size), C.off_t(siov.req.data.args[2]))
 	if err != nil {
