@@ -225,8 +225,7 @@ func networkIntegrationsGet(d *Daemon, r *http.Request) response.Response {
 						usedBy = append(usedBy, url)
 					}
 				}
-				// Assign the collected URLs (original 'err' check is implicitly handled by checks above)
-				result.UsedBy = usedBy
+				result.UsedBy = project.FilterUsedBy(s.Authorizer, r, usedBy)
 
 				if clauses != nil && len(clauses.Clauses) > 0 {
 					match, err := filter.Match(*result, *clauses)
@@ -592,8 +591,7 @@ func networkIntegrationGet(d *Daemon, r *http.Request) response.Response {
 				usedBy = append(usedBy, url)
 			}
 		}
-		// Assign the collected URLs (original 'err' check is implicitly handled by checks above)
-		info.UsedBy = usedBy
+		info.UsedBy = project.FilterUsedBy(s.Authorizer, r, usedBy)
 
 		return nil
 	})
