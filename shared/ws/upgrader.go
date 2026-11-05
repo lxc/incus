@@ -72,6 +72,9 @@ func checkOrigin(r *http.Request) bool {
 // ControlMessageMaxSize is the maximum size of a websocket control message.
 const ControlMessageMaxSize = 1024 * 32
 
+// EventMessageMaxSize is the maximum size of a websocket event message.
+const EventMessageMaxSize = 1024 * 1024 * 16
+
 // Upgrader is a websocket upgrader which validates the request Origin.
 var Upgrader = websocket.Upgrader{
 	HandshakeTimeout: time.Second * 5,
