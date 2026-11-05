@@ -219,7 +219,7 @@ func (c *cmdAdd) run(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	metaTar, metaTarCancel, err := archive.CompressedTarReader(context.Background(), metaFile, unpacker, "")
+	metaTar, metaTarCancel, err := archive.CompressedTarReader(context.Background(), metaFile, unpacker, "", -1)
 	if err != nil {
 		return err
 	}
@@ -299,7 +299,7 @@ func (c *cmdAdd) run(cmd *cobra.Command, args []string) error {
 			return err
 		}
 
-		typeTar, typeTarCancel, err := archive.CompressedTarReader(context.Background(), metaFile, unpacker, "")
+		typeTar, typeTarCancel, err := archive.CompressedTarReader(context.Background(), metaFile, unpacker, "", -1)
 		if err != nil {
 			return err
 		}

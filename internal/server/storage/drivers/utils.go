@@ -1330,7 +1330,7 @@ func UnpackVolume(d Driver, vol Volume, r io.ReadSeeker, tarArgs []string, unpac
 	if vol.contentType == ContentTypeBlock {
 		srcFile := fmt.Sprintf("%s.%s", srcPrefix, genericVolumeBlockExtension)
 
-		tr, cancelFunc, err := archive.CompressedTarReader(context.Background(), r, unpacker, mountPath)
+		tr, cancelFunc, err := archive.CompressedTarReader(context.Background(), r, unpacker, mountPath, -1)
 		if err != nil {
 			return err
 		}

@@ -996,7 +996,7 @@ func createFromBackup(s *state.State, r *http.Request, projectName string, data 
 		return response.InternalError(err)
 	}
 
-	bInfo, err := backup.GetInfo(backupFile, s.OS, backupFile.Name())
+	bInfo, err := backup.GetInfo(backupFile, s.OS, backupFile.Name(), budget)
 	if err != nil {
 		return response.BadRequest(err)
 	}

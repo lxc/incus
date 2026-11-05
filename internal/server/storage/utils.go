@@ -621,8 +621,8 @@ func ImageVirtualSize(sysOS *sys.OS, imgPath string) (int64, error) {
 	return imgInfo.VirtualSize, nil
 }
 
-// tarballContentSize returns the total size of the entries in a possibly compressed tarball.
-func tarballContentSize(path string, outputPath string) (int64, error) {
+// tarballContentSize returns the total size of the entries in a possibly compressed tarball, giving up past maxSize.
+func tarballContentSize(path string, outputPath string, maxSize int64) (int64, error) {
 	f, err := os.Open(path)
 	if err != nil {
 		return -1, err
@@ -635,7 +635,7 @@ func tarballContentSize(path string, outputPath string) (int64, error) {
 		return -1, err
 	}
 
-	tr, cancelFunc, err := archive.CompressedTarReader(context.Background(), f, unpacker, outputPath)
+	tr, cancelFunc, err := archive.CompressedTarReader(context.Background(), f, unpacker, outputPath, maxSize)
 	if err != nil {
 		return -1, err
 	}
@@ -945,7 +945,7 @@ func ImageUnpack(imageFile string, vol drivers.Volume, destBlockFile string, sys
 				return -1, err
 			}
 
-			contentSize, err := tarballContentSize(imageFile, tempDir)
+			contentSize, err := tarballContentSize(imageFile, tempDir, sizeBytes+(4*1024*1024))
 			if err != nil {
 				return -1, err
 			}
