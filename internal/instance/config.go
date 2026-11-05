@@ -20,6 +20,37 @@ func IsUserConfig(key string) bool {
 	return strings.HasPrefix(key, "user.")
 }
 
+// isSyscallList validates a list of syscall names, each with an optional seccomp action other than notify.
+func isSyscallList(value string) error {
+	for line := range strings.SplitSeq(value, "\n") {
+		fields := strings.Fields(line)
+		if len(fields) == 0 {
+			continue
+		}
+
+		if !isSyscallName(fields[0]) {
+			return fmt.Errorf("Invalid syscall name %q", fields[0])
+		}
+
+		if len(fields) > 1 && !slices.Contains([]string{"allow", "errno", "kill", "trap", "log"}, fields[1]) {
+			return fmt.Errorf("Invalid syscall action %q", fields[1])
+		}
+	}
+
+	return nil
+}
+
+// isSyscallName checks that a string is made of the characters found in a syscall name.
+func isSyscallName(name string) bool {
+	for _, r := range name {
+		if (r < 'a' || r > 'z') && (r < 'A' || r > 'Z') && (r < '0' || r > '9') && r != '_' {
+			return false
+		}
+	}
+
+	return true
+}
+
 // isNvidiaConfigValue rejects line breaks that would allow injecting arbitrary directives into the generated LXC configuration.
 func isNvidiaConfigValue(value string) error {
 	if strings.ContainsAny(value, "\r\n") {
@@ -1043,12 +1074,12 @@ var InstanceConfigKeysContainer = map[string]func(value string) error{
 	//  liveupdate: no
 	//  condition: container
 	//  shortdesc: List of syscalls to allow
-	"security.syscalls.allow": validate.IsAny,
+	"security.syscalls.allow": isSyscallList,
 
 	// Legacy configuration keys (old names).
 	"security.syscalls.blacklist_default": validate.Optional(validate.IsBool),
 	"security.syscalls.blacklist_compat":  validate.Optional(validate.IsBool),
-	"security.syscalls.blacklist":         validate.IsAny,
+	"security.syscalls.blacklist":         isSyscallList,
 
 	// gendoc:generate(entity=instance, group=security, key=security.syscalls.deny_default)
 	//
@@ -1079,7 +1110,7 @@ var InstanceConfigKeysContainer = map[string]func(value string) error{
 	//  liveupdate: no
 	//  condition: container
 	//  shortdesc: List of syscalls to deny
-	"security.syscalls.deny": validate.IsAny,
+	"security.syscalls.deny": isSyscallList,
 
 	// gendoc:generate(entity=instance, group=security, key=security.syscalls.intercept.bpf)
 	//
@@ -1179,7 +1210,7 @@ var InstanceConfigKeysContainer = map[string]func(value string) error{
 	//  shortdesc: Whether to handle the `sysinfo` system call
 	"security.syscalls.intercept.sysinfo": validate.Optional(validate.IsBool),
 
-	"security.syscalls.whitelist": validate.IsAny,
+	"security.syscalls.whitelist": isSyscallList,
 
 	// gendoc:generate(entity=instance, group=volatile, key=volatile.container.oci)
 	//
