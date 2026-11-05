@@ -8391,7 +8391,15 @@ func (d *lxc) PortForwardConn(address string, port int) (net.Conn, error) {
 		Stderr:     &stderr,
 	}
 
-	err = forknet.Run()
+	err = forknet.Start()
+	if err != nil {
+		return nil, fmt.Errorf("Failed to run forknet connect: %w: %s", err, strings.TrimSpace(stderr.String()))
+	}
+
+	// The guest decides how long the dial takes, don't let it keep the helper around.
+	killTimer := time.AfterFunc(time.Minute, func() { _ = forknet.Process.Kill() })
+	err = forknet.Wait()
+	killTimer.Stop()
 	if err != nil {
 		return nil, fmt.Errorf("Failed to run forknet connect: %w: %s", err, strings.TrimSpace(stderr.String()))
 	}

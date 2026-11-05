@@ -1408,7 +1408,7 @@ func (c *cmdForknet) runConnect(_ *cobra.Command, args []string) error {
 	addr := net.JoinHostPort(args[2], args[3])
 
 	// Establish the connection (we're inside the instance's network namespace).
-	conn, err := net.Dial("tcp", addr)
+	conn, err := net.DialTimeout("tcp", addr, 30*time.Second)
 	if err != nil {
 		return fmt.Errorf("Failed connecting to %q: %w", addr, err)
 	}
