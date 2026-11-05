@@ -2,9 +2,12 @@ package zone
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"slices"
+	"strings"
+	"unicode"
 
 	"github.com/miekg/dns"
 
@@ -243,6 +246,11 @@ func (d *zone) validateEntries(info api.NetworkZoneRecordPut) error {
 	for _, entry := range info.Entries {
 		if entry.TTL == 0 {
 			entry.TTL = 300
+		}
+
+		// The parser only reads one line, so the entry must fit on it.
+		if strings.ContainsAny(entry.Type+entry.Value, "\r\n") || strings.ContainsFunc(entry.Type, unicode.IsSpace) {
+			return errors.New("Bad zone record entry: line breaks aren't allowed")
 		}
 
 		_, err := dns.NewRR(fmt.Sprintf("record %d IN %s %s", entry.TTL, entry.Type, entry.Value))
