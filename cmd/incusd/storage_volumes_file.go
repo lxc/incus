@@ -191,14 +191,19 @@ func storageVolumeFileGet(s *state.State, vol storageDrivers.Volume, volumeProje
 	reverter := revert.New()
 	defer reverter.Fail()
 
-	client, err := vol.FileSFTP(s)
+	conn, err := vol.FileSFTPConn(s)
+	if err != nil {
+		return response.SmartError(err)
+	}
+
+	client, listing, err := fileSFTPListingClient(conn)
 	if err != nil {
 		return response.SmartError(err)
 	}
 
 	reverter.Add(func() { _ = client.Close() })
 
-	return fileSFTPGet(client, path, r, reverter, func() {
+	return fileSFTPGet(client, listing, path, r, reverter, func() {
 		s.Events.SendLifecycle(volumeProjectName, lifecycle.StorageVolumeFileRetrieved.Event(vol, string(vol.Type()), volumeProjectName, nil, logger.Ctx{"path": path}))
 	})
 }
