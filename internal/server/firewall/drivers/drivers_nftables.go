@@ -420,8 +420,8 @@ func (d Nftables) InstanceSetupBridgeFilter(projectName string, instanceName str
 		tplFields["macFiltering"] = true
 	}
 
-	// Filter unwanted ethernet frames when using IP filtering.
-	if len(IPv4Nets)+len(IPv6Nets) > 0 {
+	// Filter unwanted ethernet frames when using IP filtering, including when a family is blocked.
+	if IPv4Nets != nil || IPv6Nets != nil {
 		tplFields["filterUnwantedFrames"] = true
 		tplFields["macFiltering"] = true
 	}
