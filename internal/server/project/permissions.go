@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"math"
 	"net/http"
 	"net/url"
 	"path/filepath"
@@ -1888,6 +1889,15 @@ func expandInstancesConfigAndDevices(instances []api.Instance, profiles []api.Pr
 	return expandedInstances, nil
 }
 
+// addLimit adds a value to a running total, refusing an overflow.
+func addLimit(total int64, value int64) (int64, error) {
+	if value < 0 || total > math.MaxInt64-value {
+		return 0, errors.New("Value too large")
+	}
+
+	return total + value, nil
+}
+
 // Sum of the effective values for the given limits across all project
 // entities (instances and custom volumes).
 func getTotalsAcrossProjectEntities(info *projectInfo, keys []string, skipUnset bool) (map[string]int64, error) {
@@ -1921,7 +1931,10 @@ func getTotalsAcrossProjectEntities(info *projectInfo, keys []string, skipUnset 
 					return nil, fmt.Errorf(`Parse "size" for custom volume %q in project %q: %w`, volume.Name, info.Project.Name, err)
 				}
 
-				totals[key] += limit
+				totals[key], err = addLimit(totals[key], limit)
+				if err != nil {
+					return nil, fmt.Errorf(`Invalid "size" for custom volume %q in project %q: %w`, volume.Name, info.Project.Name, err)
+				}
 			}
 		}
 	}
@@ -1933,7 +1946,10 @@ func getTotalsAcrossProjectEntities(info *projectInfo, keys []string, skipUnset 
 		}
 
 		for _, key := range keys {
-			totals[key] += limits[key]
+			totals[key], err = addLimit(totals[key], limits[key])
+			if err != nil {
+				return nil, fmt.Errorf("Invalid %q for instance %q in project %q: %w", key, inst.Name, inst.Project, err)
+			}
 		}
 	}
 
@@ -2008,7 +2024,10 @@ func getInstanceLimits(inst api.Instance, keys []string, skipUnset bool) (map[st
 					return nil, fmt.Errorf("Failed parsing %q for instance %q in project %q", "size.state", inst.Name, inst.Project)
 				}
 
-				limit += sizeStateLimit
+				limit, err = addLimit(limit, sizeStateLimit)
+				if err != nil {
+					return nil, fmt.Errorf("Invalid %q for instance %q in project %q: %w", "size.state", inst.Name, inst.Project, err)
+				}
 			}
 		} else {
 			// Skip processing for 'limits.processes' if the instance type is VM,
