@@ -2214,7 +2214,7 @@ func autoUpdateImages(ctx context.Context, s *state.State) error {
 				if errors.Is(err, context.Canceled) {
 					return nil
 				}
-			} else {
+			} else if newInfo != nil {
 				deleteIDs = append(deleteIDs, image.ID)
 			}
 
@@ -2274,8 +2274,9 @@ func autoUpdateImages(ctx context.Context, s *state.State) error {
 				continue
 			}
 
-			if pruneOld {
-				imageDeleteFromDisk(fingerprint)
+			err = imageDeleteUnreferenced(ctx, s, nil, fingerprint)
+			if err != nil {
+				logger.Error("Error deleting old image", logger.Ctx{"err": err, "fingerprint": fingerprint})
 			}
 		}
 	}
@@ -2404,6 +2405,11 @@ func distributeImage(ctx context.Context, s *state.State, nodes []string, oldFin
 			_, _, err = client.RawQuery("POST", "/internal/image-optimize", req, "")
 			if err != nil {
 				logger.Error("Failed creating new image in storage pool", logger.Ctx{"err": err, "remote": nodeAddress, "pool": poolName, "fingerprint": newImage.Fingerprint})
+			}
+
+			// The old volume stays while another project still uses the image.
+			if !pruneOld {
+				continue
 			}
 
 			err = client.DeleteStoragePoolVolume(poolName, "image", oldFingerprint)
@@ -2611,29 +2617,6 @@ func autoUpdateImage(ctx context.Context, s *state.State, op *operations.Operati
 		})
 		if err != nil {
 			logger.Error("Copying default profiles", logger.Ctx{"err": err, "fingerprint": hash})
-		}
-
-		// If we do have optimized pools, make sure we remove the volumes associated with the image.
-		if poolName != "" {
-			pool, err := storagePools.LoadByName(s, poolName)
-			if err != nil {
-				logger.Error("Error loading storage pool to delete image", logger.Ctx{"err": err, "pool": poolName, "fingerprint": fingerprint})
-				continue
-			}
-
-			// Lock this operation to ensure that concurrent image operations don't conflict.
-			unlock, err := imageOperationLock(ctx, fingerprint)
-			if err != nil {
-				logger.Error("Error locking image for deletion from storage pool", logger.Ctx{"err": err, "pool": pool.Name(), "fingerprint": fingerprint})
-				continue
-			}
-
-			err = pool.DeleteImage(fingerprint, op)
-			unlock()
-			if err != nil {
-				logger.Error("Error deleting image from storage pool", logger.Ctx{"err": err, "pool": pool.Name(), "fingerprint": fingerprint})
-				continue
-			}
 		}
 
 		// Add the image to the authorizer.
@@ -3261,6 +3244,63 @@ func imageDelete(d *Daemon, r *http.Request) response.Response {
 	}
 
 	return operations.OperationResponse(op)
+}
+
+// imageDeleteUnreferenced removes an image's volumes and files once no project refers to it anymore.
+func imageDeleteUnreferenced(ctx context.Context, s *state.State, op *operations.Operation, fingerprint string) error {
+	unlock, err := imageOperationLock(ctx, fingerprint)
+	if err != nil {
+		return err
+	}
+
+	defer unlock()
+
+	var referenced bool
+	var poolNames []string
+
+	err = s.DB.Cluster.Transaction(ctx, func(ctx context.Context, tx *db.ClusterTx) error {
+		remaining, err := dbCluster.GetImages(ctx, tx.Tx(), dbCluster.ImageFilter{Fingerprint: &fingerprint})
+		if err != nil {
+			return err
+		}
+
+		referenced = len(remaining) > 0
+		if referenced {
+			return nil
+		}
+
+		poolIDs, err := tx.GetPoolsWithImage(ctx, fingerprint)
+		if err != nil {
+			return err
+		}
+
+		poolNames, err = tx.GetPoolNamesFromIDs(ctx, poolIDs)
+
+		return err
+	})
+	if err != nil {
+		return err
+	}
+
+	if referenced {
+		return nil
+	}
+
+	for _, poolName := range poolNames {
+		pool, err := storagePools.LoadByName(s, poolName)
+		if err != nil {
+			return fmt.Errorf("Error loading storage pool %q to delete image volume %q: %w", poolName, fingerprint, err)
+		}
+
+		err = pool.DeleteImage(fingerprint, op)
+		if err != nil {
+			return fmt.Errorf("Error deleting image volume %q from storage pool %q: %w", fingerprint, pool.Name(), err)
+		}
+	}
+
+	imageDeleteFromDisk(fingerprint)
+
+	return nil
 }
 
 // Helper to delete an image file from the local images directory.
@@ -5139,8 +5179,9 @@ func imageRefresh(d *Daemon, r *http.Request) response.Response {
 				return err
 			}
 
-			if !referenced {
-				imageDeleteFromDisk(fingerprint)
+			err = imageDeleteUnreferenced(context.TODO(), s, op, fingerprint)
+			if err != nil {
+				return err
 			}
 		}
 
