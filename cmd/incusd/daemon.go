@@ -142,6 +142,7 @@ type Daemon struct {
 	// Status control.
 	setupChan      chan struct{}      // Closed when basic Daemon setup is completed
 	waitReady      *cancel.Canceller  // Cancelled when fully ready
+	stateReady     *cancel.Canceller  // Cancelled once the state can serve instance hooks
 	shutdownCtx    context.Context    // Cancelled when shutdown starts.
 	shutdownCancel context.CancelFunc // Cancels the shutdownCtx to indicate shutdown starting.
 	shutdownDoneCh chan error         // Receives the result of the d.Stop() function and tells the daemon to end.
@@ -217,6 +218,7 @@ func newDaemon(config *DaemonConfig, osInfo *sys.OS) *Daemon {
 		os:             osInfo,
 		setupChan:      make(chan struct{}),
 		waitReady:      cancel.New(context.Background()),
+		stateReady:     cancel.New(context.Background()),
 		shutdownCtx:    shutdownCtx,
 		shutdownCancel: shutdownCancel,
 		shutdownDoneCh: make(chan error),
@@ -1875,6 +1877,9 @@ func (d *Daemon) init() error {
 
 	// Start all background tasks
 	d.tasks.Start(d.shutdownCtx)
+
+	// Instance hooks may run during autostart, the state is ready for them.
+	d.stateReady.Cancel()
 
 	// Restore instances
 	instancesStart(d.State(), instances)
