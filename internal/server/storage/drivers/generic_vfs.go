@@ -177,6 +177,11 @@ func genericVFSMigrateVolume(d Driver, s *state.State, vol Volume, conn io.ReadW
 		return ErrNotSupported
 	}
 
+	// The instance backup file holds the pool config, the target writes its own.
+	if vol.volType == VolumeTypeContainer || vol.volType == VolumeTypeVM {
+		rsyncArgs = append(rsyncArgs, "--exclude", "/backup.yaml")
+	}
+
 	// Define function to send a filesystem volume.
 	sendFSVol := func(vol Volume, conn io.ReadWriteCloser, mountPath string) error {
 		var wrapper *ioprogress.ProgressTracker
@@ -611,6 +616,11 @@ func genericVFSBackupVolume(d Driver, vol Volume, writer instancewriter.Instance
 							return nil
 						}
 
+						// Snapshot backup files hold the pool config.
+						if vol.IsSnapshot() && srcPath == filepath.Join(mountPath, "backup.yaml") {
+							return nil
+						}
+
 						name := filepath.Join(prefix, strings.TrimPrefix(srcPath, mountPath))
 						err = writer.WriteFile(name, srcPath, fi, false)
 						if err != nil {
@@ -696,6 +706,11 @@ func genericVFSBackupVolume(d Driver, vol Volume, writer instancewriter.Instance
 					}
 
 					return fmt.Errorf("Error walking file during export: %q: %w", srcPath, err)
+				}
+
+				// Snapshot backup files hold the pool config.
+				if vol.IsSnapshot() && srcPath == filepath.Join(mountPath, "backup.yaml") {
+					return nil
 				}
 
 				name := filepath.Join(prefix, strings.TrimPrefix(srcPath, mountPath))
