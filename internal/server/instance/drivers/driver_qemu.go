@@ -11773,6 +11773,14 @@ func (d *qemu) MigrateReceive(args instance.MigrateReceiveArgs) error {
 						}
 					}
 
+					// The snapshot config comes from the source, check it against the project.
+					err = d.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+						return project.AllowSnapshotImport(tx, d.project.Name, *snapArgs)
+					})
+					if err != nil {
+						return err
+					}
+
 					// Create the snapshot instance.
 					_, snapInstOp, cleanup, err := instance.CreateInternal(d.state, *snapArgs, d.op, true, false, false)
 					if err != nil {
