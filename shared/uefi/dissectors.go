@@ -1,10 +1,12 @@
 package uefi
 
 import (
+	"bytes"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"reflect"
 	"strconv"
 	"strings"
 )
@@ -31,6 +33,11 @@ func wrap[T any](f func(*reader) (T, error), g func(*writer, T) error) dissector
 			return v, nil
 		},
 		format: func(in json.RawMessage) ([]byte, error) {
+			// A list may be empty, anything else needs its data.
+			if string(bytes.TrimSpace(in)) == "null" && reflect.TypeFor[T]().Kind() != reflect.Slice {
+				return nil, errors.New("Missing variable data")
+			}
+
 			w := newWriter()
 			var v T
 			err := json.Unmarshal(in, &v)
