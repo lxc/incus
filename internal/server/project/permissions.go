@@ -199,7 +199,7 @@ func CheckLimits(tx *db.ClusterTx, projectName string) error {
 
 	aggregateKeys := []string{}
 	for key := range info.Project.Config {
-		if slices.Contains(allAggregateLimits, key) {
+		if slices.Contains(allAggregateLimits, key) || strings.HasPrefix(key, projectLimitDiskPool) {
 			aggregateKeys = append(aggregateKeys, key)
 		}
 	}
@@ -1185,6 +1185,21 @@ func AllowInstanceUpdate(tx *db.ClusterTx, projectName, instanceName string, req
 	return nil
 }
 
+// hasDiskLimit returns whether the project sets limits.disk or a pool-specific disk limit.
+func hasDiskLimit(config map[string]string) bool {
+	if config["limits.disk"] != "" {
+		return true
+	}
+
+	for key := range config {
+		if strings.HasPrefix(key, projectLimitDiskPool) {
+			return true
+		}
+	}
+
+	return false
+}
+
 // AllowVolumeUpdate returns an error if any project-specific limit or
 // restriction is violated when updating an existing custom volume.
 func AllowVolumeUpdate(tx *db.ClusterTx, projectName, volumeName string, req api.StorageVolumePut, currentConfig map[string]string) error {
@@ -1197,8 +1212,8 @@ func AllowVolumeUpdate(tx *db.ClusterTx, projectName, volumeName string, req api
 		return nil
 	}
 
-	// If "limits.disk" is not set, there's nothing to do.
-	if info.Project.Config["limits.disk"] == "" {
+	// Without a disk limit there's nothing to do.
+	if !hasDiskLimit(info.Project.Config) {
 		return nil
 	}
 
