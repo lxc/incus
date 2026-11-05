@@ -964,6 +964,27 @@ func storagePoolVolumesPost(d *Daemon, r *http.Request) response.Response {
 		return response.Conflict(errors.New("Volume by that name already exists"))
 	}
 
+	// A refresh overwrites the existing volume, which requires edit access to it.
+	if dbVolume != nil {
+		var location string
+
+		if s.ServerClustered {
+			pool, err := storagePools.LoadByName(s, poolName)
+			if err != nil {
+				return response.SmartError(err)
+			}
+
+			if !pool.Driver().Info().Remote {
+				location = dbVolume.Location
+			}
+		}
+
+		err = s.Authorizer.CheckPermission(r.Context(), r, auth.ObjectStorageVolume(projectName, poolName, db.StoragePoolVolumeTypeNameCustom, req.Name, location), auth.EntitlementCanEdit)
+		if err != nil {
+			return response.SmartError(err)
+		}
+	}
+
 	// Check if we need to switch to migration
 	serverName := s.ServerName
 	var nodeAddress string
