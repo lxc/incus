@@ -7510,10 +7510,30 @@ func (d *lxc) FileSFTP() (*sftp.Client, error) {
 
 // stopForkFile attempts to send SIGTERM (if force is true) or SIGINT to forkfile then waits for it to exit.
 func (d *lxc) stopForkfile(force bool) {
+	var pid int64
+
 	// Make sure that when the function exits, no forkfile is running by acquiring the lock (which indicates
 	// that forkfile isn't running and holding the lock) and then releasing it.
 	defer func() {
-		unlock, err := locking.Lock(context.TODO(), d.forkfileRunningLockName())
+		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+		defer cancel()
+
+		unlock, err := locking.Lock(ctx, d.forkfileRunningLockName())
+		if err == nil {
+			unlock()
+			return
+		}
+
+		// Its clients decide how long a graceful stop takes, don't let them hold things up forever.
+		if pid > 0 {
+			d.logger.Warn("Killing forkfile that didn't stop in time", logger.Ctx{"pid": pid})
+			_ = unix.Kill(int(pid), unix.SIGKILL)
+		}
+
+		ctx, cancel = context.WithTimeout(context.Background(), 30*time.Second)
+		defer cancel()
+
+		unlock, err = locking.Lock(ctx, d.forkfileRunningLockName())
 		if err != nil {
 			return
 		}
@@ -7526,7 +7546,7 @@ func (d *lxc) stopForkfile(force bool) {
 		return
 	}
 
-	pid, err := strconv.ParseInt(strings.TrimSpace(string(content)), 10, 64)
+	pid, err = strconv.ParseInt(strings.TrimSpace(string(content)), 10, 64)
 	if err != nil {
 		return
 	}
