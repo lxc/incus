@@ -910,6 +910,16 @@ func createFromBackup(s *state.State, r *http.Request, projectName string, data 
 		return response.Forbidden(errors.New("Cluster member is evacuated"))
 	}
 
+	// The instance is restored on this member, so the project must be allowed to use it.
+	if s.ServerClustered {
+		err := s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
+			return project.CheckMemberAllowed(ctx, tx, projectName, s.ServerName)
+		})
+		if err != nil {
+			return response.SmartError(err)
+		}
+	}
+
 	reverter := revert.New()
 	defer reverter.Fail()
 
