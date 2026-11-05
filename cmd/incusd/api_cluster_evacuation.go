@@ -97,7 +97,7 @@ func evacuateReconcileState(s *state.State, name string) error {
 			return nil
 		}
 
-		logger.Warn("Reverting cluster member state left by an interrupted operation", logger.Ctx{"state": node.State, "newState": newState})
+		logger.Warn("Reverting cluster member state left by an interrupted operation", logger.Ctx{"server": name, "state": node.State, "newState": newState})
 
 		err = tx.UpdateNodeStatus(node.ID, newState)
 		if err != nil {
@@ -1103,8 +1103,14 @@ func healClusterMember(d *Daemon, op *operations.Operation, name string) error {
 		}
 	}
 
+	// The member may have died in the middle of its own evacuation or restore.
+	err := evacuateReconcileState(s, name)
+	if err != nil {
+		logger.Error("Failed to heal cluster member", logger.Ctx{"server": name, "err": err})
+		return err
+	}
+
 	// Attempt up to 5 evacuations.
-	var err error
 	for range 5 {
 		err = evacuateClusterMember(context.Background(), s, op, name, "heal", nil, migrateFunc)
 		if err == nil {
