@@ -156,17 +156,23 @@ func autoRenewCertificate(ctx context.Context, d *Daemon, force bool) error {
 			return nil
 		}
 
-		cert, err := localtls.KeyPairFromRaw(newCert.Certificate, newCert.PrivateKey)
+		_, err = localtls.KeyPairFromRaw(newCert.Certificate, newCert.PrivateKey)
 		if err != nil {
 			return err
 		}
-
-		s.Endpoints.NetworkUpdateCert(cert)
 
 		err = util.WriteCert(s.OS.VarDir, "server", newCert.Certificate, newCert.PrivateKey, nil)
 		if err != nil {
 			return err
 		}
+
+		// Load it back from disk so the CA and CRL come along.
+		cert, err := util.LoadServerCert(s.OS.VarDir)
+		if err != nil {
+			return err
+		}
+
+		s.Endpoints.NetworkUpdateCert(cert)
 
 		return nil
 	}
