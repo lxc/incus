@@ -3554,6 +3554,10 @@ func (d *qemu) templateApplyNow(trigger instance.TemplateTrigger, path string) e
 	// Go through the templates.
 	for tplPath, tpl := range metadata.Templates {
 		err = func(tplPath string, tpl *api.ImageMetadataTemplate) error {
+			if tpl == nil {
+				return fmt.Errorf("Template %q has no definition", tplPath)
+			}
+
 			var w *os.File
 
 			// Check if the template should be applied now.
