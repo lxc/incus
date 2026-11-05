@@ -5,7 +5,6 @@ import (
 	"net"
 	"net/http"
 	"net/url"
-	"slices"
 
 	"github.com/gorilla/mux"
 
@@ -71,8 +70,8 @@ func storagePoolVolumeTypeSFTPHandler(d *Daemon, r *http.Request) response.Respo
 		return response.BadRequest(err)
 	}
 
-	// Check that the storage volume type is valid.
-	if !slices.Contains(supportedVolumeTypes, volumeType) {
+	// Only custom volumes are served, so the type must match the authorized object.
+	if volumeType != db.StoragePoolVolumeTypeCustom {
 		return response.BadRequest(fmt.Errorf("Invalid storage volume type %q", volumeTypeName))
 	}
 
