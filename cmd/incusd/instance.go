@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"sync"
 	"time"
@@ -16,6 +17,7 @@ import (
 	ociSpecs "github.com/opencontainers/runtime-spec/specs-go"
 
 	internalInstance "github.com/lxc/incus/v7/internal/instance"
+	"github.com/lxc/incus/v7/internal/server/auth"
 	"github.com/lxc/incus/v7/internal/server/cluster"
 	"github.com/lxc/incus/v7/internal/server/db"
 	dbCluster "github.com/lxc/incus/v7/internal/server/db/cluster"
@@ -27,6 +29,7 @@ import (
 	"github.com/lxc/incus/v7/internal/server/locking"
 	"github.com/lxc/incus/v7/internal/server/operations"
 	"github.com/lxc/incus/v7/internal/server/project"
+	"github.com/lxc/incus/v7/internal/server/response"
 	"github.com/lxc/incus/v7/internal/server/state"
 	storagePools "github.com/lxc/incus/v7/internal/server/storage"
 	"github.com/lxc/incus/v7/internal/server/task"
@@ -945,6 +948,74 @@ func getSourceImageFromInstanceSource(ctx context.Context, s *state.State, tx *d
 	}
 
 	return sourceImage, nil
+}
+
+// checkAttachedAccess checks that the caller may view newly attached profiles and custom volumes.
+func checkAttachedAccess(s *state.State, r *http.Request, projectName string, profiles []string, curProfiles []string, devices map[string]map[string]string, curDevices map[string]map[string]string) error {
+	for _, name := range profiles {
+		if slices.Contains(curProfiles, name) {
+			continue
+		}
+
+		profileProject, err := project.ProfileProject(s.DB.Cluster, projectName)
+		if err != nil {
+			return err
+		}
+
+		err = s.Authorizer.CheckPermission(r.Context(), r, auth.ObjectProfile(profileProject.Name, name), auth.EntitlementCanView)
+		if err != nil {
+			return err
+		}
+	}
+
+	for name, dev := range devices {
+		if dev["type"] != "disk" || dev["pool"] == "" || dev["source"] == "" {
+			continue
+		}
+
+		cur := curDevices[name]
+		if cur != nil && cur["pool"] == dev["pool"] && cur["source"] == dev["source"] {
+			continue
+		}
+
+		volProject, err := project.StorageVolumeProject(s.DB.Cluster, projectName, db.StoragePoolVolumeTypeCustom)
+		if err != nil {
+			return err
+		}
+
+		volName, _, _ := api.GetParentAndSnapshotName(dev["source"])
+
+		// Only a volume on a single member carries a location.
+		var location string
+		if s.ServerClustered {
+			var nodes []db.NodeInfo
+
+			err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
+				poolID, err := tx.GetStoragePoolID(ctx, dev["pool"])
+				if err != nil {
+					return err
+				}
+
+				nodes, err = tx.GetStorageVolumeNodes(ctx, poolID, volProject, volName, db.StoragePoolVolumeTypeCustom)
+
+				return err
+			})
+			if err != nil && !response.IsNotFoundError(err) {
+				return err
+			}
+
+			if len(nodes) == 1 {
+				location = nodes[0].Name
+			}
+		}
+
+		err = s.Authorizer.CheckPermission(r.Context(), r, auth.ObjectStorageVolume(volProject, dev["pool"], db.StoragePoolVolumeTypeNameCustom, volName, location), auth.EntitlementCanView)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 // instanceOperationLock acquires a lock for operating on an instance and returns the unlock function.
