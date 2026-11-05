@@ -537,7 +537,7 @@ var ConfigSchema = config.Schema{
 	//  type: string
 	//  scope: global
 	//  shortdesc: HMAC key for External Account Binding
-	"acme.eab.hmac": {},
+	"acme.eab.hmac": {Hidden: true},
 
 	// gendoc:generate(entity=server, group=acme, key=acme.agree_tos)
 	//
@@ -573,7 +573,7 @@ var ConfigSchema = config.Schema{
 	//  scope: global
 	//  defaultdesc: ``
 	//  shortdesc: Environment variables to set during the challenge (used by DNS-01)
-	"acme.provider.environment": {Type: config.String, Default: ""},
+	"acme.provider.environment": {Hidden: true, Type: config.String, Default: ""},
 
 	// gendoc:generate(entity=server, group=acme, key=acme.provider.resolvers)
 	// DNS resolvers to use for performing (recursive) `CNAME` resolving and apex domain determination during DNS-01 challenge.
@@ -644,7 +644,7 @@ var ConfigSchema = config.Schema{
 	// type: string
 	// scope: global
 	// shortdesc: API token of the OpenFGA server
-	"authorization.openfga.api.token": {},
+	"authorization.openfga.api.token": {Hidden: true},
 
 	// gendoc:generate(entity=server, group=authorization, key=authorization.openfga.api.url)
 	//
@@ -869,7 +869,7 @@ var ConfigSchema = config.Schema{
 	//  type: string
 	//  scope: global
 	//  shortdesc: HTTP proxy to use
-	"core.proxy_http": {},
+	"core.proxy_http": {Hidden: true},
 
 	// gendoc:generate(entity=server, group=core, key=core.proxy_https)
 	// If this option is not specified, the daemon falls back to the `HTTPS_PROXY` environment variable (if set).
@@ -877,7 +877,7 @@ var ConfigSchema = config.Schema{
 	//  type: string
 	//  scope: global
 	//  shortdesc: HTTPS proxy to use
-	"core.proxy_https": {},
+	"core.proxy_https": {Hidden: true},
 
 	// gendoc:generate(entity=server, group=core, key=core.proxy_ignore_hosts)
 	// Specify this option in a similar format to `NO_PROXY` (for example, `1.2.3.4,1.2.3.5`)
@@ -1040,7 +1040,7 @@ var ConfigSchema = config.Schema{
 	//  type: string
 	//  scope: global
 	//  shortdesc: Private key for the TPM platform CA certificate (PEM private key)
-	"instances.tpm.platform_key": {Validator: validate.Optional(validate.IsPEM(false, "PRIVATE KEY", ".* PRIVATE KEY"))},
+	"instances.tpm.platform_key": {Hidden: true, Validator: validate.Optional(validate.IsPEM(false, "PRIVATE KEY", ".* PRIVATE KEY"))},
 
 	// gendoc:generate(entity=server, group=loki, key=loki.auth.username)
 	//
@@ -1056,7 +1056,7 @@ var ConfigSchema = config.Schema{
 	//  type: string
 	//  scope: global
 	//  shortdesc: Password used for Loki authentication
-	"loki.auth.password": {Deprecated: "Use 'logging.*.target.password' instead"},
+	"loki.auth.password": {Hidden: true, Deprecated: "Use 'logging.*.target.password' instead"},
 
 	// gendoc:generate(entity=server, group=loki, key=loki.api.ca_cert)
 	//
@@ -1207,7 +1207,7 @@ var ConfigSchema = config.Schema{
 	//  scope: global
 	//  defaultdesc: Content of `/etc/ovn/key_host` if present
 	//  shortdesc: OVN SSL client key (PEM private key)
-	"network.ovn.client_key": {Validator: validate.Optional(validate.IsPEM(false, "PRIVATE KEY", ".* PRIVATE KEY"))},
+	"network.ovn.client_key": {Hidden: true, Validator: validate.Optional(validate.IsPEM(false, "PRIVATE KEY", ".* PRIVATE KEY"))},
 
 	// gendoc:generate(entity=server, group=miscellaneous, key=storage.linstor.controller_connection)
 	//
@@ -1239,7 +1239,7 @@ var ConfigSchema = config.Schema{
 	//  type: string
 	//  scope: global
 	//  shortdesc: LINSTOR SSL client key (PEM private key)
-	"storage.linstor.client_key": {Validator: validate.Optional(validate.IsPEM(false, "PRIVATE KEY", ".* PRIVATE KEY"))},
+	"storage.linstor.client_key": {Hidden: true, Validator: validate.Optional(validate.IsPEM(false, "PRIVATE KEY", ".* PRIVATE KEY"))},
 }
 
 func expiryValidator(value string) error {

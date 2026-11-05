@@ -428,6 +428,16 @@ func api10Get(d *Daemon, r *http.Request) response.Response {
 		return response.SyncResponseETag(true, fullSrv, nil)
 	}
 
+	// Only those allowed to change the config get to see the credentials in it.
+	err = s.Authorizer.CheckPermission(r.Context(), r, auth.ObjectServer(), auth.EntitlementCanEdit)
+	if err != nil {
+		if !api.StatusErrorCheck(err, http.StatusForbidden) {
+			return response.SmartError(err)
+		}
+
+		daemonConfigHideSecrets(fullSrvConfig)
+	}
+
 	fullSrv.Config = fullSrvConfig
 
 	etag, err := daemonConfigETag(s, r)
