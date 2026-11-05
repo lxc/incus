@@ -356,7 +356,7 @@ __attribute__((constructor)) void init(void) {
 		ret = unshare(CLONE_NEWNS);
 		if (ret < 0) {
 			fprintf(stderr, "Failed unshare of mount namespace: %s\n", strerror(errno));
-			return;
+			_exit(1);
 		}
 	} else if (strncmp(cmdline_cur, "-", 1) == 0 || strcmp(cmdline_cur, "daemon") == 0)
 		checkfeature();
