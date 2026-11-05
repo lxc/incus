@@ -9128,7 +9128,7 @@ func (d *qemu) Render() (any, any, error) {
 
 	instState.Description = d.description
 	instState.Architecture = d.architectureName
-	instState.Config = d.localConfig
+	instState.Config = maps.Clone(d.localConfig)
 	instState.CreatedAt = d.creationDate
 	instState.Devices = d.localDevices.CloneNative()
 	instState.Ephemeral = d.ephemeral
