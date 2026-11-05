@@ -7981,6 +7981,22 @@ func (n *ovn) ForwardDelete(listenAddress string, clientType request.ClientType)
 			return err
 		}
 
+		// Refuse to release a listen address still used as the external address of an instance NIC.
+		listenIP := net.ParseIP(forward.ListenAddress)
+		err = UsedByInstanceDevices(n.state, n.Project(), n.Name(), n.Type(), func(inst db.InstanceArgs, nicName string, nicConfig map[string]string) error {
+			for _, keyPrefix := range []string{"ipv4", "ipv6"} {
+				extIP := net.ParseIP(nicConfig[fmt.Sprintf("%s.address.external", keyPrefix)])
+				if extIP != nil && extIP.Equal(listenIP) {
+					return api.StatusErrorf(http.StatusBadRequest, "Network forward is in use as the external address of an instance NIC")
+				}
+			}
+
+			return nil
+		})
+		if err != nil {
+			return err
+		}
+
 		// Delete the network forward itself.
 		err = n.ovnnb.DeleteLoadBalancer(context.TODO(), n.getLoadBalancerName(forward.ListenAddress))
 		if err != nil {
