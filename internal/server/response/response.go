@@ -622,6 +622,23 @@ type sftpResponse struct {
 	conn net.Conn
 }
 
+var (
+	upgradedConnsMu sync.Mutex
+	upgradedConns   = map[*sftpResponse]net.Conn{}
+)
+
+// CloseUpgradedConnections closes the hijacked connections whose request matches.
+func CloseUpgradedConnections(match func(r *http.Request) bool) {
+	upgradedConnsMu.Lock()
+	defer upgradedConnsMu.Unlock()
+
+	for resp, conn := range upgradedConns {
+		if match(resp.req) {
+			_ = conn.Close()
+		}
+	}
+}
+
 // String returns the response type name.
 func (r *sftpResponse) String() string {
 	return "sftp handler"
@@ -647,6 +664,17 @@ func (r *sftpResponse) Render(w http.ResponseWriter) error {
 	}
 
 	defer func() { _ = remoteConn.Close() }()
+
+	// Keep track of it so a lost trust can end it.
+	upgradedConnsMu.Lock()
+	upgradedConns[r] = remoteConn
+	upgradedConnsMu.Unlock()
+
+	defer func() {
+		upgradedConnsMu.Lock()
+		delete(upgradedConns, r)
+		upgradedConnsMu.Unlock()
+	}()
 
 	remoteTCP, _ := tcp.ExtractConn(remoteConn)
 	if remoteTCP != nil {

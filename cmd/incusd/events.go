@@ -169,6 +169,8 @@ func eventsSocket(s *state.State, r *http.Request, w http.ResponseWriter) error 
 		return nil
 	}
 
+	listener.SetRequestor(requestIdentity(r))
+
 	listener.Wait(r.Context())
 
 	return nil
