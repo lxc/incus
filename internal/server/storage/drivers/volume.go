@@ -1028,6 +1028,8 @@ func (v Volume) FileSFTPConn(s *state.State) (net.Conn, error) {
 			pidFile := filepath.Join(v.forkfileRunPath(), "forkfile.pid")
 			err = os.WriteFile(pidFile, fmt.Appendf(nil, "%d\n", forkfile.Process.Pid), 0o600)
 			if err != nil {
+				_ = forkfile.Process.Kill()
+				_ = forkfile.Wait()
 				return fmt.Errorf("Failed to write forkfile PID: %w", err)
 			}
 

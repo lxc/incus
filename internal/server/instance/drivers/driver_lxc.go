@@ -8290,6 +8290,8 @@ func (d *lxc) FileSFTPConn() (net.Conn, error) {
 		pidFile := filepath.Join(d.RunPath(), "forkfile.pid")
 		err = os.WriteFile(pidFile, fmt.Appendf(nil, "%d\n", forkfile.Process.Pid), 0o600)
 		if err != nil {
+			_ = forkfile.Process.Kill()
+			_ = forkfile.Wait()
 			chReady <- fmt.Errorf("Failed to write forkfile PID: %w", err)
 			return
 		}
