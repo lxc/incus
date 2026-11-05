@@ -107,6 +107,7 @@ void forkfile(void)
 import "C"
 
 import (
+	"errors"
 	"net"
 	"os"
 	"os/signal"
@@ -234,6 +235,12 @@ func (c *cmdForkfile) run(_ *cobra.Command, args []string) error {
 		// Accept new connection.
 		conn, err := listener.Accept()
 		if err != nil {
+			// The signal handler exits once the remaining connections are gone.
+			if errors.Is(err, net.ErrClosed) {
+				select {}
+			}
+
+			time.Sleep(100 * time.Millisecond)
 			continue
 		}
 
