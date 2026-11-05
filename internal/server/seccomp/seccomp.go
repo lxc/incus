@@ -1371,7 +1371,7 @@ func (srv *Server) HandleMknodSyscall(c Instance, siov *Iovec) int {
 		return int(siov.resp.error)
 	}
 
-	cPathBuf := [unix.PathMax]C.char{}
+	cPathBuf := [unix.PathMax + 1]C.char{}
 	_, err := C.pread(C.int(siov.memFd), unsafe.Pointer(&cPathBuf[0]), C.size_t(unix.PathMax), C.off_t(siov.req.data.args[0]))
 	if err != nil {
 		ctx["err"] = fmt.Sprintf("Failed to read memory for mknod syscall: %s", err)
@@ -1437,7 +1437,7 @@ func (srv *Server) HandleMknodatSyscall(c Instance, siov *Iovec) int {
 		return int(siov.resp.error)
 	}
 
-	cPathBuf := [unix.PathMax]C.char{}
+	cPathBuf := [unix.PathMax + 1]C.char{}
 	_, err := C.pread(C.int(siov.memFd), unsafe.Pointer(&cPathBuf[0]), C.size_t(unix.PathMax), C.off_t(siov.req.data.args[1]))
 	if err != nil {
 		ctx["err"] = "Failed to read memory for mknodat syscall: %s"
@@ -1527,7 +1527,7 @@ func (srv *Server) HandleSetxattrSyscall(c Instance, siov *Iovec) int {
 	args.nsfsuid, args.nsfsgid = idmapset.ShiftFromNS(fsuid, fsgid)
 
 	// const char *path
-	cBuf := [unix.PathMax]C.char{}
+	cBuf := [unix.PathMax + 1]C.char{}
 	_, err = C.pread(C.int(siov.memFd), unsafe.Pointer(&cBuf[0]), C.size_t(unix.PathMax), C.off_t(siov.req.data.args[0]))
 	if err != nil {
 		ctx["err"] = fmt.Sprintf("Failed to read memory for setxattr syscall: %s", err)
@@ -2111,10 +2111,10 @@ func (srv *Server) HandleMountSyscall(c Instance, siov *Iovec) int {
 		defer func() { _ = pidFd.Close() }()
 	}
 
-	mntSource := [unix.PathMax]C.char{}
-	mntTarget := [unix.PathMax]C.char{}
-	mntFs := [unix.PathMax]C.char{}
-	mntData := [unix.PathMax]C.char{}
+	mntSource := [unix.PathMax + 1]C.char{}
+	mntTarget := [unix.PathMax + 1]C.char{}
+	mntFs := [unix.PathMax + 1]C.char{}
+	mntData := [unix.PathMax + 1]C.char{}
 
 	// const char *source
 	if siov.req.data.args[0] != 0 {
