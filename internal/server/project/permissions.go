@@ -2082,6 +2082,35 @@ func AllowClusterGroup(p *api.Project, groupName string) error {
 	return nil
 }
 
+// CheckMemberAllowed returns an error if the project isn't allowed to use the named cluster member.
+func CheckMemberAllowed(ctx context.Context, tx *db.ClusterTx, projectName string, memberName string) error {
+	dbProject, err := cluster.GetProject(ctx, tx.Tx(), projectName)
+	if err != nil {
+		return err
+	}
+
+	p, err := dbProject.ToAPI(ctx, tx.Tx())
+	if err != nil {
+		return err
+	}
+
+	if util.IsFalseOrEmpty(p.Config["restricted"]) || len(GetRestrictedClusterGroups(p)) == 0 {
+		return nil
+	}
+
+	member, err := tx.GetNodeByName(ctx, memberName)
+	if err != nil {
+		return err
+	}
+
+	err = AllowClusterMember(p, &member)
+	if err != nil {
+		return api.StatusErrorf(http.StatusForbidden, "%s", err.Error())
+	}
+
+	return nil
+}
+
 // CheckTargetMember checks if the given targetMemberName is present in allMembers
 // and is allowed for the project.
 // If the target member is allowed it returns the resolved node information.

@@ -658,6 +658,16 @@ func createFromCopy(ctx context.Context, s *state.State, r *http.Request, projec
 }
 
 func createFromBackup(s *state.State, r *http.Request, projectName string, data io.Reader, pool string, instanceName string, config string, device string) response.Response {
+	// The instance is restored on this member, so the project must be allowed to use it.
+	if s.ServerClustered {
+		err := s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
+			return project.CheckMemberAllowed(ctx, tx, projectName, s.ServerName)
+		})
+		if err != nil {
+			return response.SmartError(err)
+		}
+	}
+
 	reverter := revert.New()
 	defer reverter.Fail()
 
