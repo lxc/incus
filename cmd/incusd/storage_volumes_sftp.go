@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"net"
 	"net/http"
@@ -8,6 +9,7 @@ import (
 
 	"github.com/gorilla/mux"
 
+	incus "github.com/lxc/incus/v6/client"
 	"github.com/lxc/incus/v6/internal/server/cluster"
 	"github.com/lxc/incus/v6/internal/server/db"
 	"github.com/lxc/incus/v6/internal/server/project"
@@ -80,13 +82,22 @@ func storagePoolVolumeTypeSFTPHandler(d *Daemon, r *http.Request) response.Respo
 		return response.SmartError(err)
 	}
 
+	// The permission was checked on the targeted member's volume, so only serve that one.
+	target := request.QueryParam(r, "target")
+	if target != "" && target != s.ServerName {
+		return response.BadRequest(errors.New("Targeting another cluster member isn't supported on this endpoint"))
+	}
+
 	// Redirect to correct server if needed.
 	var conn net.Conn
+	var client incus.InstanceServer
 
-	// Forward the request if the instance is remote.
-	client, err := cluster.ConnectIfVolumeIsRemote(s, poolName, volumeProjectName, volumeName, volumeType, s.Endpoints.NetworkCert(), s.ServerCert(), r)
-	if err != nil {
-		return response.SmartError(err)
+	// Forward the request if the volume is remote.
+	if target == "" {
+		client, err = cluster.ConnectIfVolumeIsRemote(s, poolName, volumeProjectName, volumeName, volumeType, s.Endpoints.NetworkCert(), s.ServerCert(), r)
+		if err != nil {
+			return response.SmartError(err)
+		}
 	}
 
 	if client != nil {
