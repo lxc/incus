@@ -633,6 +633,11 @@ func profilePut(d *Daemon, r *http.Request) response.Response {
 		return response.BadRequest(err)
 	}
 
+	err = checkAttachedAccess(s, r, request.ProjectParam(r), nil, nil, req.Devices, profile.Devices)
+	if err != nil {
+		return response.SmartError(err)
+	}
+
 	err = doProfileUpdate(r.Context(), s, *p, name, profile, req)
 
 	if err == nil && !isClusterNotification(r) {
@@ -777,6 +782,11 @@ func profilePatch(d *Daemon, r *http.Request) response.Response {
 				req.Devices[k] = v
 			}
 		}
+	}
+
+	err = checkAttachedAccess(s, r, request.ProjectParam(r), nil, nil, req.Devices, profile.Devices)
+	if err != nil {
+		return response.SmartError(err)
 	}
 
 	requestor := request.CreateRequestor(r)
