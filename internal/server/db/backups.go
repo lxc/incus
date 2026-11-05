@@ -50,10 +50,10 @@ type StoragePoolBucketBackup struct {
 }
 
 // Returns the ID of the instance backup with the given name.
-func (c *ClusterTx) getInstanceBackupID(ctx context.Context, name string) (int, error) {
-	q := "SELECT id FROM instances_backups WHERE name=?"
+func (c *ClusterTx) getInstanceBackupID(ctx context.Context, instanceID int, name string) (int, error) {
+	q := "SELECT id FROM instances_backups WHERE instance_id=? AND name=?"
 	id := -1
-	arg1 := []any{name}
+	arg1 := []any{instanceID, name}
 	arg2 := []any{&id}
 
 	err := dbQueryRowScan(ctx, c, q, arg1, arg2)
@@ -173,10 +173,10 @@ WHERE projects.name=? AND instances.name=?`
 }
 
 // CreateInstanceBackup creates a new backup.
-func (c *ClusterTx) CreateInstanceBackup(ctx context.Context, args InstanceBackup) error {
-	_, err := c.getInstanceBackupID(ctx, args.Name)
+func (c *ClusterTx) CreateInstanceBackup(ctx context.Context, args InstanceBackup) (int, error) {
+	_, err := c.getInstanceBackupID(ctx, args.InstanceID, args.Name)
 	if err == nil {
-		return ErrAlreadyDefined
+		return -1, ErrAlreadyDefined
 	}
 
 	instanceOnlyInt := 0
@@ -192,7 +192,7 @@ func (c *ClusterTx) CreateInstanceBackup(ctx context.Context, args InstanceBacku
 	str := "INSERT INTO instances_backups (instance_id, name, creation_date, expiry_date, container_only, optimized_storage) VALUES (?, ?, ?, ?, ?, ?)"
 	stmt, err := c.tx.Prepare(str)
 	if err != nil {
-		return err
+		return -1, err
 	}
 
 	defer func() { _ = stmt.Close() }()
@@ -200,25 +200,20 @@ func (c *ClusterTx) CreateInstanceBackup(ctx context.Context, args InstanceBacku
 		args.CreationDate.Unix(), args.ExpiryDate.Unix(), instanceOnlyInt,
 		optimizedStorageInt)
 	if err != nil {
-		return err
+		return -1, err
 	}
 
-	_, err = result.LastInsertId()
+	id, err := result.LastInsertId()
 	if err != nil {
-		return fmt.Errorf("Error inserting %q into database", args.Name)
+		return -1, fmt.Errorf("Error inserting %q into database", args.Name)
 	}
 
-	return nil
+	return int(id), nil
 }
 
-// DeleteInstanceBackup removes the instance backup with the given name from the database.
-func (c *ClusterTx) DeleteInstanceBackup(ctx context.Context, name string) error {
-	id, err := c.getInstanceBackupID(ctx, name)
-	if err != nil {
-		return err
-	}
-
-	_, err = c.tx.ExecContext(ctx, "DELETE FROM instances_backups WHERE id=?", id)
+// DeleteInstanceBackup removes the instance backup with the given ID from the database.
+func (c *ClusterTx) DeleteInstanceBackup(ctx context.Context, id int) error {
+	_, err := c.tx.ExecContext(ctx, "DELETE FROM instances_backups WHERE id=?", id)
 	if err != nil {
 		return err
 	}
@@ -226,10 +221,9 @@ func (c *ClusterTx) DeleteInstanceBackup(ctx context.Context, name string) error
 	return nil
 }
 
-// RenameInstanceBackup renames an instance backup from the given current name
-// to the new one.
-func (c *ClusterTx) RenameInstanceBackup(ctx context.Context, oldName, newName string) error {
-	str := "UPDATE instances_backups SET name = ? WHERE name = ?"
+// RenameInstanceBackup renames the instance backup with the given ID.
+func (c *ClusterTx) RenameInstanceBackup(ctx context.Context, id int, newName string) error {
+	str := "UPDATE instances_backups SET name = ? WHERE id = ?"
 	stmt, err := c.tx.PrepareContext(ctx, str)
 	if err != nil {
 		return err
@@ -240,11 +234,11 @@ func (c *ClusterTx) RenameInstanceBackup(ctx context.Context, oldName, newName s
 	logger.Debug(
 		"Calling SQL Query",
 		logger.Ctx{
-			"query":   "UPDATE instances_backups SET name = ? WHERE name = ?",
-			"oldName": oldName,
+			"query":   "UPDATE instances_backups SET name = ? WHERE id = ?",
+			"id":      id,
 			"newName": newName,
 		})
-	_, err = stmt.ExecContext(ctx, newName, oldName)
+	_, err = stmt.ExecContext(ctx, newName, id)
 	if err != nil {
 		return err
 	}
@@ -255,12 +249,13 @@ func (c *ClusterTx) RenameInstanceBackup(ctx context.Context, oldName, newName s
 // GetExpiredInstanceBackups returns a list of expired instance backups.
 func (c *ClusterTx) GetExpiredInstanceBackups(ctx context.Context) ([]InstanceBackup, error) {
 	var result []InstanceBackup
+	var id int
 	var name string
 	var expiryDate string
 	var instanceID int
 
-	q := `SELECT instances_backups.name, instances_backups.expiry_date, instances_backups.instance_id FROM instances_backups`
-	outfmt := []any{name, expiryDate, instanceID}
+	q := `SELECT instances_backups.id, instances_backups.name, instances_backups.expiry_date, instances_backups.instance_id FROM instances_backups`
+	outfmt := []any{id, name, expiryDate, instanceID}
 
 	dbResults, err := queryScan(ctx, c, q, nil, outfmt)
 	if err != nil {
@@ -268,7 +263,7 @@ func (c *ClusterTx) GetExpiredInstanceBackups(ctx context.Context) ([]InstanceBa
 	}
 
 	for _, r := range dbResults {
-		timestamp := r[1]
+		timestamp := r[2]
 
 		var backupExpiry time.Time
 		err = backupExpiry.UnmarshalText([]byte(timestamp.(string)))
@@ -286,8 +281,9 @@ func (c *ClusterTx) GetExpiredInstanceBackups(ctx context.Context) ([]InstanceBa
 		// Backup has expired
 		if time.Now().Unix()-backupExpiry.Unix() >= 0 {
 			result = append(result, InstanceBackup{
-				Name:       r[0].(string),
-				InstanceID: r[2].(int),
+				ID:         r[0].(int),
+				Name:       r[1].(string),
+				InstanceID: r[3].(int),
 				ExpiryDate: backupExpiry,
 			})
 		}
@@ -300,13 +296,13 @@ func (c *ClusterTx) GetExpiredInstanceBackups(ctx context.Context) ([]InstanceBa
 func (c *ClusterTx) GetExpiredStorageVolumeBackups(ctx context.Context) ([]StoragePoolVolumeBackup, error) {
 	var backups []StoragePoolVolumeBackup
 
-	q := `SELECT storage_volumes_backups.name, storage_volumes_backups.expiry_date, storage_volumes_backups.storage_volume_id FROM storage_volumes_backups`
+	q := `SELECT storage_volumes_backups.id, storage_volumes_backups.name, storage_volumes_backups.expiry_date, storage_volumes_backups.storage_volume_id FROM storage_volumes_backups`
 
 	err := query.Scan(ctx, c.Tx(), q, func(scan func(dest ...any) error) error {
 		var b StoragePoolVolumeBackup
 		var expiryTime sql.NullTime
 
-		err := scan(&b.Name, &expiryTime, &b.VolumeID)
+		err := scan(&b.ID, &b.Name, &expiryTime, &b.VolumeID)
 		if err != nil {
 			return err
 		}
@@ -401,10 +397,10 @@ ORDER BY storage_volumes_backups.id`
 }
 
 // CreateStoragePoolVolumeBackup creates a new storage volume backup.
-func (c *ClusterTx) CreateStoragePoolVolumeBackup(ctx context.Context, args StoragePoolVolumeBackup) error {
-	_, err := c.getStoragePoolVolumeBackupID(ctx, args.Name)
+func (c *ClusterTx) CreateStoragePoolVolumeBackup(ctx context.Context, args StoragePoolVolumeBackup) (int, error) {
+	_, err := c.getStoragePoolVolumeBackupID(ctx, args.VolumeID, args.Name)
 	if err == nil {
-		return ErrAlreadyDefined
+		return -1, ErrAlreadyDefined
 	}
 
 	volumeOnlyInt := 0
@@ -420,7 +416,7 @@ func (c *ClusterTx) CreateStoragePoolVolumeBackup(ctx context.Context, args Stor
 	str := "INSERT INTO storage_volumes_backups (storage_volume_id, name, creation_date, expiry_date, volume_only, optimized_storage) VALUES (?, ?, ?, ?, ?, ?)"
 	stmt, err := c.tx.Prepare(str)
 	if err != nil {
-		return err
+		return -1, err
 	}
 
 	defer func() { _ = stmt.Close() }()
@@ -428,22 +424,22 @@ func (c *ClusterTx) CreateStoragePoolVolumeBackup(ctx context.Context, args Stor
 		args.CreationDate.Unix(), args.ExpiryDate.Unix(), volumeOnlyInt,
 		optimizedStorageInt)
 	if err != nil {
-		return err
+		return -1, err
 	}
 
-	_, err = result.LastInsertId()
+	id, err := result.LastInsertId()
 	if err != nil {
-		return fmt.Errorf("Error inserting %q into database", args.Name)
+		return -1, fmt.Errorf("Error inserting %q into database", args.Name)
 	}
 
-	return nil
+	return int(id), nil
 }
 
 // Returns the ID of the storage volume backup with the given name.
-func (c *ClusterTx) getStoragePoolVolumeBackupID(ctx context.Context, name string) (int, error) {
-	q := "SELECT id FROM storage_volumes_backups WHERE name=?"
+func (c *ClusterTx) getStoragePoolVolumeBackupID(ctx context.Context, volumeID int64, name string) (int, error) {
+	q := "SELECT id FROM storage_volumes_backups WHERE storage_volume_id=? AND name=?"
 	id := -1
-	arg1 := []any{name}
+	arg1 := []any{volumeID, name}
 	arg2 := []any{&id}
 
 	err := dbQueryRowScan(ctx, c, q, arg1, arg2)
@@ -454,14 +450,9 @@ func (c *ClusterTx) getStoragePoolVolumeBackupID(ctx context.Context, name strin
 	return id, err
 }
 
-// DeleteStoragePoolVolumeBackup removes the storage volume backup with the given name from the database.
-func (c *ClusterTx) DeleteStoragePoolVolumeBackup(ctx context.Context, name string) error {
-	id, err := c.getStoragePoolVolumeBackupID(ctx, name)
-	if err != nil {
-		return err
-	}
-
-	_, err = c.tx.ExecContext(ctx, "DELETE FROM storage_volumes_backups WHERE id=?", id)
+// DeleteStoragePoolVolumeBackup removes the storage volume backup with the given ID from the database.
+func (c *ClusterTx) DeleteStoragePoolVolumeBackup(ctx context.Context, id int) error {
+	_, err := c.tx.ExecContext(ctx, "DELETE FROM storage_volumes_backups WHERE id=?", id)
 	if err != nil {
 		return err
 	}
@@ -535,8 +526,8 @@ WHERE backups.id=?
 
 // RenameVolumeBackup renames a volume backup from the given current name
 // to the new one.
-func (c *ClusterTx) RenameVolumeBackup(ctx context.Context, oldName, newName string) error {
-	str := "UPDATE storage_volumes_backups SET name = ? WHERE name = ?"
+func (c *ClusterTx) RenameVolumeBackup(ctx context.Context, id int, newName string) error {
+	str := "UPDATE storage_volumes_backups SET name = ? WHERE id = ?"
 	stmt, err := c.tx.Prepare(str)
 	if err != nil {
 		return err
@@ -547,11 +538,11 @@ func (c *ClusterTx) RenameVolumeBackup(ctx context.Context, oldName, newName str
 	logger.Debug(
 		"Calling SQL Query",
 		logger.Ctx{
-			"query":   "UPDATE storage_volumes_backups SET name = ? WHERE name = ?",
-			"oldName": oldName,
+			"query":   "UPDATE storage_volumes_backups SET name = ? WHERE id = ?",
+			"id":      id,
 			"newName": newName,
 		})
-	_, err = stmt.Exec(newName, oldName)
+	_, err = stmt.Exec(newName, id)
 	if err != nil {
 		return err
 	}
@@ -624,38 +615,38 @@ ORDER BY storage_buckets_backups.id`
 }
 
 // CreateStoragePoolBucketBackup creates a new storage bucket backup.
-func (c *ClusterTx) CreateStoragePoolBucketBackup(ctx context.Context, args StoragePoolBucketBackup) error {
-	_, err := c.getStoragePoolBucketBackupID(ctx, args.Name)
+func (c *ClusterTx) CreateStoragePoolBucketBackup(ctx context.Context, args StoragePoolBucketBackup) (int, error) {
+	_, err := c.getStoragePoolBucketBackupID(ctx, args.BucketID, args.Name)
 	if err == nil {
-		return ErrAlreadyDefined
+		return -1, ErrAlreadyDefined
 	}
 
 	str := "INSERT INTO storage_buckets_backups (storage_bucket_id, name, creation_date, expiry_date) VALUES (?, ?, ?, ?)"
 	stmt, err := c.tx.Prepare(str)
 	if err != nil {
-		return err
+		return -1, err
 	}
 
 	defer func() { _ = stmt.Close() }()
 	result, err := stmt.Exec(args.BucketID, args.Name,
 		args.CreationDate.Unix(), args.ExpiryDate.Unix())
 	if err != nil {
-		return err
+		return -1, err
 	}
 
-	_, err = result.LastInsertId()
+	id, err := result.LastInsertId()
 	if err != nil {
-		return fmt.Errorf("Error inserting %q into database", args.Name)
+		return -1, fmt.Errorf("Error inserting %q into database", args.Name)
 	}
 
-	return nil
+	return int(id), nil
 }
 
 // Returns the ID of the storage bucket backup with the given name.
-func (c *ClusterTx) getStoragePoolBucketBackupID(ctx context.Context, name string) (int, error) {
-	q := "SELECT id FROM storage_buckets_backups WHERE name=?"
+func (c *ClusterTx) getStoragePoolBucketBackupID(ctx context.Context, bucketID int64, name string) (int, error) {
+	q := "SELECT id FROM storage_buckets_backups WHERE storage_bucket_id=? AND name=?"
 	id := -1
-	arg1 := []any{name}
+	arg1 := []any{bucketID, name}
 	arg2 := []any{&id}
 
 	err := dbQueryRowScan(ctx, c, q, arg1, arg2)
@@ -666,14 +657,9 @@ func (c *ClusterTx) getStoragePoolBucketBackupID(ctx context.Context, name strin
 	return id, err
 }
 
-// DeleteStoragePoolBucketBackup removes the storage bucket backup with the given name from the database.
-func (c *ClusterTx) DeleteStoragePoolBucketBackup(ctx context.Context, name string) error {
-	id, err := c.getStoragePoolBucketBackupID(ctx, name)
-	if err != nil {
-		return err
-	}
-
-	_, err = c.tx.ExecContext(ctx, "DELETE FROM storage_buckets_backups WHERE id=?", id)
+// DeleteStoragePoolBucketBackup removes the storage bucket backup with the given ID from the database.
+func (c *ClusterTx) DeleteStoragePoolBucketBackup(ctx context.Context, id int) error {
+	_, err := c.tx.ExecContext(ctx, "DELETE FROM storage_buckets_backups WHERE id=?", id)
 	if err != nil {
 		return err
 	}
@@ -756,8 +742,8 @@ FROM storage_buckets_backups`
 }
 
 // RenameBucketBackup renames a bucket backup from the given current name to the new one.
-func (c *ClusterTx) RenameBucketBackup(ctx context.Context, oldName, newName string) error {
-	str := "UPDATE storage_buckets_backups SET name = ? WHERE name = ?"
+func (c *ClusterTx) RenameBucketBackup(ctx context.Context, id int, newName string) error {
+	str := "UPDATE storage_buckets_backups SET name = ? WHERE id = ?"
 	stmt, err := c.tx.Prepare(str)
 	if err != nil {
 		return err
@@ -768,11 +754,11 @@ func (c *ClusterTx) RenameBucketBackup(ctx context.Context, oldName, newName str
 	logger.Debug(
 		"Calling SQL Query",
 		logger.Ctx{
-			"query":   "UPDATE storage_buckets_backups SET name = ? WHERE name = ?",
-			"oldName": oldName,
+			"query":   "UPDATE storage_buckets_backups SET name = ? WHERE id = ?",
+			"id":      id,
 			"newName": newName,
 		})
-	_, err = stmt.Exec(newName, oldName)
+	_, err = stmt.Exec(newName, id)
 	if err != nil {
 		return err
 	}
