@@ -7,6 +7,9 @@ import (
 	"os"
 )
 
+// xzMemoryLimit caps the decompression memory, the file decides the dictionary size.
+const xzMemoryLimit = "--memlimit-decompress=512MiB"
+
 // DetectCompression detects compression from a file name.
 func DetectCompression(fname string) ([]string, string, []string, error) {
 	f, err := os.Open(fname)
@@ -43,11 +46,11 @@ func DetectCompressionFile(f io.Reader) ([]string, string, []string, error) {
 	case n >= 2 && bytes.Equal(header[0:2], []byte{0x1f, 0x8b}):
 		return []string{"-zxf"}, ".tar.gz", []string{"gzip", "-d"}, nil
 	case n >= 5 && (bytes.Equal(header[1:5], []byte{'7', 'z', 'X', 'Z'}) && header[0] == 0xFD):
-		return []string{"-Jxf"}, ".tar.xz", []string{"xz", "-d"}, nil
+		return []string{"-I", "xz " + xzMemoryLimit, "-xf"}, ".tar.xz", []string{"xz", xzMemoryLimit, "-d"}, nil
 	case n >= 5 && (bytes.Equal(header[1:5], []byte{'7', 'z', 'X', 'Z'}) && header[0] != 0xFD):
-		return []string{"--lzma", "-xf"}, ".tar.lzma", []string{"lzma", "-d"}, nil
+		return []string{"-I", "lzma " + xzMemoryLimit, "-xf"}, ".tar.lzma", []string{"lzma", xzMemoryLimit, "-d"}, nil
 	case n >= 3 && bytes.Equal(header[0:3], []byte{0x5d, 0x00, 0x00}):
-		return []string{"--lzma", "-xf"}, ".tar.lzma", []string{"lzma", "-d"}, nil
+		return []string{"-I", "lzma " + xzMemoryLimit, "-xf"}, ".tar.lzma", []string{"lzma", xzMemoryLimit, "-d"}, nil
 	case n >= 4 && bytes.Equal(header[0:4], []byte{0x28, 0xb5, 0x2f, 0xfd}):
 		return []string{"--zstd", "-xf"}, ".tar.zst", []string{"zstd", "-d"}, nil
 	case n >= 4 && bytes.Equal(header[0:4], []byte{0x04, 0x22, 0x4d, 0x18}):
