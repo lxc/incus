@@ -247,10 +247,19 @@ func AllowMigrationTarget(tx *db.ClusterTx, projectName string) error {
 }
 
 // checkMigrationSource refuses pull mode migration in restricted projects, as the server would connect
-// to an arbitrary remote URL.
+// to an arbitrary remote URL, and container live migration unless low-level options are allowed, as
+// CRIU would restore the runtime state supplied by the source as root.
 func checkMigrationSource(project api.Project, req api.InstancesPost) error {
-	if util.IsTrue(project.Config["restricted"]) && req.Source.Type == "migration" && req.Source.Mode == "pull" {
+	if !util.IsTrue(project.Config["restricted"]) || req.Source.Type != "migration" {
+		return nil
+	}
+
+	if req.Source.Mode == "pull" {
 		return errors.New("Restricted projects aren't allowed to use pull mode migration")
+	}
+
+	if req.Source.Live && req.Type != api.InstanceTypeVM && project.Config["restricted.containers.lowlevel"] != "allow" {
+		return errors.New("Restricted projects aren't allowed to use container live migration")
 	}
 
 	return nil
@@ -1085,6 +1094,11 @@ func checkRestrictions(project api.Project, instances []api.Instance, profiles [
 		// Non-isolation is the default, so when isolation is required, the container must explicitly enable it.
 		if requireIsolated && instType == instancetype.Container && util.IsFalseOrEmpty(config["security.idmap.isolated"]) {
 			return fmt.Errorf(`Non-isolated containers are forbidden on %s %q of project %q ("security.idmap.isolated" must be set to "true")`, entityTypeLabel, entityName, project.Name)
+		}
+
+		// Container runtime state is restored by CRIU as root and may come from a backup or migration.
+		if !allowContainerLowLevel && instType == instancetype.Container && util.IsTrue(config["migration.stateful"]) {
+			return fmt.Errorf(`Stateful containers are forbidden on %s %q of project %q ("migration.stateful" must not be set to "true")`, entityTypeLabel, entityName, project.Name)
 		}
 
 		for key, value := range config {

@@ -4470,6 +4470,11 @@ func (d *lxc) Snapshot(name string, expiry time.Time, stateful bool) error {
 
 // Restore restores a snapshot.
 func (d *lxc) Restore(sourceContainer instance.Instance, stateful bool, diskOnly bool) error {
+	// Check that migration.stateful is set for stateful actions.
+	if stateful && !d.CanLiveMigrate() {
+		return errors.New("Stateful restore requires that the instance migration.stateful be set to true")
+	}
+
 	var ctxMap logger.Ctx
 
 	op, err := operationlock.Create(d.Project().Name, d.Name(), d.op, operationlock.ActionRestore, false, false)
