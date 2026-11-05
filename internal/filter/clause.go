@@ -30,10 +30,17 @@ type ClauseSet struct {
 	ParseStringSlice func(Clause) ([]string, error)
 }
 
+// maxFilterSize bounds a filter string, each clause is matched against every object.
+const maxFilterSize = 4096
+
 // Parse a user-provided filter string.
 func Parse(s string, op OperatorSet) (*ClauseSet, error) {
 	if !op.isValid() {
 		return nil, errors.New("Invalid operator set")
+	}
+
+	if len(s) > maxFilterSize {
+		return nil, errors.New("Filter is too large")
 	}
 
 	clauses := []Clause{}
