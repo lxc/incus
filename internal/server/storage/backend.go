@@ -5570,9 +5570,18 @@ func (b *backend) DeleteBucket(projectName string, bucketName string, op *operat
 		}
 	}
 
-	_ = BucketDBDelete(context.TODO(), b, bucket.ID)
+	err = BucketDBDelete(context.TODO(), b, bucket.ID)
 	if err != nil {
 		return err
+	}
+
+	// Remove the backups directory of the bucket.
+	backupsPath := internalUtil.VarPath("backups", "buckets", b.name, project.StorageBucket(projectName, bucketName))
+	if util.PathExists(backupsPath) {
+		err := os.RemoveAll(backupsPath)
+		if err != nil {
+			return fmt.Errorf("Failed removing bucket backups directory %q: %w", backupsPath, err)
+		}
 	}
 
 	return nil
