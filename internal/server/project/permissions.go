@@ -2187,6 +2187,27 @@ func AllowBackupCreation(tx *db.ClusterTx, projectName string) error {
 	return nil
 }
 
+// AllowBackupTarget returns an error if the project is restricted, as the server would upload the
+// backup to an arbitrary remote URL.
+func AllowBackupTarget(tx *db.ClusterTx, projectName string) error {
+	ctx := context.Background()
+	dbProject, err := cluster.GetProject(ctx, tx.Tx(), projectName)
+	if err != nil {
+		return err
+	}
+
+	project, err := dbProject.ToAPI(ctx, tx.Tx())
+	if err != nil {
+		return err
+	}
+
+	if util.IsTrue(project.Config["restricted"]) {
+		return api.StatusErrorf(http.StatusForbidden, "Restricted projects aren't allowed to upload backups to a remote target")
+	}
+
+	return nil
+}
+
 // AllowSnapshotCreation returns an error if any project-specific restriction is violated
 // when creating a new snapshot in a project.
 func AllowSnapshotCreation(p *api.Project) error {
