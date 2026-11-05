@@ -2,6 +2,8 @@ package oidc
 
 import (
 	"context"
+	"encoding/base64"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -304,6 +306,11 @@ func (o *Verifier) VerifyAccessToken(ctx context.Context, r *http.Request, token
 		return nil, err
 	}
 
+	if isIDToken(token, claims) {
+		// An ID token passes the access token checks but carries the user's login claims, not the access ones.
+		return nil, errors.New("Provided OIDC token is an ID token, not an access token")
+	}
+
 	if o.audience != "" {
 		// Check that the access token includes the configured audience.
 		if !slices.Contains(claims.GetAudience(), o.audience) {
@@ -327,6 +334,37 @@ func (o *Verifier) VerifyAccessToken(ctx context.Context, r *http.Request, token
 	}
 
 	return claims, nil
+}
+
+// isIDToken reports whether a verified JWT is an ID token rather than an access token.
+func isIDToken(token string, claims *oidc.AccessTokenClaims) bool {
+	// Only ID tokens carry the hash of the access token issued with them.
+	_, ok := claims.Claims["at_hash"]
+	if ok {
+		return true
+	}
+
+	// Some providers type the header instead.
+	parts := strings.Split(token, ".")
+	if len(parts) != 3 {
+		return false
+	}
+
+	rawHeader, err := base64.RawURLEncoding.DecodeString(parts[0])
+	if err != nil {
+		return false
+	}
+
+	header := struct {
+		Type string `json:"typ"`
+	}{}
+
+	err = json.Unmarshal(rawHeader, &header)
+	if err != nil {
+		return false
+	}
+
+	return header.Type == "ID"
 }
 
 func (o *Verifier) validateSubnet(r *http.Request, claim any) error {
