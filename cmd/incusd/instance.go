@@ -687,22 +687,23 @@ func autoCreateInstanceSnapshots(ctx context.Context, s *state.State, instances 
 
 		l := logger.AddContext(logger.Ctx{"project": inst.Project().Name, "instance": inst.Name()})
 
+		// One instance's failure must not cost the others their snapshot.
 		snapshotName, err := instance.NextSnapshotName(s, inst, "snap%d")
 		if err != nil {
 			l.Error("Error retrieving next snapshot name", logger.Ctx{"err": err})
-			return err
+			continue
 		}
 
 		expiry, err := internalInstance.GetExpiry(time.Now(), inst.ExpandedConfig()["snapshots.expiry"])
 		if err != nil {
 			l.Error("Error getting snapshots.expiry date")
-			return err
+			continue
 		}
 
 		err = inst.Snapshot(snapshotName, expiry, false)
 		if err != nil {
 			l.Error("Error creating snapshot", logger.Ctx{"snapshot": snapshotName, "err": err})
-			return err
+			continue
 		}
 	}
 
@@ -727,7 +728,8 @@ func pruneExpiredInstanceSnapshots(ctx context.Context, snapshots []instance.Ins
 		err = snapshot.Delete(true, true)
 		instSnapshotsPruneRunning.Delete(snapshot.ID())
 		if err != nil {
-			return fmt.Errorf("Failed to delete expired instance snapshot %q in project %q: %w", snapshot.Name(), snapshot.Project().Name, err)
+			logger.Error("Failed to delete expired instance snapshot", logger.Ctx{"project": snapshot.Project().Name, "snapshot": snapshot.Name(), "err": err})
+			continue
 		}
 
 		logger.Debug("Deleted instance snapshot", logger.Ctx{"project": snapshot.Project().Name, "snapshot": snapshot.Name()})
