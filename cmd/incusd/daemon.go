@@ -1709,7 +1709,9 @@ func (d *Daemon) init() error {
 
 		d.devmonitor, err = fsmonitor.New(d.State().ShutdownCtx, prefixPath)
 		if err != nil {
-			return err
+			// The kernel limits are shared with the containers, don't let them keep the daemon down.
+			logger.Warn("Failed to start the device monitor, device hotplug is unavailable", logger.Ctx{"err": err})
+			d.devmonitor = fsmonitor.NewNoop(prefixPath)
 		}
 
 		// Must occur after d.devmonitor has been initialized.
