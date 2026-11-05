@@ -96,7 +96,7 @@ func (b *VolumeBackup) Rename(newName string) error {
 
 	// Rename the database record.
 	err = b.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
-		return tx.RenameVolumeBackup(ctx, b.name, newName)
+		return tx.RenameVolumeBackup(ctx, b.id, newName)
 	})
 	if err != nil {
 		return err
@@ -129,7 +129,7 @@ func (b *VolumeBackup) Delete() error {
 
 	// Remove the database record.
 	err := b.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
-		return tx.DeleteStoragePoolVolumeBackup(ctx, b.name)
+		return tx.DeleteStoragePoolVolumeBackup(ctx, b.id)
 	})
 	if err != nil {
 		return err

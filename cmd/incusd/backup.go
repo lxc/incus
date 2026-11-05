@@ -61,8 +61,11 @@ func backupCreate(s *state.State, args db.InstanceBackup, sourceInst instance.In
 		b = backup.NewInstanceBackup(s, sourceInst, 0, "", args.CreationDate, args.ExpiryDate, args.InstanceOnly, args.RootOnly, args.OptimizedStorage)
 	} else {
 		// Create the database entry.
+		var backupID int
+
 		err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
-			return tx.CreateInstanceBackup(ctx, args)
+			backupID, err = tx.CreateInstanceBackup(ctx, args)
+			return err
 		})
 		if err != nil {
 			if errors.Is(err, db.ErrAlreadyDefined) {
@@ -74,7 +77,7 @@ func backupCreate(s *state.State, args db.InstanceBackup, sourceInst instance.In
 
 		reverter.Add(func() {
 			_ = s.DB.Cluster.Transaction(context.Background(), func(ctx context.Context, tx *db.ClusterTx) error {
-				return tx.DeleteInstanceBackup(ctx, args.Name)
+				return tx.DeleteInstanceBackup(ctx, backupID)
 			})
 		})
 
@@ -437,8 +440,11 @@ func volumeBackupCreate(s *state.State, args db.StoragePoolVolumeBackup, project
 		backupRow = args
 	} else {
 		// Create the database entry.
+		var backupID int
+
 		err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
-			return tx.CreateStoragePoolVolumeBackup(ctx, args)
+			backupID, err = tx.CreateStoragePoolVolumeBackup(ctx, args)
+			return err
 		})
 		if err != nil {
 			if errors.Is(err, db.ErrAlreadyDefined) {
@@ -450,7 +456,7 @@ func volumeBackupCreate(s *state.State, args db.StoragePoolVolumeBackup, project
 
 		reverter.Add(func() {
 			_ = s.DB.Cluster.Transaction(context.Background(), func(ctx context.Context, tx *db.ClusterTx) error {
-				return tx.DeleteStoragePoolVolumeBackup(ctx, args.Name)
+				return tx.DeleteStoragePoolVolumeBackup(ctx, backupID)
 			})
 		})
 
@@ -698,8 +704,11 @@ func bucketBackupCreate(s *state.State, args db.StoragePoolBucketBackup, project
 		backupRow = args
 	} else {
 		// Create the database entry
+		var backupID int
+
 		err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
-			return tx.CreateStoragePoolBucketBackup(ctx, args)
+			backupID, err = tx.CreateStoragePoolBucketBackup(ctx, args)
+			return err
 		})
 		if err != nil {
 			if errors.Is(err, db.ErrAlreadyDefined) {
@@ -711,7 +720,7 @@ func bucketBackupCreate(s *state.State, args db.StoragePoolBucketBackup, project
 
 		reverter.Add(func() {
 			_ = s.DB.Cluster.Transaction(context.Background(), func(ctx context.Context, tx *db.ClusterTx) error {
-				return tx.DeleteStoragePoolBucketBackup(ctx, args.Name)
+				return tx.DeleteStoragePoolBucketBackup(ctx, backupID)
 			})
 		})
 
