@@ -1918,7 +1918,7 @@ func getTotalsAcrossProjectEntities(info *projectInfo, keys []string, skipUnset 
 				}
 
 				value, ok := volume.Config["size"]
-				if !ok {
+				if !ok || value == "" {
 					if skipUnset {
 						continue
 					}
@@ -1929,6 +1929,15 @@ func getTotalsAcrossProjectEntities(info *projectInfo, keys []string, skipUnset 
 				limit, err := units.ParseByteSizeString(value)
 				if err != nil {
 					return nil, fmt.Errorf(`Parse "size" for custom volume %q in project %q: %w`, volume.Name, info.Project.Name, err)
+				}
+
+				// The storage layer treats a zero size as unset.
+				if limit == 0 {
+					if skipUnset {
+						continue
+					}
+
+					return nil, fmt.Errorf(`Custom volume %q in project %q has no "size" config set`, volume.Name, info.Project.Name)
 				}
 
 				totals[key], err = addLimit(totals[key], limit)
@@ -2004,6 +2013,15 @@ func getInstanceLimits(inst api.Instance, keys []string, skipUnset bool) (map[st
 				}
 
 				return nil, fmt.Errorf("Failed parsing %q for instance %q in project %q", key, inst.Name, inst.Project)
+			}
+
+			// The storage layer treats a zero size as unset.
+			if limit == 0 {
+				if skipUnset {
+					continue
+				}
+
+				return nil, fmt.Errorf(`Instance %q in project %q has no "size" config set on the root device either directly or via a profile`, inst.Name, inst.Project)
 			}
 
 			// Add size.state accounting for VM root disks.
