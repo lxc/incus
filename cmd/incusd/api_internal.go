@@ -855,6 +855,10 @@ func internalImportFromBackup(ctx context.Context, s *state.State, projectName s
 		backupConf.Container.Config = map[string]string{}
 	}
 
+	if backupConf.Container.ExpandedConfig == nil {
+		backupConf.Container.ExpandedConfig = map[string]string{}
+	}
+
 	if backupConf.Container.Devices == nil {
 		backupConf.Container.Devices = make(map[string]map[string]string)
 	}
