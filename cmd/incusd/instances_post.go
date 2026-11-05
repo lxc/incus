@@ -1725,6 +1725,14 @@ func instancesPost(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
+	// A local image may only be used by a caller allowed to view it.
+	if sourceImage != nil && req.Source.Server == "" {
+		err = s.Authorizer.CheckPermission(r.Context(), r, auth.ObjectImage(targetProjectName, sourceImage.Fingerprint), auth.EntitlementCanView)
+		if err != nil {
+			return response.SmartError(err)
+		}
+	}
+
 	err = instance.ValidName(req.Name, false)
 	if err != nil {
 		return response.BadRequest(err)

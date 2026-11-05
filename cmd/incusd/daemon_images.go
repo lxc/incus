@@ -204,6 +204,15 @@ func imageDownload(ctx context.Context, r *http.Request, s *state.State, op *ope
 
 		return err
 	})
+
+	// A private image may only be reused by a caller allowed to view it.
+	if err == nil && r != nil && !imgInfo.Public && !imgInfo.Cached {
+		err = s.Authorizer.CheckPermission(ctx, r, auth.ObjectImage(args.ProjectName, imgInfo.Fingerprint), auth.EntitlementCanView)
+		if err != nil {
+			return nil, false, err
+		}
+	}
+
 	if err == nil {
 		var nodeAddress string
 
