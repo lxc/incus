@@ -30,6 +30,7 @@ import (
 	"github.com/lxc/incus/v7/shared/idmap"
 	"github.com/lxc/incus/v7/shared/logger"
 	"github.com/lxc/incus/v7/shared/subprocess"
+	"github.com/lxc/incus/v7/shared/units"
 	"github.com/lxc/incus/v7/shared/util"
 )
 
@@ -1362,6 +1363,18 @@ func UnpackVolume(d Driver, vol Volume, r io.ReadSeeker, tarArgs []string, unpac
 			}
 
 			defer logger.WarnOnErrorExcept(to.Close, []error{os.ErrClosed}, "Failed to close file")
+
+			// The project checked the declared size, bound the image to it with the migration path's rounding allowance.
+			if vol.ExpandedConfig("size") != "" {
+				sizeBytes, err := units.ParseByteSizeString(vol.ExpandedConfig("size"))
+				if err != nil {
+					return err
+				}
+
+				if sizeBytes > 0 && hdr.Size > sizeBytes+(4*1024*1024) {
+					return fmt.Errorf("Backup image size (%d) exceeds the volume size (%d)", hdr.Size, sizeBytes)
+				}
+			}
 
 			// Restore original size of volume from raw block backup file size.
 			d.Logger().Debug("Setting volume size from source", logger.Ctx{"source": srcFile, "target": targetPath, "size": hdr.Size})
