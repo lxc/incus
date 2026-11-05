@@ -245,6 +245,7 @@ import (
 	"strings"
 	"sync"
 	"time"
+	"unicode"
 
 	"github.com/insomniacslk/dhcp/dhcpv4"
 	"github.com/insomniacslk/dhcp/dhcpv4/nclient4"
@@ -1071,6 +1072,16 @@ func appendUnique(list []string, value string) []string {
 	return append(list, value)
 }
 
+// appendUniqueDomain appends a DHCP-supplied domain name unless it would break the resolv.conf line.
+func appendUniqueDomain(list []string, value string) []string {
+	value = strings.TrimRight(value, "\x00")
+	if strings.ContainsFunc(value, func(r rune) bool { return unicode.IsSpace(r) || unicode.IsControl(r) }) {
+		return list
+	}
+
+	return appendUnique(list, value)
+}
+
 func (c *cmdForknet) dhcpApplyDNS(l *logrus.Logger) error {
 	nameservers := []string{}
 	searchLabels := []string{}
@@ -1123,7 +1134,7 @@ func (c *cmdForknet) dhcpApplyDNS(l *logrus.Logger) error {
 
 		// Domain name (option 15).
 		if c.initialDomain == "" {
-			domainNames = appendUnique(domainNames, lease.Offer.DomainName())
+			domainNames = appendUniqueDomain(domainNames, lease.Offer.DomainName())
 		}
 
 		// Domain search list (option 119).
@@ -1131,7 +1142,7 @@ func (c *cmdForknet) dhcpApplyDNS(l *logrus.Logger) error {
 			ds := lease.Offer.DomainSearch()
 			if ds != nil {
 				for _, s := range ds.Labels {
-					searchLabels = appendUnique(searchLabels, s)
+					searchLabels = appendUniqueDomain(searchLabels, s)
 				}
 			}
 		}
@@ -1156,7 +1167,7 @@ func (c *cmdForknet) dhcpApplyDNS(l *logrus.Logger) error {
 			dsl := reply.Options.DomainSearchList()
 			if dsl != nil {
 				for _, s := range dsl.Labels {
-					searchLabels = appendUnique(searchLabels, s)
+					searchLabels = appendUniqueDomain(searchLabels, s)
 				}
 			}
 		}
