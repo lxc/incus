@@ -3141,6 +3141,13 @@
 						}
 					},
 					{
+						"volatile.\u003cname\u003e.last_state.kind": {
+							"longdesc": "The kind of physical device that was moved into an instance.",
+							"shortdesc": "Network device original kind",
+							"type": "string"
+						}
+					},
+					{
 						"volatile.\u003cname\u003e.last_state.mtu": {
 							"longdesc": "The original MTU that was used when moving a physical device into an instance.",
 							"shortdesc": "Network device original MTU",

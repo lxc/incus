@@ -238,6 +238,7 @@ func (d *infinibandPhysical) postStop() error {
 			"host_name":                "",
 			"last_state.hwaddr":        "",
 			"last_state.mtu":           "",
+			"last_state.kind":          "",
 			"last_state.pci.slot.name": "",
 			"last_state.pci.driver":    "",
 		})

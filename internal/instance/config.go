@@ -1349,6 +1349,15 @@ func ConfigKeyChecker(key string, instanceType api.InstanceType) (func(value str
 			return validate.IsListOf(validate.IsNetworkAddress), nil
 		}
 
+		// gendoc:generate(entity=instance, group=volatile, key=volatile.<name>.last_state.kind)
+		// The kind of physical device that was moved into an instance.
+		// ---
+		//  type: string
+		//  shortdesc: Network device original kind
+		if strings.HasSuffix(key, ".last_state.kind") {
+			return validate.IsAny, nil
+		}
+
 		// gendoc:generate(entity=instance, group=volatile, key=volatile.<name>.last_state.mtu)
 		// The original MTU that was used when moving a physical device into an instance.
 		// ---
