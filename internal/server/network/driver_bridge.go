@@ -1883,6 +1883,11 @@ func (n *bridge) setup(oldConfig map[string]string) error {
 			dnsmasqCmd = append(dnsmasqCmd, "-S", fmt.Sprintf("/%s/", dnsDomain))
 		}
 
+		// Only use the generated names in managed mode, ignoring those supplied by DHCP clients.
+		if n.config["dns.mode"] == "" || n.config["dns.mode"] == "managed" {
+			dnsmasqCmd = append(dnsmasqCmd, "--dhcp-ignore-names")
+		}
+
 		// Create a config file to contain additional config (and to prevent dnsmasq from reading /etc/dnsmasq.conf)
 		err = os.WriteFile(internalUtil.VarPath("networks", n.name, "dnsmasq.raw"), fmt.Appendf(nil, "%s\n", n.config["raw.dnsmasq"]), 0o644)
 		if err != nil {
