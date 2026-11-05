@@ -105,7 +105,9 @@ func hasMountEntry(name string) int {
 			return -1
 		}
 
-		cleanPath := filepath.Clean(tokens[4])
+		// The kernel escapes space, tab, newline and backslash in mount points.
+		mountPath := strings.NewReplacer(`\040`, " ", `\011`, "\t", `\012`, "\n", `\134`, `\`).Replace(tokens[4])
+		cleanPath := filepath.Clean(mountPath)
 		if cleanPath == actualPath {
 			return 1
 		}
