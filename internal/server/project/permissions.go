@@ -368,7 +368,7 @@ func checkRestrictionsOnVolatileConfig(project api.Project, instanceType instanc
 				return true
 			}
 
-			if strings.HasSuffix(key, ".hwaddr") {
+			if strings.HasSuffix(key, ".hwaddr") && !strings.Contains(key, ".last_state.") {
 				return true
 			}
 		}

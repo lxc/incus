@@ -482,6 +482,12 @@ func UpdateDNSMasqStatic(s *state.State, networkName string) error {
 				continue
 			}
 
+			// Skip entries that would break the dnsmasq host file.
+			_, err = net.ParseMAC(d["hwaddr"])
+			if err != nil {
+				continue
+			}
+
 			// Add the new host entries.
 			_, ok := entries[d["parent"]]
 			if !ok {

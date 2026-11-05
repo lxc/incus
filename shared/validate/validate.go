@@ -266,6 +266,16 @@ func IsNetworkMAC(value string) error {
 	return nil
 }
 
+// IsHardwareAddress validates whether the string is a hardware address of any length.
+func IsHardwareAddress(value string) error {
+	_, err := net.ParseMAC(value)
+	if err != nil {
+		return errors.New("Invalid hardware address")
+	}
+
+	return nil
+}
+
 // IsMACPattern validates whether the string is a MAC address pattern.
 func IsMACPattern(value string) error {
 	match, _ := regexp.MatchString(`^(?:[0-9a-fA-FxX]{2}:){5}[0-9a-fA-FxX]{2}$`, value)

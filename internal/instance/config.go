@@ -1315,7 +1315,7 @@ func ConfigKeyChecker(key string, instanceType api.InstanceType) (func(value str
 		//  type: string
 		//  shortdesc: Network device MAC address
 		if strings.HasSuffix(key, ".hwaddr") {
-			return validate.IsAny, nil
+			return validate.Optional(validate.IsHardwareAddress), nil
 		}
 
 		// gendoc:generate(entity=instance, group=volatile, key=volatile.<name>.io.bus)
@@ -1369,7 +1369,7 @@ func ConfigKeyChecker(key string, instanceType api.InstanceType) (func(value str
 		//  type: string
 		//  shortdesc: Network device original MAC
 		if strings.HasSuffix(key, ".last_state.hwaddr") {
-			return validate.IsAny, nil
+			return validate.Optional(validate.IsHardwareAddress), nil
 		}
 
 		// gendoc:generate(entity=instance, group=volatile, key=volatile.<name>.last_state.ip_addresses)
@@ -1459,7 +1459,7 @@ func ConfigKeyChecker(key string, instanceType api.InstanceType) (func(value str
 		//  type: string
 		//  shortdesc: SR-IOV virtual function original MAC
 		if strings.HasSuffix(key, ".last_state.vf.hwaddr") {
-			return validate.IsAny, nil
+			return validate.Optional(validate.IsHardwareAddress), nil
 		}
 
 		// gendoc:generate(entity=instance, group=volatile, key=volatile.<name>.last_state.vf.id)
