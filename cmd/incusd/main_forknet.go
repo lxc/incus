@@ -970,11 +970,23 @@ func (c *cmdForknet) dhcpRunV6(errorChannel chan error, ready func(), iface stri
 	}
 }
 
+// readFileLimited reads at most limit bytes of a file the instance may have planted.
+func readFileLimited(path string, limit int64) ([]byte, error) {
+	f, err := os.Open(path)
+	if err != nil {
+		return nil, err
+	}
+
+	defer func() { _ = f.Close() }()
+
+	return io.ReadAll(io.LimitReader(f, limit))
+}
+
 // Get a stable DUID, recording it on disk.
 func (c *cmdForknet) loadOrCreateDUID(ifaces []net.Interface) (dhcpv6.DUID, error) {
 	duidPath := filepath.Join(c.instNetworkPath, "dhcp6.duid")
 
-	bb, err := os.ReadFile(duidPath)
+	bb, err := readFileLimited(duidPath, 4096)
 	if err == nil {
 		duid, err := dhcpv6.DUIDFromBytes(bb)
 		if err == nil {

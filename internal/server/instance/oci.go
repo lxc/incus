@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"io/fs"
 	"os"
 	"path/filepath"
@@ -14,11 +15,27 @@ import (
 
 // OCISpec returns the parsed OCI config of an instance, nil when it's not an application container.
 func OCISpec(instPath string) (*ociSpecs.Spec, error) {
-	data, err := os.ReadFile(filepath.Join(instPath, "config.json"))
+	f, err := os.Open(filepath.Join(instPath, "config.json"))
 	if errors.Is(err, fs.ErrNotExist) {
 		return nil, nil
 	}
 
+	if err != nil {
+		return nil, err
+	}
+
+	defer func() { _ = f.Close() }()
+
+	fi, err := f.Stat()
+	if err != nil {
+		return nil, err
+	}
+
+	if !fi.Mode().IsRegular() || fi.Size() > FileMaxSize {
+		return nil, errors.New("Invalid OCI config file")
+	}
+
+	data, err := io.ReadAll(io.LimitReader(f, FileMaxSize))
 	if err != nil {
 		return nil, err
 	}
