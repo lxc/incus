@@ -856,7 +856,8 @@ test_backup_volume_export_with_project() {
 
     if [ "${project}" != "default" ]; then
         # Downloads are bounded by the project's disk budget.
-        incus project set "$project-b" limits.disk=10B
+        disk_usage="$(incus query "/1.0/projects/${project}-b/state" | jq -r .resources.disk.usage)"
+        incus project set "$project-b" limits.disk="$((disk_usage + 10))B"
         incus storage volume import-url "${custom_vol_pool}" "http://127.0.0.1:${port}/testvol.tar.gz" testvol3 --project "$project-b" 2>&1 | grep -F "exceeding quota"
         incus project unset "$project-b" limits.disk
 
