@@ -88,6 +88,8 @@ Instances that get started follow the same order as when the server starts up, w
 
 Incus can automatically detect and recover from a broken server. This is done by setting the {config:option}`server-cluster:cluster.healing_threshold` configuration to a non-zero value.
 Instances are automatically evacuated to other servers after the leader has marked a cluster member has offline.
+Each healing run makes up to 5 attempts. If some instances can't be moved yet, for example because their storage is still in use,
+healing is retried every minute for as long as the server remains offline.
 
 When the broken server is available again, you must manually restore it as if it had been manually evacuated.
 
