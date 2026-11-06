@@ -1610,10 +1610,6 @@ definitions:
         x-go-package: github.com/lxc/incus/v7/shared/api
     InitNetworksProjectPost:
         properties:
-            Project:
-                description: Project in which the network will reside
-                example: default
-                type: string
             config:
                 $ref: '#/definitions/ConfigMap'
             description:
@@ -1629,6 +1625,11 @@ definitions:
                 example: mybr1
                 type: string
                 x-go-name: Name
+            project:
+                description: Project in which the network will reside
+                example: default
+                type: string
+                x-go-name: Project
             type:
                 description: The network type (refer to doc/networks.md)
                 example: bridge
@@ -1699,10 +1700,6 @@ definitions:
         x-go-package: github.com/lxc/incus/v7/shared/api
     InitProfileProjectPost:
         properties:
-            Project:
-                description: Project in which the profile will reside
-                example: default
-                type: string
             config:
                 $ref: '#/definitions/ConfigMap'
             description:
@@ -1717,19 +1714,16 @@ definitions:
                 example: foo
                 type: string
                 x-go-name: Name
+            project:
+                description: Project in which the profile will reside
+                example: default
+                type: string
+                x-go-name: Project
         title: InitProfileProjectPost represents the fields of a new profile along with its associated project.
         type: object
         x-go-package: github.com/lxc/incus/v7/shared/api
     InitStorageVolumesProjectPost:
         properties:
-            Pool:
-                description: Storage pool in which the volume will reside
-                example: default
-                type: string
-            Project:
-                description: Project in which the volume will reside
-                example: default
-                type: string
             config:
                 $ref: '#/definitions/ConfigMap'
             content_type:
@@ -1753,6 +1747,16 @@ definitions:
                 example: foo
                 type: string
                 x-go-name: Name
+            pool:
+                description: Storage pool in which the volume will reside
+                example: default
+                type: string
+                x-go-name: Pool
+            project:
+                description: Project in which the volume will reside
+                example: default
+                type: string
+                x-go-name: Project
             restore:
                 description: |-
                     Name of a snapshot to restore
@@ -2224,20 +2228,6 @@ definitions:
         x-go-package: github.com/lxc/incus/v7/shared/api
     InstancePost:
         properties:
-            Config:
-                $ref: '#/definitions/ConfigMap'
-            Devices:
-                $ref: '#/definitions/DevicesMap'
-            Profiles:
-                description: |-
-                    List of profiles applied to the instance.
-
-                    API extension: instance_move_config
-                example:
-                    - default
-                items:
-                    type: string
-                type: array
             allow_inconsistent:
                 description: |-
                     AllowInconsistent allow inconsistent copies when migrating.
@@ -2246,6 +2236,10 @@ definitions:
                 example: false
                 type: boolean
                 x-go-name: AllowInconsistent
+            config:
+                $ref: '#/definitions/ConfigMap'
+            devices:
+                $ref: '#/definitions/DevicesMap'
             instance_only:
                 description: Whether snapshots should be discarded (migration only)
                 example: false
@@ -2274,6 +2268,17 @@ definitions:
                 example: baz
                 type: string
                 x-go-name: Pool
+            profiles:
+                description: |-
+                    List of profiles applied to the instance.
+
+                    API extension: instance_move_config
+                example:
+                    - default
+                items:
+                    type: string
+                type: array
+                x-go-name: Profiles
             project:
                 description: |-
                     Target project for local cross-project move
@@ -4725,16 +4730,18 @@ definitions:
     ProjectStateResource:
         description: ProjectStateResource represents the state of a particular resource in a project
         properties:
-            Limit:
+            limit:
                 description: Limit for the resource (-1 if none)
                 example: 10
                 format: int64
                 type: integer
-            Usage:
+                x-go-name: Limit
+            usage:
                 description: Current usage for the resource
                 example: 4
                 format: int64
                 type: integer
+                x-go-name: Usage
         type: object
         x-go-package: github.com/lxc/incus/v7/shared/api
     ProjectsPost:
@@ -5220,26 +5227,30 @@ definitions:
     ResourcesLoad:
         description: ResourcesLoad represents system load information
         properties:
-            Average1Min:
+            average1min:
                 description: Load average in the past minute
                 example: 0.69
                 format: double
                 type: number
-            Average5Min:
+                x-go-name: Average1Min
+            average5min:
                 description: Load average in the past 5 minutes
                 example: 1.1
                 format: double
                 type: number
-            Average10Min:
+                x-go-name: Average5Min
+            average10min:
                 description: Load average in the past 10 minutes
                 example: 1.29
                 format: double
                 type: number
-            Processes:
+                x-go-name: Average10Min
+            processes:
                 description: The number of active processes
                 example: 1234
                 format: int64
                 type: integer
+                x-go-name: Processes
         type: object
         x-go-package: github.com/lxc/incus/v7/shared/api
     ResourcesMemory:
@@ -6434,27 +6445,30 @@ definitions:
     ServerStorageDriverInfo:
         description: ServerStorageDriverInfo represents the read-only info about a storage driver
         properties:
-            Name:
+            name:
                 description: |-
                     Name of the driver
 
                     API extension: server_supported_storage_drivers
                 example: zfs
                 type: string
-            Remote:
+                x-go-name: Name
+            remote:
                 description: |-
                     Whether the driver has remote volumes
 
                     API extension: server_supported_storage_drivers
                 example: false
                 type: boolean
-            Version:
+                x-go-name: Remote
+            version:
                 description: |-
                     Version of the driver
 
                     API extension: server_supported_storage_drivers
                 example: 0.8.4-1ubuntu11
                 type: string
+                x-go-name: Version
         type: object
         x-go-package: github.com/lxc/incus/v7/shared/api
     ServerUntrusted:
