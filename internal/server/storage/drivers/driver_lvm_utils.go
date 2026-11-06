@@ -710,7 +710,7 @@ func (d *lvm) acquireExclusive(vol Volume) (func(), error) {
 	}
 
 	return func() {
-		if vol.ContentType() == ContentTypeBlock && vol.ExpandedConfig("block.type") == BlockVolumeTypeQcow2 {
+		if vol.ContentType() == ContentTypeBlock && vol.ExpandedConfig("block.type") == BlockVolumeTypeQcow2 && !d.exclusiveVolume(vol) {
 			_, _ = subprocess.TryRunCommand("lvchange", "--activate", "sy", "--ignoreactivationskip", volDevPath)
 		}
 	}, nil
@@ -1205,7 +1205,7 @@ func (d *lvm) activateVolume(vol Volume) (bool, error) {
 
 	if d.clustered {
 		// Block and ISO volumes may be used from several members at once.
-		if vol.Type() == VolumeTypeVM || vol.ContentType() == ContentTypeBlock || vol.ContentType() == ContentTypeISO {
+		if (vol.Type() == VolumeTypeVM || vol.ContentType() == ContentTypeBlock || vol.ContentType() == ContentTypeISO) && !d.exclusiveVolume(vol) {
 			_, err := subprocess.RunCommand("lvchange", "--activate", "sy", "--ignoreactivationskip", volPath)
 			if err != nil {
 				return false, fmt.Errorf("Failed to activate LVM logical volume %q: %w", volPath, err)
