@@ -495,6 +495,135 @@ func instanceLoadFromDisk(s *state.State, instanceType instancetype.Type, projec
 	return instance.Load(s, *instDBArgs, emptyProject)
 }
 
+// instanceShutdown stops a single instance as part of the server shutdown.
+func instanceShutdown(s *state.State, inst instance.Instance, forceCh <-chan struct{}, forceTimeout time.Duration) {
+	// Determine how long to wait for the instance to shutdown cleanly.
+	timeoutSeconds := 30
+	value, ok := inst.ExpandedConfig()["boot.host_shutdown_timeout"]
+	if ok {
+		timeoutSeconds, _ = strconv.Atoi(value)
+	}
+
+	timeout := time.Second * time.Duration(timeoutSeconds)
+
+	// Record a forced stop, blocking the clean stop path from resolving the warning.
+	var forcedMu sync.Mutex
+	forced := false
+	markForced := func(message string) {
+		forcedMu.Lock()
+		defer forcedMu.Unlock()
+
+		forced = true
+		instanceForcedStopWarn(s, inst, message)
+	}
+
+	// Shutdown the instance without waiting past the timeouts on an unresponsive instance.
+	done := make(chan struct{})
+	go func() {
+		defer close(done)
+
+		// Save and restore the ephemeral bit (if DB is available).
+		if inst.ID() > 0 {
+			ephemeral := inst.IsEphemeral()
+			if ephemeral {
+				// Unset ephemeral flag if present.
+				args := db.InstanceArgs{
+					Architecture: inst.Architecture(),
+					Config:       inst.LocalConfig(),
+					Description:  inst.Description(),
+					Devices:      inst.LocalDevices(),
+					Ephemeral:    false,
+					Profiles:     inst.Profiles(),
+					Project:      inst.Project().Name,
+					Type:         inst.Type(),
+					Snapshot:     inst.IsSnapshot(),
+				}
+
+				err := inst.Update(args, false)
+				if err == nil {
+					// On function return, set the flag back on.
+					defer func() {
+						args.Ephemeral = ephemeral
+						_ = inst.Update(args, false)
+					}()
+				}
+			}
+		}
+
+		// Perform the shutdown action.
+		action := inst.ExpandedConfig()["boot.host_shutdown_action"]
+
+		// Regular shutdown with a forced stop as fallback.
+		shutdown := func() {
+			err := inst.Shutdown(timeout)
+			if err != nil {
+				logger.Warn("Failed shutting down instance, forcefully stopping", logger.Ctx{"project": inst.Project().Name, "instance": inst.Name(), "timeout": timeout, "err": err})
+				markForced(fmt.Sprintf("Didn't shut down within %s during server shutdown", timeout))
+				err = inst.Stop(false)
+				if err != nil {
+					logger.Warn("Failed forcefully stopping instance", logger.Ctx{"project": inst.Project().Name, "instance": inst.Name(), "err": err})
+				}
+			}
+		}
+
+		switch action {
+		case "stateful-stop":
+			err := inst.Stop(true)
+			if err != nil {
+				logger.Warn("Failed statefully stopping instance, shutting down instead", logger.Ctx{"project": inst.Project().Name, "instance": inst.Name(), "err": err})
+				shutdown()
+			}
+
+		case "force-stop":
+			err := inst.Stop(false)
+			if err != nil {
+				logger.Warn("Failed forcefully stopping instance", logger.Ctx{"project": inst.Project().Name, "instance": inst.Name(), "err": err})
+			}
+
+		default:
+			shutdown()
+		}
+
+		// Clear any earlier warning once the configured action completed on its own.
+		forcedMu.Lock()
+		defer forcedMu.Unlock()
+
+		if !forced {
+			instanceForcedStopResolve(s, inst)
+		}
+	}()
+
+	wedged := false
+	select {
+	case <-done:
+	case <-time.After(timeout + forceTimeout):
+		logger.Error("Timed out stopping instance, forcefully stopping it", logger.Ctx{"project": inst.Project().Name, "instance": inst.Name(), "timeout": timeout})
+		markForced(fmt.Sprintf("Stop didn't complete within %s during server shutdown", timeout+forceTimeout))
+		wedged = true
+	case <-forceCh:
+		logger.Warn("Forced shutdown, forcefully stopping instance", logger.Ctx{"project": inst.Project().Name, "instance": inst.Name()})
+		markForced("Server shutdown was forced before the instance stopped")
+		wedged = true
+	}
+
+	// Take over the wedged stop without waiting on it any further.
+	if wedged {
+		go func() {
+			err := inst.Stop(false)
+			if err != nil {
+				logger.Error("Failed forcefully stopping instance", logger.Ctx{"project": inst.Project().Name, "instance": inst.Name(), "err": err})
+			}
+		}()
+	}
+
+	if inst.ID() > 0 {
+		// If DB was available then the instance shutdown process will have set
+		// the last power state to STOPPED, so set that back to RUNNING so that
+		// when the daemon restarts the instance will be started again.
+		_ = inst.VolatileSet(map[string]string{"volatile.last_state.power": instance.PowerStateRunning})
+	}
+}
+
 func instancesShutdown(ctx context.Context, s *state.State, instances []instance.Instance, forceTimeout time.Duration) {
 	sort.Sort(instanceStopList(instances))
 
@@ -516,132 +645,7 @@ func instancesShutdown(ctx context.Context, s *state.State, instances []instance
 	for range maxConcurrent {
 		go func(instShutdownCh <-chan instance.Instance) {
 			for inst := range instShutdownCh {
-				// Determine how long to wait for the instance to shutdown cleanly.
-				timeoutSeconds := 30
-				value, ok := inst.ExpandedConfig()["boot.host_shutdown_timeout"]
-				if ok {
-					timeoutSeconds, _ = strconv.Atoi(value)
-				}
-
-				timeout := time.Second * time.Duration(timeoutSeconds)
-
-				// Record a forced stop, blocking the clean stop path from resolving the warning.
-				var forcedMu sync.Mutex
-				forced := false
-				markForced := func(message string) {
-					forcedMu.Lock()
-					defer forcedMu.Unlock()
-
-					forced = true
-					instanceForcedStopWarn(s, inst, message)
-				}
-
-				// Shutdown the instance without waiting past the timeouts on an unresponsive instance.
-				done := make(chan struct{})
-				go func() {
-					defer close(done)
-
-					// Save and restore the ephemeral bit (if DB is available).
-					if inst.ID() > 0 {
-						ephemeral := inst.IsEphemeral()
-						if ephemeral {
-							// Unset ephemeral flag if present.
-							args := db.InstanceArgs{
-								Architecture: inst.Architecture(),
-								Config:       inst.LocalConfig(),
-								Description:  inst.Description(),
-								Devices:      inst.LocalDevices(),
-								Ephemeral:    false,
-								Profiles:     inst.Profiles(),
-								Project:      inst.Project().Name,
-								Type:         inst.Type(),
-								Snapshot:     inst.IsSnapshot(),
-							}
-
-							err := inst.Update(args, false)
-							if err == nil {
-								// On function return, set the flag back on.
-								defer func() {
-									args.Ephemeral = ephemeral
-									_ = inst.Update(args, false)
-								}()
-							}
-						}
-					}
-
-					// Perform the shutdown action.
-					action := inst.ExpandedConfig()["boot.host_shutdown_action"]
-
-					// Regular shutdown with a forced stop as fallback.
-					shutdown := func() {
-						err := inst.Shutdown(timeout)
-						if err != nil {
-							logger.Warn("Failed shutting down instance, forcefully stopping", logger.Ctx{"project": inst.Project().Name, "instance": inst.Name(), "timeout": timeout, "err": err})
-							markForced(fmt.Sprintf("Didn't shut down within %s during server shutdown", timeout))
-							err = inst.Stop(false)
-							if err != nil {
-								logger.Warn("Failed forcefully stopping instance", logger.Ctx{"project": inst.Project().Name, "instance": inst.Name(), "err": err})
-							}
-						}
-					}
-
-					switch action {
-					case "stateful-stop":
-						err := inst.Stop(true)
-						if err != nil {
-							logger.Warn("Failed statefully stopping instance, shutting down instead", logger.Ctx{"project": inst.Project().Name, "instance": inst.Name(), "err": err})
-							shutdown()
-						}
-
-					case "force-stop":
-						err := inst.Stop(false)
-						if err != nil {
-							logger.Warn("Failed forcefully stopping instance", logger.Ctx{"project": inst.Project().Name, "instance": inst.Name(), "err": err})
-						}
-
-					default:
-						shutdown()
-					}
-
-					// Clear any earlier warning once the configured action completed on its own.
-					forcedMu.Lock()
-					defer forcedMu.Unlock()
-
-					if !forced {
-						instanceForcedStopResolve(s, inst)
-					}
-				}()
-
-				wedged := false
-				select {
-				case <-done:
-				case <-time.After(timeout + forceTimeout):
-					logger.Error("Timed out stopping instance, forcefully stopping it", logger.Ctx{"project": inst.Project().Name, "instance": inst.Name(), "timeout": timeout})
-					markForced(fmt.Sprintf("Stop didn't complete within %s during server shutdown", timeout+forceTimeout))
-					wedged = true
-				case <-forceCh:
-					logger.Warn("Forced shutdown, forcefully stopping instance", logger.Ctx{"project": inst.Project().Name, "instance": inst.Name()})
-					markForced("Server shutdown was forced before the instance stopped")
-					wedged = true
-				}
-
-				// Take over the wedged stop without waiting on it any further.
-				if wedged {
-					go func() {
-						err := inst.Stop(false)
-						if err != nil {
-							logger.Error("Failed forcefully stopping instance", logger.Ctx{"project": inst.Project().Name, "instance": inst.Name(), "err": err})
-						}
-					}()
-				}
-
-				if inst.ID() > 0 {
-					// If DB was available then the instance shutdown process will have set
-					// the last power state to STOPPED, so set that back to RUNNING so that
-					// when the daemon restarts the instance will be started again.
-					_ = inst.VolatileSet(map[string]string{"volatile.last_state.power": instance.PowerStateRunning})
-				}
-
+				instanceShutdown(s, inst, forceCh, forceTimeout)
 				wg.Done()
 			}
 		}(instShutdownCh)
