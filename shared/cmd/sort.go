@@ -51,11 +51,11 @@ func (a SortColumnsNaturally) Less(i, j int) bool {
 			continue
 		}
 
-		if a[i][k] == "" {
+		if a[i][k] == "" || a[i][k][0] == '(' {
 			return false
 		}
 
-		if a[j][k] == "" {
+		if a[j][k] == "" || a[j][k][0] == '(' {
 			return true
 		}
 
