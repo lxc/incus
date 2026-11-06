@@ -1019,10 +1019,14 @@ test_projects_restrictions() {
     incus project set p1 restricted.devices.disk=allow
     incus config device add c1 testdir disk source="${TEST_DIR}" path=/foo
 
+    # The autostart delay is a low-level key as it holds up the daemon startup.
+    ! incus config set c1 boot.autostart.delay=10 || false
+
     # Relaxing restricted.containers.lowlevel to 'allow' makes it possible set
     # low-level keys.
     incus project set p1 restricted.containers.lowlevel=allow
     incus config set c1 "raw.idmap=both 0 0"
+    incus config set c1 boot.autostart.delay=10
 
     incus delete c1
 
@@ -1103,6 +1107,35 @@ test_projects_restrictions() {
 
     incus network delete "${netManaged}"
     incus storage volume delete "${pool}" "v-proj$$"
+}
+
+# Test that the boot order of a project doesn't hold up other projects
+test_projects_boot_order() {
+    ensure_import_testimage
+    ensure_has_localhost_remote "${INCUS_ADDR}"
+
+    incus project create p1 -c features.images=false -c features.profiles=false
+    incus project create p2 -c features.images=false -c features.profiles=false
+
+    incus launch testimage a --project p1 -c boot.autostart=true -c boot.autostart.priority=2 -c boot.autostart.delay=10
+    incus launch testimage b --project p1 -c boot.autostart=true -c boot.autostart.priority=1
+    incus launch testimage c --project p2 -c boot.autostart=true -c boot.autostart.priority=1
+
+    shutdown_incus "${INCUS_DIR}"
+    respawn_incus "${INCUS_DIR}" true
+
+    started() {
+        date -d "$(incus query "/1.0/instances/${1}?project=${2}" | jq -r .last_used_at)" +%s
+    }
+
+    # The delay applies within the project, not to the other one.
+    [ "$(started b p1)" -ge "$(($(started a p1) + 10))" ]
+    [ "$(started c p2)" -lt "$(started b p1)" ]
+
+    incus delete -f a b --project p1
+    incus delete -f c --project p2
+    incus project delete p1
+    incus project delete p2
 }
 
 # Test project state api
