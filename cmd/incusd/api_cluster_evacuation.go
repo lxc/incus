@@ -587,18 +587,9 @@ func restoreClusterMember(d *Daemon, r *http.Request, skipInstances bool) respon
 			}
 
 			// Start the instance.
-			_ = op.ExtendMetadata(map[string]any{"evacuation_progress": fmt.Sprintf("Starting %q in project %q", inst.Name(), inst.Project().Name)})
-
-			// If configured for stateful stop, try restoring its state.
-			action := inst.CanMigrate()
-			if action == "stateful-stop" {
-				err = inst.Start(true)
-			} else {
-				err = inst.Start(false)
-			}
-
+			err = restoreStartInstance(inst, op)
 			if err != nil {
-				return fmt.Errorf("Failed to start instance %q: %w", inst.Name(), err)
+				return err
 			}
 		}
 
@@ -631,6 +622,19 @@ func restoreClusterMember(d *Daemon, r *http.Request, skipInstances bool) respon
 	}
 
 	return operations.OperationResponse(op)
+}
+
+// restoreStartInstance starts an instance left on the member being restored.
+func restoreStartInstance(inst instance.Instance, op *operations.Operation) error {
+	_ = op.ExtendMetadata(map[string]any{"evacuation_progress": fmt.Sprintf("Starting %q in project %q", inst.Name(), inst.Project().Name)})
+
+	// If configured for stateful stop, try restoring its state.
+	err := inst.Start(inst.CanMigrate() == "stateful-stop")
+	if err != nil {
+		return fmt.Errorf("Failed to start instance %q: %w", inst.Name(), err)
+	}
+
+	return nil
 }
 
 func restoreClusterMemberFunc(inst instance.Instance, op *operations.Operation, originName string, r *http.Request, s *state.State) error {
