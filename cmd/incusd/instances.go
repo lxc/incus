@@ -736,7 +736,7 @@ func instancesInStopOrder(limit chan struct{}, instances []instance.Instance, pr
 			end = len(sorted)
 		}
 
-		logger.Info("Stopping instances", logger.Ctx{"stopPriority": priority})
+		logger.Info("Stopping instances", logger.Ctx{"project": sorted[0].Project().Name, "stopPriority": priority})
 
 		err := concurrentInstanceActions(limit, sorted[:end], prefix, fn)
 		if err != nil {
@@ -764,10 +764,12 @@ func instancesShutdown(ctx context.Context, s *state.State, instances []instance
 	// Limit shutdown concurrency to the number of CPU cores.
 	limit := make(chan struct{}, runtime.NumCPU())
 
-	_ = instancesInStopOrder(limit, running, "Failed to stop instances", func(inst instance.Instance) error {
-		instanceShutdown(s, inst, forceCh, forceTimeout)
+	_ = instancesPerProject(running, func(projectInstances []instance.Instance) error {
+		return instancesInStopOrder(limit, projectInstances, "Failed to stop instances", func(inst instance.Instance) error {
+			instanceShutdown(s, inst, forceCh, forceTimeout)
 
-		return nil
+			return nil
+		})
 	})
 }
 
