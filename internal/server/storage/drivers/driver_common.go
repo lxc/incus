@@ -430,6 +430,16 @@ func (d *common) DelegateVolume(vol Volume, pid int) error {
 	return nil
 }
 
+// SetVolumeShared switches the lock of an active volume between shared and exclusive.
+func (d *common) SetVolumeShared(vol Volume, shared bool) error {
+	return nil
+}
+
+// CheckVolumeLock checks that a volume isn't locked by another cluster member.
+func (d *common) CheckVolumeLock(vol Volume) error {
+	return nil
+}
+
 // RenameVolume renames the volume and all related filesystem entries.
 func (d *common) RenameVolume(vol Volume, newVolName string, op *operations.Operation) error {
 	return ErrNotSupported

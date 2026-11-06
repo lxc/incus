@@ -100,6 +100,12 @@ type Driver interface {
 	// not mounted.
 	UnmountVolumeSnapshot(snapVol Volume, op *operations.Operation) (bool, error)
 
+	// SetVolumeShared switches the lock of an active volume between shared and exclusive.
+	SetVolumeShared(vol Volume, shared bool) error
+
+	// CheckVolumeLock checks that a volume isn't locked by another cluster member.
+	CheckVolumeLock(vol Volume) error
+
 	CanRestoreVolume(vol Volume, snapshotName string) error
 	CreateVolumeSnapshot(snapVol Volume, op *operations.Operation) error
 	GetQcow2BackingFilePath(vol Volume) (string, error)
