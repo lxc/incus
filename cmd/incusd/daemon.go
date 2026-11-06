@@ -1801,6 +1801,9 @@ func (d *Daemon) init() error {
 
 		// Remove expired tokens (hourly)
 		d.tasks.Add(autoRemoveExpiredTokensTask(d))
+
+		// Cancel operations whose requestor lost access (every 30 seconds)
+		d.tasks.Add(operationsRecheckAccessTask(d))
 	}
 
 	// Start all background tasks
