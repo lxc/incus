@@ -25,6 +25,7 @@ import (
 	"github.com/lxc/incus/v7/internal/server/instance/instancetype"
 	"github.com/lxc/incus/v7/internal/server/project"
 	"github.com/lxc/incus/v7/internal/server/state"
+	storagePools "github.com/lxc/incus/v7/internal/server/storage"
 	"github.com/lxc/incus/v7/internal/server/warnings"
 	internalUtil "github.com/lxc/incus/v7/internal/util"
 	"github.com/lxc/incus/v7/shared/api"
@@ -358,6 +359,26 @@ func instanceStart(s *state.State, inst instance.Instance) error {
 	}
 
 	return nil
+}
+
+// instancesLockStorage switches the storage locks of running VMs to exclusive.
+func instancesLockStorage(s *state.State, instances []instance.Instance) {
+	for _, inst := range instances {
+		if inst.Type() != instancetype.VM || !inst.IsRunning() {
+			continue
+		}
+
+		pool, err := storagePools.LoadByInstance(s, inst)
+		if err != nil {
+			logger.Warn("Failed loading instance storage pool", logger.Ctx{"project": inst.Project().Name, "instance": inst.Name(), "err": err})
+			continue
+		}
+
+		err = pool.SetInstanceShared(inst, false, nil)
+		if err != nil {
+			logger.Warn("Failed switching storage locks to exclusive", logger.Ctx{"project": inst.Project().Name, "instance": inst.Name(), "err": err})
+		}
+	}
 }
 
 func instancesStart(s *state.State, instances []instance.Instance) {
