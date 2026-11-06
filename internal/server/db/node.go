@@ -526,7 +526,16 @@ JOIN cluster_groups ON cluster_groups.id = nodes_cluster_groups.group_id`
 	// Process node entries.
 	// refTime anchors the IsOffline check to the time the heartbeat snapshot
 	// was taken (see NodeInfo.heartbeatRefTime).
-	refTime := time.Now()
+	threshold, err := c.GetNodeOfflineThreshold(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("Failed to get offline threshold: %w", err)
+	}
+
+	refTime, err := c.heartbeatRefTime(ctx, threshold)
+	if err != nil {
+		return nil, err
+	}
+
 	nodes := []NodeInfo{}
 	err = query.Scan(ctx, c.tx, stmt, func(scan func(dest ...any) error) error {
 		node := NodeInfo{}
@@ -1231,6 +1240,38 @@ func (c *ClusterTx) SetNodeVersion(id int64, ver [2]int) error {
 	}
 
 	return nil
+}
+
+// heartbeatRefTime returns the time that member heartbeats should be compared against.
+// Only the leader records heartbeats so they all go stale when it's lost. The latest one
+// is then used so that healthy members aren't seen as offline until the next leader's first round.
+func (c *ClusterTx) heartbeatRefTime(ctx context.Context, threshold time.Duration) (time.Time, error) {
+	refTime := time.Now()
+
+	var latest time.Time
+	err := query.Scan(ctx, c.tx, "SELECT heartbeat FROM nodes", func(scan func(dest ...any) error) error {
+		var heartbeat time.Time
+
+		err := scan(&heartbeat)
+		if err != nil {
+			return err
+		}
+
+		if heartbeat.After(latest) {
+			latest = heartbeat
+		}
+
+		return nil
+	})
+	if err != nil {
+		return time.Time{}, fmt.Errorf("Failed to fetch heartbeats: %w", err)
+	}
+
+	if nodeIsOffline(threshold, latest, refTime) {
+		return latest, nil
+	}
+
+	return refTime, nil
 }
 
 // nodeIsOffline reports whether heartbeat is older than threshold relative to

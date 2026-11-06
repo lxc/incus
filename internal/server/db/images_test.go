@@ -28,7 +28,10 @@ func TestLocateImage(t *testing.T) {
 		assert.Equal(t, "", address)
 
 		// Pretend that the function is being run on another node.
-		tx.NodeID(2)
+		nodeID, err := tx.CreateNode("node2", "1.2.3.4:666")
+		require.NoError(t, err)
+
+		tx.NodeID(nodeID)
 
 		address, err = tx.LocateImage(ctx, "abc")
 		require.NoError(t, err)
