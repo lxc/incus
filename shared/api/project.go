@@ -93,9 +93,9 @@ type ProjectState struct {
 type ProjectStateResource struct {
 	// Limit for the resource (-1 if none)
 	// Example: 10
-	Limit int64
+	Limit int64 `json:"limit" yaml:"limit"`
 
 	// Current usage for the resource
 	// Example: 4
-	Usage int64
+	Usage int64 `json:"usage" yaml:"usage"`
 }
