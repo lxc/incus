@@ -398,7 +398,14 @@ func evacuateInstances(ctx context.Context, opts evacuateOpts) error {
 
 	limit := make(chan struct{}, max(runtime.NumCPU()/16, 1))
 
-	return concurrentInstanceActions(limit, opts.instances, "Failed to evacuate instances", func(inst instance.Instance) error {
+	return instancesPerProject(opts.instances, func(projectInstances []instance.Instance) error {
+		return evacuateProjectInstances(ctx, limit, projectInstances, opts)
+	})
+}
+
+// evacuateProjectInstances evacuates the instances of a single project.
+func evacuateProjectInstances(ctx context.Context, limit chan struct{}, instances []instance.Instance, opts evacuateOpts) error {
+	return concurrentInstanceActions(limit, instances, "Failed to evacuate instances", func(inst instance.Instance) error {
 		action := evacuateInstanceAction(inst, opts.mode)
 		if action == "" {
 			return nil
