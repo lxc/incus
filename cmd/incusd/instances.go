@@ -11,6 +11,7 @@ import (
 	"runtime"
 	"sort"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -362,6 +363,38 @@ func instanceAutostartDelay(ctx context.Context, inst instance.Instance) {
 	case <-ctx.Done():
 	case <-time.After(time.Duration(delay) * time.Second):
 	}
+}
+
+// concurrentInstanceActions runs fn on every instance, limit bounds how many run at once.
+// Each instance runs to completion regardless of other failures, all of which are reported at the end.
+func concurrentInstanceActions(limit chan struct{}, instances []instance.Instance, prefix string, fn func(inst instance.Instance) error) error {
+	var wg sync.WaitGroup
+	var failuresLock sync.Mutex
+	failures := []string{}
+
+	for _, inst := range instances {
+		wg.Go(func() {
+			limit <- struct{}{}
+			defer func() { <-limit }()
+
+			err := fn(inst)
+			if err != nil {
+				failuresLock.Lock()
+				failures = append(failures, fmt.Sprintf("%s/%s: %v", inst.Project().Name, inst.Name(), err))
+				failuresLock.Unlock()
+			}
+		})
+	}
+
+	wg.Wait()
+
+	if len(failures) > 0 {
+		sort.Strings(failures)
+
+		return fmt.Errorf("%s:\n - %s", prefix, strings.Join(failures, "\n - "))
+	}
+
+	return nil
 }
 
 func instancesStart(s *state.State, instances []instance.Instance) {
