@@ -237,6 +237,16 @@ func (b *mockBackend) UnmountInstance(inst instance.Instance, op *operations.Ope
 	return nil
 }
 
+// SetInstanceAccessMode switches the storage locks of an instance to the given access mode.
+func (b *mockBackend) SetInstanceAccessMode(inst instance.Instance, mode drivers.VolumeAccessMode, op *operations.Operation) error {
+	return nil
+}
+
+// IsInstanceLocked checks whether the instance volume is locked by another cluster member.
+func (b *mockBackend) IsInstanceLocked(inst instance.Instance, op *operations.Operation) (bool, error) {
+	return false, nil
+}
+
 // CreateInstanceSnapshot creates a snapshot of an instance volume.
 func (b *mockBackend) CreateInstanceSnapshot(i instance.Instance, src instance.Instance, op *operations.Operation) error {
 	return nil

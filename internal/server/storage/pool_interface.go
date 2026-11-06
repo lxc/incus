@@ -84,6 +84,8 @@ type Pool interface {
 
 	MountInstance(inst instance.Instance, op *operations.Operation) (*MountInfo, error)
 	UnmountInstance(inst instance.Instance, op *operations.Operation) error
+	SetInstanceAccessMode(inst instance.Instance, mode drivers.VolumeAccessMode, op *operations.Operation) error
+	IsInstanceLocked(inst instance.Instance, op *operations.Operation) (bool, error)
 
 	// Instance snapshots.
 	CanRestoreInstanceSnapshot(inst instance.Instance, src instance.Instance) error
