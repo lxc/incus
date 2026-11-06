@@ -155,6 +155,11 @@ type Instance struct {
 // If localOnly is set, only instances on the local member are returned.
 // If nameLike is set, only instances whose name matches that SQL LIKE pattern (backslash escaped) are returned.
 func (c *ClusterTx) GetInstancesByMemberAddress(ctx context.Context, offlineThreshold time.Duration, projects []string, localOnly bool, nameLike string) (map[string][]Instance, error) {
+	refTime, err := c.heartbeatRefTime(ctx, offlineThreshold)
+	if err != nil {
+		return nil, err
+	}
+
 	args := make([]any, 0, len(projects)+2)
 	var q strings.Builder
 
@@ -206,7 +211,7 @@ func (c *ClusterTx) GetInstancesByMemberAddress(ctx context.Context, offlineThre
 
 		if memberID == c.nodeID {
 			memberAddress = ""
-		} else if nodeIsOffline(offlineThreshold, memberHeartbeat, time.Time{}) {
+		} else if nodeIsOffline(offlineThreshold, memberHeartbeat, refTime) {
 			memberAddress = "0.0.0.0"
 		}
 
