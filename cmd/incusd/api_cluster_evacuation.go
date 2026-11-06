@@ -405,21 +405,86 @@ func evacuateInstances(ctx context.Context, opts evacuateOpts) error {
 
 // evacuateProjectInstances evacuates the instances of a single project.
 func evacuateProjectInstances(ctx context.Context, limit chan struct{}, instances []instance.Instance, opts evacuateOpts) error {
-	return concurrentInstanceActions(limit, instances, "Failed to evacuate instances", func(inst instance.Instance) error {
+	// Decide on all actions first, only instances going through a stop or start get ordered.
+	plans := make(map[instance.Instance]evacuateInstancePlan, len(instances))
+	var ordered, unordered []instance.Instance
+	for _, inst := range instances {
 		action := evacuateInstanceAction(inst, opts.mode)
 		if action == "" {
-			return nil
+			continue
 		}
 
-		plan := evacuateInstancePlan{action: action, isRunning: inst.IsRunning()}
+		isRunning := inst.IsRunning()
+		plans[inst] = evacuateInstancePlan{action: action, isRunning: isRunning}
 
-		err := evacuateStopInstanceStep(inst, plan, opts)
+		isLive := (action == "live-migrate" || action == "refresh-migrate") && isRunning
+		willStart := !evacuateActionStays(action) && instanceShouldAutoStart(inst)
+		if !isLive && (isRunning || willStart) {
+			ordered = append(ordered, inst)
+		} else {
+			unordered = append(unordered, inst)
+		}
+	}
+
+	evacuate := func(inst instance.Instance) error {
+		err := evacuateStopInstanceStep(inst, plans[inst], opts)
 		if err != nil {
 			return err
 		}
 
-		return evacuateMoveInstanceStep(ctx, inst, plan, opts)
+		return evacuateMoveInstanceStep(ctx, inst, plans[inst], opts)
+	}
+
+	// Keep everything in parallel unless the order was configured.
+	isConfigured := func(inst instance.Instance) bool {
+		config := inst.ExpandedConfig()
+
+		return config["boot.stop.priority"] != "" || config["boot.autostart.priority"] != "" || config["boot.autostart.delay"] != ""
+	}
+
+	if !slices.ContainsFunc(ordered, isConfigured) {
+		return concurrentInstanceActions(limit, append(ordered, unordered...), "Failed to evacuate instances", evacuate)
+	}
+
+	// Instances outside of the order don't wait for it.
+	var wg sync.WaitGroup
+	var unorderedErr error
+	wg.Go(func() {
+		unorderedErr = concurrentInstanceActions(limit, unordered, "Failed to evacuate instances", evacuate)
 	})
+
+	// Stop everything first, then move and start, to match a regular shutdown and startup.
+	var movingLock sync.Mutex
+	var moving []instance.Instance
+	stopErr := instancesInStopOrder(limit, ordered, "Failed to stop instances", func(inst instance.Instance) error {
+		err := evacuateStopInstanceStep(inst, plans[inst], opts)
+		if err != nil {
+			return err
+		}
+
+		if !evacuateActionStays(plans[inst].action) {
+			movingLock.Lock()
+			moving = append(moving, inst)
+			movingLock.Unlock()
+		}
+
+		return nil
+	})
+
+	moveErr := instancesInStartOrder(ctx, limit, moving, "Failed to evacuate instances", func(inst instance.Instance) (bool, error) {
+		err := evacuateMoveInstanceStep(ctx, inst, plans[inst], opts)
+
+		return err == nil, err
+	})
+
+	wg.Wait()
+
+	return errors.Join(stopErr, moveErr, unorderedErr)
+}
+
+// evacuateActionStays returns whether the action leaves the instance on its member.
+func evacuateActionStays(action string) bool {
+	return action == "stop" || action == "stateful-stop" || action == "force-stop"
 }
 
 // evacuateStopInstanceStep stops the instance if its action requires it.
