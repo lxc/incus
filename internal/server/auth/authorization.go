@@ -31,6 +31,27 @@ const (
 // ErrUnknownDriver is the "Unknown driver" error.
 var ErrUnknownDriver = errors.New("Unknown driver")
 
+// unavailableError marks a forbidden error caused by the authorization backend rather than an actual deny.
+type unavailableError struct {
+	error
+}
+
+// Unwrap returns the underlying error.
+func (e unavailableError) Unwrap() error {
+	return e.error
+}
+
+// IsDenied returns whether err is a clean deny, as opposed to a failure to reach a decision.
+func IsDenied(err error) bool {
+	if !api.StatusErrorCheck(err, http.StatusForbidden) {
+		return false
+	}
+
+	_, unavailable := errors.AsType[unavailableError](err)
+
+	return !unavailable
+}
+
 var authorizers = map[string]func() authorizer{
 	DriverTLS:       func() authorizer { return &TLS{} },
 	DriverOpenFGA:   func() authorizer { return &FGA{} },
