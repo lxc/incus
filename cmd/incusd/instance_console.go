@@ -60,6 +60,9 @@ type consoleWs struct {
 	// channel to wait until the control socket is connected
 	controlConnected chan bool
 
+	// channel closed when the operation is canceled
+	canceled chan struct{}
+
 	// map file descriptors to secret
 	fds map[int]string
 
@@ -353,6 +356,8 @@ func (s *consoleWs) doConsole() error {
 		close(consoleDisconnectCh)
 	case <-consoleDoneCh:
 		close(consoleDisconnectCh)
+	case <-s.canceled:
+		close(consoleDisconnectCh)
 	}
 
 	// Write a reset escape sequence to the console to cancel any ongoing reads to the handle
@@ -424,21 +429,10 @@ func (s *consoleWs) closeConns() {
 
 // Cancel is responsible for closing websocket connections.
 func (s *consoleWs) cancel(*operations.Operation) error {
-	s.connsLock.Lock()
-	conn := s.conns[-1]
-	s.connsLock.Unlock()
+	close(s.canceled)
 
-	if conn == nil {
-		return nil
-	}
-
-	_ = conn.Close()
-
-	// Close all dynamic connections.
-	for conn, console := range s.dynamic {
-		_ = conn.Close()
-		_ = console.Close()
-	}
+	// The control socket is optional for text consoles.
+	s.closeConns()
 
 	return nil
 }
@@ -605,6 +599,7 @@ func instanceConsolePost(d *Daemon, r *http.Request) response.Response {
 
 	consoleWS.allConnected = make(chan bool, 1)
 	consoleWS.controlConnected = make(chan bool, 1)
+	consoleWS.canceled = make(chan struct{})
 	consoleWS.instance = inst
 	consoleWS.state = s
 	consoleWS.width = post.Width
