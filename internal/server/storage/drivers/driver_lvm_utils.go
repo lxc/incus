@@ -1255,6 +1255,15 @@ func (d *lvm) activateVolume(vol Volume) (bool, error) {
 	return true, nil
 }
 
+// exclusiveVolume returns whether a volume is used by a single instance and so locked exclusively when clustered.
+func (d *lvm) exclusiveVolume(vol Volume) bool {
+	if vol.IsSnapshot() {
+		return false
+	}
+
+	return vol.volType == VolumeTypeVM || (vol.IsCustomBlock() && util.IsTrue(vol.config["dependent"]))
+}
+
 // deactivateVolume deactivates an LVM logical volume if present. Returns true if deactivated, false if not.
 func (d *lvm) deactivateVolume(vol Volume) (bool, error) {
 	var volPath string
