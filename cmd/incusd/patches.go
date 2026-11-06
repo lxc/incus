@@ -113,6 +113,7 @@ var patches = []patch{
 	{name: "network_ovn_acl_address_sets", stage: patchPostDaemonStorage, run: patchGenericNetwork(patchNetworkOVNACLAddressSets)},
 	{name: "auth_openfga_security_tags", stage: patchPostNetworks, run: patchGenericAuthorization},
 	{name: "instance_idmap_base_non_isolated", stage: patchPostDaemonStorage, run: patchInstanceIdmapBaseNonIsolated},
+	{name: "storage_lvmcluster_exclusive_instance_locks", stage: patchPostDaemonStorage, run: patchStorageLvmclusterExclusiveInstanceLocks},
 }
 
 type patchRun func(name string, d *Daemon) error
@@ -2357,6 +2358,47 @@ func patchNetworkOVNACLAddressSets(_ string, d *Daemon) error {
 	}
 
 	reverter.Success()
+	return nil
+}
+
+// patchStorageLvmclusterExclusiveInstanceLocks switches the storage locks of running VMs on lvmcluster to exclusive.
+func patchStorageLvmclusterExclusiveInstanceLocks(_ string, d *Daemon) error {
+	s := d.State()
+
+	instances, err := instance.LoadNodeAll(s, instancetype.VM)
+	if err != nil {
+		return fmt.Errorf("Failed loading local instances: %w", err)
+	}
+
+	failed := false
+	for _, inst := range instances {
+		if !inst.IsRunning() {
+			continue
+		}
+
+		pool, err := storagePools.LoadByInstance(s, inst)
+		if err != nil {
+			logger.Warn("Failed loading instance storage pool", logger.Ctx{"project": inst.Project().Name, "instance": inst.Name(), "err": err})
+			failed = true
+			continue
+		}
+
+		if pool.Driver().Info().Name != "lvmcluster" {
+			continue
+		}
+
+		err = pool.SetInstanceAccessMode(inst, storageDrivers.VolumeAccessModeExclusive, nil)
+		if err != nil {
+			logger.Warn("Failed switching storage locks to exclusive", logger.Ctx{"project": inst.Project().Name, "instance": inst.Name(), "err": err})
+			failed = true
+		}
+	}
+
+	// Retry on the next start for the instances that failed.
+	if failed {
+		return errRetryNextTime
+	}
+
 	return nil
 }
 
