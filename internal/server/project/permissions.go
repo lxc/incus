@@ -1213,6 +1213,7 @@ func isContainerLowLevelOptionForbidden(key string) bool {
 	}
 
 	if slices.Contains([]string{
+		"boot.autostart.delay",
 		"boot.host_shutdown_action",
 		"boot.host_shutdown_timeout",
 		"linux.kernel_modules",
@@ -1240,6 +1241,7 @@ func isContainerLowLevelOptionForbidden(key string) bool {
 // Return true if a low-level VM option is forbidden.
 func isVMLowLevelOptionForbidden(key string) bool {
 	return slices.Contains([]string{
+		"boot.autostart.delay",
 		"boot.host_shutdown_action",
 		"boot.host_shutdown_timeout",
 		"limits.memory.hugepages",
