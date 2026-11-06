@@ -107,6 +107,7 @@ type Operation struct {
 	entitlement auth.Entitlement
 	dbOpType    operationtype.Type
 	requestor   *api.EventLifecycleRequestor
+	request     *http.Request
 	logger      logger.Logger
 
 	// Those functions are called at various points in the Operation lifecycle
@@ -219,6 +220,10 @@ func (op *Operation) SetEventServer(eventServer *events.Server) {
 // SetRequestor sets a requestor for this operation from an http.Request.
 func (op *Operation) SetRequestor(r *http.Request) {
 	op.requestor = request.CreateRequestor(r)
+
+	// Keep a copy that outlives the HTTP request for later permission checks.
+	op.request = r.Clone(context.WithoutCancel(r.Context()))
+	op.request.Body = http.NoBody
 }
 
 // IsSameRequestor compares the current request requestor to that stored (if any).
@@ -240,11 +245,17 @@ func (op *Operation) IsSameRequestor(r *http.Request) bool {
 // CopyRequestor sets a requestor to match that of another operation.
 func (op *Operation) CopyRequestor(otherOp *Operation) {
 	op.requestor = otherOp.requestor
+	op.request = otherOp.request
 }
 
 // Requestor returns the initial requestor for this operation.
 func (op *Operation) Requestor() *api.EventLifecycleRequestor {
 	return op.requestor
+}
+
+// Request returns a copy of the request which created this operation, if any.
+func (op *Operation) Request() *http.Request {
+	return op.request
 }
 
 func (op *Operation) done() {
@@ -483,6 +494,14 @@ func (op *Operation) Connect(r *http.Request, w http.ResponseWriter) (chan error
 	op.logger.Debug("Connecting to operation")
 
 	return chanConnect, nil
+}
+
+// Cancelable returns whether the operation can be canceled.
+func (op *Operation) Cancelable() bool {
+	op.lock.Lock()
+	defer op.lock.Unlock()
+
+	return op.mayCancel()
 }
 
 func (op *Operation) mayCancel() bool {
