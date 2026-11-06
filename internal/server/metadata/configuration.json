@@ -2660,7 +2660,7 @@
 						"boot.autostart.delay": {
 							"defaultdesc": "0",
 							"liveupdate": "no",
-							"longdesc": "The number of seconds to wait after the instance started before starting the next one.",
+							"longdesc": "The number of seconds to wait after the instance started before starting the next one in its project.",
 							"shortdesc": "Delay after starting the instance",
 							"type": "integer"
 						}
@@ -2668,7 +2668,7 @@
 					{
 						"boot.autostart.priority": {
 							"liveupdate": "no",
-							"longdesc": "The instance with the highest value is started first.\nInstances without a priority set will be started (with some parallelism) ahead of\ninstances with a priority set.",
+							"longdesc": "The instance with the highest value is started first.\nInstances without a priority set will be started (with some parallelism) ahead of\ninstances with a priority set.\nThe order only applies within a project, projects are started in parallel.",
 							"shortdesc": "What order to start the instances in",
 							"type": "integer"
 						}
@@ -2704,7 +2704,7 @@
 						"boot.stop.priority": {
 							"defaultdesc": "0",
 							"liveupdate": "no",
-							"longdesc": "The instance with the highest value is shut down first.",
+							"longdesc": "The instance with the highest value is shut down first.\nThe order only applies within a project, projects are shut down in parallel.",
 							"shortdesc": "What order to shut down the instances in",
 							"type": "integer"
 						}
