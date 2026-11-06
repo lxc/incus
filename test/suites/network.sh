@@ -39,6 +39,13 @@ test_network() {
     kill -0 "${victim_pid}"
     kill -9 "${victim_pid}"
     wait "${victim_pid}" || true
+
+    # Test that an empty dnsmasq.pid (left by a power loss) doesn't prevent the network from starting
+    dnsmasq_pid="$(awk '/^pid/ {print $2}' "${INCUS_DIR}/networks/inct$$/dnsmasq.pid")"
+    kill -9 "${dnsmasq_pid}"
+    : > "${INCUS_DIR}/networks/inct$$/dnsmasq.pid"
+    incus network set inct$$ dns.include_hosts=true
+    [ -s "${INCUS_DIR}/networks/inct$$/dnsmasq.pid" ]
     incus network delete inct$$
 
     # Standard bridge with random subnet and a bunch of options
