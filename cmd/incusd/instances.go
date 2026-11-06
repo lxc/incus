@@ -364,6 +364,65 @@ func instanceAutostartDelay(ctx context.Context, inst instance.Instance) {
 	}
 }
 
+// instanceLimiter bounds concurrent instance actions, giving each project a turn at free slots.
+type instanceLimiter struct {
+	mu      sync.Mutex
+	free    int
+	waiters map[string][]chan struct{}
+	turns   []string
+}
+
+// newInstanceLimiter returns a limiter allowing limit concurrent actions.
+func newInstanceLimiter(limit int) *instanceLimiter {
+	return &instanceLimiter{free: limit, waiters: map[string][]chan struct{}{}}
+}
+
+// acquire waits for a slot for an action in the project.
+func (l *instanceLimiter) acquire(projectName string) {
+	l.mu.Lock()
+
+	if l.free > 0 {
+		l.free--
+		l.mu.Unlock()
+
+		return
+	}
+
+	ready := make(chan struct{})
+	if len(l.waiters[projectName]) == 0 {
+		l.turns = append(l.turns, projectName)
+	}
+
+	l.waiters[projectName] = append(l.waiters[projectName], ready)
+	l.mu.Unlock()
+
+	<-ready
+}
+
+// release hands the slot to the next project in line.
+func (l *instanceLimiter) release() {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+
+	if len(l.turns) == 0 {
+		l.free++
+
+		return
+	}
+
+	projectName := l.turns[0]
+	l.turns = l.turns[1:]
+
+	close(l.waiters[projectName][0])
+	l.waiters[projectName] = l.waiters[projectName][1:]
+
+	if len(l.waiters[projectName]) > 0 {
+		l.turns = append(l.turns, projectName)
+	} else {
+		delete(l.waiters, projectName)
+	}
+}
+
 // concurrentInstanceActions runs fn on every instance, limit bounds how many run at once.
 // Each instance runs to completion regardless of other failures, all of which are reported at the end.
 func concurrentInstanceActions(limit chan struct{}, instances []instance.Instance, prefix string, fn func(inst instance.Instance) error) error {
