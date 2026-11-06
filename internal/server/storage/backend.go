@@ -3537,6 +3537,143 @@ func (b *backend) UnmountInstance(inst instance.Instance, op *operations.Operati
 	return nil
 }
 
+// instanceRootVolume returns the effective root volume of an instance.
+func (b *backend) instanceRootVolume(inst instance.Instance) (drivers.Volume, error) {
+	volType, err := InstanceTypeToVolumeType(inst.Type())
+	if err != nil {
+		return drivers.Volume{}, err
+	}
+
+	dbVol, err := VolumeDBGet(b, inst.Project().Name, inst.Name(), volType)
+	if err != nil {
+		return drivers.Volume{}, err
+	}
+
+	vol := b.GetVolume(volType, InstanceContentType(inst), project.Instance(inst.Project().Name, inst.Name()), dbVol.Config)
+	err = b.applyInstanceRootDiskOverrides(inst, &vol)
+	if err != nil {
+		return drivers.Volume{}, err
+	}
+
+	return vol, nil
+}
+
+// dependentVolume is a dependent volume of an instance along with the pool holding it.
+type dependentVolume struct {
+	pool *backend
+	vol  drivers.Volume
+}
+
+// instanceDependentVolumes returns the dependent volumes attached to an instance.
+func (b *backend) instanceDependentVolumes(inst instance.Instance) ([]dependentVolume, error) {
+	storageProjectName, err := project.StorageVolumeProject(b.state.DB.Cluster, inst.Project().Name, db.StoragePoolVolumeTypeCustom)
+	if err != nil {
+		return nil, err
+	}
+
+	var vols []dependentVolume
+
+	err = inst.ForEachDependentDiskType(func(dev deviceConfig.DeviceNamed) error {
+		diskPool, err := LoadByName(b.state, dev.Config["pool"])
+		if err != nil {
+			return fmt.Errorf("Failed loading storage pool: %w", err)
+		}
+
+		diskBackend, ok := diskPool.(*backend)
+		if !ok {
+			return errors.New("Dependent volume pool is not a backend")
+		}
+
+		volName, _ := internalInstance.SplitVolumeSource(dev.Config["source"])
+
+		dbVol, err := VolumeDBGet(diskBackend, storageProjectName, volName, drivers.VolumeTypeCustom)
+		if err != nil {
+			return err
+		}
+
+		diskVol := diskBackend.GetVolume(drivers.VolumeTypeCustom, drivers.ContentType(dbVol.ContentType), project.StorageVolume(storageProjectName, volName), dbVol.Config)
+		vols = append(vols, dependentVolume{pool: diskBackend, vol: diskVol})
+
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return vols, nil
+}
+
+// SetInstanceAccessMode switches the storage locks of an instance and its dependent volumes to the given access mode.
+func (b *backend) SetInstanceAccessMode(inst instance.Instance, mode drivers.VolumeAccessMode, op *operations.Operation) error {
+	l := b.logger.AddContext(logger.Ctx{"project": inst.Project().Name, "instance": inst.Name(), "mode": mode})
+	l.Debug("SetInstanceAccessMode started")
+	defer l.Debug("SetInstanceAccessMode finished")
+
+	revertMode := drivers.VolumeAccessModeShared
+	if mode == drivers.VolumeAccessModeShared {
+		revertMode = drivers.VolumeAccessModeExclusive
+	}
+
+	depVols, err := b.instanceDependentVolumes(inst)
+	if err != nil {
+		return err
+	}
+
+	reverter := revert.New()
+	defer reverter.Fail()
+
+	// Switch the dependent volumes before the instance volume.
+	for _, depVol := range depVols {
+		err = depVol.pool.driver.SetVolumeAccessMode(depVol.vol, mode)
+		if err != nil {
+			return err
+		}
+
+		reverter.Add(func() { _ = depVol.pool.driver.SetVolumeAccessMode(depVol.vol, revertMode) })
+	}
+
+	vol, err := b.instanceRootVolume(inst)
+	if err != nil {
+		return err
+	}
+
+	err = b.driver.SetVolumeAccessMode(vol, mode)
+	if err != nil {
+		return err
+	}
+
+	reverter.Success()
+
+	return nil
+}
+
+// IsInstanceLocked checks whether the instance volume or any of its dependent volumes is locked by another cluster member.
+func (b *backend) IsInstanceLocked(inst instance.Instance, op *operations.Operation) (bool, error) {
+	vol, err := b.instanceRootVolume(inst)
+	if err != nil {
+		return false, err
+	}
+
+	locked, err := b.driver.IsVolumeLocked(vol)
+	if err != nil || locked {
+		return locked, err
+	}
+
+	depVols, err := b.instanceDependentVolumes(inst)
+	if err != nil {
+		return false, err
+	}
+
+	for _, depVol := range depVols {
+		locked, err := depVol.pool.driver.IsVolumeLocked(depVol.vol)
+		if err != nil || locked {
+			return locked, err
+		}
+	}
+
+	return false, nil
+}
+
 // getInstanceDisk returns the location of the disk.
 func (b *backend) getInstanceDisk(inst instance.Instance) (string, error) {
 	if inst.Type() != instancetype.VM {
