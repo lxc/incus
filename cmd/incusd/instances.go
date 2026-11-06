@@ -15,8 +15,6 @@ import (
 	"sync"
 	"time"
 
-	"golang.org/x/sync/errgroup"
-
 	"github.com/lxc/incus/v7/internal/server/auth"
 	"github.com/lxc/incus/v7/internal/server/db"
 	"github.com/lxc/incus/v7/internal/server/db/cluster"
@@ -397,6 +395,50 @@ func concurrentInstanceActions(limit chan struct{}, instances []instance.Instanc
 	return nil
 }
 
+// instancesInStartOrder runs fn on the instances in startup order, fn returns whether it started the instance.
+// The delay of a started instance is held without using up the limit and is skipped if nothing follows it.
+func instancesInStartOrder(ctx context.Context, limit chan struct{}, instances []instance.Instance, prefix string, fn func(inst instance.Instance) (bool, error)) error {
+	bulkInstances, sequentialInstances := bulkStartInstances(instances)
+
+	// Start instances that support bulk startup.
+	var failures []error
+	err := concurrentInstanceActions(limit, bulkInstances, prefix, func(inst instance.Instance) error {
+		_, err := fn(inst)
+
+		return err
+	})
+	if err != nil {
+		failures = append(failures, err)
+	}
+
+	// Sort based on instance boot priority.
+	sort.Sort(instanceAutostartList(sequentialInstances))
+
+	for i, inst := range sequentialInstances {
+		if ctx.Err() != nil {
+			failures = append(failures, ctx.Err())
+			break
+		}
+
+		var started bool
+		err := concurrentInstanceActions(limit, []instance.Instance{inst}, prefix, func(inst instance.Instance) error {
+			var err error
+			started, err = fn(inst)
+
+			return err
+		})
+		if err != nil {
+			failures = append(failures, err)
+		}
+
+		if started && i < len(sequentialInstances)-1 {
+			instanceAutostartDelay(ctx, inst)
+		}
+	}
+
+	return errors.Join(failures...)
+}
+
 func instancesStart(s *state.State, instances []instance.Instance) {
 	// Check if the cluster is currently evacuated.
 	if s.ServerClustered && s.DB.Cluster.LocalNodeIsEvacuated() {
@@ -407,33 +449,12 @@ func instancesStart(s *state.State, instances []instance.Instance) {
 	instancesStartMu.Lock()
 	defer instancesStartMu.Unlock()
 
-	bulkInstances, sequentialInstances := bulkStartInstances(instances)
-
 	// Limit the number of concurrent tasks.
-	numParallel := max(runtime.NumCPU()/4, 1)
+	limit := make(chan struct{}, max(runtime.NumCPU()/4, 1))
 
-	group := new(errgroup.Group)
-	group.SetLimit(numParallel)
-
-	// Start instances that support bulk startup.
-	for _, inst := range bulkInstances {
-		i := inst
-		group.Go(func() error {
-			instanceStart(s, i)
-			return nil
-		})
-	}
-
-	_ = group.Wait()
-
-	// Sort based on instance boot priority.
-	sort.Sort(instanceAutostartList(sequentialInstances))
-
-	for _, inst := range sequentialInstances {
-		if instanceStart(s, inst) {
-			instanceAutostartDelay(s.ShutdownCtx, inst)
-		}
-	}
+	_ = instancesInStartOrder(s.ShutdownCtx, limit, instances, "Failed to start instances", func(inst instance.Instance) (bool, error) {
+		return instanceStart(s, inst), nil
+	})
 }
 
 type instanceStopList []instance.Instance
