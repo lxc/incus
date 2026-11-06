@@ -56,7 +56,7 @@ type InitNetworksProjectPost struct {
 
 	// Project in which the network will reside
 	// Example: "default"
-	Project string
+	Project string `json:"project" yaml:"project"`
 }
 
 // InitProfileProjectPost represents the fields of a new profile along with its associated project.
@@ -69,7 +69,7 @@ type InitProfileProjectPost struct {
 
 	// Project in which the profile will reside
 	// Example: "default"
-	Project string
+	Project string `json:"project" yaml:"project"`
 }
 
 // InitStorageVolumesProjectPost represents the fields of a new storage volume along with its associated pool.
@@ -82,11 +82,11 @@ type InitStorageVolumesProjectPost struct {
 
 	// Storage pool in which the volume will reside
 	// Example: "default"
-	Pool string
+	Pool string `json:"pool" yaml:"pool"`
 
 	// Project in which the volume will reside
 	// Example: "default"
-	Project string
+	Project string `json:"project" yaml:"project"`
 }
 
 // InitClusterPreseed represents initialization configuration for the cluster.

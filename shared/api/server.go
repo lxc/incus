@@ -134,19 +134,19 @@ type ServerStorageDriverInfo struct {
 	// Example: zfs
 	//
 	// API extension: server_supported_storage_drivers
-	Name string
+	Name string `json:"name" yaml:"name"`
 
 	// Version of the driver
 	// Example: 0.8.4-1ubuntu11
 	//
 	// API extension: server_supported_storage_drivers
-	Version string
+	Version string `json:"version" yaml:"version"`
 
 	// Whether the driver has remote volumes
 	// Example: false
 	//
 	// API extension: server_supported_storage_drivers
-	Remote bool
+	Remote bool `json:"remote" yaml:"remote"`
 }
 
 // ServerPut represents the modifiable fields of a server configuration
@@ -252,7 +252,7 @@ type ServerFiltered struct {
 
 	// Number of supported API extensions
 	// Example: 412
-	APIExtensionsCount int `json:"api_extensions_count"`
+	APIExtensionsCount int `json:"api_extensions_count" yaml:"api_extensions_count"`
 }
 
 // MarshalYAML is used as a workaround to keep the field ordering the same in the output by injecting api_extensions_count at the right spot.

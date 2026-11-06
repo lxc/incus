@@ -1138,19 +1138,19 @@ type ResourcesSystemMotherboard struct {
 type ResourcesLoad struct {
 	// Load average in the past minute
 	// Example: 0.69
-	Average1Min float64
+	Average1Min float64 `json:"average1min" yaml:"average1min"`
 
 	// Load average in the past 5 minutes
 	// Example: 1.10
-	Average5Min float64
+	Average5Min float64 `json:"average5min" yaml:"average5min"`
 
 	// Load average in the past 10 minutes
 	// Example: 1.29
-	Average10Min float64
+	Average10Min float64 `json:"average10min" yaml:"average10min"`
 
 	// The number of active processes
 	// Example: 1234
-	Processes int
+	Processes int `json:"processes" yaml:"processes"`
 }
 
 // ResourcesSerial represents the serial devices available on the system
