@@ -3537,6 +3537,82 @@ func (b *backend) UnmountInstance(inst instance.Instance, op *operations.Operati
 	return nil
 }
 
+// instanceRootVolume returns the effective root volume of an instance.
+func (b *backend) instanceRootVolume(inst instance.Instance) (drivers.Volume, error) {
+	volType, err := InstanceTypeToVolumeType(inst.Type())
+	if err != nil {
+		return drivers.Volume{}, err
+	}
+
+	dbVol, err := VolumeDBGet(b, inst.Project().Name, inst.Name(), volType)
+	if err != nil {
+		return drivers.Volume{}, err
+	}
+
+	vol := b.GetVolume(volType, InstanceContentType(inst), project.Instance(inst.Project().Name, inst.Name()), dbVol.Config)
+	err = b.applyInstanceRootDiskOverrides(inst, &vol)
+	if err != nil {
+		return drivers.Volume{}, err
+	}
+
+	return vol, nil
+}
+
+// SetInstanceShared switches the storage locks of an instance and its dependent volumes between shared and exclusive.
+func (b *backend) SetInstanceShared(inst instance.Instance, shared bool, op *operations.Operation) error {
+	l := b.logger.AddContext(logger.Ctx{"project": inst.Project().Name, "instance": inst.Name(), "shared": shared})
+	l.Debug("SetInstanceShared started")
+	defer l.Debug("SetInstanceShared finished")
+
+	vol, err := b.instanceRootVolume(inst)
+	if err != nil {
+		return err
+	}
+
+	err = b.driver.SetVolumeShared(vol, shared)
+	if err != nil {
+		return err
+	}
+
+	return inst.ForEachDependentDiskType(func(dev deviceConfig.DeviceNamed) error {
+		diskPool, err := LoadByName(b.state, dev.Config["pool"])
+		if err != nil {
+			return fmt.Errorf("Failed loading storage pool: %w", err)
+		}
+
+		diskBackend, ok := diskPool.(*backend)
+		if !ok {
+			return errors.New("Dependent volume pool is not a backend")
+		}
+
+		storageProjectName, err := project.StorageVolumeProject(b.state.DB.Cluster, inst.Project().Name, db.StoragePoolVolumeTypeCustom)
+		if err != nil {
+			return err
+		}
+
+		volName, _ := internalInstance.SplitVolumeSource(dev.Config["source"])
+
+		dbVol, err := VolumeDBGet(diskBackend, storageProjectName, volName, drivers.VolumeTypeCustom)
+		if err != nil {
+			return err
+		}
+
+		diskVol := diskBackend.GetVolume(drivers.VolumeTypeCustom, drivers.ContentType(dbVol.ContentType), project.StorageVolume(storageProjectName, volName), dbVol.Config)
+
+		return diskBackend.driver.SetVolumeShared(diskVol, shared)
+	})
+}
+
+// CheckInstanceLock checks that the instance volume isn't locked by another cluster member.
+func (b *backend) CheckInstanceLock(inst instance.Instance, op *operations.Operation) error {
+	vol, err := b.instanceRootVolume(inst)
+	if err != nil {
+		return err
+	}
+
+	return b.driver.CheckVolumeLock(vol)
+}
+
 // getInstanceDisk returns the location of the disk.
 func (b *backend) getInstanceDisk(inst instance.Instance) (string, error) {
 	if inst.Type() != instancetype.VM {

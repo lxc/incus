@@ -237,6 +237,16 @@ func (b *mockBackend) UnmountInstance(inst instance.Instance, op *operations.Ope
 	return nil
 }
 
+// SetInstanceShared switches the storage locks of an instance between shared and exclusive.
+func (b *mockBackend) SetInstanceShared(inst instance.Instance, shared bool, op *operations.Operation) error {
+	return nil
+}
+
+// CheckInstanceLock checks that the instance volume isn't locked by another cluster member.
+func (b *mockBackend) CheckInstanceLock(inst instance.Instance, op *operations.Operation) error {
+	return nil
+}
+
 // CreateInstanceSnapshot creates a snapshot of an instance volume.
 func (b *mockBackend) CreateInstanceSnapshot(i instance.Instance, src instance.Instance, op *operations.Operation) error {
 	return nil
