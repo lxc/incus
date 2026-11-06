@@ -359,6 +359,12 @@ func evacuateClusterMember(ctx context.Context, s *state.State, op *operations.O
 	return nil
 }
 
+// evacuateInstancePlan is what was decided for an instance before acting on it.
+type evacuateInstancePlan struct {
+	action    string
+	isRunning bool
+}
+
 // evacuateInstanceAction returns the action for the instance, empty if it must be left as it is.
 func evacuateInstanceAction(inst instance.Instance, mode string) string {
 	// An explicit mode overrides the instance's policy.
@@ -393,39 +399,48 @@ func evacuateInstances(ctx context.Context, opts evacuateOpts) error {
 	limit := make(chan struct{}, max(runtime.NumCPU()/16, 1))
 
 	return concurrentInstanceActions(limit, opts.instances, "Failed to evacuate instances", func(inst instance.Instance) error {
-		return evacuateInstancesFunc(ctx, inst, opts)
+		action := evacuateInstanceAction(inst, opts.mode)
+		if action == "" {
+			return nil
+		}
+
+		plan := evacuateInstancePlan{action: action, isRunning: inst.IsRunning()}
+
+		err := evacuateStopInstanceStep(inst, plan, opts)
+		if err != nil {
+			return err
+		}
+
+		return evacuateMoveInstanceStep(ctx, inst, plan, opts)
 	})
 }
 
-func evacuateInstancesFunc(ctx context.Context, inst instance.Instance, opts evacuateOpts) error {
-	instProject := inst.Project()
-	l := logger.AddContext(logger.Ctx{"project": instProject.Name, "instance": inst.Name()})
-
-	// Check what to do with the instance.
-	action := evacuateInstanceAction(inst, opts.mode)
-	if action == "" {
+// evacuateStopInstanceStep stops the instance if its action requires it.
+func evacuateStopInstanceStep(inst instance.Instance, plan evacuateInstancePlan, opts evacuateOpts) error {
+	if plan.action == "live-migrate" || plan.action == "refresh-migrate" || opts.stopInstance == nil || !plan.isRunning {
 		return nil
 	}
 
-	// Stop the instance if needed.
-	isRunning := inst.IsRunning()
-	if action != "live-migrate" && action != "refresh-migrate" {
-		if opts.stopInstance != nil && isRunning {
-			_ = opts.op.ExtendMetadata(map[string]any{"evacuation_progress": fmt.Sprintf("Stopping %q in project %q", inst.Name(), instProject.Name)})
+	_ = opts.op.ExtendMetadata(map[string]any{"evacuation_progress": fmt.Sprintf("Stopping %q in project %q", inst.Name(), inst.Project().Name)})
 
-			err := opts.stopInstance(opts.s, inst, action)
-			if err != nil {
-				return err
-			}
-		}
+	return opts.stopInstance(opts.s, inst, plan.action)
+}
 
-		if action != "migrate" {
-			// Done with this instance.
-			return nil
-		}
-	} else if !isRunning {
+// evacuateMoveInstanceStep moves the instance to another member if its action requires it.
+func evacuateMoveInstanceStep(ctx context.Context, inst instance.Instance, plan evacuateInstancePlan, opts evacuateOpts) error {
+	instProject := inst.Project()
+	l := logger.AddContext(logger.Ctx{"project": instProject.Name, "instance": inst.Name()})
+
+	action := plan.action
+	isRunning := plan.isRunning
+	if action == "live-migrate" || action == "refresh-migrate" {
 		// Can't live or refresh migrate if we're stopped.
-		action = "migrate"
+		if !isRunning {
+			action = "migrate"
+		}
+	} else if action != "migrate" {
+		// Done with this instance.
+		return nil
 	}
 
 	// Find a new location for the instance.
@@ -435,7 +450,7 @@ func evacuateInstancesFunc(ctx context.Context, inst instance.Instance, opts eva
 			// No target was available, so stop the instance in place instead.
 			l.Warn("No migration target available for instance, stopping it in place")
 
-			if opts.stopInstance != nil && isRunning {
+			if opts.stopInstance != nil && inst.IsRunning() {
 				_ = opts.op.ExtendMetadata(map[string]any{"evacuation_progress": fmt.Sprintf("Stopping %q in project %q", inst.Name(), instProject.Name)})
 
 				return opts.stopInstance(opts.s, inst, "")
