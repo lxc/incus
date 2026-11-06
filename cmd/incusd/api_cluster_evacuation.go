@@ -8,14 +8,12 @@ import (
 	"net/http"
 	"runtime"
 	"slices"
-	"sort"
 	"strconv"
 	"strings"
 	"sync"
 	"time"
 
 	"github.com/cowsql/go-cowsql/cluster/membership"
-	"golang.org/x/sync/errgroup"
 
 	incus "github.com/lxc/incus/v7/client"
 	"github.com/lxc/incus/v7/internal/server/cluster"
@@ -361,45 +359,14 @@ func evacuateClusterMember(ctx context.Context, s *state.State, op *operations.O
 	return nil
 }
 
-// concurrentInstanceActions runs fn on every instance with bounded concurrency.
-// Each instance runs to completion regardless of other failures, all of which are reported at the end.
-func concurrentInstanceActions(instances []instance.Instance, prefix string, fn func(inst instance.Instance) error) error {
-	group := errgroup.Group{}
-	group.SetLimit(max(runtime.NumCPU()/16, 1))
-
-	var failuresLock sync.Mutex
-	failures := []string{}
-
-	for _, inst := range instances {
-		group.Go(func() error {
-			err := fn(inst)
-			if err != nil {
-				failuresLock.Lock()
-				failures = append(failures, fmt.Sprintf("%s/%s: %v", inst.Project().Name, inst.Name(), err))
-				failuresLock.Unlock()
-			}
-
-			return nil
-		})
-	}
-
-	_ = group.Wait()
-
-	if len(failures) > 0 {
-		sort.Strings(failures)
-
-		return fmt.Errorf("%s:\n - %s", prefix, strings.Join(failures, "\n - "))
-	}
-
-	return nil
-}
-
 func evacuateInstances(ctx context.Context, opts evacuateOpts) error {
 	if opts.migrateInstance == nil {
 		return errors.New("Missing migration callback function")
 	}
 
-	return concurrentInstanceActions(opts.instances, "Failed to evacuate instances", func(inst instance.Instance) error {
+	limit := make(chan struct{}, max(runtime.NumCPU()/16, 1))
+
+	return concurrentInstanceActions(limit, opts.instances, "Failed to evacuate instances", func(inst instance.Instance) error {
 		return evacuateInstancesFunc(ctx, inst, opts)
 	})
 }
@@ -609,7 +576,9 @@ func restoreClusterMember(d *Daemon, r *http.Request, skipInstances bool) respon
 		}
 
 		// Migrate back the remote instances.
-		err = concurrentInstanceActions(instances, "Failed to restore instances", func(inst instance.Instance) error {
+		limit := make(chan struct{}, max(runtime.NumCPU()/16, 1))
+
+		err = concurrentInstanceActions(limit, instances, "Failed to restore instances", func(inst instance.Instance) error {
 			return restoreClusterMemberFunc(inst, op, originName, r, s)
 		})
 		if err != nil {
