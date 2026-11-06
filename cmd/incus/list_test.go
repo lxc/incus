@@ -84,9 +84,17 @@ func TestShouldShow(t *testing.T) {
 
 // Used by TestColumns and TestInvalidColumns.
 const (
-	shorthand = "46abcdDefFlmMnNpPRsStuUL"
 	alphanum  = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
+	shorthand = "46abcdDefFlmMnNpPRsStuUL"
 )
+
+var columns = map[rune]listColumn[instanceWithRemote]{}
+
+func init() {
+	for _, r := range shorthand {
+		columns[r] = listColumn[instanceWithRemote]{}
+	}
+}
 
 func TestColumns(t *testing.T) {
 	keys := make([]string, 0, len(instance.InstanceConfigKeysAny)+len(instance.InstanceConfigKeysContainer)+len(instance.InstanceConfigKeysVM))
@@ -213,16 +221,19 @@ func TestColumns(t *testing.T) {
 			// Generate the column string, removing any leading, trailing or duplicate commas.
 			raw := removeDuplicatesFromString(strings.Trim(buffer.String(), ","), ",")
 
-			list := cmdList{flagColumns: raw}
+			list := cmdList{lister: &listable[instanceWithRemote]{
+				columns:     columns,
+				flagColumns: raw,
+				hooks:       []listHook[instanceWithRemote]{instanceListHook},
+			}}
 
-			clustered := strings.Contains(raw, "L")
-			columns, _, err := list.parseColumns(clustered)
+			err := list.lister.parseColumns()
 			if err != nil {
 				t.Errorf("Failed to parse columns string.  Input: %s, Error: %s", raw, err)
 			}
 
-			if len(columns) != num {
-				t.Errorf("Did not generate correct number of columns.  Expected: %d, Actual: %d, Input: %s", num, len(columns), raw)
+			if len(list.lister.activeColumns) != num {
+				t.Errorf("Did not generate correct number of columns.  Expected: %d, Actual: %d, Input: %s", num, len(list.lister.activeColumns), raw)
 			}
 		}()
 	}
@@ -240,8 +251,12 @@ func removeDuplicatesFromString(s string, sep string) string {
 
 func TestInvalidColumns(t *testing.T) {
 	run := func(raw string) {
-		list := cmdList{flagColumns: raw}
-		_, _, err := list.parseColumns(true)
+		list := cmdList{lister: &listable[instanceWithRemote]{
+			columns:     columns,
+			flagColumns: raw,
+			hooks:       []listHook[instanceWithRemote]{instanceListHook},
+		}}
+		err := list.lister.parseColumns()
 		if err == nil {
 			t.Errorf("Expected error from parseColumns, received nil.  Input: %s", raw)
 		}
@@ -280,14 +295,4 @@ func TestPrepareInstanceServerFilters(t *testing.T) {
 
 	result := prepareInstanceServerFilters(filters, api.InstanceFull{})
 	assert.Equal(t, []string{"name=(^foo$|^foo.*)", "expanded_config.user.a=blah", "name=v1", "status=running"}, result)
-}
-
-func TestRemoteColumn(t *testing.T) {
-	list := cmdList{flagColumns: "nR", currentRemote: "some-remote"}
-
-	columns, _, err := list.parseColumns(true)
-	assert.NoError(t, err)
-	assert.Len(t, columns, 2)
-	assert.Equal(t, "REMOTE", columns[1].Name)
-	assert.Equal(t, "some-remote", columns[1].Data(api.InstanceFull{}))
 }
