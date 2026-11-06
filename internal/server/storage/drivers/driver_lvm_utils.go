@@ -1228,6 +1228,38 @@ func (d *lvm) activateVolume(vol Volume) (bool, error) {
 	return true, nil
 }
 
+// exclusiveVolume returns whether a volume is used by a single instance and so locked exclusively when clustered.
+func (d *lvm) exclusiveVolume(vol Volume) bool {
+	if vol.IsSnapshot() {
+		return false
+	}
+
+	return vol.volType == VolumeTypeVM || (vol.IsCustomBlock() && util.IsTrue(vol.config["dependent"]))
+}
+
+// activateVolumeShared activates an LVM logical volume in shared mode if not already active.
+func (d *lvm) activateVolumeShared(vol Volume) error {
+	volPath := d.lvmPath(d.config["lvm.vg_name"], vol.volType, vol.contentType, vol.name)
+	volDevPath, err := d.lvmDevPath(volPath)
+	if err != nil && !errors.Is(err, os.ErrNotExist) {
+		return err
+	}
+
+	if volDevPath != "" {
+		return nil
+	}
+
+	lvmActivation.Lock()
+	defer lvmActivation.Unlock()
+
+	_, err = subprocess.RunCommand("lvchange", "--activate", "sy", "--ignoreactivationskip", volPath)
+	if err != nil {
+		return fmt.Errorf("Failed to activate LVM logical volume %q: %w", volPath, err)
+	}
+
+	return nil
+}
+
 // deactivateVolume deactivates an LVM logical volume if present. Returns true if deactivated, false if not.
 func (d *lvm) deactivateVolume(vol Volume) (bool, error) {
 	var volPath string
