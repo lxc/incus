@@ -3149,6 +3149,31 @@ test_clustering_evacuation() {
     INCUS_DIR="${INCUS_TWO_DIR}" incus info c6 | grep -q "Status: RUNNING"
     INCUS_DIR="${INCUS_TWO_DIR}" incus info c6 | grep -q "Location: node2"
 
+    # Instances going through a stop and start cycle follow the boot order of their project.
+    INCUS_DIR="${INCUS_ONE_DIR}" incus project create evac -c features.images=false -c features.profiles=false
+    INCUS_DIR="${INCUS_ONE_DIR}" incus launch testimage o1 --target=node1 -s pool1 -c cluster.evacuate=migrate -c boot.host_shutdown_timeout=1 -c boot.stop.priority=1 -c boot.autostart.priority=2 -c boot.autostart.delay=15
+    INCUS_DIR="${INCUS_ONE_DIR}" incus launch testimage o2 --target=node1 -s pool1 -c cluster.evacuate=migrate -c boot.host_shutdown_timeout=1 -c boot.stop.priority=2 -c boot.autostart.priority=1
+    INCUS_DIR="${INCUS_ONE_DIR}" incus launch testimage o3 --project evac --target=node1 -s pool1 -c cluster.evacuate=migrate -c boot.host_shutdown_timeout=1 -c boot.autostart.priority=1
+
+    (INCUS_CLI_TIMEOUT=600 INCUS_DIR="${INCUS_TWO_DIR}" stdbuf -oL incus monitor --all-projects --type=lifecycle --format=json > "${TEST_DIR}/events.log" 2>&1) &
+    MONITOR=$!
+    sleep 2
+
+    INCUS_DIR="${INCUS_TWO_DIR}" incus cluster evacuate node1 --force
+    INCUS_DIR="${INCUS_TWO_DIR}" incus cluster restore node1 --force
+    sleep 2
+    kill "${MONITOR}" || true
+
+    jq -r 'select(.metadata.action == "instance-stopped") | .metadata.source' "${TEST_DIR}/events.log" | grep -E '/o[12]' | head -2 | tr '\n' ' ' | grep -qF '/1.0/instances/o2 /1.0/instances/o1 '
+    jq -r 'select(.metadata.action == "instance-started") | .metadata.source' "${TEST_DIR}/events.log" | grep -E '/o[12]' | tr '\n' ' ' | grep -qF '/1.0/instances/o1 /1.0/instances/o2 /1.0/instances/o1 /1.0/instances/o2 '
+
+    # The delay of one project doesn't hold up another.
+    jq -r 'select(.metadata.action == "instance-started") | .metadata.source' "${TEST_DIR}/events.log" | grep -E '/o[123]' | head -3 | tail -1 | grep -qF '/1.0/instances/o2'
+
+    INCUS_DIR="${INCUS_TWO_DIR}" incus rm -f o1 o2
+    INCUS_DIR="${INCUS_TWO_DIR}" incus rm -f o3 --project evac
+    INCUS_DIR="${INCUS_TWO_DIR}" incus project delete evac
+
     # Clean up
     INCUS_DIR="${INCUS_TWO_DIR}" incus rm -f c1
     INCUS_DIR="${INCUS_TWO_DIR}" incus rm -f c2
