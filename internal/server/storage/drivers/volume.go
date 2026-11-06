@@ -94,6 +94,15 @@ const ContentTypeBlock = ContentType("block")
 // ContentTypeISO indicates the volume will be an ISO which is read-only, and uses the ISO 9660 filesystem.
 const ContentTypeISO = ContentType("iso")
 
+// VolumeAccessMode indicates how a volume is locked between cluster members.
+type VolumeAccessMode string
+
+// VolumeAccessModeShared allows other cluster members to activate the volume.
+const VolumeAccessModeShared = VolumeAccessMode("shared")
+
+// VolumeAccessModeExclusive restricts activation of the volume to the local cluster member.
+const VolumeAccessModeExclusive = VolumeAccessMode("exclusive")
+
 // VolumePostHook function returned from a storage action that should be run later to complete the action.
 type VolumePostHook func(vol Volume) error
 

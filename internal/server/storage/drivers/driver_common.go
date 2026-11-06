@@ -430,6 +430,16 @@ func (d *common) DelegateVolume(vol Volume, pid int) error {
 	return nil
 }
 
+// SetVolumeAccessMode switches the lock of an active volume to the given access mode.
+func (d *common) SetVolumeAccessMode(vol Volume, mode VolumeAccessMode) error {
+	return nil
+}
+
+// IsVolumeLocked checks whether a volume is locked by another cluster member.
+func (d *common) IsVolumeLocked(vol Volume) (bool, error) {
+	return false, nil
+}
+
 // RenameVolume renames the volume and all related filesystem entries.
 func (d *common) RenameVolume(vol Volume, newVolName string, op *operations.Operation) error {
 	return ErrNotSupported
