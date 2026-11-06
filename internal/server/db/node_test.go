@@ -220,6 +220,38 @@ func TestSetNodeHeartbeat(t *testing.T) {
 	assert.True(t, node.IsOffline(20*time.Second))
 }
 
+// Members aren't offline when all heartbeats are stale, only the ones behind the latest heartbeat are.
+func TestNodeHeartbeatsStale(t *testing.T) {
+	tx, cleanup := db.NewTestClusterTx(t)
+	defer cleanup()
+
+	_, err := tx.CreateNode("buzz", "1.2.3.4:666")
+	require.NoError(t, err)
+
+	_, err = tx.CreateNode("rusp", "5.6.7.8:666")
+	require.NoError(t, err)
+
+	require.NoError(t, tx.SetNodeHeartbeat("0.0.0.0", time.Now().Add(-time.Minute)))
+	require.NoError(t, tx.SetNodeHeartbeat("1.2.3.4:666", time.Now().Add(-time.Minute)))
+	require.NoError(t, tx.SetNodeHeartbeat("5.6.7.8:666", time.Now().Add(-time.Hour)))
+
+	nodes, err := tx.GetNodes(context.Background())
+	require.NoError(t, err)
+	require.Len(t, nodes, 3)
+	assert.False(t, nodes[0].IsOffline(20*time.Second))
+	assert.False(t, nodes[1].IsOffline(20*time.Second))
+	assert.True(t, nodes[2].IsOffline(20*time.Second))
+
+	// A lookup of a single member must still compare it to all the others.
+	node, err := tx.GetNodeByName(context.Background(), "rusp")
+	require.NoError(t, err)
+	assert.True(t, node.IsOffline(20*time.Second))
+
+	result, err := tx.GetInstancesByMemberAddress(context.Background(), 20*time.Second, []string{"default"}, false, "")
+	require.NoError(t, err)
+	assert.NotContains(t, result, "0.0.0.0")
+}
+
 // A node is considered empty only if it has no instances.
 func TestNodeIsEmpty_Instances(t *testing.T) {
 	tx, cleanup := db.NewTestClusterTx(t)
