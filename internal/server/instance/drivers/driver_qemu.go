@@ -9752,6 +9752,18 @@ func (d *qemu) MigrateSend(args instance.MigrateSendArgs) error {
 			op.Done(err)
 			return err
 		}
+
+		// The target can only activate the volumes once they're shared.
+		d.stopStorageLock()
+
+		err = pool.SetInstanceAccessMode(d, storageDrivers.VolumeAccessModeShared, d.op)
+		if err != nil {
+			err := fmt.Errorf("Failed sharing storage volumes with the target: %w", err)
+			op.Done(err)
+			return err
+		}
+
+		reverter.Add(func() { d.lockStorageExclusive(d, pool) })
 	}
 
 	// Send offer to target.
@@ -11239,6 +11251,11 @@ func (d *qemu) MigrateReceive(args instance.MigrateReceiveArgs) error {
 			}
 		})
 
+		if isRemoteClusterMove && !storageMove && args.Live {
+			// Release the shared activation from CreateVolumeFromMigration so the source can lock exclusively again.
+			reverter.Add(func() { _ = pool.UnmountInstance(d, nil) })
+		}
+
 		// Derive the effective storage project name from the instance config's project.
 		storageProjectName, err := project.StorageVolumeProject(d.state.DB.Cluster, d.project.Name, db.StoragePoolVolumeTypeCustom)
 		if err != nil {
@@ -11266,6 +11283,7 @@ func (d *qemu) MigrateReceive(args instance.MigrateReceiveArgs) error {
 
 				// Setup the volume entry.
 				extraTargetArgs := localMigration.VolumeTargetArgs{
+					Live:                  args.Live,
 					ClusterMoveSourceName: args.ClusterMoveSourceName,
 					StoragePool:           args.StoragePool,
 				}
@@ -11282,6 +11300,11 @@ func (d *qemu) MigrateReceive(args instance.MigrateReceiveArgs) error {
 				err = diskPool.Driver().CreateVolumeFromMigration(vol, nil, extraTargetArgs, nil, nil)
 				if err != nil {
 					return fmt.Errorf("Failed to prepare device %q for migration: %w", dev.Name, err)
+				}
+
+				if args.Live && util.IsTrue(dbVol.Config["dependent"]) {
+					// Release the shared activation from CreateVolumeFromMigration so the source can lock exclusively again.
+					reverter.Add(func() { _, _ = diskPool.Driver().UnmountVolume(vol, false, nil) })
 				}
 			}
 		}
@@ -11390,6 +11413,10 @@ func (d *qemu) MigrateReceive(args instance.MigrateReceiveArgs) error {
 		_ = g.Wait()
 
 		reverter.Success()
+
+		if args.Live && clusterMove && !storageMove && pool.Driver().Info().Remote {
+			d.lockStorageExclusive(d, pool)
+		}
 
 		return nil
 	}
