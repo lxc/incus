@@ -422,7 +422,7 @@ test_backup_import_with_project() {
     incus stop c3 --force
 
     # Import into a restricted project, the volatile keys of the backup get regenerated.
-    incus project create "$project-restricted" -c restricted=true -c features.images=false
+    incus project create "$project-restricted" -c restricted=true -c restricted.snapshots=allow -c features.images=false
     incus profile device add default root disk path="/" pool="incustest-$(basename "${INCUS_DIR}")" --project "$project-restricted"
     incus import "${INCUS_DIR}/c2.tar.gz" --project "$project-restricted"
     incus info c2 --project "$project-restricted" | grep snap0
