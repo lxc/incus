@@ -396,6 +396,34 @@ func concurrentInstanceActions(limit chan struct{}, instances []instance.Instanc
 	return nil
 }
 
+// instancesPerProject runs fn on the instances of each project in parallel.
+// The boot order only applies within a project so that one project can't hold up another.
+func instancesPerProject(instances []instance.Instance, fn func(projectInstances []instance.Instance) error) error {
+	projects := map[string][]instance.Instance{}
+	for _, inst := range instances {
+		projects[inst.Project().Name] = append(projects[inst.Project().Name], inst)
+	}
+
+	var wg sync.WaitGroup
+	var failuresLock sync.Mutex
+	var failures []error
+
+	for _, projectInstances := range projects {
+		wg.Go(func() {
+			err := fn(projectInstances)
+			if err != nil {
+				failuresLock.Lock()
+				failures = append(failures, err)
+				failuresLock.Unlock()
+			}
+		})
+	}
+
+	wg.Wait()
+
+	return errors.Join(failures...)
+}
+
 // instancesInStartOrder runs fn on the instances in startup order, fn returns whether it started the instance.
 // The delay of a started instance is held without using up the limit and is skipped if nothing follows it.
 func instancesInStartOrder(ctx context.Context, limit chan struct{}, instances []instance.Instance, prefix string, fn func(inst instance.Instance) (bool, error)) error {
@@ -453,8 +481,10 @@ func instancesStart(s *state.State, instances []instance.Instance) {
 	// Limit the number of concurrent tasks.
 	limit := make(chan struct{}, max(runtime.NumCPU()/4, 1))
 
-	_ = instancesInStartOrder(s.ShutdownCtx, limit, instances, "Failed to start instances", func(inst instance.Instance) (bool, error) {
-		return instanceStart(s, inst), nil
+	_ = instancesPerProject(instances, func(projectInstances []instance.Instance) error {
+		return instancesInStartOrder(s.ShutdownCtx, limit, projectInstances, "Failed to start instances", func(inst instance.Instance) (bool, error) {
+			return instanceStart(s, inst), nil
+		})
 	})
 }
 
