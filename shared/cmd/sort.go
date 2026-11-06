@@ -51,16 +51,27 @@ func (a SortColumnsNaturally) Less(i, j int) bool {
 			continue
 		}
 
-		if a[i][k] == "" {
-			return false
-		}
-
-		if a[j][k] == "" {
-			return true
+		rankI := sortRank(a[i][k])
+		rankJ := sortRank(a[j][k])
+		if rankI != rankJ {
+			return rankI < rankJ
 		}
 
 		return sortorder.NaturalLess(a[i][k], a[j][k])
 	}
 
 	return false
+}
+
+// sortRank puts parenthesized cells after regular ones and empty cells last.
+func sortRank(cell string) int {
+	if cell == "" {
+		return 2
+	}
+
+	if cell[0] == '(' {
+		return 1
+	}
+
+	return 0
 }
