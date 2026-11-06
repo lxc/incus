@@ -85,7 +85,15 @@ func Kill(name string, reload bool) error {
 	// Import saved subprocess details
 	p, err := subprocess.ImportProcess(pidPath)
 	if err != nil {
-		return fmt.Errorf("Could not read pid file: %s", err)
+		// An unusable file (such as after a power loss) can't identify a process, so treat it as stale.
+		logger.Warn("Removing unusable dnsmasq pid file", logger.Ctx{"network": name, "err": err})
+
+		err = os.Remove(pidPath)
+		if err != nil && !errors.Is(err, fs.ErrNotExist) {
+			return fmt.Errorf("Unable to remove dnsmasq pid file: %w", err)
+		}
+
+		return nil
 	}
 
 	if reload {
