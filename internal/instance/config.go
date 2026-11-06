@@ -74,7 +74,7 @@ var InstanceConfigKeysAny = map[string]func(value string) error{
 	"boot.autostart": validate.Optional(validate.Or(validate.IsBool, validate.IsOneOf("last-state"))),
 
 	// gendoc:generate(entity=instance, group=boot, key=boot.autostart.delay)
-	// The number of seconds to wait after the instance started before starting the next one.
+	// The number of seconds to wait after the instance started before starting the next one in its project.
 	// ---
 	//  type: integer
 	//  defaultdesc: 0
@@ -86,6 +86,7 @@ var InstanceConfigKeysAny = map[string]func(value string) error{
 	// The instance with the highest value is started first.
 	// Instances without a priority set will be started (with some parallelism) ahead of
 	// instances with a priority set.
+	// The order only applies within a project, projects are started in parallel.
 	// ---
 	//  type: integer
 	//  liveupdate: no
@@ -94,6 +95,7 @@ var InstanceConfigKeysAny = map[string]func(value string) error{
 
 	// gendoc:generate(entity=instance, group=boot, key=boot.stop.priority)
 	// The instance with the highest value is shut down first.
+	// The order only applies within a project, projects are shut down in parallel.
 	// ---
 	//  type: integer
 	//  defaultdesc: 0
