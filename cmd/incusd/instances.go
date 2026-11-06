@@ -281,23 +281,22 @@ func instanceShouldAutoStart(inst instance.Instance) bool {
 	return util.IsTrue(autoStart) || ((autoStart == "" || autoStart == "last-state") && lastState == instance.PowerStateRunning)
 }
 
-// instanceStart starts a single instance.
-func instanceStart(s *state.State, inst instance.Instance) error {
+// instanceStart starts a single instance and returns whether it got started.
+func instanceStart(s *state.State, inst instance.Instance) bool {
 	// Let's make up to 3 attempts to start instances.
 	maxAttempts := 3
 
 	if !instanceShouldAutoStart(inst) {
-		return nil
+		return false
 	}
 
 	// If already running, we're done.
 	if inst.IsRunning() {
-		return nil
+		return false
 	}
 
 	// Get the instance config.
 	config := inst.ExpandedConfig()
-	autoStartDelay := config["boot.autostart.delay"]
 	shutdownAction := config["boot.host_shutdown_action"]
 
 	instLogger := logger.AddContext(logger.Ctx{"project": inst.Project().Name, "instance": inst.Name()})
@@ -318,7 +317,7 @@ func instanceStart(s *state.State, inst instance.Instance) error {
 
 		if err != nil {
 			if api.StatusErrorCheck(err, http.StatusServiceUnavailable) {
-				break // Don't log or retry instances that are not ready to start yet.
+				return false // Don't log or retry instances that are not ready to start yet.
 			}
 
 			instLogger.Warn("Failed auto start instance attempt", logger.Ctx{"attempt": attempt, "maxAttempts": maxAttempts, "err": err})
@@ -334,7 +333,7 @@ func instanceStart(s *state.State, inst instance.Instance) error {
 
 				instLogger.Error("Failed to auto start instance", logger.Ctx{"err": err})
 
-				break
+				return false
 			}
 
 			time.Sleep(5 * time.Second)
@@ -348,16 +347,21 @@ func instanceStart(s *state.State, inst instance.Instance) error {
 			instLogger.Warn("Failed to resolve instance autostart failure warning", logger.Ctx{"err": warnErr})
 		}
 
-		// Wait the auto-start delay if set.
-		autoStartDelayInt, err := strconv.Atoi(autoStartDelay)
-		if err == nil {
-			time.Sleep(time.Duration(autoStartDelayInt) * time.Second)
-		}
+		return true
+	}
+}
 
-		break
+// instanceAutostartDelay waits for the boot.autostart.delay of the instance.
+func instanceAutostartDelay(ctx context.Context, inst instance.Instance) {
+	delay, err := strconv.Atoi(inst.ExpandedConfig()["boot.autostart.delay"])
+	if err != nil || delay <= 0 {
+		return
 	}
 
-	return nil
+	select {
+	case <-ctx.Done():
+	case <-time.After(time.Duration(delay) * time.Second):
+	}
 }
 
 func instancesStart(s *state.State, instances []instance.Instance) {
@@ -382,7 +386,7 @@ func instancesStart(s *state.State, instances []instance.Instance) {
 	for _, inst := range bulkInstances {
 		i := inst
 		group.Go(func() error {
-			_ = instanceStart(s, i)
+			instanceStart(s, i)
 			return nil
 		})
 	}
@@ -393,7 +397,9 @@ func instancesStart(s *state.State, instances []instance.Instance) {
 	sort.Sort(instanceAutostartList(sequentialInstances))
 
 	for _, inst := range sequentialInstances {
-		_ = instanceStart(s, inst)
+		if instanceStart(s, inst) {
+			instanceAutostartDelay(s.ShutdownCtx, inst)
+		}
 	}
 }
 
