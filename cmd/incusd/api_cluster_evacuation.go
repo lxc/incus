@@ -646,30 +646,19 @@ func restoreClusterMember(d *Daemon, r *http.Request, skipInstances bool) respon
 			return err
 		}
 
-		// Restart the local instances.
+		// Restart the local instances and migrate back the remote ones.
+		restoring := slices.Clone(instances)
 		for _, inst := range localInstances {
-			// Don't start instances which were stopped by the user.
-			if inst.LocalConfig()["volatile.last_state.power"] != instance.PowerStateRunning {
-				continue
-			}
-
-			// Don't attempt to start instances which are already running.
-			if inst.IsRunning() {
-				continue
-			}
-
-			// Start the instance.
-			err = restoreStartInstance(inst, op)
-			if err != nil {
-				return err
+			// Don't start instances which were stopped by the user or are already running.
+			if inst.LocalConfig()["volatile.last_state.power"] == instance.PowerStateRunning && !inst.IsRunning() {
+				restoring = append(restoring, inst)
 			}
 		}
 
-		// Migrate back the remote instances.
 		limit := make(chan struct{}, max(runtime.NumCPU()/16, 1))
 
-		err = concurrentInstanceActions(limit, instances, "Failed to restore instances", func(inst instance.Instance) error {
-			return restoreClusterMemberFunc(inst, op, originName, r, s)
+		err = instancesPerProject(restoring, func(projectInstances []instance.Instance) error {
+			return restoreProjectInstances(s, r, op, originName, limit, projectInstances, localInstances)
 		})
 		if err != nil {
 			return err
@@ -694,6 +683,46 @@ func restoreClusterMember(d *Daemon, r *http.Request, skipInstances bool) respon
 	}
 
 	return operations.OperationResponse(op)
+}
+
+// restoreProjectInstances restores the instances of a single project.
+func restoreProjectInstances(s *state.State, r *http.Request, op *operations.Operation, originName string, limit chan struct{}, instances []instance.Instance, localInstances []instance.Instance) error {
+	restore := func(inst instance.Instance) error {
+		if slices.Contains(localInstances, inst) {
+			return restoreStartInstance(inst, op)
+		}
+
+		return restoreClusterMemberFunc(inst, op, originName, r, s)
+	}
+
+	// Only the instances getting started follow the boot order.
+	var ordered, unordered []instance.Instance
+	for _, inst := range instances {
+		action := inst.CanMigrate()
+		isLive := action == "live-migrate" || action == "refresh-migrate"
+		if slices.Contains(localInstances, inst) || (!isLive && inst.LocalConfig()["volatile.last_state.power"] == instance.PowerStateRunning) {
+			ordered = append(ordered, inst)
+		} else {
+			unordered = append(unordered, inst)
+		}
+	}
+
+	// Instances outside of the order don't wait for it.
+	var wg sync.WaitGroup
+	var unorderedErr error
+	wg.Go(func() {
+		unorderedErr = concurrentInstanceActions(limit, unordered, "Failed to restore instances", restore)
+	})
+
+	orderedErr := instancesInStartOrder(s.ShutdownCtx, limit, ordered, "Failed to restore instances", func(inst instance.Instance) (bool, error) {
+		err := restore(inst)
+
+		return err == nil, err
+	})
+
+	wg.Wait()
+
+	return errors.Join(orderedErr, unorderedErr)
 }
 
 // restoreStartInstance starts an instance left on the member being restored.
