@@ -73,8 +73,15 @@ The evacuated cluster member is then transitioned to an "evacuated" state, which
 You can control how each instance is moved through the {config:option}`instance-miscellaneous:cluster.evacuate` instance configuration key.
 Instances are shut down cleanly, respecting the `boot.host_shutdown_timeout` configuration key.
 
+Each project is evacuated independently of the others.
+If {config:option}`instance-boot:boot.stop.priority`, {config:option}`instance-boot:boot.autostart.priority` or {config:option}`instance-boot:boot.autostart.delay` is set on an instance of a project that gets stopped or started, the evacuation honors them for that project.
+Those instances are first all stopped following `boot.stop.priority`, then moved and started in the same order as when the server starts up.
+Instances that are live migrated or aren't running aren't part of that order.
+Otherwise, all instances of the project are processed in parallel.
+
 When the evacuated server is available again, use the [`incus cluster restore`](incus_cluster_restore.md) command to move the server back into a normal running state.
 This command also moves the evacuated instances back from the servers that were temporarily holding them.
+Instances that get started follow the same order as when the server starts up, within their project.
 
 (cluster-automatic-evacuation)=
 ### Cluster healing
