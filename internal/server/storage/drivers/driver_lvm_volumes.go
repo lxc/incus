@@ -211,6 +211,14 @@ func (d *lvm) CreateVolumeFromMigration(vol Volume, conn io.ReadWriteCloser, vol
 			return err
 		}
 
+		// The source keeps using the volume until the live migration completes.
+		if volTargetArgs.Live && d.exclusiveVolume(vol) {
+			err := d.activateVolumeShared(vol)
+			if err != nil {
+				return err
+			}
+		}
+
 		if vol.IsVMBlock() {
 			fsVol := vol.NewVMBlockFilesystemVolume()
 			err := d.CreateVolumeFromMigration(fsVol, conn, volTargetArgs, preFiller, op)
