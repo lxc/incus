@@ -425,15 +425,15 @@ func (l *instanceLimiter) release() {
 
 // concurrentInstanceActions runs fn on every instance, limit bounds how many run at once.
 // Each instance runs to completion regardless of other failures, all of which are reported at the end.
-func concurrentInstanceActions(limit chan struct{}, instances []instance.Instance, prefix string, fn func(inst instance.Instance) error) error {
+func concurrentInstanceActions(limit *instanceLimiter, instances []instance.Instance, prefix string, fn func(inst instance.Instance) error) error {
 	var wg sync.WaitGroup
 	var failuresLock sync.Mutex
 	failures := []string{}
 
 	for _, inst := range instances {
 		wg.Go(func() {
-			limit <- struct{}{}
-			defer func() { <-limit }()
+			limit.acquire(inst.Project().Name)
+			defer limit.release()
 
 			err := fn(inst)
 			if err != nil {
@@ -485,7 +485,7 @@ func instancesPerProject(instances []instance.Instance, fn func(projectInstances
 
 // instancesInStartOrder runs fn on the instances in startup order, fn returns whether it started the instance.
 // The delay of a started instance is held without using up the limit and is skipped if nothing follows it.
-func instancesInStartOrder(ctx context.Context, limit chan struct{}, instances []instance.Instance, prefix string, fn func(inst instance.Instance) (bool, error)) error {
+func instancesInStartOrder(ctx context.Context, limit *instanceLimiter, instances []instance.Instance, prefix string, fn func(inst instance.Instance) (bool, error)) error {
 	bulkInstances, sequentialInstances := bulkStartInstances(instances)
 
 	// Start instances that support bulk startup.
@@ -538,7 +538,7 @@ func instancesStart(s *state.State, instances []instance.Instance) {
 	defer instancesStartMu.Unlock()
 
 	// Limit the number of concurrent tasks.
-	limit := make(chan struct{}, max(runtime.NumCPU()/4, 1))
+	limit := newInstanceLimiter(max(runtime.NumCPU()/4, 1))
 
 	_ = instancesPerProject(instances, func(projectInstances []instance.Instance) error {
 		return instancesInStartOrder(s.ShutdownCtx, limit, projectInstances, "Failed to start instances", func(inst instance.Instance) (bool, error) {
@@ -775,7 +775,7 @@ func instanceShutdown(s *state.State, inst instance.Instance, forceCh <-chan str
 }
 
 // instancesInStopOrder runs fn on the instances in shutdown order, finishing each priority before the next.
-func instancesInStopOrder(limit chan struct{}, instances []instance.Instance, prefix string, fn func(inst instance.Instance) error) error {
+func instancesInStopOrder(limit *instanceLimiter, instances []instance.Instance, prefix string, fn func(inst instance.Instance) error) error {
 	sorted := slices.Clone(instances)
 	sort.Sort(instanceStopList(sorted))
 
@@ -821,7 +821,7 @@ func instancesShutdown(ctx context.Context, s *state.State, instances []instance
 	})
 
 	// Limit shutdown concurrency to the number of CPU cores.
-	limit := make(chan struct{}, runtime.NumCPU())
+	limit := newInstanceLimiter(runtime.NumCPU())
 
 	_ = instancesPerProject(running, func(projectInstances []instance.Instance) error {
 		return instancesInStopOrder(limit, projectInstances, "Failed to stop instances", func(inst instance.Instance) error {

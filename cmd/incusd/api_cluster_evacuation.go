@@ -396,7 +396,7 @@ func evacuateInstances(ctx context.Context, opts evacuateOpts) error {
 		return errors.New("Missing migration callback function")
 	}
 
-	limit := make(chan struct{}, max(runtime.NumCPU()/16, 1))
+	limit := newInstanceLimiter(max(runtime.NumCPU()/16, 1))
 
 	return instancesPerProject(opts.instances, func(projectInstances []instance.Instance) error {
 		return evacuateProjectInstances(ctx, limit, projectInstances, opts)
@@ -404,7 +404,7 @@ func evacuateInstances(ctx context.Context, opts evacuateOpts) error {
 }
 
 // evacuateProjectInstances evacuates the instances of a single project.
-func evacuateProjectInstances(ctx context.Context, limit chan struct{}, instances []instance.Instance, opts evacuateOpts) error {
+func evacuateProjectInstances(ctx context.Context, limit *instanceLimiter, instances []instance.Instance, opts evacuateOpts) error {
 	// Decide on all actions first, only instances going through a stop or start get ordered.
 	plans := make(map[instance.Instance]evacuateInstancePlan, len(instances))
 	var ordered, unordered []instance.Instance
@@ -655,7 +655,7 @@ func restoreClusterMember(d *Daemon, r *http.Request, skipInstances bool) respon
 			}
 		}
 
-		limit := make(chan struct{}, max(runtime.NumCPU()/16, 1))
+		limit := newInstanceLimiter(max(runtime.NumCPU()/16, 1))
 
 		err = instancesPerProject(restoring, func(projectInstances []instance.Instance) error {
 			return restoreProjectInstances(s, r, op, originName, limit, projectInstances, localInstances)
@@ -686,7 +686,7 @@ func restoreClusterMember(d *Daemon, r *http.Request, skipInstances bool) respon
 }
 
 // restoreProjectInstances restores the instances of a single project.
-func restoreProjectInstances(s *state.State, r *http.Request, op *operations.Operation, originName string, limit chan struct{}, instances []instance.Instance, localInstances []instance.Instance) error {
+func restoreProjectInstances(s *state.State, r *http.Request, op *operations.Operation, originName string, limit *instanceLimiter, instances []instance.Instance, localInstances []instance.Instance) error {
 	restore := func(inst instance.Instance) error {
 		if slices.Contains(localInstances, inst) {
 			return restoreStartInstance(inst, op)
