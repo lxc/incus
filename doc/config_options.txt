@@ -2338,7 +2338,7 @@ If unset or set to `last-state`, restores the last state.
 :liveupdate: "no"
 :shortdesc: "Delay after starting the instance"
 :type: "integer"
-The number of seconds to wait after the instance started before starting the next one.
+The number of seconds to wait after the instance started before starting the next one in its project.
 ```
 
 ```{config:option} boot.autostart.priority instance-boot
@@ -2348,6 +2348,7 @@ The number of seconds to wait after the instance started before starting the nex
 The instance with the highest value is started first.
 Instances without a priority set will be started (with some parallelism) ahead of
 instances with a priority set.
+The order only applies within a project, projects are started in parallel.
 ```
 
 ```{config:option} boot.host_shutdown_action instance-boot
@@ -2382,6 +2383,7 @@ Number of seconds to wait for the instance to shut down before it is force-stopp
 :shortdesc: "What order to shut down the instances in"
 :type: "integer"
 The instance with the highest value is shut down first.
+The order only applies within a project, projects are shut down in parallel.
 ```
 
 <!-- config group instance-boot end -->
