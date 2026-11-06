@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -684,57 +685,60 @@ func instanceShutdown(s *state.State, inst instance.Instance, forceCh <-chan str
 	}
 }
 
-func instancesShutdown(ctx context.Context, s *state.State, instances []instance.Instance, forceTimeout time.Duration) {
-	sort.Sort(instanceStopList(instances))
+// instancesInStopOrder runs fn on the instances in shutdown order, finishing each priority before the next.
+func instancesInStopOrder(limit chan struct{}, instances []instance.Instance, prefix string, fn func(inst instance.Instance) error) error {
+	sorted := slices.Clone(instances)
+	sort.Sort(instanceStopList(sorted))
 
+	stopPriority := func(inst instance.Instance) int {
+		priority, _ := strconv.Atoi(inst.ExpandedConfig()["boot.stop.priority"])
+
+		return priority
+	}
+
+	var failures []error
+	for len(sorted) > 0 {
+		priority := stopPriority(sorted[0])
+		end := slices.IndexFunc(sorted, func(inst instance.Instance) bool {
+			return stopPriority(inst) != priority
+		})
+		if end < 0 {
+			end = len(sorted)
+		}
+
+		logger.Info("Stopping instances", logger.Ctx{"stopPriority": priority})
+
+		err := concurrentInstanceActions(limit, sorted[:end], prefix, fn)
+		if err != nil {
+			failures = append(failures, err)
+		}
+
+		sorted = sorted[end:]
+	}
+
+	return errors.Join(failures...)
+}
+
+func instancesShutdown(ctx context.Context, s *state.State, instances []instance.Instance, forceTimeout time.Duration) {
 	// A shutdown forced from the start still gets the regular timeouts.
 	forceCh := ctx.Done()
 	if ctx.Err() != nil {
 		forceCh = nil
 	}
 
-	// Limit shutdown concurrency to number of instances or number of CPU cores (which ever is less).
-	var wg sync.WaitGroup
-	instShutdownCh := make(chan instance.Instance)
-	maxConcurrent := runtime.NumCPU()
-	instCount := len(instances)
-	if instCount < maxConcurrent {
-		maxConcurrent = instCount
-	}
+	// Skip stopped instances.
+	running := slices.DeleteFunc(slices.Clone(instances), func(inst instance.Instance) bool {
+		return !inst.IsRunning()
+	})
 
-	for range maxConcurrent {
-		go func(instShutdownCh <-chan instance.Instance) {
-			for inst := range instShutdownCh {
-				instanceShutdown(s, inst, forceCh, forceTimeout)
-				wg.Done()
-			}
-		}(instShutdownCh)
-	}
+	// Limit shutdown concurrency to the number of CPU cores.
+	limit := make(chan struct{}, runtime.NumCPU())
 
-	var currentBatchPriority int
-	for i, inst := range instances {
-		// Skip stopped instances.
-		if !inst.IsRunning() {
-			continue
-		}
+	_ = instancesInStopOrder(limit, running, "Failed to stop instances", func(inst instance.Instance) error {
+		instanceShutdown(s, inst, forceCh, forceTimeout)
 
-		priority, _ := strconv.Atoi(inst.ExpandedConfig()["boot.stop.priority"])
-
-		// Shutdown instances in priority batches, logging at the start of each batch.
-		if i == 0 || priority != currentBatchPriority {
-			currentBatchPriority = priority
-
-			// Wait for instances with higher priority to finish before starting next batch.
-			wg.Wait()
-			logger.Info("Stopping instances", logger.Ctx{"stopPriority": currentBatchPriority})
-		}
-
-		wg.Add(1)
-		instShutdownCh <- inst
-	}
-
-	wg.Wait()
-	close(instShutdownCh)
+		return nil
+	})
 }
 
 // instanceShutdownDefaultTimeout is the default timeout (in seconds) to wait for a clean shutdown.
