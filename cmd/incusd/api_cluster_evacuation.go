@@ -359,6 +359,32 @@ func evacuateClusterMember(ctx context.Context, s *state.State, op *operations.O
 	return nil
 }
 
+// evacuateInstanceAction returns the action for the instance, empty if it must be left as it is.
+func evacuateInstanceAction(inst instance.Instance, mode string) string {
+	// An explicit mode overrides the instance's policy.
+	if mode != "" && mode != "auto" && mode != "heal" {
+		return mode
+	}
+
+	// Check if migratable.
+	action := inst.CanMigrate()
+	if mode != "heal" {
+		return action
+	}
+
+	// Source server is dead, live-migration isn't an option.
+	if action == "live-migrate" || action == "refresh-migrate" {
+		return "migrate"
+	}
+
+	// We can only migrate instances or leave them as they are.
+	if action != "migrate" {
+		return ""
+	}
+
+	return action
+}
+
 func evacuateInstances(ctx context.Context, opts evacuateOpts) error {
 	if opts.migrateInstance == nil {
 		return errors.New("Missing migration callback function")
@@ -375,24 +401,10 @@ func evacuateInstancesFunc(ctx context.Context, inst instance.Instance, opts eva
 	instProject := inst.Project()
 	l := logger.AddContext(logger.Ctx{"project": instProject.Name, "instance": inst.Name()})
 
-	// Check if migratable.
-	action := inst.CanMigrate()
-
-	// Apply overrides.
-	if opts.mode != "" {
-		if opts.mode == "heal" {
-			// Source server is dead, live-migration isn't an option.
-			if action == "live-migrate" || action == "refresh-migrate" {
-				action = "migrate"
-			}
-
-			if action != "migrate" {
-				// We can only migrate instances or leave them as they are.
-				return nil
-			}
-		} else if opts.mode != "auto" {
-			action = opts.mode
-		}
+	// Check what to do with the instance.
+	action := evacuateInstanceAction(inst, opts.mode)
+	if action == "" {
+		return nil
 	}
 
 	// Stop the instance if needed.
