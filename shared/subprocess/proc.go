@@ -377,8 +377,10 @@ func (p *Process) Save(path string) error {
 
 	// Write to a temporary file and rename so a partial file is never imported.
 	tmpPath := path + ".tmp"
-	err = os.WriteFile(tmpPath, dat, 0o644)
+	err = writeFileSync(tmpPath, dat)
 	if err != nil {
+		_ = os.Remove(tmpPath)
+
 		return fmt.Errorf("Unable to write to file '%s': %w", tmpPath, err)
 	}
 
@@ -390,6 +392,28 @@ func (p *Process) Save(path string) error {
 	}
 
 	return nil
+}
+
+// writeFileSync writes the file and flushes it so a rename can't reach the disk ahead of the content.
+func writeFileSync(path string, dat []byte) error {
+	f, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0o644)
+	if err != nil {
+		return err
+	}
+
+	defer func() { _ = f.Close() }()
+
+	_, err = f.Write(dat)
+	if err != nil {
+		return err
+	}
+
+	err = f.Sync()
+	if err != nil {
+		return err
+	}
+
+	return f.Close()
 }
 
 // Signal will send a signal to the given process object given a signal value.
