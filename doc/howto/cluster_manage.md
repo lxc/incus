@@ -101,6 +101,9 @@ power to the server in question by interacting with its BMC or PDU, and set {con
 number of seconds long enough for that power off to complete.
 Incus sends the event as soon as it detects the offline server and only starts evacuating its instances once the delay has elapsed,
 after checking that the server is still offline.
+
+With the {ref}`lvmcluster <storage-lvmcluster>` driver, instances whose volumes are still locked by the offline server are left in place
+and retried on the next healing run.
 ```
 
 (cluster-automatic-balancing)=
