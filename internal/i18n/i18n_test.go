@@ -74,3 +74,37 @@ func TestDetectLanguage(t *testing.T) {
 		}
 	}
 }
+
+// TestCatalogueNames covers the alias chain, especially the Chinese
+// region-to-script mapping that the region-named catalogues require.
+func TestCatalogueNames(t *testing.T) {
+	cases := []struct {
+		lang string
+		want []string
+	}{
+		{"zh_CN", []string{"zh_CN", "zh_Hans", "zh"}},
+		{"zh_TW", []string{"zh_TW", "zh_Hant", "zh"}},
+		{"zh_Hans", []string{"zh_Hans", "zh"}},
+		{"no_NO", []string{"no_NO", "nb_NO", "no", "nb"}},
+		{"nn_NO", []string{"nn_NO", "nn"}},
+		{"pt_BR", []string{"pt_BR", "pt"}},
+		{"fr_FR", []string{"fr_FR", "fr"}},
+	}
+
+	for _, c := range cases {
+		got := catalogueNames(c.lang)
+		if len(got) != len(c.want) {
+			t.Errorf("catalogueNames(%q) = %v, want %v", c.lang, got, c.want)
+
+			continue
+		}
+
+		for i := range got {
+			if got[i] != c.want[i] {
+				t.Errorf("catalogueNames(%q) = %v, want %v", c.lang, got, c.want)
+
+				break
+			}
+		}
+	}
+}

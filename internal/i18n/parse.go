@@ -14,8 +14,63 @@ package i18n
 
 import (
 	"bufio"
+	"slices"
 	"strings"
 )
+
+// localeAlias maps a locale to the catalogue that serves it when the two are
+// named differently.
+//
+// Chinese catalogues are named by script, zh_Hans and zh_Hant, while locales
+// are named by region. Without this every zh_* locale falls back to English.
+// The region-to-script assignment is CLDR's.
+//
+// Norwegian: nb_NO is Bokmål, and the legacy no_NO alias means the same thing.
+// Nynorsk (nn_*) is a separate written standard with no catalogue here, so it
+// is deliberately absent and falls back to English rather than being served
+// Bokmål.
+var localeAlias = map[string]string{
+	"zh_CN": "zh_Hans",
+	"zh_SG": "zh_Hans",
+	"zh_MY": "zh_Hans",
+	"zh_TW": "zh_Hant",
+	"zh_HK": "zh_Hant",
+	"zh_MO": "zh_Hant",
+	"no":    "nb",
+	"no_NO": "nb_NO",
+}
+
+// catalogueNames lists the catalogue names to try for a locale, most specific
+// first: the locale itself, its alias, then the same two for the bare language
+// code.
+//
+// Trying the alias before the short code matters for Chinese. A zh_CN locale
+// must reach zh_Hans, and the short code "zh" has no catalogue, so putting the
+// short code first would skip straight to English.
+func catalogueNames(lang string) []string {
+	var names []string
+
+	add := func(name string) {
+		if name == "" {
+			return
+		}
+
+		if slices.Contains(names, name) {
+			return
+		}
+
+		names = append(names, name)
+	}
+
+	add(lang)
+	add(localeAlias[lang])
+
+	short := shortCode(lang)
+	add(short)
+	add(localeAlias[short])
+
+	return names
+}
 
 // shortCode reduces "zh_Hans" to "zh", or returns "" when there is no "_".
 func shortCode(lang string) string {
