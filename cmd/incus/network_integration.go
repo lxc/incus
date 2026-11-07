@@ -6,7 +6,6 @@ import (
 	"io"
 	"maps"
 	"os"
-	"sort"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -47,7 +46,7 @@ func (c *cmdNetworkIntegration) command() *cobra.Command {
 	cmd.AddCommand(networkIntegrationGetCmd.command())
 
 	// List
-	networkIntegrationListCmd := cmdNetworkIntegrationList{global: c.global, networkIntegration: c}
+	networkIntegrationListCmd := cmdNetworkIntegrationList{global: c.global, networkIntegration: c, lister: &listable[api.NetworkIntegration]{global: c.global}}
 	cmd.AddCommand(networkIntegrationListCmd.command())
 
 	// Rename
@@ -324,11 +323,6 @@ type cmdNetworkIntegrationGet struct {
 	flagIsProperty bool
 }
 
-type networkIntegrationColumn struct {
-	Name string
-	Data func(api.NetworkIntegration) string
-}
-
 var cmdNetworkIntegrationGetUsage = u.Usage{u.NetworkIntegration.Remote(), u.Key}
 
 func (c *cmdNetworkIntegrationGet) command() *cobra.Command {
@@ -379,9 +373,7 @@ func (c *cmdNetworkIntegrationGet) run(cmd *cobra.Command, args []string) error 
 type cmdNetworkIntegrationList struct {
 	global             *cmdGlobal
 	networkIntegration *cmdNetworkIntegration
-
-	flagFormat  string
-	flagColumns string
+	lister             *listable[api.NetworkIntegration]
 }
 
 var cmdNetworkIntegrationListUsage = u.Usage{u.RemoteColonOpt}
@@ -391,69 +383,18 @@ func (c *cmdNetworkIntegrationList) command() *cobra.Command {
 	cmd.Use = cli.U("list", cmdNetworkIntegrationListUsage...)
 	cmd.Aliases = []string{"ls"}
 	cmd.Short = i18n.G("List network integrations")
-	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
-		`List network integrations
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G("List network integrations"))
 
-Default column layout: ndtu
-
-== Columns ==
-The -c option takes a comma separated list of arguments that control
-which network integrations attributes to output when displaying in table or csv
-format.
-
-Column arguments are either pre-defined shorthand chars (see below),
-or (extended) config keys.
-
-Commas between consecutive shorthand chars are optional.
-
-Pre-defined column shorthand chars:
-	n - Name
-	d - Description
-	t - Type
-	u - Used by`,
-	))
-
-	cli.AddStringFlag(cmd.Flags(), &c.flagFormat, "format|f", c.global.defaultListFormat(), "", i18n.G(`Format (csv|json|table|yaml|compact|markdown), use suffix ",noheader" to disable headers and ",header" to enable it if missing, e.g. csv,header`))
-	cli.AddStringFlag(cmd.Flags(), &c.flagColumns, "columns|c", defaultNetworkIntegrationColumns, "", i18n.G("Columns"))
-
-	cmd.PreRunE = func(cmd *cobra.Command, _ []string) error {
-		return cli.ValidateFlagFormatForListOutput(cmd.Flag("format").Value.String())
-	}
+	c.lister.init(cmd, "ndtu", map[rune]listColumn[api.NetworkIntegration]{
+		'n': {i18n.G("NAME"), i18n.G("Name"), c.nameColumnData},
+		'd': {i18n.G("DESCRIPTION"), i18n.G("Description"), c.descriptionColumnData},
+		't': {i18n.G("TYPE"), i18n.G("Type"), c.typeColumnData},
+		'u': {i18n.G("USED BY"), i18n.G("Number of references"), c.usedByColumnData},
+	})
 
 	cmd.RunE = c.run
 
 	return cmd
-}
-
-const defaultNetworkIntegrationColumns = "ndtu"
-
-func (c *cmdNetworkIntegrationList) parseColumns() ([]networkIntegrationColumn, error) {
-	columnsShorthandMap := map[rune]networkIntegrationColumn{
-		'n': {i18n.G("NAME"), c.nameColumnData},
-		'd': {i18n.G("DESCRIPTION"), c.descriptionColumnData},
-		't': {i18n.G("TYPE"), c.typeColumnData},
-		'u': {i18n.G("USED BY"), c.usedByColumnData},
-	}
-
-	columnList := strings.Split(c.flagColumns, ",")
-	columns := []networkIntegrationColumn{}
-
-	for _, columnEntry := range columnList {
-		if columnEntry == "" {
-			return nil, fmt.Errorf(i18n.G("Empty column entry (redundant, leading or trailing command) in '%s'"), c.flagColumns)
-		}
-
-		for _, columnRune := range columnEntry {
-			column, ok := columnsShorthandMap[columnRune]
-			if !ok {
-				return nil, fmt.Errorf(i18n.G("Unknown column shorthand char '%c' in '%s'"), columnRune, columnEntry)
-			}
-
-			columns = append(columns, column)
-		}
-	}
-
-	return columns, nil
 }
 
 func (c *cmdNetworkIntegrationList) nameColumnData(integration api.NetworkIntegration) string {
@@ -486,30 +427,7 @@ func (c *cmdNetworkIntegrationList) run(cmd *cobra.Command, args []string) error
 		return err
 	}
 
-	// Parse column flags.
-	columns, err := c.parseColumns()
-	if err != nil {
-		return err
-	}
-
-	data := [][]string{}
-	for _, networkIntegration := range networkIntegrations {
-		line := []string{}
-		for _, column := range columns {
-			line = append(line, column.Data(networkIntegration))
-		}
-
-		data = append(data, line)
-	}
-
-	sort.Sort(cli.SortColumnsNaturally(data))
-
-	header := []string{}
-	for _, column := range columns {
-		header = append(header, column.Name)
-	}
-
-	return cli.RenderTable(os.Stdout, c.flagFormat, header, data, networkIntegrations)
+	return c.lister.run(networkIntegrations)
 }
 
 // Rename.

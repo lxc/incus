@@ -8,6 +8,7 @@ import (
 	"os"
 	"slices"
 	"sort"
+	"strconv"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -33,7 +34,7 @@ func (c *cmdNetworkAddressSet) command() *cobra.Command {
 	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G("Manage network address sets"))
 
 	// List
-	networkAddressSetListCmd := cmdNetworkAddressSetList{global: c.global, networkAddressSet: c}
+	networkAddressSetListCmd := cmdNetworkAddressSetList{global: c.global, networkAddressSet: c, lister: &listable[api.NetworkAddressSet]{global: c.global}}
 	cmd.AddCommand(networkAddressSetListCmd.command())
 
 	// Show
@@ -82,8 +83,8 @@ func (c *cmdNetworkAddressSet) command() *cobra.Command {
 type cmdNetworkAddressSetList struct {
 	global            *cmdGlobal
 	networkAddressSet *cmdNetworkAddressSet
+	lister            *listable[api.NetworkAddressSet]
 
-	flagFormat      string
 	flagAllProjects bool
 }
 
@@ -95,10 +96,17 @@ func (c *cmdNetworkAddressSetList) command() *cobra.Command {
 	cmd.Aliases = []string{"ls"}
 	cmd.Short = i18n.G("List available network address sets")
 	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G("List available network address sets"))
+	cli.AddBoolFlag(cmd.Flags(), &c.flagAllProjects, "all-projects", i18n.G("List address sets across all projects"))
+
+	c.lister.init(cmd, "ndau", map[rune]listColumn[api.NetworkAddressSet]{
+		'n': {i18n.G("NAME"), i18n.G("Name"), func(v api.NetworkAddressSet) string { return v.Name }},
+		'd': {i18n.G("DESCRIPTION"), i18n.G("Description"), func(v api.NetworkAddressSet) string { return v.Description }},
+		'a': {i18n.G("ADDRESSES"), i18n.G("Addresses"), func(v api.NetworkAddressSet) string { return strings.Join(v.Addresses, "\n") }},
+		'u': {i18n.G("USED BY"), i18n.G("Number of references"), func(v api.NetworkAddressSet) string { return strconv.Itoa(len(v.UsedBy)) }},
+		'e': {i18n.G("PROJECT"), i18n.G("Project"), func(v api.NetworkAddressSet) string { return v.Project }},
+	}, projectToggle)
 
 	cmd.RunE = c.run
-	cli.AddStringFlag(cmd.Flags(), &c.flagFormat, "format|f", c.global.defaultListFormat(), "", i18n.G("Format (csv|json|table|yaml|compact|markdown)"))
-	cli.AddBoolFlag(cmd.Flags(), &c.flagAllProjects, "all-projects", i18n.G("List address sets across all projects"))
 
 	cmd.ValidArgsFunction = func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		if len(args) == 0 {
@@ -119,6 +127,15 @@ func (c *cmdNetworkAddressSetList) run(cmd *cobra.Command, args []string) error 
 
 	d := parsed[0].RemoteServer
 
+	if c.global.flagProject != "" && c.flagAllProjects {
+		return errors.New(i18n.G("Can't specify --project with --all-projects"))
+	}
+
+	err = c.lister.toggle(projectToggle, c.flagAllProjects)
+	if err != nil {
+		return err
+	}
+
 	var sets []api.NetworkAddressSet
 	if c.flagAllProjects {
 		sets, err = d.GetNetworkAddressSetsAllProjects()
@@ -131,37 +148,8 @@ func (c *cmdNetworkAddressSetList) run(cmd *cobra.Command, args []string) error 
 			return err
 		}
 	}
-	data := [][]string{}
-	for _, as := range sets {
-		strUsedBy := fmt.Sprintf("%d", len(as.UsedBy))
-		details := []string{
-			as.Name,
-			as.Description,
-			strings.Join(as.Addresses, "\n"),
-			strUsedBy,
-		}
 
-		if c.flagAllProjects {
-			details = append([]string{as.Project}, details...)
-		}
-
-		data = append(data, details)
-	}
-
-	sort.Sort(cli.SortColumnsNaturally(data))
-
-	header := []string{
-		i18n.G("NAME"),
-		i18n.G("DESCRIPTION"),
-		i18n.G("ADDRESSES"),
-		i18n.G("USED BY"),
-	}
-
-	if c.flagAllProjects {
-		header = append([]string{i18n.G("PROJECT")}, header...)
-	}
-
-	return cli.RenderTable(os.Stdout, c.flagFormat, header, data, sets)
+	return c.lister.run(sets)
 }
 
 // cmdNetworkAddressSetShow defines the structure for showing a network address set.

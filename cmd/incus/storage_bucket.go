@@ -8,7 +8,6 @@ import (
 	"net/url"
 	"os"
 	"path"
-	"sort"
 	"strings"
 	"time"
 
@@ -57,7 +56,7 @@ func (c *cmdStorageBucket) command() *cobra.Command {
 	cmd.AddCommand(storageBucketGetCmd.command())
 
 	// List.
-	storageBucketListCmd := cmdStorageBucketList{global: c.global, storageBucket: c}
+	storageBucketListCmd := cmdStorageBucketList{global: c.global, storageBucket: c, lister: &listable[api.StorageBucket]{global: c.global}}
 	cmd.AddCommand(storageBucketListCmd.command())
 
 	// Set.
@@ -421,97 +420,31 @@ func (c *cmdStorageBucketGet) run(cmd *cobra.Command, args []string) error {
 type cmdStorageBucketList struct {
 	global        *cmdGlobal
 	storageBucket *cmdStorageBucket
+	lister        *listable[api.StorageBucket]
 
-	flagFormat      string
 	flagAllProjects bool
-	flagColumns     string
 }
 
 var cmdStorageBucketListUsage = u.Usage{u.Pool.Remote(), u.Filter.List(0)}
-
-type storageBucketColumn struct {
-	Name string
-	Data func(api.StorageBucket) string
-}
 
 func (c *cmdStorageBucketList) command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("list", cmdStorageBucketListUsage...)
 	cmd.Aliases = []string{"ls"}
 	cmd.Short = i18n.G("List storage buckets")
-
-	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
-		`List storage buckets
-
-Default column layout: ndL
-
-== Columns ==
-The -c option takes a comma separated list of arguments that control
-which storage bucket attributes to output when displaying in table or csv
-format.
-
-Column arguments are either pre-defined shorthand chars (see below),
-or (extended) config keys.
-
-Commas between consecutive shorthand chars are optional.
-
-Pre-defined column shorthand chars:
-  e - Project name
-  n - Name
-  d - Description
-  L - Location of the storage bucket (e.g. its cluster member)`,
-	))
-
-	cli.AddStringFlag(cmd.Flags(), &c.flagFormat, "format|f", c.global.defaultListFormat(), "", i18n.G(`Format (csv|json|table|yaml|compact|markdown), use suffix ",noheader" to disable headers and ",header" to enable it if missing, e.g. csv,header`))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G("List storage buckets"))
 	cli.AddBoolFlag(cmd.Flags(), &c.flagAllProjects, "all-projects", i18n.G("Display storage pool buckets from all projects"))
-	cli.AddStringFlag(cmd.Flags(), &c.flagColumns, "columns|c", defaultStorageBucketColumns, "", i18n.G("Columns"))
 
-	cmd.PreRunE = func(cmd *cobra.Command, _ []string) error {
-		return cli.ValidateFlagFormatForListOutput(cmd.Flag("format").Value.String())
-	}
+	c.lister.init(cmd, "nd", map[rune]listColumn[api.StorageBucket]{
+		'e': {i18n.G("PROJECT"), i18n.G("Project"), c.projectColumnData},
+		'n': {i18n.G("NAME"), i18n.G("Name"), c.nameColumnData},
+		'd': {i18n.G("DESCRIPTION"), i18n.G("Description"), c.descriptionColumnData},
+		'L': {i18n.G("LOCATION"), i18n.G("Location (cluster member)"), c.locationColumnData},
+	}, projectToggle, locationToggle)
 
 	cmd.RunE = c.run
 
 	return cmd
-}
-
-const defaultStorageBucketColumns = "nd" // codespell:ignore nd
-
-func (c *cmdStorageBucketList) parseColumns(clustered bool) ([]storageBucketColumn, error) {
-	columnsShorthandMap := map[rune]storageBucketColumn{
-		'e': {i18n.G("PROJECT"), c.projectColumnData},
-		'n': {i18n.G("NAME"), c.nameColumnData},
-		'd': {i18n.G("DESCRIPTION"), c.descriptionColumnData},
-		'L': {i18n.G("LOCATION"), c.locationColumnData},
-	}
-
-	columnList := strings.Split(c.flagColumns, ",")
-	columns := []storageBucketColumn{}
-
-	if c.flagColumns == defaultStorageBucketColumns && clustered {
-		columnList = append(columnList, "L")
-	}
-
-	if c.flagColumns == defaultStorageBucketColumns && c.flagAllProjects {
-		columnList = append([]string{"e"}, columnList...)
-	}
-
-	for _, columnEntry := range columnList {
-		if columnEntry == "" {
-			return nil, fmt.Errorf(i18n.G("Empty column entry (redundant, leading or trailing command) in '%s'"), c.flagColumns)
-		}
-
-		for _, columnRune := range columnEntry {
-			column, ok := columnsShorthandMap[columnRune]
-			if !ok {
-				return nil, fmt.Errorf(i18n.G("Unknown column shorthand char '%c' in '%s'"), columnRune, columnEntry)
-			}
-
-			columns = append(columns, column)
-		}
-	}
-
-	return columns, nil
 }
 
 func (c *cmdStorageBucketList) nameColumnData(bucket api.StorageBucket) string {
@@ -540,6 +473,20 @@ func (c *cmdStorageBucketList) run(cmd *cobra.Command, args []string) error {
 	poolName := parsed[0].RemoteObject.String
 	filters := prepareStorageBucketFilters(parsed[1].StringList)
 
+	if c.global.flagProject != "" && c.flagAllProjects {
+		return errors.New(i18n.G("Can't specify --project with --all-projects"))
+	}
+
+	err = c.lister.toggle(projectToggle, c.flagAllProjects)
+	if err != nil {
+		return err
+	}
+
+	err = c.lister.toggle(locationToggle, d.IsClustered())
+	if err != nil {
+		return err
+	}
+
 	var buckets []api.StorageBucket
 	if c.flagAllProjects {
 		buckets, err = d.GetStoragePoolBucketsWithFilterAllProjects(poolName, filters)
@@ -553,30 +500,7 @@ func (c *cmdStorageBucketList) run(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	// Parse column flags.
-	columns, err := c.parseColumns(d.IsClustered())
-	if err != nil {
-		return err
-	}
-
-	data := make([][]string, 0, len(buckets))
-	for _, bucket := range buckets {
-		line := []string{}
-		for _, column := range columns {
-			line = append(line, column.Data(bucket))
-		}
-
-		data = append(data, line)
-	}
-
-	sort.Sort(cli.SortColumnsNaturally(data))
-
-	header := []string{}
-	for _, column := range columns {
-		header = append(header, column.Name)
-	}
-
-	return cli.RenderTable(os.Stdout, c.flagFormat, header, data, buckets)
+	return c.lister.run(buckets)
 }
 
 // Set.
@@ -804,7 +728,7 @@ func (c *cmdStorageBucketKey) command() *cobra.Command {
 	cmd.AddCommand(storageBucketKeyEditCmd.command())
 
 	// List.
-	storageBucketKeyListCmd := cmdStorageBucketKeyList{global: c.global, storageBucketKey: c}
+	storageBucketKeyListCmd := cmdStorageBucketKeyList{global: c.global, storageBucketKey: c, lister: &listable[api.StorageBucketKey]{global: c.global}}
 	cmd.AddCommand(storageBucketKeyListCmd.command())
 
 	// Show.
@@ -821,13 +745,7 @@ func (c *cmdStorageBucketKey) command() *cobra.Command {
 type cmdStorageBucketKeyList struct {
 	global           *cmdGlobal
 	storageBucketKey *cmdStorageBucketKey
-	flagFormat       string
-	flagColumns      string
-}
-
-type storageBucketKeyListColumns struct {
-	Name string
-	Data func(api.StorageBucketKey) string
+	lister           *listable[api.StorageBucketKey]
 }
 
 var cmdStorageBucketKeyListUsage = u.Usage{u.Pool.Remote(), u.Bucket}
@@ -837,68 +755,18 @@ func (c *cmdStorageBucketKeyList) command() *cobra.Command {
 	cmd.Use = cli.U("list", cmdStorageBucketKeyListUsage...)
 	cmd.Aliases = []string{"ls"}
 	cmd.Short = i18n.G("List storage bucket keys")
-
-	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
-		`List storage bucket keys
-
-Default column layout: ndr
-
-== Columns ==
-The -c option takes a comma separated list of arguments that control
-which storage bucket keys attributes to output when displaying in table or csv
-format.
-
-Column arguments are either pre-defined shorthand chars (see below),
-or (extended) config keys.
-
-Commas between consecutive shorthand chars are optional.
-
-Pre-defined column shorthand chars:
-  n - Name
-  d - Description
-  r - Role`,
-	))
-	cli.AddStringFlag(cmd.Flags(), &c.flagFormat, "format|f", c.global.defaultListFormat(), "", i18n.G(`Format (csv|json|table|yaml|compact|markdown), use suffix ",noheader" to disable headers and ",header" to enable it if missing, e.g. csv,header`))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G("List storage bucket keys"))
 	cli.AddStringFlag(cmd.Flags(), &c.storageBucketKey.flagTarget, "target", "", "", i18n.G("Cluster member name"))
-	cli.AddStringFlag(cmd.Flags(), &c.flagColumns, "columns|c", defaultStorageBucketKeyColumns, "", i18n.G("Columns"))
 
-	cmd.PreRunE = func(cmd *cobra.Command, _ []string) error {
-		return cli.ValidateFlagFormatForListOutput(cmd.Flag("format").Value.String())
-	}
+	c.lister.init(cmd, "ndr", map[rune]listColumn[api.StorageBucketKey]{
+		'n': {i18n.G("NAME"), i18n.G("Name"), c.nameColumnData},
+		'd': {i18n.G("DESCRIPTION"), i18n.G("Description"), c.descriptionColumnData},
+		'r': {i18n.G("ROLE"), i18n.G("Role"), c.roleColumnData},
+	})
 
 	cmd.RunE = c.run
 
 	return cmd
-}
-
-const defaultStorageBucketKeyColumns = "ndr"
-
-func (c *cmdStorageBucketKeyList) parseColumns() ([]storageBucketKeyListColumns, error) {
-	columnsShorthandMap := map[rune]storageBucketKeyListColumns{
-		'n': {i18n.G("NAME"), c.nameColumnData},
-		'd': {i18n.G("DESCRIPTION"), c.descriptionColumnData},
-		'r': {i18n.G("ROLE"), c.roleColumnData},
-	}
-
-	columnList := strings.Split(c.flagColumns, ",")
-	columns := []storageBucketKeyListColumns{}
-
-	for _, columnEntry := range columnList {
-		if columnEntry == "" {
-			return nil, fmt.Errorf(i18n.G("Empty column entry (redundant, leading or trailing command) in '%s'"), c.flagColumns)
-		}
-
-		for _, columnRune := range columnEntry {
-			column, ok := columnsShorthandMap[columnRune]
-			if !ok {
-				return nil, fmt.Errorf(i18n.G("Unknown column shorthand char '%c' in '%s'"), columnRune, columnEntry)
-			}
-
-			columns = append(columns, column)
-		}
-	}
-
-	return columns, nil
 }
 
 func (c *cmdStorageBucketKeyList) nameColumnData(buckKey api.StorageBucketKey) string {
@@ -933,30 +801,7 @@ func (c *cmdStorageBucketKeyList) run(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	// Parse column flags.
-	columns, err := c.parseColumns()
-	if err != nil {
-		return err
-	}
-
-	data := make([][]string, 0, len(bucketKeys))
-	for _, bucketKey := range bucketKeys {
-		line := []string{}
-		for _, column := range columns {
-			line = append(line, column.Data(bucketKey))
-		}
-
-		data = append(data, line)
-	}
-
-	sort.Sort(cli.SortColumnsNaturally(data))
-
-	header := []string{}
-	for _, column := range columns {
-		header = append(header, column.Name)
-	}
-
-	return cli.RenderTable(os.Stdout, c.flagFormat, header, data, bucketKeys)
+	return c.lister.run(bucketKeys)
 }
 
 // Create Key.

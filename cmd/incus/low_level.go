@@ -16,7 +16,6 @@ import (
 	"net"
 	"os"
 	"slices"
-	"sort"
 	"strings"
 	"sync"
 	"time"
@@ -391,9 +390,10 @@ type cmdLowLevelNVRAM struct {
 	global *cmdGlobal
 }
 
-type nvramColumn struct {
-	Name string
-	Data func(string, string, *api.InstanceNVRAMVariable) string
+type lowLevelNVRAMRowData struct {
+	guid string
+	name string
+	api.InstanceNVRAMVariable
 }
 
 func (c *cmdLowLevelNVRAM) command() *cobra.Command {
@@ -411,7 +411,7 @@ func (c *cmdLowLevelNVRAM) command() *cobra.Command {
 	cmd.AddCommand(lowLevelNVRAMGetCmd.command())
 
 	// List.
-	lowLevelNVRAMListCmd := cmdLowLevelNVRAMList{global: c.global}
+	lowLevelNVRAMListCmd := cmdLowLevelNVRAMList{global: c.global, lister: &listable[lowLevelNVRAMRowData]{global: c.global}}
 	cmd.AddCommand(lowLevelNVRAMListCmd.command())
 
 	// Set.
@@ -687,9 +687,7 @@ func (c *cmdLowLevelNVRAMGet) run(cmd *cobra.Command, args []string) error {
 // List.
 type cmdLowLevelNVRAMList struct {
 	global *cmdGlobal
-
-	flagFormat  string
-	flagColumns string
+	lister *listable[lowLevelNVRAMRowData]
 }
 
 var cmdLowLevelNVRAMListUsage = u.Usage{u.Instance.Remote(), u.Placeholder(i18n.G("GUID")).Optional()}
@@ -699,26 +697,19 @@ func (c *cmdLowLevelNVRAMList) command() *cobra.Command {
 	cmd.Use = cli.U("list", cmdLowLevelNVRAMListUsage...)
 	cmd.Aliases = []string{"ls"}
 	cmd.Short = i18n.G("List UEFI GUIDs and variables")
-	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`List UEFI GUIDs and variables
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G("List UEFI GUIDs and variables"))
 
-The -c option takes a (optionally comma-separated) list of arguments
-that control which variable attributes to output when displaying in table
-or csv format.
-
-Default column layout is: Gn
-
-Column shorthand chars:
-	a - Attributes
-	g - GUID
-	G - Familiar GUID name or GUID if none
-	n - Name
-	r - Raw value
-	t - Authenticated write timestamp
-	v - Interpreted value`))
+	c.lister.init(cmd, "Gn", map[rune]listColumn[lowLevelNVRAMRowData]{
+		'a': {i18n.G("ATTRIBUTES"), i18n.G("Attributes"), c.attributesColumnData},
+		'g': {i18n.G("GUID"), i18n.G("GUID"), c.guidColumnData},
+		'G': {i18n.G("GUID NAME"), i18n.G("Familiar GUID name or GUID if none"), c.guidNameColumnData},
+		'n': {i18n.G("VARIABLE NAME"), i18n.G("Variable name"), c.nameColumnData},
+		'r': {i18n.G("RAW VALUE"), i18n.G("Raw value"), c.rawColumnData},
+		't': {i18n.G("TIMESTAMP"), i18n.G("Timestamp"), c.timestampColumnData},
+		'v': {i18n.G("INTERPRETED VALUE"), i18n.G("Interpreted value"), c.valueColumnData},
+	})
 
 	cmd.RunE = c.run
-	cli.AddStringFlag(cmd.Flags(), &c.flagFormat, "format|f", c.global.defaultListFormat(), "", i18n.G(`Format (csv|json|table|yaml|compact|markdown), use suffix ",noheader" to disable headers and ",header" to enable it if missing, e.g. csv,header`))
-	cli.AddStringFlag(cmd.Flags(), &c.flagColumns, "columns|c", defaultNVRAMColumns, "", i18n.G("Columns"))
 
 	// completion for instance.
 	cmd.ValidArgsFunction = func(_ *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
@@ -732,61 +723,27 @@ Column shorthand chars:
 	return cmd
 }
 
-const defaultNVRAMColumns = "Gn"
-
-func (c *cmdLowLevelNVRAMList) parseColumns() ([]nvramColumn, error) {
-	columnsShorthandMap := map[rune]nvramColumn{
-		'a': {i18n.G("ATTRIBUTES"), c.attributesColumnData},
-		'g': {i18n.G("GUID"), c.guidColumnData},
-		'G': {i18n.G("GUID NAME"), c.guidNameColumnData},
-		'n': {i18n.G("VARIABLE NAME"), c.nameColumnData},
-		'r': {i18n.G("RAW VALUE"), c.rawColumnData},
-		't': {i18n.G("TIMESTAMP"), c.timestampColumnData},
-		'v': {i18n.G("INTERPRETED VALUE"), c.valueColumnData},
-	}
-
-	columnList := strings.Split(c.flagColumns, ",")
-	columns := []nvramColumn{}
-
-	for _, columnEntry := range columnList {
-		if columnEntry == "" {
-			return nil, fmt.Errorf(i18n.G("Empty column entry (redundant, leading or trailing command) in '%s'"), c.flagColumns)
-		}
-
-		for _, columnRune := range columnEntry {
-			column, ok := columnsShorthandMap[columnRune]
-			if !ok {
-				return nil, fmt.Errorf(i18n.G("Unknown column shorthand char '%c' in '%s'"), columnRune, columnEntry)
-			}
-
-			columns = append(columns, column)
-		}
-	}
-
-	return columns, nil
-}
-
-func (c *cmdLowLevelNVRAMList) attributesColumnData(guid string, name string, v *api.InstanceNVRAMVariable) string {
+func (c *cmdLowLevelNVRAMList) attributesColumnData(v lowLevelNVRAMRowData) string {
 	return strings.Join(v.Attributes, " + ")
 }
 
-func (c *cmdLowLevelNVRAMList) guidColumnData(guid string, name string, v *api.InstanceNVRAMVariable) string {
-	return guid
+func (c *cmdLowLevelNVRAMList) guidColumnData(v lowLevelNVRAMRowData) string {
+	return v.guid
 }
 
-func (c *cmdLowLevelNVRAMList) guidNameColumnData(guid string, name string, v *api.InstanceNVRAMVariable) string {
-	return uefi.GUIDName(guid)
+func (c *cmdLowLevelNVRAMList) guidNameColumnData(v lowLevelNVRAMRowData) string {
+	return uefi.GUIDName(v.guid)
 }
 
-func (c *cmdLowLevelNVRAMList) nameColumnData(guid string, name string, v *api.InstanceNVRAMVariable) string {
-	return name
+func (c *cmdLowLevelNVRAMList) nameColumnData(v lowLevelNVRAMRowData) string {
+	return v.name
 }
 
-func (c *cmdLowLevelNVRAMList) rawColumnData(guid string, name string, v *api.InstanceNVRAMVariable) string {
+func (c *cmdLowLevelNVRAMList) rawColumnData(v lowLevelNVRAMRowData) string {
 	return base64.StdEncoding.EncodeToString(v.Binary)
 }
 
-func (c *cmdLowLevelNVRAMList) timestampColumnData(guid string, name string, v *api.InstanceNVRAMVariable) string {
+func (c *cmdLowLevelNVRAMList) timestampColumnData(v lowLevelNVRAMRowData) string {
 	if v.Timestamp == nil {
 		return i18n.G("(no timestamp)")
 	}
@@ -794,7 +751,7 @@ func (c *cmdLowLevelNVRAMList) timestampColumnData(guid string, name string, v *
 	return v.Timestamp.String()
 }
 
-func (c *cmdLowLevelNVRAMList) valueColumnData(guid string, name string, v *api.InstanceNVRAMVariable) string {
+func (c *cmdLowLevelNVRAMList) valueColumnData(v lowLevelNVRAMRowData) string {
 	if v.Data == nil {
 		return i18n.G("(binary data)")
 	}
@@ -837,33 +794,15 @@ func (c *cmdLowLevelNVRAMList) run(cmd *cobra.Command, args []string) error {
 		uefiVars = map[string]map[string]*api.InstanceNVRAMVariable{guid: vars}
 	}
 
-	// Parse column flags.
-	columns, err := c.parseColumns()
-	if err != nil {
-		return err
-	}
-
 	// Render the table
-	data := [][]string{}
+	var rows []lowLevelNVRAMRowData
 	for guid, vars := range uefiVars {
 		for name, v := range vars {
-			line := []string{}
-			for _, column := range columns {
-				line = append(line, column.Data(guid, name, v))
-			}
-
-			data = append(data, line)
+			rows = append(rows, lowLevelNVRAMRowData{guid, name, *v})
 		}
 	}
 
-	sort.Sort(cli.SortColumnsNaturally(data))
-
-	header := []string{}
-	for _, column := range columns {
-		header = append(header, column.Name)
-	}
-
-	return cli.RenderTable(os.Stdout, c.flagFormat, header, data, uefiVars)
+	return c.lister.run(rows, uefiVars)
 }
 
 // Set.
@@ -1101,9 +1040,10 @@ type cmdLowLevelSecureBoot struct {
 	global *cmdGlobal
 }
 
-type secureBootColumn struct {
-	Name string
-	Data func(string, *uefi.ESLEntry, *x509.Certificate) string
+type lowLevelSecureBootRowData struct {
+	sigType  string
+	eslEntry *uefi.ESLEntry
+	cert     *x509.Certificate
 }
 
 var cmdLowLevelSecureBootESLNames = []string{"pk", "kek", "db", "dbx", "dbt", "mok"}
@@ -1127,7 +1067,7 @@ func (c *cmdLowLevelSecureBoot) command() *cobra.Command {
 	cmd.AddCommand(lowLevelSecureBootImportCmd.command())
 
 	// List.
-	lowLevelSecureBootListCmd := cmdLowLevelSecureBootList{global: c.global}
+	lowLevelSecureBootListCmd := cmdLowLevelSecureBootList{global: c.global, lister: &listable[lowLevelSecureBootRowData]{global: c.global}}
 	cmd.AddCommand(lowLevelSecureBootListCmd.command())
 
 	// Remove.
@@ -1609,9 +1549,7 @@ func (c *cmdLowLevelSecureBootImport) run(cmd *cobra.Command, args []string) err
 // List.
 type cmdLowLevelSecureBootList struct {
 	global *cmdGlobal
-
-	flagFormat  string
-	flagColumns string
+	lister *listable[lowLevelSecureBootRowData]
 }
 
 var cmdLowLevelSecureBootListUsage = u.Usage{u.Instance.Remote(), u.EitherVerbatim(cmdLowLevelSecureBootESLNames...)}
@@ -1621,29 +1559,22 @@ func (c *cmdLowLevelSecureBootList) command() *cobra.Command {
 	cmd.Use = cli.U("list", cmdLowLevelSecureBootListUsage...)
 	cmd.Aliases = []string{"ls"}
 	cmd.Short = i18n.G("List Secure Boot signatures")
-	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`List Secure Boot signatures
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G("List Secure Boot signatures"))
 
-The -c option takes a (optionally comma-separated) list of arguments
-that control which signature attributes to output when displaying in table
-or csv format.
-
-Default column layout is: tOfs
-
-Column shorthand chars:
-	f - Fingerprint (short)
-	F - Fingerprint (long)
-	i - Issuer (short, for certificates)
-	I - Issuer (long, for certificates)
-	o - Owner GUID
-	O - Owner familiar GUID name or GUID if none
-	r - Raw value
-	s - Subject (short, for certificates)
-	S - Subject (long, for certificates)
-	t - Signature type`))
+	c.lister.init(cmd, "tOfs", map[rune]listColumn[lowLevelSecureBootRowData]{
+		'f': {i18n.G("FINGERPRINT"), i18n.G("Fingerprint (short)"), c.fingerprintColumnData},
+		'F': {i18n.G("FINGERPRINT"), i18n.G("Fingerprint (long)"), c.fingerprintFullColumnData},
+		'i': {i18n.G("ISSUER"), i18n.G("Issuer (short, for certificates)"), c.issuerColumnData},
+		'I': {i18n.G("ISSUER"), i18n.G("Issuer (long, for certificates)"), c.issuerFullColumnData},
+		'o': {i18n.G("OWNER GUID"), i18n.G("Owner GUID"), c.ownerColumnData},
+		'O': {i18n.G("OWNER GUID NAME"), i18n.G("Owner familiar GUID name or GUID if none"), c.ownerNameColumnData},
+		'r': {i18n.G("RAW VALUE"), i18n.G("Raw value"), c.rawColumnData},
+		's': {i18n.G("SUBJECT"), i18n.G("Subject (short, for certificates)"), c.subjectColumnData},
+		'S': {i18n.G("SUBJECT"), i18n.G("Subject (long, for certificates)"), c.subjectFullColumnData},
+		't': {i18n.G("TYPE"), i18n.G("Signature type"), c.typeColumnData},
+	})
 
 	cmd.RunE = c.run
-	cli.AddStringFlag(cmd.Flags(), &c.flagFormat, "format|f", c.global.defaultListFormat(), "", i18n.G(`Format (csv|json|table|yaml|compact|markdown), use suffix ",noheader" to disable headers and ",header" to enable it if missing, e.g. csv,header`))
-	cli.AddStringFlag(cmd.Flags(), &c.flagColumns, "columns|c", defaultSecureBootColumns, "", i18n.G("Columns"))
 
 	cmd.ValidArgsFunction = func(_ *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		if len(args) == 0 {
@@ -1660,43 +1591,6 @@ Column shorthand chars:
 	return cmd
 }
 
-const defaultSecureBootColumns = "tOfs"
-
-func (c *cmdLowLevelSecureBootList) parseColumns() ([]secureBootColumn, error) {
-	columnsShorthandMap := map[rune]secureBootColumn{
-		'f': {i18n.G("FINGERPRINT"), c.fingerprintColumnData},
-		'F': {i18n.G("FINGERPRINT"), c.fingerprintFullColumnData},
-		'i': {i18n.G("ISSUER"), c.issuerColumnData},
-		'I': {i18n.G("ISSUER"), c.issuerFullColumnData},
-		'o': {i18n.G("OWNER GUID"), c.ownerColumnData},
-		'O': {i18n.G("OWNER GUID NAME"), c.ownerNameColumnData},
-		'r': {i18n.G("RAW VALUE"), c.rawColumnData},
-		's': {i18n.G("SUBJECT"), c.subjectColumnData},
-		'S': {i18n.G("SUBJECT"), c.subjectFullColumnData},
-		't': {i18n.G("TYPE"), c.typeColumnData},
-	}
-
-	columnList := strings.Split(c.flagColumns, ",")
-	columns := []secureBootColumn{}
-
-	for _, columnEntry := range columnList {
-		if columnEntry == "" {
-			return nil, fmt.Errorf(i18n.G("Empty column entry (redundant, leading or trailing command) in '%s'"), c.flagColumns)
-		}
-
-		for _, columnRune := range columnEntry {
-			column, ok := columnsShorthandMap[columnRune]
-			if !ok {
-				return nil, fmt.Errorf(i18n.G("Unknown column shorthand char '%c' in '%s'"), columnRune, columnEntry)
-			}
-
-			columns = append(columns, column)
-		}
-	}
-
-	return columns, nil
-}
-
 // eslFingerprint returns the fingerprint of the given ESL entry.
 func eslFingerprint(v *uefi.ESLEntry, cert *x509.Certificate) string {
 	var data []byte
@@ -1710,61 +1604,61 @@ func eslFingerprint(v *uefi.ESLEntry, cert *x509.Certificate) string {
 	return fmt.Sprintf("%x", data)
 }
 
-func (c *cmdLowLevelSecureBootList) fingerprintColumnData(sigType string, v *uefi.ESLEntry, cert *x509.Certificate) string {
-	fingerprint := eslFingerprint(v, cert)
+func (c *cmdLowLevelSecureBootList) fingerprintColumnData(v lowLevelSecureBootRowData) string {
+	fingerprint := eslFingerprint(v.eslEntry, v.cert)
 	return fingerprint[:12]
 }
 
-func (c *cmdLowLevelSecureBootList) fingerprintFullColumnData(sigType string, v *uefi.ESLEntry, cert *x509.Certificate) string {
-	return eslFingerprint(v, cert)
+func (c *cmdLowLevelSecureBootList) fingerprintFullColumnData(v lowLevelSecureBootRowData) string {
+	return eslFingerprint(v.eslEntry, v.cert)
 }
 
-func (c *cmdLowLevelSecureBootList) issuerColumnData(sigType string, v *uefi.ESLEntry, cert *x509.Certificate) string {
-	if cert == nil {
+func (c *cmdLowLevelSecureBootList) issuerColumnData(v lowLevelSecureBootRowData) string {
+	if v.cert == nil {
 		return i18n.G("(not a certificate)")
 	}
 
-	return cert.Issuer.CommonName
+	return v.cert.Issuer.CommonName
 }
 
-func (c *cmdLowLevelSecureBootList) issuerFullColumnData(sigType string, v *uefi.ESLEntry, cert *x509.Certificate) string {
-	if cert == nil {
+func (c *cmdLowLevelSecureBootList) issuerFullColumnData(v lowLevelSecureBootRowData) string {
+	if v.cert == nil {
 		return i18n.G("(not a certificate)")
 	}
 
-	return cert.Issuer.String()
+	return v.cert.Issuer.String()
 }
 
-func (c *cmdLowLevelSecureBootList) ownerColumnData(sigType string, v *uefi.ESLEntry, cert *x509.Certificate) string {
-	return v.Owner
+func (c *cmdLowLevelSecureBootList) ownerColumnData(v lowLevelSecureBootRowData) string {
+	return v.eslEntry.Owner
 }
 
-func (c *cmdLowLevelSecureBootList) ownerNameColumnData(sigType string, v *uefi.ESLEntry, cert *x509.Certificate) string {
-	return uefi.GUIDName(v.Owner)
+func (c *cmdLowLevelSecureBootList) ownerNameColumnData(v lowLevelSecureBootRowData) string {
+	return uefi.GUIDName(v.eslEntry.Owner)
 }
 
-func (c *cmdLowLevelSecureBootList) rawColumnData(sigType string, v *uefi.ESLEntry, cert *x509.Certificate) string {
-	return base64.StdEncoding.EncodeToString(v.Data)
+func (c *cmdLowLevelSecureBootList) rawColumnData(v lowLevelSecureBootRowData) string {
+	return base64.StdEncoding.EncodeToString(v.eslEntry.Data)
 }
 
-func (c *cmdLowLevelSecureBootList) subjectColumnData(sigType string, v *uefi.ESLEntry, cert *x509.Certificate) string {
-	if cert == nil {
+func (c *cmdLowLevelSecureBootList) subjectColumnData(v lowLevelSecureBootRowData) string {
+	if v.cert == nil {
 		return i18n.G("(not a certificate)")
 	}
 
-	return cert.Subject.CommonName
+	return v.cert.Subject.CommonName
 }
 
-func (c *cmdLowLevelSecureBootList) subjectFullColumnData(sigType string, v *uefi.ESLEntry, cert *x509.Certificate) string {
-	if cert == nil {
+func (c *cmdLowLevelSecureBootList) subjectFullColumnData(v lowLevelSecureBootRowData) string {
+	if v.cert == nil {
 		return i18n.G("(not a certificate)")
 	}
 
-	return cert.Subject.String()
+	return v.cert.Subject.String()
 }
 
-func (c *cmdLowLevelSecureBootList) typeColumnData(sigType string, v *uefi.ESLEntry, cert *x509.Certificate) string {
-	return sigType
+func (c *cmdLowLevelSecureBootList) typeColumnData(v lowLevelSecureBootRowData) string {
+	return v.sigType
 }
 
 func (c *cmdLowLevelSecureBootList) run(cmd *cobra.Command, args []string) error {
@@ -1797,34 +1691,15 @@ func (c *cmdLowLevelSecureBootList) run(cmd *cobra.Command, args []string) error
 		return fmt.Errorf(i18n.G("Unable to parse %s:%s as an EFI Signature List"), uefi.GUIDName(guid), varName)
 	}
 
-	// Parse column flags.
-	columns, err := c.parseColumns()
-	if err != nil {
-		return err
-	}
-
-	// Render the table
-	data := [][]string{}
+	var rows []lowLevelSecureBootRowData
 	for _, node := range esl {
 		for _, entry := range node.Entries {
-			line := []string{}
 			cert, _ := x509.ParseCertificate(entry.Data)
-			for _, column := range columns {
-				line = append(line, column.Data(node.Type, &entry, cert))
-			}
-
-			data = append(data, line)
+			rows = append(rows, lowLevelSecureBootRowData{node.Type, &entry, cert})
 		}
 	}
 
-	sort.Sort(cli.SortColumnsNaturally(data))
-
-	header := []string{}
-	for _, column := range columns {
-		header = append(header, column.Name)
-	}
-
-	return cli.RenderTable(os.Stdout, c.flagFormat, header, data, esl)
+	return c.lister.run(rows, esl)
 }
 
 // Remove.
