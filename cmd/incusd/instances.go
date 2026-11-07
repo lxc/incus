@@ -9,12 +9,12 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"slices"
 	"sort"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
-
-	"golang.org/x/sync/errgroup"
 
 	"github.com/lxc/incus/v7/internal/server/auth"
 	"github.com/lxc/incus/v7/internal/server/db"
@@ -281,23 +281,22 @@ func instanceShouldAutoStart(inst instance.Instance) bool {
 	return util.IsTrue(autoStart) || ((autoStart == "" || autoStart == "last-state") && lastState == instance.PowerStateRunning)
 }
 
-// instanceStart starts a single instance.
-func instanceStart(s *state.State, inst instance.Instance) error {
+// instanceStart starts a single instance and returns whether it got started.
+func instanceStart(s *state.State, inst instance.Instance) bool {
 	// Let's make up to 3 attempts to start instances.
 	maxAttempts := 3
 
 	if !instanceShouldAutoStart(inst) {
-		return nil
+		return false
 	}
 
 	// If already running, we're done.
 	if inst.IsRunning() {
-		return nil
+		return false
 	}
 
 	// Get the instance config.
 	config := inst.ExpandedConfig()
-	autoStartDelay := config["boot.autostart.delay"]
 	shutdownAction := config["boot.host_shutdown_action"]
 
 	instLogger := logger.AddContext(logger.Ctx{"project": inst.Project().Name, "instance": inst.Name()})
@@ -318,7 +317,7 @@ func instanceStart(s *state.State, inst instance.Instance) error {
 
 		if err != nil {
 			if api.StatusErrorCheck(err, http.StatusServiceUnavailable) {
-				break // Don't log or retry instances that are not ready to start yet.
+				return false // Don't log or retry instances that are not ready to start yet.
 			}
 
 			instLogger.Warn("Failed auto start instance attempt", logger.Ctx{"attempt": attempt, "maxAttempts": maxAttempts, "err": err})
@@ -334,7 +333,7 @@ func instanceStart(s *state.State, inst instance.Instance) error {
 
 				instLogger.Error("Failed to auto start instance", logger.Ctx{"err": err})
 
-				break
+				return false
 			}
 
 			time.Sleep(5 * time.Second)
@@ -348,16 +347,184 @@ func instanceStart(s *state.State, inst instance.Instance) error {
 			instLogger.Warn("Failed to resolve instance autostart failure warning", logger.Ctx{"err": warnErr})
 		}
 
-		// Wait the auto-start delay if set.
-		autoStartDelayInt, err := strconv.Atoi(autoStartDelay)
-		if err == nil {
-			time.Sleep(time.Duration(autoStartDelayInt) * time.Second)
-		}
+		return true
+	}
+}
 
-		break
+// instanceAutostartDelay waits for the boot.autostart.delay of the instance.
+func instanceAutostartDelay(ctx context.Context, inst instance.Instance) {
+	delay, err := strconv.Atoi(inst.ExpandedConfig()["boot.autostart.delay"])
+	if err != nil || delay <= 0 {
+		return
+	}
+
+	select {
+	case <-ctx.Done():
+	case <-time.After(time.Duration(delay) * time.Second):
+	}
+}
+
+// instanceLimiter bounds concurrent instance actions, giving each project a turn at free slots.
+type instanceLimiter struct {
+	mu      sync.Mutex
+	free    int
+	waiters map[string][]chan struct{}
+	turns   []string
+}
+
+// newInstanceLimiter returns a limiter allowing limit concurrent actions.
+func newInstanceLimiter(limit int) *instanceLimiter {
+	return &instanceLimiter{free: limit, waiters: map[string][]chan struct{}{}}
+}
+
+// acquire waits for a slot for an action in the project.
+func (l *instanceLimiter) acquire(projectName string) {
+	l.mu.Lock()
+
+	if l.free > 0 {
+		l.free--
+		l.mu.Unlock()
+
+		return
+	}
+
+	ready := make(chan struct{})
+	if len(l.waiters[projectName]) == 0 {
+		l.turns = append(l.turns, projectName)
+	}
+
+	l.waiters[projectName] = append(l.waiters[projectName], ready)
+	l.mu.Unlock()
+
+	<-ready
+}
+
+// release hands the slot to the next project in line.
+func (l *instanceLimiter) release() {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+
+	if len(l.turns) == 0 {
+		l.free++
+
+		return
+	}
+
+	projectName := l.turns[0]
+	l.turns = l.turns[1:]
+
+	close(l.waiters[projectName][0])
+	l.waiters[projectName] = l.waiters[projectName][1:]
+
+	if len(l.waiters[projectName]) > 0 {
+		l.turns = append(l.turns, projectName)
+	} else {
+		delete(l.waiters, projectName)
+	}
+}
+
+// concurrentInstanceActions runs fn on every instance, limit bounds how many run at once.
+// Each instance runs to completion regardless of other failures, all of which are reported at the end.
+func concurrentInstanceActions(limit *instanceLimiter, instances []instance.Instance, prefix string, fn func(inst instance.Instance) error) error {
+	var wg sync.WaitGroup
+	var failuresLock sync.Mutex
+	failures := []string{}
+
+	for _, inst := range instances {
+		wg.Go(func() {
+			limit.acquire(inst.Project().Name)
+			defer limit.release()
+
+			err := fn(inst)
+			if err != nil {
+				failuresLock.Lock()
+				failures = append(failures, fmt.Sprintf("%s/%s: %v", inst.Project().Name, inst.Name(), err))
+				failuresLock.Unlock()
+			}
+		})
+	}
+
+	wg.Wait()
+
+	if len(failures) > 0 {
+		sort.Strings(failures)
+
+		return fmt.Errorf("%s:\n - %s", prefix, strings.Join(failures, "\n - "))
 	}
 
 	return nil
+}
+
+// instancesPerProject runs fn on the instances of each project in parallel.
+// The boot order only applies within a project so that one project can't hold up another.
+func instancesPerProject(instances []instance.Instance, fn func(projectInstances []instance.Instance) error) error {
+	projects := map[string][]instance.Instance{}
+	for _, inst := range instances {
+		projects[inst.Project().Name] = append(projects[inst.Project().Name], inst)
+	}
+
+	var wg sync.WaitGroup
+	var failuresLock sync.Mutex
+	var failures []error
+
+	for _, projectInstances := range projects {
+		wg.Go(func() {
+			err := fn(projectInstances)
+			if err != nil {
+				failuresLock.Lock()
+				failures = append(failures, err)
+				failuresLock.Unlock()
+			}
+		})
+	}
+
+	wg.Wait()
+
+	return errors.Join(failures...)
+}
+
+// instancesInStartOrder runs fn on the instances in startup order, fn returns whether it started the instance.
+// The delay of a started instance is held without using up the limit and is skipped if nothing follows it.
+func instancesInStartOrder(ctx context.Context, limit *instanceLimiter, instances []instance.Instance, prefix string, fn func(inst instance.Instance) (bool, error)) error {
+	bulkInstances, sequentialInstances := bulkStartInstances(instances)
+
+	// Start instances that support bulk startup.
+	var failures []error
+	err := concurrentInstanceActions(limit, bulkInstances, prefix, func(inst instance.Instance) error {
+		_, err := fn(inst)
+
+		return err
+	})
+	if err != nil {
+		failures = append(failures, err)
+	}
+
+	// Sort based on instance boot priority.
+	sort.Sort(instanceAutostartList(sequentialInstances))
+
+	for i, inst := range sequentialInstances {
+		if ctx.Err() != nil {
+			failures = append(failures, ctx.Err())
+			break
+		}
+
+		var started bool
+		err := concurrentInstanceActions(limit, []instance.Instance{inst}, prefix, func(inst instance.Instance) error {
+			var err error
+			started, err = fn(inst)
+
+			return err
+		})
+		if err != nil {
+			failures = append(failures, err)
+		}
+
+		if started && i < len(sequentialInstances)-1 {
+			instanceAutostartDelay(ctx, inst)
+		}
+	}
+
+	return errors.Join(failures...)
 }
 
 func instancesStart(s *state.State, instances []instance.Instance) {
@@ -370,31 +537,14 @@ func instancesStart(s *state.State, instances []instance.Instance) {
 	instancesStartMu.Lock()
 	defer instancesStartMu.Unlock()
 
-	bulkInstances, sequentialInstances := bulkStartInstances(instances)
-
 	// Limit the number of concurrent tasks.
-	numParallel := max(runtime.NumCPU()/4, 1)
+	limit := newInstanceLimiter(max(runtime.NumCPU()/4, 1))
 
-	group := new(errgroup.Group)
-	group.SetLimit(numParallel)
-
-	// Start instances that support bulk startup.
-	for _, inst := range bulkInstances {
-		i := inst
-		group.Go(func() error {
-			_ = instanceStart(s, i)
-			return nil
+	_ = instancesPerProject(instances, func(projectInstances []instance.Instance) error {
+		return instancesInStartOrder(s.ShutdownCtx, limit, projectInstances, "Failed to start instances", func(inst instance.Instance) (bool, error) {
+			return instanceStart(s, inst), nil
 		})
-	}
-
-	_ = group.Wait()
-
-	// Sort based on instance boot priority.
-	sort.Sort(instanceAutostartList(sequentialInstances))
-
-	for _, inst := range sequentialInstances {
-		_ = instanceStart(s, inst)
-	}
+	})
 }
 
 type instanceStopList []instance.Instance
@@ -495,182 +645,191 @@ func instanceLoadFromDisk(s *state.State, instanceType instancetype.Type, projec
 	return instance.Load(s, *instDBArgs, emptyProject)
 }
 
-func instancesShutdown(ctx context.Context, s *state.State, instances []instance.Instance, forceTimeout time.Duration) {
-	sort.Sort(instanceStopList(instances))
+// instanceShutdown stops a single instance as part of the server shutdown.
+func instanceShutdown(s *state.State, inst instance.Instance, forceCh <-chan struct{}, forceTimeout time.Duration) {
+	// Determine how long to wait for the instance to shutdown cleanly.
+	timeoutSeconds := 30
+	value, ok := inst.ExpandedConfig()["boot.host_shutdown_timeout"]
+	if ok {
+		timeoutSeconds, _ = strconv.Atoi(value)
+	}
 
+	timeout := time.Second * time.Duration(timeoutSeconds)
+
+	// Record a forced stop, blocking the clean stop path from resolving the warning.
+	var forcedMu sync.Mutex
+	forced := false
+	markForced := func(message string) {
+		forcedMu.Lock()
+		defer forcedMu.Unlock()
+
+		forced = true
+		instanceForcedStopWarn(s, inst, message)
+	}
+
+	// Shutdown the instance without waiting past the timeouts on an unresponsive instance.
+	done := make(chan struct{})
+	go func() {
+		defer close(done)
+
+		// Save and restore the ephemeral bit (if DB is available).
+		if inst.ID() > 0 {
+			ephemeral := inst.IsEphemeral()
+			if ephemeral {
+				// Unset ephemeral flag if present.
+				args := db.InstanceArgs{
+					Architecture: inst.Architecture(),
+					Config:       inst.LocalConfig(),
+					Description:  inst.Description(),
+					Devices:      inst.LocalDevices(),
+					Ephemeral:    false,
+					Profiles:     inst.Profiles(),
+					Project:      inst.Project().Name,
+					Type:         inst.Type(),
+					Snapshot:     inst.IsSnapshot(),
+				}
+
+				err := inst.Update(args, false)
+				if err == nil {
+					// On function return, set the flag back on.
+					defer func() {
+						args.Ephemeral = ephemeral
+						_ = inst.Update(args, false)
+					}()
+				}
+			}
+		}
+
+		// Perform the shutdown action.
+		action := inst.ExpandedConfig()["boot.host_shutdown_action"]
+
+		// Regular shutdown with a forced stop as fallback.
+		shutdown := func() {
+			err := inst.Shutdown(timeout)
+			if err != nil {
+				logger.Warn("Failed shutting down instance, forcefully stopping", logger.Ctx{"project": inst.Project().Name, "instance": inst.Name(), "timeout": timeout, "err": err})
+				markForced(fmt.Sprintf("Didn't shut down within %s during server shutdown", timeout))
+				err = inst.Stop(false)
+				if err != nil {
+					logger.Warn("Failed forcefully stopping instance", logger.Ctx{"project": inst.Project().Name, "instance": inst.Name(), "err": err})
+				}
+			}
+		}
+
+		switch action {
+		case "stateful-stop":
+			err := inst.Stop(true)
+			if err != nil {
+				logger.Warn("Failed statefully stopping instance, shutting down instead", logger.Ctx{"project": inst.Project().Name, "instance": inst.Name(), "err": err})
+				shutdown()
+			}
+
+		case "force-stop":
+			err := inst.Stop(false)
+			if err != nil {
+				logger.Warn("Failed forcefully stopping instance", logger.Ctx{"project": inst.Project().Name, "instance": inst.Name(), "err": err})
+			}
+
+		default:
+			shutdown()
+		}
+
+		// Clear any earlier warning once the configured action completed on its own.
+		forcedMu.Lock()
+		defer forcedMu.Unlock()
+
+		if !forced {
+			instanceForcedStopResolve(s, inst)
+		}
+	}()
+
+	wedged := false
+	select {
+	case <-done:
+	case <-time.After(timeout + forceTimeout):
+		logger.Error("Timed out stopping instance, forcefully stopping it", logger.Ctx{"project": inst.Project().Name, "instance": inst.Name(), "timeout": timeout})
+		markForced(fmt.Sprintf("Stop didn't complete within %s during server shutdown", timeout+forceTimeout))
+		wedged = true
+	case <-forceCh:
+		logger.Warn("Forced shutdown, forcefully stopping instance", logger.Ctx{"project": inst.Project().Name, "instance": inst.Name()})
+		markForced("Server shutdown was forced before the instance stopped")
+		wedged = true
+	}
+
+	// Take over the wedged stop without waiting on it any further.
+	if wedged {
+		go func() {
+			err := inst.Stop(false)
+			if err != nil {
+				logger.Error("Failed forcefully stopping instance", logger.Ctx{"project": inst.Project().Name, "instance": inst.Name(), "err": err})
+			}
+		}()
+	}
+
+	if inst.ID() > 0 {
+		// If DB was available then the instance shutdown process will have set
+		// the last power state to STOPPED, so set that back to RUNNING so that
+		// when the daemon restarts the instance will be started again.
+		_ = inst.VolatileSet(map[string]string{"volatile.last_state.power": instance.PowerStateRunning})
+	}
+}
+
+// instancesInStopOrder runs fn on the instances in shutdown order, finishing each priority before the next.
+func instancesInStopOrder(limit *instanceLimiter, instances []instance.Instance, prefix string, fn func(inst instance.Instance) error) error {
+	sorted := slices.Clone(instances)
+	sort.Sort(instanceStopList(sorted))
+
+	stopPriority := func(inst instance.Instance) int {
+		priority, _ := strconv.Atoi(inst.ExpandedConfig()["boot.stop.priority"])
+
+		return priority
+	}
+
+	var failures []error
+	for len(sorted) > 0 {
+		priority := stopPriority(sorted[0])
+		end := slices.IndexFunc(sorted, func(inst instance.Instance) bool {
+			return stopPriority(inst) != priority
+		})
+		if end < 0 {
+			end = len(sorted)
+		}
+
+		logger.Info("Stopping instances", logger.Ctx{"project": sorted[0].Project().Name, "stopPriority": priority})
+
+		err := concurrentInstanceActions(limit, sorted[:end], prefix, fn)
+		if err != nil {
+			failures = append(failures, err)
+		}
+
+		sorted = sorted[end:]
+	}
+
+	return errors.Join(failures...)
+}
+
+func instancesShutdown(ctx context.Context, s *state.State, instances []instance.Instance, forceTimeout time.Duration) {
 	// A shutdown forced from the start still gets the regular timeouts.
 	forceCh := ctx.Done()
 	if ctx.Err() != nil {
 		forceCh = nil
 	}
 
-	// Limit shutdown concurrency to number of instances or number of CPU cores (which ever is less).
-	var wg sync.WaitGroup
-	instShutdownCh := make(chan instance.Instance)
-	maxConcurrent := runtime.NumCPU()
-	instCount := len(instances)
-	if instCount < maxConcurrent {
-		maxConcurrent = instCount
-	}
+	// Skip stopped instances.
+	running := slices.DeleteFunc(slices.Clone(instances), func(inst instance.Instance) bool {
+		return !inst.IsRunning()
+	})
 
-	for range maxConcurrent {
-		go func(instShutdownCh <-chan instance.Instance) {
-			for inst := range instShutdownCh {
-				// Determine how long to wait for the instance to shutdown cleanly.
-				timeoutSeconds := 30
-				value, ok := inst.ExpandedConfig()["boot.host_shutdown_timeout"]
-				if ok {
-					timeoutSeconds, _ = strconv.Atoi(value)
-				}
+	// Limit shutdown concurrency to the number of CPU cores.
+	limit := newInstanceLimiter(runtime.NumCPU())
 
-				timeout := time.Second * time.Duration(timeoutSeconds)
+	_ = instancesPerProject(running, func(projectInstances []instance.Instance) error {
+		return instancesInStopOrder(limit, projectInstances, "Failed to stop instances", func(inst instance.Instance) error {
+			instanceShutdown(s, inst, forceCh, forceTimeout)
 
-				// Record a forced stop, blocking the clean stop path from resolving the warning.
-				var forcedMu sync.Mutex
-				forced := false
-				markForced := func(message string) {
-					forcedMu.Lock()
-					defer forcedMu.Unlock()
-
-					forced = true
-					instanceForcedStopWarn(s, inst, message)
-				}
-
-				// Shutdown the instance without waiting past the timeouts on an unresponsive instance.
-				done := make(chan struct{})
-				go func() {
-					defer close(done)
-
-					// Save and restore the ephemeral bit (if DB is available).
-					if inst.ID() > 0 {
-						ephemeral := inst.IsEphemeral()
-						if ephemeral {
-							// Unset ephemeral flag if present.
-							args := db.InstanceArgs{
-								Architecture: inst.Architecture(),
-								Config:       inst.LocalConfig(),
-								Description:  inst.Description(),
-								Devices:      inst.LocalDevices(),
-								Ephemeral:    false,
-								Profiles:     inst.Profiles(),
-								Project:      inst.Project().Name,
-								Type:         inst.Type(),
-								Snapshot:     inst.IsSnapshot(),
-							}
-
-							err := inst.Update(args, false)
-							if err == nil {
-								// On function return, set the flag back on.
-								defer func() {
-									args.Ephemeral = ephemeral
-									_ = inst.Update(args, false)
-								}()
-							}
-						}
-					}
-
-					// Perform the shutdown action.
-					action := inst.ExpandedConfig()["boot.host_shutdown_action"]
-
-					// Regular shutdown with a forced stop as fallback.
-					shutdown := func() {
-						err := inst.Shutdown(timeout)
-						if err != nil {
-							logger.Warn("Failed shutting down instance, forcefully stopping", logger.Ctx{"project": inst.Project().Name, "instance": inst.Name(), "timeout": timeout, "err": err})
-							markForced(fmt.Sprintf("Didn't shut down within %s during server shutdown", timeout))
-							err = inst.Stop(false)
-							if err != nil {
-								logger.Warn("Failed forcefully stopping instance", logger.Ctx{"project": inst.Project().Name, "instance": inst.Name(), "err": err})
-							}
-						}
-					}
-
-					switch action {
-					case "stateful-stop":
-						err := inst.Stop(true)
-						if err != nil {
-							logger.Warn("Failed statefully stopping instance, shutting down instead", logger.Ctx{"project": inst.Project().Name, "instance": inst.Name(), "err": err})
-							shutdown()
-						}
-
-					case "force-stop":
-						err := inst.Stop(false)
-						if err != nil {
-							logger.Warn("Failed forcefully stopping instance", logger.Ctx{"project": inst.Project().Name, "instance": inst.Name(), "err": err})
-						}
-
-					default:
-						shutdown()
-					}
-
-					// Clear any earlier warning once the configured action completed on its own.
-					forcedMu.Lock()
-					defer forcedMu.Unlock()
-
-					if !forced {
-						instanceForcedStopResolve(s, inst)
-					}
-				}()
-
-				wedged := false
-				select {
-				case <-done:
-				case <-time.After(timeout + forceTimeout):
-					logger.Error("Timed out stopping instance, forcefully stopping it", logger.Ctx{"project": inst.Project().Name, "instance": inst.Name(), "timeout": timeout})
-					markForced(fmt.Sprintf("Stop didn't complete within %s during server shutdown", timeout+forceTimeout))
-					wedged = true
-				case <-forceCh:
-					logger.Warn("Forced shutdown, forcefully stopping instance", logger.Ctx{"project": inst.Project().Name, "instance": inst.Name()})
-					markForced("Server shutdown was forced before the instance stopped")
-					wedged = true
-				}
-
-				// Take over the wedged stop without waiting on it any further.
-				if wedged {
-					go func() {
-						err := inst.Stop(false)
-						if err != nil {
-							logger.Error("Failed forcefully stopping instance", logger.Ctx{"project": inst.Project().Name, "instance": inst.Name(), "err": err})
-						}
-					}()
-				}
-
-				if inst.ID() > 0 {
-					// If DB was available then the instance shutdown process will have set
-					// the last power state to STOPPED, so set that back to RUNNING so that
-					// when the daemon restarts the instance will be started again.
-					_ = inst.VolatileSet(map[string]string{"volatile.last_state.power": instance.PowerStateRunning})
-				}
-
-				wg.Done()
-			}
-		}(instShutdownCh)
-	}
-
-	var currentBatchPriority int
-	for i, inst := range instances {
-		// Skip stopped instances.
-		if !inst.IsRunning() {
-			continue
-		}
-
-		priority, _ := strconv.Atoi(inst.ExpandedConfig()["boot.stop.priority"])
-
-		// Shutdown instances in priority batches, logging at the start of each batch.
-		if i == 0 || priority != currentBatchPriority {
-			currentBatchPriority = priority
-
-			// Wait for instances with higher priority to finish before starting next batch.
-			wg.Wait()
-			logger.Info("Stopping instances", logger.Ctx{"stopPriority": currentBatchPriority})
-		}
-
-		wg.Add(1)
-		instShutdownCh <- inst
-	}
-
-	wg.Wait()
-	close(instShutdownCh)
+			return nil
+		})
+	})
 }
 
 // instanceShutdownDefaultTimeout is the default timeout (in seconds) to wait for a clean shutdown.
