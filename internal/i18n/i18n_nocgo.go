@@ -41,11 +41,7 @@ func load() {
 		return
 	}
 
-	for _, candidate := range []string{detectedLang, shortCode(detectedLang)} {
-		if candidate == "" {
-			continue
-		}
-
+	for _, candidate := range catalogueNames(detectedLang) {
 		data, err := po.Files.ReadFile(candidate + ".po")
 		if err != nil {
 			continue
