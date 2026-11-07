@@ -12604,15 +12604,17 @@ func (d *qemu) checkFeatures(hostArch int, qemuPath string) (map[string]any, err
 		"-no-user-config",
 		"-chardev", fmt.Sprintf("socket,id=monitor,path=%s,server=on,wait=off", qemuEscapeCmdline(monitorPath.Name())),
 		"-qmp", "chardev:monitor",
-		"-machine", qemuMachineType(hostArch),
 	}
 
-	if hostArch == osarch.ARCH_64BIT_INTEL_X86 {
+	switch hostArch {
+	case osarch.ARCH_64BIT_INTEL_X86:
 		// On Intel, use KVM acceleration as it's needed for SEV detection.
-		// This also happens to be less resource intensive but can't
-		// trivially be performed on all architectures without extra care about the
-		// machine type.
-		qemuArgs = append(qemuArgs, "-accel", "kvm")
+		qemuArgs = append(qemuArgs, "-machine", qemuMachineType(hostArch), "-accel", "kvm")
+	case osarch.ARCH_64BIT_ARMV8_LITTLE_ENDIAN:
+		// Match the VM setup, KVM on Arm only takes the host CPU and qemu-kvm builds default to KVM.
+		qemuArgs = append(qemuArgs, "-machine", qemuMachineType(hostArch)+",gic-version=max", "-accel", "kvm", "-cpu", "host")
+	default:
+		qemuArgs = append(qemuArgs, "-machine", qemuMachineType(hostArch))
 	}
 
 	if d.architectureSupportsUEFI(hostArch) {
