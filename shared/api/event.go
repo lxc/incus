@@ -128,10 +128,10 @@ func (event *Event) ToLogging() (EventLogRecord, error) {
 
 // EventLogRecord represents single log record.
 type EventLogRecord struct {
-	Time time.Time
-	Lvl  string
-	Msg  string
-	Ctx  []any
+	Time time.Time `json:"time" yaml:"time"`
+	Lvl  string    `json:"lvl" yaml:"lvl"`
+	Msg  string    `json:"msg" yaml:"msg"`
+	Ctx  []any     `json:"ctx" yaml:"ctx"`
 }
 
 // EventLogging represents a logging type event entry (admin only).

@@ -120,19 +120,19 @@ type InstancePost struct {
 	// Example: {"security.nesting": "true"}
 	//
 	// API extension: instance_move_config
-	Config ConfigMap
+	Config ConfigMap `json:"config" yaml:"config"`
 
 	// Instance devices.
 	// Example: {"root": {"type": "disk", "pool": "default", "path": "/"}}
 	//
 	// API extension: instance_move_config
-	Devices DevicesMap
+	Devices DevicesMap `json:"devices" yaml:"devices"`
 
 	// List of profiles applied to the instance.
 	// Example: ["default"]
 	//
 	// API extension: instance_move_config
-	Profiles []string
+	Profiles []string `json:"profiles" yaml:"profiles"`
 }
 
 // InstancePostTarget represents the migration target host and operation.

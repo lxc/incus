@@ -12,13 +12,13 @@ import (
 // API extension: instance_nvram.
 type InstanceNVRAMVariablePut struct {
 	// Dissected data.
-	Data any `json:"data,omitempty"`
+	Data any `json:"data,omitempty" yaml:"data,omitempty"`
 
 	// Variable attributes.
-	Attributes []string `json:"attributes"`
+	Attributes []string `json:"attributes" yaml:"attributes"`
 
 	// Authenticated variable timestamp.
-	Timestamp *time.Time `json:"timestamp,omitempty"`
+	Timestamp *time.Time `json:"timestamp,omitempty" yaml:"timestamp,omitempty"`
 }
 
 // InstanceNVRAMVariable represents a UEFI variable.
@@ -27,10 +27,10 @@ type InstanceNVRAMVariablePut struct {
 //
 // API extension: instance_nvram.
 type InstanceNVRAMVariable struct {
-	InstanceNVRAMVariablePut
+	InstanceNVRAMVariablePut `yaml:",inline"`
 
 	// Binary data.
-	Binary []byte `json:"binary"`
+	Binary []byte `json:"binary" yaml:"binary"`
 }
 
 // MarshalYAML marshals binary variable data to base64.
