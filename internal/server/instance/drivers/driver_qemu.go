@@ -13129,9 +13129,9 @@ func (d *qemu) setCPUs(monitor *qmp.Monitor, count int) error {
 			return errors.New("Unable to remove CPUs, not enough hotpluggable CPUs available")
 		}
 
-		// Less CPUs requested.
+		// Less CPUs requested, remove the most recently added ones (QEMU lists slots in reverse order).
 		for i := range totalReservedCPUs - count {
-			cpu := hotpluggedCPUs[i]
+			cpu := hotpluggedCPUs[len(hotpluggedCPUs)-1-i]
 
 			fields := strings.Split(cpu.QOMPath, "/")
 			devID := fields[len(fields)-1]
