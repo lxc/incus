@@ -112,6 +112,7 @@ type Operation struct {
 	// Those functions are called at various points in the Operation lifecycle
 	onRun     func(*Operation) error
 	onCancel  func(*Operation) error
+	running   bool
 	onConnect func(*Operation, *http.Request, http.ResponseWriter) error
 
 	// Indicates if operation has finished.
@@ -307,11 +308,20 @@ func (op *Operation) Start() error {
 	op.status = api.Running
 
 	if op.onRun != nil {
+		op.running = true
+
 		go func(op *Operation) {
 			err := op.onRun(op)
 			if err != nil {
+				// A cancelled operation still records why its run ended.
 				op.lock.Lock()
-				op.status = api.Failure
+				op.running = false
+				if op.status == api.Cancelling || op.status == api.Cancelled {
+					op.status = api.Cancelled
+				} else {
+					op.status = api.Failure
+				}
+
 				op.err = err
 				op.lock.Unlock()
 				op.done()
@@ -327,6 +337,7 @@ func (op *Operation) Start() error {
 			}
 
 			op.lock.Lock()
+			op.running = false
 			op.status = api.Success
 			op.lock.Unlock()
 			op.done()
@@ -388,7 +399,10 @@ func (op *Operation) Cancel() (chan error, error) {
 			err := onCancel(op)
 			if err != nil {
 				op.lock.Lock()
-				op.status = oldStatus
+				if op.status == api.Cancelling {
+					op.status = oldStatus
+				}
+
 				op.lock.Unlock()
 				chanCancel <- err
 
@@ -402,10 +416,19 @@ func (op *Operation) Cancel() (chan error, error) {
 				return
 			}
 
+			// A running function completes the operation itself so its result isn't lost.
 			op.lock.Lock()
-			op.status = api.Cancelled
+			running := op.running
+			if op.status == api.Cancelling {
+				op.status = api.Cancelled
+			}
+
 			op.lock.Unlock()
-			op.done()
+
+			if !running {
+				op.done()
+			}
+
 			chanCancel <- nil
 
 			op.logger.Debug("Cancelled operation")
@@ -430,9 +453,17 @@ func (op *Operation) Cancel() (chan error, error) {
 
 	if !hasOnCancel {
 		op.lock.Lock()
-		op.status = api.Cancelled
+		running := op.running
+		if op.status == api.Cancelling {
+			op.status = api.Cancelled
+		}
+
 		op.lock.Unlock()
-		op.done()
+
+		if !running {
+			op.done()
+		}
+
 		chanCancel <- nil
 	}
 
