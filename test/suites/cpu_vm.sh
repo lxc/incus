@@ -93,6 +93,30 @@ test_cpu_vm() {
     incus stop -f v1
     ! incus info v1 || false
 
+    if [ "${cpuCount}" -ge 3 ]; then
+        echo "==> Restore the VM state after CPU changes"
+        # Older QEMU loses ACPI events to vCPUs plugged by a restore, so each direction gets a fresh VM.
+        incus launch images:debian/13 v2 --vm -s "${poolName}" -c limits.cpu=2 -c migration.stateful=true -d root,size.state=2GiB
+        incus wait v2 agent --timeout=90 --interval=1
+        incus config set v2 limits.cpu=3
+        cpu_vm_wait_count v2 3
+        incus stop --stateful v2
+        incus start v2
+        incus wait v2 agent --timeout=90 --interval=1
+        cpu_vm_wait_count v2 3
+        incus delete -f v2
+
+        incus launch images:debian/13 v2 --vm -s "${poolName}" -c limits.cpu=3 -c migration.stateful=true -d root,size.state=2GiB
+        incus wait v2 agent --timeout=90 --interval=1
+        incus config set v2 limits.cpu=2
+        cpu_vm_wait_count v2 2
+        incus stop --stateful v2
+        incus start v2
+        incus wait v2 agent --timeout=90 --interval=1
+        cpu_vm_wait_count v2 2
+        incus delete -f v2
+    fi
+
     echo "==> Deleting storage pool"
     incus storage delete "${poolName}"
 
