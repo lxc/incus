@@ -43,6 +43,9 @@ type DefaultSettings struct {
 
 	// NoColor disables colors in the client.
 	NoColor bool `yaml:"no_color"`
+
+	// IncusUI is the path to the Incus UI files.
+	IncusUI string `yaml:"incus_ui"`
 }
 
 // DefaultConfig returns the default configuration.

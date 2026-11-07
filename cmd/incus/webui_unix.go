@@ -8,6 +8,7 @@ import (
 	"net"
 	"net/http"
 	"net/url"
+	"path/filepath"
 	"sync"
 
 	"github.com/google/uuid"
@@ -42,23 +43,26 @@ func (c *cmdWebui) run(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	// Check that the target supports the UI.
-	req, err := http.NewRequest("GET", fmt.Sprintf("%s/ui/", info.URL), nil)
-	if err != nil {
-		return err
-	}
+	// Serve the UI locally when configured, otherwise check the remote.
+	uiDir := c.resolveUIDir()
+	if uiDir == "" {
+		req, err := http.NewRequest("GET", fmt.Sprintf("%s/ui/", info.URL), nil)
+		if err != nil {
+			return err
+		}
 
-	resp, err := d.DoHTTP(req)
-	if err != nil {
-		return err
-	}
+		resp, err := d.DoHTTP(req)
+		if err != nil {
+			return err
+		}
 
-	if resp.Body != nil {
-		_ = resp.Body.Close()
-	}
+		if resp.Body != nil {
+			_ = resp.Body.Close()
+		}
 
-	if resp.StatusCode == http.StatusNotFound {
-		return errors.New(i18n.G("The server doesn't have a web UI installed"))
+		if resp.StatusCode == http.StatusNotFound {
+			return errors.New(i18n.G("The server doesn't have a web UI installed"))
+		}
 	}
 
 	// Enable keep-alive for proxied connections.
@@ -95,6 +99,7 @@ func (c *cmdWebui) run(cmd *cobra.Command, args []string) error {
 		transport: transport,
 		api10:     api10,
 		api10Etag: api10Etag,
+		uiDir:     uiDir,
 
 		mu:           &sync.RWMutex{},
 		connections:  &connections,
@@ -118,4 +123,18 @@ func (c *cmdWebui) run(cmd *cobra.Command, args []string) error {
 	}
 
 	return nil
+}
+
+// resolveUIDir returns the configured UI directory, or an empty string.
+func (c *cmdWebui) resolveUIDir() string {
+	if c.global.conf == nil {
+		return ""
+	}
+
+	uiPath := c.global.conf.Defaults.IncusUI
+	if uiPath == "" || !util.PathExists(filepath.Join(uiPath, "index.html")) {
+		return ""
+	}
+
+	return uiPath
 }

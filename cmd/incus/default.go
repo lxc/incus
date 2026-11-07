@@ -3,6 +3,7 @@ package main
 import (
 	"errors"
 	"fmt"
+	"path/filepath"
 	"strconv"
 
 	"github.com/spf13/cobra"
@@ -12,6 +13,7 @@ import (
 	u "github.com/lxc/incus/v7/cmd/incus/usage"
 	"github.com/lxc/incus/v7/internal/i18n"
 	cli "github.com/lxc/incus/v7/shared/cmd"
+	"github.com/lxc/incus/v7/shared/util"
 )
 
 type cmdDefault struct {
@@ -81,6 +83,8 @@ func (c *cmdDefaultSet) set(cmd *cobra.Command, parsed []*u.Parsed) error {
 			err = c.setConsoleSpiceCommand(v)
 		case "no_color":
 			err = c.setNoColor(v)
+		case "incus_ui":
+			err = c.setIncusUI(v)
 		default:
 			err = fmt.Errorf(i18n.G("Invalid default %q"), k)
 		}
@@ -147,6 +151,16 @@ func (c *cmdDefaultSet) setNoColor(noColorStr string) error {
 	}
 
 	c.global.conf.Defaults.NoColor = noColor
+
+	return nil
+}
+
+func (c *cmdDefaultSet) setIncusUI(incusUI string) error {
+	if incusUI != "" && !util.PathExists(filepath.Join(incusUI, "index.html")) {
+		return errors.New(i18n.G("incus_ui must point to a directory containing index.html"))
+	}
+
+	c.global.conf.Defaults.IncusUI = incusUI
 
 	return nil
 }
