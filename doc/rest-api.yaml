@@ -830,6 +830,175 @@ definitions:
         title: DebugLVM represents LVM debug information for the system.
         type: object
         x-go-package: github.com/lxc/incus-os/incus-osd/api
+    DebugNetworkDumpTraffic:
+        properties:
+            duration:
+                description: Seconds to capture for, defaults to 10 if unset, 0 captures until the request is canceled.
+                format: int64
+                type: integer
+                x-go-name: Duration
+            filter:
+                description: Capture filter expression in tcpdump syntax.
+                type: string
+                x-go-name: Filter
+            format:
+                description: Output format, either "text" (default) or "pcap".
+                type: string
+                x-go-name: Format
+            interface:
+                description: Interface to capture on, defaults to all interfaces.
+                type: string
+                x-go-name: Interface
+        title: DebugNetworkDumpTraffic defines the arguments for a network traffic dump request.
+        type: object
+        x-go-package: github.com/lxc/incus-os/incus-osd/api
+    DebugNetworkPing:
+        properties:
+            count:
+                description: Number of packets to send, defaults to 10 if unset, 0 pings until the request is canceled.
+                format: int64
+                type: integer
+                x-go-name: Count
+            family:
+                description: Address family to use, either "ipv4" or "ipv6", automatically selected if unset.
+                type: string
+                x-go-name: Family
+            interface:
+                description: Interface to send from, automatically selected if unset.
+                type: string
+                x-go-name: Interface
+            interval:
+                description: Seconds to wait between packets.
+                format: double
+                type: number
+                x-go-name: Interval
+            numeric:
+                description: Don't resolve addresses to names.
+                type: boolean
+                x-go-name: Numeric
+            pmtu_discovery:
+                description: Path MTU discovery strategy, one of "do", "dont", "want" or "probe".
+                type: string
+                x-go-name: PMTUDiscovery
+            size:
+                description: Payload size in bytes.
+                format: int64
+                type: integer
+                x-go-name: Size
+            target:
+                description: Host name or address to ping.
+                type: string
+                x-go-name: Target
+        title: DebugNetworkPing defines the arguments for a network ping request.
+        type: object
+        x-go-package: github.com/lxc/incus-os/incus-osd/api
+    DebugNetworkRoutes:
+        properties:
+            ipv4_routes:
+                items:
+                    additionalProperties: {}
+                    type: object
+                type: array
+                x-go-name: IPv4Routes
+            ipv4_rules:
+                items:
+                    additionalProperties: {}
+                    type: object
+                type: array
+                x-go-name: IPv4Rules
+            ipv6_routes:
+                items:
+                    additionalProperties: {}
+                    type: object
+                type: array
+                x-go-name: IPv6Routes
+            ipv6_rules:
+                items:
+                    additionalProperties: {}
+                    type: object
+                type: array
+                x-go-name: IPv6Rules
+        title: DebugNetworkRoutes holds the routing policy rules and tables as reported by iproute2.
+        type: object
+        x-go-package: github.com/lxc/incus-os/incus-osd/api
+    DebugNetworkSpeedTest:
+        properties:
+            bitrate:
+                description: Target bitrate in bits per second with an optional K, M or G suffix, 0 for unlimited.
+                type: string
+                x-go-name: Bitrate
+            duration:
+                description: Seconds to test for, defaults to 10 if unset, 0 tests until the request is canceled.
+                format: int64
+                type: integer
+                x-go-name: Duration
+            family:
+                description: Address family to use, either "ipv4" or "ipv6", automatically selected if unset.
+                type: string
+                x-go-name: Family
+            format:
+                description: Output format, either "json" (default) or "text".
+                type: string
+                x-go-name: Format
+            interface:
+                description: Interface to send from, automatically selected if unset.
+                type: string
+                x-go-name: Interface
+            parallel:
+                description: Number of parallel connections to test with, defaults to 1.
+                format: int64
+                type: integer
+                x-go-name: Parallel
+            port:
+                description: Port of the iperf3 server, defaults to 5201.
+                format: int64
+                type: integer
+                x-go-name: Port
+            protocol:
+                description: Protocol to test with, either "tcp" (default) or "udp".
+                type: string
+                x-go-name: Protocol
+            reverse:
+                description: Measure the download rather than upload bandwidth.
+                type: boolean
+                x-go-name: Reverse
+            target:
+                description: Host name or address of the iperf3 server.
+                type: string
+                x-go-name: Target
+        title: DebugNetworkSpeedTest defines the arguments for a network speed test request.
+        type: object
+        x-go-package: github.com/lxc/incus-os/incus-osd/api
+    DebugNetworkTrace:
+        properties:
+            count:
+                description: Number of probes to send to each hop, defaults to 10 if unset, 0 traces until the request is canceled.
+                format: int64
+                type: integer
+                x-go-name: Count
+            family:
+                description: Address family to use, either "ipv4" or "ipv6", automatically selected if unset.
+                type: string
+                x-go-name: Family
+            format:
+                description: Output format, either "json" (default) or "text".
+                type: string
+                x-go-name: Format
+            interface:
+                description: Interface to send from, automatically selected if unset.
+                type: string
+                x-go-name: Interface
+            numeric:
+                description: Don't resolve addresses to names.
+                type: boolean
+                x-go-name: Numeric
+            target:
+                description: Host name or address to trace the path to.
+                type: string
+                x-go-name: Target
+        title: DebugNetworkTrace defines the arguments for a network trace request.
+        type: object
+        x-go-package: github.com/lxc/incus-os/incus-osd/api
     DebugReport:
         properties:
             media_type:
@@ -7803,9 +7972,24 @@ definitions:
         x-go-package: github.com/lxc/incus-os/incus-osd/api
     SystemKernelState:
         properties:
+            clock:
+                $ref: '#/definitions/SystemKernelStateClock'
             memory:
                 $ref: '#/definitions/SystemKernelStateMemory'
         title: SystemKernelState represents state for the system's kernel-level configuration.
+        type: object
+        x-go-package: github.com/lxc/incus-os/incus-osd/api
+    SystemKernelStateClock:
+        properties:
+            available_sources:
+                items:
+                    type: string
+                type: array
+                x-go-name: AvailableSources
+            source:
+                type: string
+                x-go-name: Source
+        title: SystemKernelStateClock reports the kernel timekeeping clock source.
         type: object
         x-go-package: github.com/lxc/incus-os/incus-osd/api
     SystemKernelStateMemory:
