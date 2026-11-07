@@ -24,12 +24,14 @@ import (
 
 // OVN ACL rule priorities.
 const (
-	ovnACLPriorityPortGroupDefaultAction  = 0
-	ovnACLPriorityNICDefaultActionIngress = 100
+	ovnACLPriorityPortGroupDefaultAction      = 0
+	ovnACLPriorityNICDefaultActionEgressAllow = 99
+	ovnACLPriorityNICDefaultActionIngress     = 100
 )
 
 // ovnACLPriorityNICDefaultActionEgress needs to be >10 higher than ovnACLPriorityNICDefaultActionIngress so that
 // ingress reject rules (that OVN adds 10 to their priorities) don't prevent egress rules being tested first.
+// An allowing egress default goes below the ingress one instead so the receiving NIC's default still applies.
 const (
 	ovnACLPriorityNICDefaultActionEgress  = 111
 	ovnACLPrioritySwitchAllow             = 200
@@ -1309,6 +1311,11 @@ func OVNApplyInstanceNICDefaultRules(client *ovn.NB, switchPortGroup ovn.OVNPort
 		return fmt.Errorf("Invalid egress action %q", egressAction)
 	}
 
+	egressPriority := ovnACLPriorityNICDefaultActionEgress
+	if egressAction == "allow" || egressAction == "allow-stateless" {
+		egressPriority = ovnACLPriorityNICDefaultActionEgressAllow
+	}
+
 	if egressAction == "allow" {
 		egressAction = "allow-related"
 	}
@@ -1319,7 +1326,7 @@ func OVNApplyInstanceNICDefaultRules(client *ovn.NB, switchPortGroup ovn.OVNPort
 			Action:    egressAction,
 			Log:       egressLogged,
 			LogName:   fmt.Sprintf("%s-egress", logPrefix), // Max 63 chars.
-			Priority:  ovnACLPriorityNICDefaultActionEgress,
+			Priority:  egressPriority,
 			Match:     fmt.Sprintf(`inport == "%s"`, nicPortName), // From NIC.
 		},
 		{
