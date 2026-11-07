@@ -590,6 +590,9 @@ func instancePost(d *Daemon, r *http.Request) response.Response {
 	return operations.OperationResponse(op)
 }
 
+// errInstanceStorageInUse is returned when the storage of an instance may still be in use by another cluster member.
+var errInstanceStorageInUse = errors.New("Instance storage may still be in use by another cluster member")
+
 // Perform the server-side migration.
 func migrateInstance(ctx context.Context, s *state.State, inst instance.Instance, req api.InstancePost, sourceMemberInfo *db.NodeInfo, targetMemberInfo *db.NodeInfo, targetGroupName string, op *operations.Operation, progressHandler func(newOp api.Operation)) error {
 	if progressHandler == nil {
@@ -633,6 +636,12 @@ func migrateInstance(ctx context.Context, s *state.State, inst instance.Instance
 
 	// Handle migration of an instance away from an offline server (on shared storage).
 	if targetMemberInfo != nil && sourceMemberInfo != nil && sourceMemberInfo.IsOffline(s.GlobalConfig.OfflineThreshold()) && sourcePool.Driver().Info().Remote {
+		// The offline member may still be running the instance.
+		err = sourcePool.CheckInstanceLock(inst, nil)
+		if err != nil {
+			return fmt.Errorf("%w: %w", errInstanceStorageInUse, err)
+		}
+
 		// Update the database records.
 		err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
 			err := tx.UpdateInstanceNode(ctx, inst.Project().Name, inst.Name(), inst.Name(), targetMemberInfo.Name, sourcePool.ID(), volDBType)

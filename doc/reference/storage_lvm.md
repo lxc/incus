@@ -55,6 +55,11 @@ To use this with Incus, you must:
 - Set a unique (within your cluster) `host_id` value in `/etc/lvm/lvmlocal.conf`
 - Ensure that both `lvmlockd` and `sanlock` daemons are running
 
+The volumes of a running instance (its root disk, the configuration volume of a VM and its dependent custom volumes) are locked exclusively by the cluster member running it.
+Other members can't activate them until the instance is stopped or moved, which also prevents cluster healing from starting an instance that's still running on an unreachable member.
+Snapshots, images, ISO volumes and other custom volumes are activated in shared mode.
+Protection against a member which lost access to the shared storage relies on the `sanlock` watchdog (`wdmd`).
+
 ```{warning}
 `lvmcluster` has the following limitations:
 

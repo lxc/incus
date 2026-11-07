@@ -9647,6 +9647,18 @@ func (d *qemu) MigrateSend(args instance.MigrateSendArgs) error {
 
 		configReadOnly = true
 		reverter.Add(func() { _ = linux.SetMountReadOnly(d.Path(), false) })
+
+		// The target can only activate the volumes once they're shared.
+		d.stopStorageLock()
+
+		err = pool.SetInstanceShared(d, true, d.op)
+		if err != nil {
+			err := fmt.Errorf("Failed sharing storage volumes with the target: %w", err)
+			op.Done(err)
+			return err
+		}
+
+		reverter.Add(func() { d.lockStorageExclusive(pool) })
 	}
 
 	// Send offer to target.
@@ -11134,6 +11146,10 @@ func (d *qemu) MigrateReceive(args instance.MigrateReceiveArgs) error {
 			}
 		})
 
+		if isRemoteClusterMove && !storageMove && args.Live {
+			reverter.Add(func() { _ = pool.UnmountInstance(d, nil) })
+		}
+
 		// Derive the effective storage project name from the instance config's project.
 		storageProjectName, err := project.StorageVolumeProject(d.state.DB.Cluster, d.project.Name, db.StoragePoolVolumeTypeCustom)
 		if err != nil {
@@ -11161,6 +11177,7 @@ func (d *qemu) MigrateReceive(args instance.MigrateReceiveArgs) error {
 
 				// Setup the volume entry.
 				extraTargetArgs := localMigration.VolumeTargetArgs{
+					Live:                  args.Live,
 					ClusterMoveSourceName: args.ClusterMoveSourceName,
 					StoragePool:           args.StoragePool,
 				}
@@ -11177,6 +11194,10 @@ func (d *qemu) MigrateReceive(args instance.MigrateReceiveArgs) error {
 				err = diskPool.Driver().CreateVolumeFromMigration(vol, nil, extraTargetArgs, nil, nil)
 				if err != nil {
 					return fmt.Errorf("Failed to prepare device %q for migration: %w", dev.Name, err)
+				}
+
+				if args.Live && util.IsTrue(dbVol.Config["dependent"]) {
+					reverter.Add(func() { _, _ = diskPool.Driver().UnmountVolume(vol, false, nil) })
 				}
 			}
 		}
@@ -11286,8 +11307,83 @@ func (d *qemu) MigrateReceive(args instance.MigrateReceiveArgs) error {
 
 		reverter.Success()
 
+		if args.Live && clusterMove && !storageMove && pool.Driver().Info().Remote {
+			d.lockStorageExclusive(pool)
+		}
+
 		return nil
 	}
+}
+
+// storageLock tracks a pending switch of an instance's storage locks to exclusive.
+type storageLock struct {
+	cancel context.CancelFunc
+	done   chan struct{}
+}
+
+// storageLocks tracks the pending storage lock switches by instance ID.
+var (
+	storageLocksMu sync.Mutex
+	storageLocks   = map[int]*storageLock{}
+)
+
+// stopStorageLock stops any pending switch of the instance's storage locks and waits for it to finish.
+func (d *qemu) stopStorageLock() {
+	storageLocksMu.Lock()
+	lock := storageLocks[d.id]
+	delete(storageLocks, d.id)
+	storageLocksMu.Unlock()
+
+	if lock != nil {
+		lock.cancel()
+		<-lock.done
+	}
+}
+
+// lockStorageExclusive switches the instance's storage locks back to exclusive once no other member uses them.
+func (d *qemu) lockStorageExclusive(pool storagePools.Pool) {
+	d.stopStorageLock()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	lock := &storageLock{cancel: cancel, done: make(chan struct{})}
+
+	storageLocksMu.Lock()
+	storageLocks[d.id] = lock
+	storageLocksMu.Unlock()
+
+	go func() {
+		defer close(lock.done)
+		defer func() {
+			storageLocksMu.Lock()
+			if storageLocks[d.id] == lock {
+				delete(storageLocks, d.id)
+			}
+
+			storageLocksMu.Unlock()
+			cancel()
+		}()
+
+		var err error
+
+		for range 30 {
+			if ctx.Err() != nil || !d.IsRunning() {
+				return
+			}
+
+			err = pool.SetInstanceShared(d, false, nil)
+			if err == nil {
+				return
+			}
+
+			select {
+			case <-ctx.Done():
+				return
+			case <-time.After(10 * time.Second):
+			}
+		}
+
+		d.logger.Warn("Failed switching storage locks to exclusive", logger.Ctx{"err": err})
+	}()
 }
 
 // CGroup is not implemented for VMs.

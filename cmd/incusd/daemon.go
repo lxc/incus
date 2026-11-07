@@ -1710,6 +1710,9 @@ func (d *Daemon) init() error {
 		// Reap any forkproxy helpers left behind by an out-of-cgroup kill of the previous daemon.
 		cleanupOrphanedProxyHelpers(instances)
 
+		// Restore exclusive storage locks on VMs started by an older daemon.
+		instancesLockStorage(d.State(), instances)
+
 		// Setup seccomp handler
 		seccompServer, err := seccomp.NewSeccompServer(d.State(), internalUtil.RunPath("seccomp.socket"), func(pid int32, state *state.State) (seccomp.Instance, error) {
 			return findContainerForPid(pid, state)

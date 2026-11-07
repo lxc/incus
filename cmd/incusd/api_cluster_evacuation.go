@@ -995,6 +995,10 @@ func autoHealClusterTask(d *Daemon) (task.Func, task.Schedule) {
 			for _, member := range offlineMembers {
 				err := healClusterMember(d, op, member.Name)
 				if err != nil {
+					if strings.Contains(err.Error(), errInstanceStorageInUse.Error()) {
+						continue
+					}
+
 					logger.Error("Failed healing cluster instances", logger.Ctx{"server": member.Name, "err": err})
 					return err
 				}
@@ -1117,6 +1121,12 @@ func healClusterMember(d *Daemon, op *operations.Operation, name string) error {
 			s.Events.SendLifecycle(api.ProjectDefaultName, lifecycle.ClusterMemberHealed.Event(name, op.Requestor(), nil))
 
 			return nil
+		}
+
+		// Retry on a later healing run once the member's storage locks are released.
+		if strings.Contains(err.Error(), errInstanceStorageInUse.Error()) {
+			logger.Warn("Postponing cluster healing as instance storage is still in use", logger.Ctx{"server": name, "err": err})
+			return err
 		}
 	}
 

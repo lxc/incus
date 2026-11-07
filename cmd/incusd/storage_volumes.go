@@ -1004,6 +1004,35 @@ func storagePoolVolumesPost(d *Daemon, r *http.Request) response.Response {
 			return response.SmartError(err)
 		}
 
+		// Copy a shared volume attached to an instance on another member from that member.
+		_, _, srcIsSnapshot := api.GetParentAndSnapshotName(req.Source.Name)
+		if s.ServerClustered && req.Source.Location == "" && !srcIsSnapshot {
+			srcPool, err := storagePools.LoadByName(s, srcPoolName)
+			if err != nil {
+				return response.SmartError(err)
+			}
+
+			if srcPool.Driver().Info().Remote {
+				client, err := cluster.ConnectIfVolumeIsRemote(s, srcPoolName, srcProjectName, req.Source.Name, db.StoragePoolVolumeTypeCustom, s.Endpoints.NetworkCert(), s.ServerCert(), r)
+				if err != nil {
+					return response.SmartError(err)
+				}
+
+				if client != nil {
+					if srcPoolName == poolName && request.QueryParam(r, "target") == "" {
+						return response.ForwardedResponse(client, r)
+					}
+
+					info, err := client.GetConnectionInfo()
+					if err != nil {
+						return response.SmartError(err)
+					}
+
+					return clusterCopyCustomVolumeInternal(s, r, strings.TrimPrefix(info.URL, "https://"), projectName, poolName, &req)
+				}
+			}
+		}
+
 		if dbVolume != nil {
 			return doCustomVolumeRefresh(s, r, request.ProjectParam(r), projectName, poolName, &req)
 		}

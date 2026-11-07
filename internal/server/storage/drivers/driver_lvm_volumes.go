@@ -211,6 +211,14 @@ func (d *lvm) CreateVolumeFromMigration(vol Volume, conn io.ReadWriteCloser, vol
 			return err
 		}
 
+		// The source keeps using the volume until the live migration completes.
+		if volTargetArgs.Live && d.exclusiveVolume(vol) {
+			err := d.activateVolumeShared(vol)
+			if err != nil {
+				return err
+			}
+		}
+
 		if vol.IsVMBlock() {
 			fsVol := vol.NewVMBlockFilesystemVolume()
 			err := d.CreateVolumeFromMigration(fsVol, conn, volTargetArgs, preFiller, op)
@@ -1374,6 +1382,77 @@ func (d *lvm) RenameVolume(vol Volume, newVolName string, op *operations.Operati
 		reverter.Success()
 		return nil
 	}, false, op)
+}
+
+// SetVolumeShared switches the lock of an active volume between shared and exclusive.
+func (d *lvm) SetVolumeShared(vol Volume, shared bool) error {
+	if !d.clustered || (vol.volType != VolumeTypeVM && !vol.IsCustomBlock()) {
+		return nil
+	}
+
+	mode := "ey"
+	if shared {
+		mode = "sy"
+	}
+
+	vols := []Volume{vol}
+	if vol.IsVMBlock() {
+		vols = append(vols, vol.NewVMBlockFilesystemVolume())
+	}
+
+	lvmActivation.Lock()
+	defer lvmActivation.Unlock()
+
+	for _, v := range vols {
+		volPath := d.lvmPath(d.config["lvm.vg_name"], v.volType, v.contentType, v.name)
+		volDevPath, err := d.lvmDevPath(volPath)
+		if err != nil && !errors.Is(err, os.ErrNotExist) {
+			return err
+		}
+
+		if volDevPath == "" {
+			continue
+		}
+
+		_, err = subprocess.RunCommand("lvchange", "--activate", mode, "--ignoreactivationskip", volPath)
+		if err != nil {
+			return fmt.Errorf("Failed to switch lock mode of LVM logical volume %q: %w", volPath, err)
+		}
+	}
+
+	return nil
+}
+
+// CheckVolumeLock checks that a volume isn't locked by another cluster member.
+func (d *lvm) CheckVolumeLock(vol Volume) error {
+	if !d.clustered {
+		return nil
+	}
+
+	volPath := d.lvmPath(d.config["lvm.vg_name"], vol.volType, vol.contentType, vol.name)
+	volDevPath, err := d.lvmDevPath(volPath)
+	if err != nil && !errors.Is(err, os.ErrNotExist) {
+		return err
+	}
+
+	if volDevPath != "" {
+		return nil
+	}
+
+	lvmActivation.Lock()
+	defer lvmActivation.Unlock()
+
+	_, err = subprocess.RunCommand("lvchange", "--activate", "ey", "--ignoreactivationskip", volPath)
+	if err != nil {
+		return fmt.Errorf("LVM logical volume %q is locked by another cluster member: %w", volPath, err)
+	}
+
+	_, err = subprocess.TryRunCommand("lvchange", "--activate", "n", "--ignoreactivationskip", volPath)
+	if err != nil {
+		return fmt.Errorf("Failed to deactivate LVM logical volume %q: %w", volPath, err)
+	}
+
+	return nil
 }
 
 // MigrateVolume sends a volume for migration.
