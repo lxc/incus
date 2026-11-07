@@ -471,18 +471,38 @@ func patchInstanceIdmapBaseNonIsolated(_ string, d *Daemon) error {
 	s := d.State()
 
 	return s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
-		// Profiles setting both keys.
+		// Load everything upfront as a query per entry takes too long on members far from the leader.
 		profiles, err := dbCluster.GetProfiles(ctx, tx.Tx())
 		if err != nil {
 			return err
 		}
 
-		for _, profile := range profiles {
-			config, err := dbCluster.GetProfileConfig(ctx, tx.Tx(), profile.ID)
-			if err != nil {
-				return err
-			}
+		profileConfigs, err := dbCluster.GetConfig(ctx, tx.Tx(), "profiles", "profile")
+		if err != nil {
+			return err
+		}
 
+		snapshots, err := dbCluster.GetInstanceSnapshots(ctx, tx.Tx())
+		if err != nil {
+			return err
+		}
+
+		baseKey := "security.idmap.base"
+		isolatedKey := "security.idmap.isolated"
+		snapshotConfigs, err := dbCluster.GetConfig(ctx, tx.Tx(), "instances_snapshots", "instance_snapshot", dbCluster.ConfigFilter{Key: &baseKey}, dbCluster.ConfigFilter{Key: &isolatedKey})
+		if err != nil {
+			return err
+		}
+
+		instanceSnapshots := map[string][]dbCluster.InstanceSnapshot{}
+		for _, snap := range snapshots {
+			key := snap.Project + "/" + snap.Instance
+			instanceSnapshots[key] = append(instanceSnapshots[key], snap)
+		}
+
+		// Profiles setting both keys.
+		for _, profile := range profiles {
+			config := profileConfigs[profile.ID]
 			if config["security.idmap.base"] == "" || !util.IsTrue(config["security.idmap.isolated"]) {
 				continue
 			}
@@ -516,18 +536,8 @@ func patchInstanceIdmapBaseNonIsolated(_ string, d *Daemon) error {
 				}
 			}
 
-			snaps, err := tx.GetInstanceSnapshotsWithName(ctx, inst.Project, inst.Name)
-			if err != nil {
-				return err
-			}
-
-			for _, snap := range snaps {
-				config, err := dbCluster.GetInstanceSnapshotConfig(ctx, tx.Tx(), snap.ID)
-				if err != nil {
-					return err
-				}
-
-				expanded = db.ExpandInstanceConfig(config, inst.Profiles)
+			for _, snap := range instanceSnapshots[inst.Project+"/"+inst.Name] {
+				expanded = db.ExpandInstanceConfig(snapshotConfigs[snap.ID], inst.Profiles)
 				if expanded["security.idmap.base"] != "" && util.IsTrue(expanded["security.idmap.isolated"]) {
 					err = tx.UpdateInstanceSnapshotConfig(snap.ID, map[string]string{"security.idmap.isolated": "false"})
 					if err != nil {
