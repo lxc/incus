@@ -15,6 +15,9 @@ By default, the method used for a request is determined automatically from the
 client's authentication protocol. This can be customized so that different kinds
 of clients are handled by different methods; see {ref}`authorization-client-routing`.
 
+Long-running operations, such as `exec` and console sessions, are checked against the current permissions every 30 seconds.
+An operation is canceled if its requestor no longer has the required permission, but not if the authorization check itself fails, for example when the OpenFGA server is unreachable.
+
 (authorization-tls)=
 ## TLS authorization
 

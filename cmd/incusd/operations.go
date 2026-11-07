@@ -13,6 +13,7 @@ import (
 
 	"github.com/lxc/incus/v7/internal/jmap"
 	"github.com/lxc/incus/v7/internal/server/auth"
+	"github.com/lxc/incus/v7/internal/server/certificate"
 	"github.com/lxc/incus/v7/internal/server/cluster"
 	"github.com/lxc/incus/v7/internal/server/db"
 	dbCluster "github.com/lxc/incus/v7/internal/server/db/cluster"
@@ -24,6 +25,7 @@ import (
 	"github.com/lxc/incus/v7/internal/server/state"
 	"github.com/lxc/incus/v7/internal/server/task"
 	localUtil "github.com/lxc/incus/v7/internal/server/util"
+	internalUtil "github.com/lxc/incus/v7/internal/util"
 	"github.com/lxc/incus/v7/shared/api"
 	"github.com/lxc/incus/v7/shared/logger"
 	"github.com/lxc/incus/v7/shared/util"
@@ -188,6 +190,75 @@ func operationCheckPermission(s *state.State, r *http.Request, op *operations.Op
 	}
 
 	return nil
+}
+
+// operationRequestorTrusted returns false if the operation's TLS requestor is gone from the trust store.
+func operationRequestorTrusted(d *Daemon, op *operations.Operation) bool {
+	requestor := op.Requestor()
+	if requestor == nil || requestor.Protocol != api.AuthenticationMethodTLS {
+		return true
+	}
+
+	// With a CA, certificates are trusted without being in the trust store.
+	if util.PathExists(internalUtil.VarPath("server.ca")) {
+		return true
+	}
+
+	certs, _ := d.clientCerts.GetCertificatesAndProjects()
+	_, ok := certs[certificate.TypeClient][requestor.Username]
+
+	return ok
+}
+
+// operationsRecheckAccessTask cancels the running operations whose requestor lost the required permission.
+func operationsRecheckAccessTask(d *Daemon) (task.Func, task.Schedule) {
+	f := func(ctx context.Context) {
+		s := d.State()
+
+		for _, op := range operations.Clone() {
+			if ctx.Err() != nil {
+				return
+			}
+
+			if op.Status() != api.Running || op.Class() == operations.OperationClassToken || !op.Cancelable() {
+				continue
+			}
+
+			objectType, _ := op.Permission()
+			r := op.Request()
+			if r == nil || objectType == "" {
+				continue
+			}
+
+			l := logger.AddContext(logger.Ctx{"operation": op.ID(), "project": op.Project(), "requestor": op.Requestor().Username})
+
+			var err error
+			if operationRequestorTrusted(d, op) {
+				err = operationCheckPermission(s, r, op)
+			} else {
+				err = api.StatusErrorf(http.StatusForbidden, "Requestor is no longer trusted")
+			}
+
+			if err == nil {
+				continue
+			}
+
+			// A backend failure must not cut off users, only a clean deny does.
+			if !auth.IsDenied(err) {
+				l.Warn("Failed re-checking operation access", logger.Ctx{"err": err})
+				continue
+			}
+
+			l.Warn("Canceling operation as its requestor lost access", logger.Ctx{"err": err})
+
+			_, err = op.Cancel()
+			if err != nil {
+				l.Warn("Failed canceling operation", logger.Ctx{"err": err})
+			}
+		}
+	}
+
+	return f, task.Every(30 * time.Second)
 }
 
 // operationCheckCancelAccess checks whether the requestor may cancel the operation.
