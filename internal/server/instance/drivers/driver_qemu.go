@@ -3757,7 +3757,18 @@ func (d *qemu) deviceAttachSingleNIC(deviceName string, nicConfig []deviceConfig
 		qemuDev["addr"] = "00.0"
 	}
 
-	monHook, err := d.addNetDevConfig(qemuBus, qemuDev, nil, nicConfig)
+	// Size the NIC queues like the ones added at boot when the boot state is known.
+	cpuCount := 0
+	bs, err := d.getBootState()
+	if err != nil {
+		return err
+	}
+
+	if bs.CPUTopology != nil {
+		cpuCount = bs.CPUTopology.Sockets * bs.CPUTopology.Cores * bs.CPUTopology.Threads
+	}
+
+	monHook, err := d.addNetDevConfig(qemuBus, qemuDev, nil, nicConfig, cpuCount)
 	if err != nil {
 		return err
 	}
@@ -5307,6 +5318,9 @@ func (d *qemu) generateQemuConfig(bs *qemuBootState, mountInfo *storagePools.Mou
 	// Record the mounts we are going to do inside the VM using the agent.
 	agentMounts := []instancetype.VMAgentMount{}
 
+	// Size the NIC queues from the boot topology so a stateful restore matches the source.
+	cpuCount := bs.CPUTopology.Sockets * bs.CPUTopology.Cores * bs.CPUTopology.Threads
+
 	// These devices are sorted so that NICs are added first to ensure that the first NIC can use the 5th
 	// PCIe bus port and will be consistently named enp5s0 for compatibility with network configuration in our
 	// existing VM images. Even on non-PCIe buses having NICs first means that their names won't change when
@@ -5386,7 +5400,7 @@ func (d *qemu) generateQemuConfig(bs *qemuBootState, mountInfo *storagePools.Mou
 						failoverDev["multifunction"] = true
 					}
 
-					monHook, err := d.addNetDevConfig(busName, failoverDev, bootIndexes, runConf.FailoverNetworkInterface)
+					monHook, err := d.addNetDevConfig(busName, failoverDev, bootIndexes, runConf.FailoverNetworkInterface, cpuCount)
 					if err != nil {
 						return nil, err
 					}
@@ -5403,7 +5417,7 @@ func (d *qemu) generateQemuConfig(bs *qemuBootState, mountInfo *storagePools.Mou
 				}
 			}
 
-			monHook, err := d.addNetDevConfig(busName, qemuDev, bootIndexes, runConf.NetworkInterface)
+			monHook, err := d.addNetDevConfig(busName, qemuDev, bootIndexes, runConf.NetworkInterface, cpuCount)
 			if err != nil {
 				return nil, err
 			}
@@ -6726,7 +6740,8 @@ func (d *qemu) addDriveConfig(qemuDev map[string]any, bootIndexes map[string]int
 
 // addNetDevConfig adds the qemu config required for adding a network device.
 // The qemuDev map is expected to be preconfigured with the settings for an existing port to use for the device.
-func (d *qemu) addNetDevConfig(busName string, qemuDev map[string]any, bootIndexes map[string]int, nicConfig []deviceConfig.RunConfigItem) (monitorHook, error) {
+// The queues are sized from cpuCount, or from the current vCPUs when zero.
+func (d *qemu) addNetDevConfig(busName string, qemuDev map[string]any, bootIndexes map[string]int, nicConfig []deviceConfig.RunConfigItem, cpuCount int) (monitorHook, error) {
 	reverter := revert.New()
 	defer reverter.Fail()
 
@@ -6802,12 +6817,16 @@ func (d *qemu) addNetDevConfig(busName string, qemuDev map[string]any, bootIndex
 			reverter := revert.New()
 			defer reverter.Fail()
 
-			cpus, err := m.QueryCPUs()
-			if err != nil {
-				return errors.New("Failed getting CPU list for NIC queues")
+			if cpuCount == 0 {
+				cpus, err := m.QueryCPUs()
+				if err != nil {
+					return errors.New("Failed getting CPU list for NIC queues")
+				}
+
+				cpuCount = len(cpus)
 			}
 
-			queueCount := configureQueues(len(cpus))
+			queueCount := configureQueues(cpuCount)
 
 			// Enable vhost_net offloading if available.
 			info := DriverStatuses()[instancetype.VM].Info
@@ -6892,7 +6911,7 @@ func (d *qemu) addNetDevConfig(busName string, qemuDev map[string]any, bootIndex
 			qemuDev["netdev"] = netDevID
 			qemuDev["mac"] = devHwaddr
 
-			err = m.AddNIC(qemuNetDev, qemuDev, connected)
+			err := m.AddNIC(qemuNetDev, qemuDev, connected)
 			if err != nil {
 				return fmt.Errorf("Failed setting up device %q: %w", devName, err)
 			}
