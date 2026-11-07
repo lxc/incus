@@ -135,6 +135,9 @@ var errQemuAgentOffline = errors.New("VM agent isn't currently running")
 // errQemuPIDMismatch is returned when the recorded PID no longer belongs to this instance's QEMU.
 var errQemuPIDMismatch = errors.New("PID doesn't match the running process")
 
+// errQemuCPURemovalPending is returned while the guest still holds a vCPU whose removal was requested.
+var errQemuCPURemovalPending = errors.New("A vCPU removal is still pending")
+
 // monitorGoneErrors are the errors caused by QEMU having gone away, as happens during a restart.
 var monitorGoneErrors = []error{qmp.ErrMonitorDisconnect, unix.ECONNREFUSED, fs.ErrNotExist, errQemuPIDMismatch}
 
@@ -526,7 +529,12 @@ func (d *qemu) getMonitorEventHandler() func(event string, data map[string]any) 
 	s := d.state
 
 	return func(event string, data map[string]any) {
-		if !slices.Contains([]string{qmp.EventVMShutdown, qmp.EventVMReset, qmp.EventAgentStarted, qmp.EventAgentStopped, qmp.EventAgentTemplated, qmp.EventRTCChange}, event) {
+		if event == qmp.EventDeviceDeleted {
+			devID, ok := data["device"].(string)
+			if !ok || !strings.HasPrefix(devID, "cpu") {
+				return // Only vCPU removals are tracked.
+			}
+		} else if !slices.Contains([]string{qmp.EventVMShutdown, qmp.EventVMReset, qmp.EventAgentStarted, qmp.EventAgentStopped, qmp.EventAgentTemplated, qmp.EventRTCChange}, event) {
 			return // Don't bother loading the instance from DB if we aren't going to handle the event.
 		}
 
@@ -556,6 +564,18 @@ func (d *qemu) getMonitorEventHandler() func(event string, data map[string]any) 
 		}
 
 		switch event {
+		case qmp.EventDeviceDeleted:
+			// The guest may release a vCPU long after its removal was requested.
+			monitor, err := d.qmpConnect()
+			if err != nil {
+				break
+			}
+
+			err = d.saveCPUCount(monitor)
+			if err != nil && !errors.Is(err, errQemuCPURemovalPending) {
+				d.logger.Warn("Failed recording vCPUs", logger.Ctx{"err": err})
+			}
+
 		case qmp.EventAgentStarted:
 			d.logger.Debug("Instance agent started")
 
@@ -1664,6 +1684,12 @@ func (d *qemu) saveState(monitor *qmp.Monitor) error {
 	d.logger.Debug("Stateful checkpoint starting", logger.Ctx{"target": statePath})
 	defer d.logger.Debug("Stateful checkpoint finished", logger.Ctx{"target": statePath})
 
+	// The restore needs the exact vCPUs the state is taken with.
+	err := d.saveCPUCount(monitor)
+	if err != nil {
+		return err
+	}
+
 	// Save the checkpoint to state file.
 	_ = os.Remove(statePath)
 
@@ -2695,9 +2721,14 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 
 	// Apply CPU pinning.
 	if bs.CPUTopology.VCPUs == nil {
-		if d.architectureSupportsCPUHotplug() && !bs.CPUTopology.Explicit && bs.CPUTopology.Cores > 1 {
-			// Hotplug the CPUs.
-			err := d.setCPUs(monitor, bs.CPUTopology.Cores)
+		if d.architectureSupportsCPUHotplug() && !bs.CPUTopology.Explicit {
+			// Hotplug the CPUs, matching a recorded live change over the topology.
+			count := bs.CPUTopology.Cores
+			if bs.CPUCount > 0 {
+				count = bs.CPUCount
+			}
+
+			err := d.setCPUs(monitor, count)
 			if err != nil {
 				err = fmt.Errorf("Failed to add CPUs: %w", err)
 				op.Done(err)
@@ -8502,10 +8533,21 @@ func (d *qemu) Update(args db.InstanceArgs, userRequested bool) error {
 					return errors.New("Cannot change to CPU pinning or an explicit CPU topology when the VM is running")
 				}
 
+				monitor, err := d.qmpConnect()
+				if err != nil {
+					return err
+				}
+
 				// Hotplug the CPUs.
-				err = d.setCPUs(nil, limit)
+				err = d.setCPUs(monitor, limit)
 				if err != nil {
 					return fmt.Errorf("Failed updating cpu limit: %w", err)
+				}
+
+				// A removal the guest hasn't completed yet gets recorded once it does.
+				err = d.saveCPUCount(monitor)
+				if err != nil && !errors.Is(err, errQemuCPURemovalPending) {
+					return fmt.Errorf("Failed recording vCPUs: %w", err)
 				}
 
 			case "limits.memory":
@@ -13056,6 +13098,53 @@ func (d *qemu) blockNodeName(name string) string {
 func (d *qemu) mountTagName(name string, maxLength int) string {
 	// Apply the prefix.
 	return fmt.Sprintf("%s%s", qemuMountTagPrefix, internalInstance.HashName(name, maxLength))
+}
+
+// saveCPUCount records the number of plugged vCPUs in the boot state.
+// Slots are always filled from the top and freed from the bottom, so the count alone describes the layout.
+func (d *qemu) saveCPUCount(monitor *qmp.Monitor) error {
+	bs, err := d.getBootState()
+	if err != nil {
+		return err
+	}
+
+	if bs.CPUTopology == nil || bs.CPUTopology.Explicit || bs.CPUTopology.VCPUs != nil || !d.architectureSupportsCPUHotplug() {
+		return nil
+	}
+
+	cpus, err := monitor.QueryHotpluggableCPUs()
+	if err != nil {
+		return err
+	}
+
+	count := 0
+	freed := false
+	for _, cpu := range cpus {
+		if cpu.QOMPath == "" {
+			freed = true
+			continue
+		}
+
+		// A plugged slot below a free one is a removal the guest hasn't completed.
+		if freed && strings.HasPrefix(cpu.QOMPath, "/machine/peripheral") {
+			return errQemuCPURemovalPending
+		}
+
+		count++
+	}
+
+	// Only a count differing from the topology needs recording.
+	if count == bs.CPUTopology.Sockets*bs.CPUTopology.Cores*bs.CPUTopology.Threads {
+		count = 0
+	}
+
+	if bs.CPUCount == count {
+		return nil
+	}
+
+	bs.CPUCount = count
+
+	return d.saveBootState(*bs)
 }
 
 func (d *qemu) setCPUs(monitor *qmp.Monitor, count int) error {

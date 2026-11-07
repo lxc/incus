@@ -24,6 +24,9 @@ type qemuBootState struct {
 	CPUTopology *qemuCPUTopology `json:"cpu_topology"`
 	MaxCPUs     int              `json:"max_cpus,omitempty"`
 
+	// CPUCount is the number of plugged vCPUs when live changes made it differ from the topology.
+	CPUCount int `json:"cpu_count,omitempty"`
+
 	MachineType string `json:"machine_type"`
 
 	MemoryTopology *qemuMemoryTopology `json:"memory_topology"`
@@ -106,6 +109,10 @@ func (d *qemu) checkBootStateLimits(bs *qemuBootState) error {
 
 		limit := topology.Sockets * topology.Cores * topology.Threads
 		count := bs.CPUTopology.Sockets * bs.CPUTopology.Cores * bs.CPUTopology.Threads
+		if bs.CPUCount > 0 {
+			count = bs.CPUCount
+		}
+
 		if count != limit {
 			return fmt.Errorf("Boot state CPU count %d doesn't match the limit of %d", count, limit)
 		}
