@@ -9633,7 +9633,21 @@ func (d *qemu) MigrateSend(args instance.MigrateSendArgs) error {
 	configReadOnly := false
 	if args.Live && remoteClusterMove && !storageMove {
 		err = linux.SetMountReadOnly(d.Path(), true)
-		if err != nil {
+		if err == nil {
+			configReadOnly = true
+			reverter.Add(func() { _ = linux.SetMountReadOnly(d.Path(), false) })
+		} else if !util.PathExists(d.localImageMetadataDir()) {
+			// Needed for upgrades, QEMU started by older versions keeps the metadata images open
+			// on the config volume. This can go away with Incus 8.0.
+			d.logger.Warn("Failed making config volume read-only, syncing it instead", logger.Ctx{"err": err})
+
+			err = linux.SyncFS(d.Path())
+			if err != nil {
+				err := fmt.Errorf("Failed syncing config volume: %w", err)
+				op.Done(err)
+				return err
+			}
+		} else {
 			// Two members writing the same volume corrupt it, so never go ahead without the protection.
 			err := fmt.Errorf("Failed making config volume read-only: %w", err)
 			writers := linux.MountWriters(d.Path())
@@ -9644,9 +9658,6 @@ func (d *qemu) MigrateSend(args instance.MigrateSendArgs) error {
 			op.Done(err)
 			return err
 		}
-
-		configReadOnly = true
-		reverter.Add(func() { _ = linux.SetMountReadOnly(d.Path(), false) })
 	}
 
 	// Send offer to target.
