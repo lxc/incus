@@ -638,6 +638,7 @@ type remoteProxyDialer struct {
 	mu      sync.Mutex
 	conns   map[string][]*remoteProxyWarmConn
 	filling map[string]int
+	lastUse time.Time
 }
 
 // remoteProxyWarmConn is a spare connection with a watcher noticing when the server closes it.
@@ -666,6 +667,8 @@ func (d *remoteProxyDialer) Dial(ctx context.Context, network string, addr strin
 	key := network + " " + addr
 
 	d.mu.Lock()
+	d.lastUse = time.Now()
+
 	var warm *remoteProxyWarmConn
 
 	pool := d.conns[key]
@@ -723,6 +726,9 @@ func (d *remoteProxyDialer) fill(network string, addr string) {
 				return
 			}
 
+			// Retire it before the server's 3s request header timeout so it never gets handed out as the server closes it.
+			_ = conn.SetReadDeadline(time.Now().Add(2 * time.Second))
+
 			warm := &remoteProxyWarmConn{Conn: conn, network: network, addr: addr, done: make(chan struct{})}
 			d.conns[key] = append(d.conns[key], warm)
 
@@ -731,9 +737,9 @@ func (d *remoteProxyDialer) fill(network string, addr string) {
 	}
 }
 
-// watch discards the spare connection once the server closes it.
+// watch discards the spare connection once it expires or the server closes it.
 func (d *remoteProxyDialer) watch(key string, warm *remoteProxyWarmConn) {
-	// Nothing arrives on an idle connection, so a read only returns when it's unusable or handed out.
+	// Nothing arrives on an idle connection, so a read only returns when it expires, is unusable or handed out.
 	_, err := warm.Read(make([]byte, 1))
 
 	d.mu.Lock()
@@ -749,6 +755,8 @@ func (d *remoteProxyDialer) watch(key string, warm *remoteProxyWarmConn) {
 	d.conns[key] = slices.DeleteFunc(d.conns[key], func(c *remoteProxyWarmConn) bool { return c == warm })
 	_ = warm.Close()
 
-	// Replace it so the pool stays warm while the proxy is alive.
-	go d.fill(warm.network, warm.addr)
+	// Replace it so the pool stays warm while the proxy is in use.
+	if time.Since(d.lastUse) < time.Minute {
+		go d.fill(warm.network, warm.addr)
+	}
 }

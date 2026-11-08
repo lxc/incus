@@ -76,11 +76,13 @@ test_storage_vm() {
         incus exec v1 -- sync
         incus snapshot create v1
         incus snapshot rename v1 snap0 snap1
+        touch "${INCUS_DIR}/virtual-machines/v1/restore-check"
 
         echo "==> Checking restore VM snapshot"
         incus snapshot restore v1 snap1
         incus wait v1 agent --timeout=90 --interval=1
         incus exec v1 -- cat /root/foo.txt | grep -Fx "foo"
+        [ ! -e "${INCUS_DIR}/virtual-machines/v1/restore-check" ]
 
         echo "==> Checking running copied VM snapshot"
         incus copy v1/snap1 v2
