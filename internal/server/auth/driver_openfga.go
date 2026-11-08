@@ -304,7 +304,7 @@ func (f *FGA) CheckPermission(ctx context.Context, r *http.Request, object Objec
 
 	// If offline, return a clear error to the user.
 	if !f.isOnline() {
-		return api.StatusErrorf(http.StatusForbidden, "The authorization server is currently offline, please try again later")
+		return unavailableError{api.StatusErrorf(http.StatusForbidden, "The authorization server is currently offline, please try again later")}
 	}
 
 	username := f.userForRequest(details)

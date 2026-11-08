@@ -57,6 +57,7 @@ type execWs struct {
 	waitControlConnected  *cancel.Canceller
 	fds                   map[int]string
 	s                     *state.State
+	cmdKill               func()
 }
 
 func (s *execWs) metadata() any {
@@ -80,13 +81,17 @@ func (s *execWs) metadata() any {
 func (s *execWs) cancel(op *operations.Operation) error {
 	s.connsLock.Lock()
 	conn := s.conns[-1]
+	cmdKill := s.cmdKill
 	s.connsLock.Unlock()
 
-	if conn == nil {
-		return nil
+	// Non-interactive clients aren't required to connect the control socket.
+	if cmdKill != nil {
+		cmdKill()
 	}
 
-	_ = conn.Close()
+	if conn != nil {
+		_ = conn.Close()
+	}
 
 	return nil
 }
@@ -346,6 +351,10 @@ func (s *execWs) do(op *operations.Operation) error {
 			l.Debug("Sent SIGKILL signal")
 		}
 	}
+
+	s.connsLock.Lock()
+	s.cmdKill = func() { cmdKillOnce.Do(cmdKill) }
+	s.connsLock.Unlock()
 
 	// Now that process has started, we can start the control handler.
 	wgEOF.Go(func() {

@@ -63,6 +63,23 @@ test_tls_restrictions() {
     curl -k -s --cert "${INCUS_CONF}/leaf.crt" --key "${INCUS_CONF}/leaf.key" "https://${INCUS_ADDR}/1.0/projects" | grep -F '"error_code":403'
     rm -f "${INCUS_CONF}/ca.key" "${INCUS_CONF}/ca.crt" "${INCUS_CONF}/ca.srl" "${INCUS_CONF}/leaf.key" "${INCUS_CONF}/leaf.csr" "${INCUS_CONF}/leaf.crt"
 
+    # Long-running sessions end once the client loses access.
+    incus project set blah features.images=false features.profiles=false
+    incus launch testimage c1 --project blah
+    (INC_LOCAL="" incus_remote exec localhost:c1 --project blah -- sleep 300) &
+    EXEC_PID=$!
+    sleep 5
+    kill -0 "${EXEC_PID}"
+
+    incus config trust show "${FINGERPRINT}" | sed -e ':a;N;$!ba;s/projects:\n *- blah/projects: []/' | incus config trust edit "${FINGERPRINT}"
+    for _ in $(seq 40); do
+        kill -0 "${EXEC_PID}" 2> /dev/null || break
+        sleep 1
+    done
+    ! kill -0 "${EXEC_PID}" 2> /dev/null || false
+    ! incus exec c1 --project blah -- ps | grep -q "sleep 300" || false
+    incus delete c1 --project blah --force
+
     # Cleanup
     incus config trust show "${FINGERPRINT}" | sed -e "s/restricted: true/restricted: false/" | incus config trust edit "${FINGERPRINT}"
     incus project delete blah

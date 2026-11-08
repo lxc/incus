@@ -35,7 +35,7 @@ func (s *Scriptlet) CheckPermission(ctx context.Context, r *http.Request, object
 
 	authorized, err := authScriptlet.AuthorizationRun(logger.Log, actualDetails, peerCertificates, apiCert, object.String(), string(entitlement))
 	if err != nil {
-		return api.StatusErrorf(http.StatusForbidden, "Authorization scriptlet execution failed with error: %v", err)
+		return unavailableError{api.StatusErrorf(http.StatusForbidden, "Authorization scriptlet execution failed with error: %v", err)}
 	}
 
 	if authorized {
