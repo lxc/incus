@@ -9691,9 +9691,9 @@ func (d *lxc) Metrics() (*metrics.MetricSet, error) {
 	oomKills, err := cg.GetOOMKills()
 	if err != nil {
 		d.logger.Warn("Failed to get oom kills", logger.Ctx{"err": err})
+	} else {
+		out.AddSamples(metrics.MemoryOOMKillsTotal, metrics.Sample{Value: float64(oomKills)})
 	}
-
-	out.AddSamples(metrics.MemoryOOMKillsTotal, metrics.Sample{Value: float64(oomKills)})
 
 	// Handle swap.
 	if cgroup.Supports(cgroup.MemorySwap) {
