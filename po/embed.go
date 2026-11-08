@@ -5,9 +5,13 @@
 // gettext toolchain keep working unchanged. The pattern matches the catalogues
 // and not incus.pot, which is a template and never read at runtime.
 //
-// Linux builds with cgo do not compile this package: they use GNU gettext and
-// carry no embedded copy, leaving distributions free to ship and update
-// translations on their own schedule.
+// A build with cgo does not compile this package, so it carries no embedded
+// copy: on Linux the translations come from GNU gettext and distributions stay
+// free to ship and update them on their own schedule; elsewhere such a build
+// returns the msgid, as it did before embedding existed.
+//
+// A build without cgo always embeds, on every platform, because it has no
+// gettext to consult.
 package po
 
 import (

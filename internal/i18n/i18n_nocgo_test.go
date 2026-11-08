@@ -1,4 +1,4 @@
-//go:build !linux || !cgo
+//go:build !cgo
 
 package i18n
 
