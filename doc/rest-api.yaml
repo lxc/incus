@@ -6695,6 +6695,19 @@ definitions:
                 x-go-name: Public
         type: object
         x-go-package: github.com/lxc/incus/v7/shared/api
+    ServiceAction:
+        properties:
+            action:
+                type: string
+                x-go-name: Action
+            config:
+                additionalProperties:
+                    type: string
+                type: object
+                x-go-name: Config
+        title: ServiceAction defines a generic struct that can be used when triggering a service-specific action.
+        type: object
+        x-go-package: github.com/lxc/incus-os/incus-osd/api
     StatusCode:
         format: int64
         title: StatusCode represents a valid operation and container status.
