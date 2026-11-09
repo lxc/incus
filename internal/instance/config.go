@@ -3,6 +3,7 @@ package instance
 import (
 	"errors"
 	"fmt"
+	"regexp"
 	"slices"
 	"strconv"
 	"strings"
@@ -48,6 +49,9 @@ func isResolvConfValue(value string) error {
 
 // ConfigVolatilePrefix indicates the prefix used for volatile config keys.
 const ConfigVolatilePrefix = "volatile."
+
+// volatileRebarSizeKey matches the volatile keys recording the original size of a resizable BAR.
+var volatileRebarSizeKey = regexp.MustCompile(`\.last_state\.rebar\.[0-5]\.size$`)
 
 // HugePageSizeKeys is a list of known hugepage size configuration keys.
 var HugePageSizeKeys = [...]string{"limits.hugepages.64KB", "limits.hugepages.1MB", "limits.hugepages.2MB", "limits.hugepages.1GB"}
@@ -1824,6 +1828,15 @@ func ConfigKeyChecker(key string, instanceType api.InstanceType) (func(value str
 			if strings.HasSuffix(key, "."+devKey) {
 				return validator, nil
 			}
+		}
+
+		// gendoc:generate(entity=instance, group=volatile, key=volatile.<name>.last_state.rebar.<N>.size)
+		// The original size in bytes of resizable BAR `N` of the PCI device.
+		// ---
+		//  type: string
+		//  shortdesc: PCI original resizable BAR size
+		if volatileRebarSizeKey.MatchString(key) {
+			return validate.IsAny, nil
 		}
 	}
 
