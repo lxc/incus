@@ -236,6 +236,7 @@ run_standalone_core() {
     run_test test_profiles_project_images_profiles "profiles in project with images and profiles enabled"
     run_test test_profiles_project_profiles "profiles in project with images disabled and profiles enabled"
     run_test test_projects_backups "backups inside projects"
+    run_test test_projects_boot_order "boot order inside projects"
     run_test test_projects_containers "containers inside projects"
     run_test test_projects_crud "projects CRUD operations"
     run_test test_projects_default "default project"

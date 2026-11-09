@@ -8,14 +8,12 @@ import (
 	"net/http"
 	"runtime"
 	"slices"
-	"sort"
 	"strconv"
 	"strings"
 	"sync"
 	"time"
 
 	"github.com/cowsql/go-cowsql/cluster/membership"
-	"golang.org/x/sync/errgroup"
 
 	incus "github.com/lxc/incus/v7/client"
 	"github.com/lxc/incus/v7/internal/server/cluster"
@@ -361,37 +359,36 @@ func evacuateClusterMember(ctx context.Context, s *state.State, op *operations.O
 	return nil
 }
 
-// concurrentInstanceActions runs fn on every instance with bounded concurrency.
-// Each instance runs to completion regardless of other failures, all of which are reported at the end.
-func concurrentInstanceActions(instances []instance.Instance, prefix string, fn func(inst instance.Instance) error) error {
-	group := errgroup.Group{}
-	group.SetLimit(max(runtime.NumCPU()/16, 1))
+// evacuateInstancePlan is what was decided for an instance before acting on it.
+type evacuateInstancePlan struct {
+	action    string
+	isRunning bool
+}
 
-	var failuresLock sync.Mutex
-	failures := []string{}
-
-	for _, inst := range instances {
-		group.Go(func() error {
-			err := fn(inst)
-			if err != nil {
-				failuresLock.Lock()
-				failures = append(failures, fmt.Sprintf("%s/%s: %v", inst.Project().Name, inst.Name(), err))
-				failuresLock.Unlock()
-			}
-
-			return nil
-		})
+// evacuateInstanceAction returns the action for the instance, empty if it must be left as it is.
+func evacuateInstanceAction(inst instance.Instance, mode string) string {
+	// An explicit mode overrides the instance's policy.
+	if mode != "" && mode != "auto" && mode != "heal" {
+		return mode
 	}
 
-	_ = group.Wait()
-
-	if len(failures) > 0 {
-		sort.Strings(failures)
-
-		return fmt.Errorf("%s:\n - %s", prefix, strings.Join(failures, "\n - "))
+	// Check if migratable.
+	action := inst.CanMigrate()
+	if mode != "heal" {
+		return action
 	}
 
-	return nil
+	// Source server is dead, live-migration isn't an option.
+	if action == "live-migrate" || action == "refresh-migrate" {
+		return "migrate"
+	}
+
+	// We can only migrate instances or leave them as they are.
+	if action != "migrate" {
+		return ""
+	}
+
+	return action
 }
 
 func evacuateInstances(ctx context.Context, opts evacuateOpts) error {
@@ -399,54 +396,123 @@ func evacuateInstances(ctx context.Context, opts evacuateOpts) error {
 		return errors.New("Missing migration callback function")
 	}
 
-	return concurrentInstanceActions(opts.instances, "Failed to evacuate instances", func(inst instance.Instance) error {
-		return evacuateInstancesFunc(ctx, inst, opts)
+	limit := newInstanceLimiter(max(runtime.NumCPU()/16, 1))
+
+	return instancesPerProject(opts.instances, func(projectInstances []instance.Instance) error {
+		return evacuateProjectInstances(ctx, limit, projectInstances, opts)
 	})
 }
 
-func evacuateInstancesFunc(ctx context.Context, inst instance.Instance, opts evacuateOpts) error {
-	instProject := inst.Project()
-	l := logger.AddContext(logger.Ctx{"project": instProject.Name, "instance": inst.Name()})
+// evacuateProjectInstances evacuates the instances of a single project.
+func evacuateProjectInstances(ctx context.Context, limit *instanceLimiter, instances []instance.Instance, opts evacuateOpts) error {
+	// Decide on all actions first, only instances going through a stop or start get ordered.
+	plans := make(map[instance.Instance]evacuateInstancePlan, len(instances))
+	var ordered, unordered []instance.Instance
+	for _, inst := range instances {
+		action := evacuateInstanceAction(inst, opts.mode)
+		if action == "" {
+			continue
+		}
 
-	// Check if migratable.
-	action := inst.CanMigrate()
+		isRunning := inst.IsRunning()
+		plans[inst] = evacuateInstancePlan{action: action, isRunning: isRunning}
 
-	// Apply overrides.
-	if opts.mode != "" {
-		if opts.mode == "heal" {
-			// Source server is dead, live-migration isn't an option.
-			if action == "live-migrate" || action == "refresh-migrate" {
-				action = "migrate"
-			}
-
-			if action != "migrate" {
-				// We can only migrate instances or leave them as they are.
-				return nil
-			}
-		} else if opts.mode != "auto" {
-			action = opts.mode
+		isLive := (action == "live-migrate" || action == "refresh-migrate") && isRunning
+		willStart := !evacuateActionStays(action) && instanceShouldAutoStart(inst)
+		if !isLive && (isRunning || willStart) {
+			ordered = append(ordered, inst)
+		} else {
+			unordered = append(unordered, inst)
 		}
 	}
 
-	// Stop the instance if needed.
-	isRunning := inst.IsRunning()
-	if action != "live-migrate" && action != "refresh-migrate" {
-		if opts.stopInstance != nil && isRunning {
-			_ = opts.op.ExtendMetadata(map[string]any{"evacuation_progress": fmt.Sprintf("Stopping %q in project %q", inst.Name(), instProject.Name)})
-
-			err := opts.stopInstance(opts.s, inst, action)
-			if err != nil {
-				return err
-			}
+	evacuate := func(inst instance.Instance) error {
+		err := evacuateStopInstanceStep(inst, plans[inst], opts)
+		if err != nil {
+			return err
 		}
 
-		if action != "migrate" {
-			// Done with this instance.
-			return nil
+		return evacuateMoveInstanceStep(ctx, inst, plans[inst], opts)
+	}
+
+	// Keep everything in parallel unless the order was configured.
+	isConfigured := func(inst instance.Instance) bool {
+		config := inst.ExpandedConfig()
+
+		return config["boot.stop.priority"] != "" || config["boot.autostart.priority"] != "" || config["boot.autostart.delay"] != ""
+	}
+
+	if !slices.ContainsFunc(ordered, isConfigured) {
+		return concurrentInstanceActions(limit, append(ordered, unordered...), "Failed to evacuate instances", evacuate)
+	}
+
+	// Instances outside of the order don't wait for it.
+	var wg sync.WaitGroup
+	var unorderedErr error
+	wg.Go(func() {
+		unorderedErr = concurrentInstanceActions(limit, unordered, "Failed to evacuate instances", evacuate)
+	})
+
+	// Stop everything first, then move and start, to match a regular shutdown and startup.
+	var movingLock sync.Mutex
+	var moving []instance.Instance
+	stopErr := instancesInStopOrder(limit, ordered, "Failed to stop instances", func(inst instance.Instance) error {
+		err := evacuateStopInstanceStep(inst, plans[inst], opts)
+		if err != nil {
+			return err
 		}
-	} else if !isRunning {
+
+		if !evacuateActionStays(plans[inst].action) {
+			movingLock.Lock()
+			moving = append(moving, inst)
+			movingLock.Unlock()
+		}
+
+		return nil
+	})
+
+	moveErr := instancesInStartOrder(ctx, limit, moving, "Failed to evacuate instances", func(inst instance.Instance) (bool, error) {
+		err := evacuateMoveInstanceStep(ctx, inst, plans[inst], opts)
+
+		return err == nil, err
+	})
+
+	wg.Wait()
+
+	return errors.Join(stopErr, moveErr, unorderedErr)
+}
+
+// evacuateActionStays returns whether the action leaves the instance on its member.
+func evacuateActionStays(action string) bool {
+	return action == "stop" || action == "stateful-stop" || action == "force-stop"
+}
+
+// evacuateStopInstanceStep stops the instance if its action requires it.
+func evacuateStopInstanceStep(inst instance.Instance, plan evacuateInstancePlan, opts evacuateOpts) error {
+	if plan.action == "live-migrate" || plan.action == "refresh-migrate" || opts.stopInstance == nil || !plan.isRunning {
+		return nil
+	}
+
+	_ = opts.op.ExtendMetadata(map[string]any{"evacuation_progress": fmt.Sprintf("Stopping %q in project %q", inst.Name(), inst.Project().Name)})
+
+	return opts.stopInstance(opts.s, inst, plan.action)
+}
+
+// evacuateMoveInstanceStep moves the instance to another member if its action requires it.
+func evacuateMoveInstanceStep(ctx context.Context, inst instance.Instance, plan evacuateInstancePlan, opts evacuateOpts) error {
+	instProject := inst.Project()
+	l := logger.AddContext(logger.Ctx{"project": instProject.Name, "instance": inst.Name()})
+
+	action := plan.action
+	isRunning := plan.isRunning
+	if action == "live-migrate" || action == "refresh-migrate" {
 		// Can't live or refresh migrate if we're stopped.
-		action = "migrate"
+		if !isRunning {
+			action = "migrate"
+		}
+	} else if action != "migrate" {
+		// Done with this instance.
+		return nil
 	}
 
 	// Find a new location for the instance.
@@ -456,7 +522,7 @@ func evacuateInstancesFunc(ctx context.Context, inst instance.Instance, opts eva
 			// No target was available, so stop the instance in place instead.
 			l.Warn("No migration target available for instance, stopping it in place")
 
-			if opts.stopInstance != nil && isRunning {
+			if opts.stopInstance != nil && inst.IsRunning() {
 				_ = opts.op.ExtendMetadata(map[string]any{"evacuation_progress": fmt.Sprintf("Stopping %q in project %q", inst.Name(), instProject.Name)})
 
 				return opts.stopInstance(opts.s, inst, "")
@@ -580,37 +646,19 @@ func restoreClusterMember(d *Daemon, r *http.Request, skipInstances bool) respon
 			return err
 		}
 
-		// Restart the local instances.
+		// Restart the local instances and migrate back the remote ones.
+		restoring := slices.Clone(instances)
 		for _, inst := range localInstances {
-			// Don't start instances which were stopped by the user.
-			if inst.LocalConfig()["volatile.last_state.power"] != instance.PowerStateRunning {
-				continue
-			}
-
-			// Don't attempt to start instances which are already running.
-			if inst.IsRunning() {
-				continue
-			}
-
-			// Start the instance.
-			_ = op.ExtendMetadata(map[string]any{"evacuation_progress": fmt.Sprintf("Starting %q in project %q", inst.Name(), inst.Project().Name)})
-
-			// If configured for stateful stop, try restoring its state.
-			action := inst.CanMigrate()
-			if action == "stateful-stop" {
-				err = inst.Start(true)
-			} else {
-				err = inst.Start(false)
-			}
-
-			if err != nil {
-				return fmt.Errorf("Failed to start instance %q: %w", inst.Name(), err)
+			// Don't start instances which were stopped by the user or are already running.
+			if inst.LocalConfig()["volatile.last_state.power"] == instance.PowerStateRunning && !inst.IsRunning() {
+				restoring = append(restoring, inst)
 			}
 		}
 
-		// Migrate back the remote instances.
-		err = concurrentInstanceActions(instances, "Failed to restore instances", func(inst instance.Instance) error {
-			return restoreClusterMemberFunc(inst, op, originName, r, s)
+		limit := newInstanceLimiter(max(runtime.NumCPU()/16, 1))
+
+		err = instancesPerProject(restoring, func(projectInstances []instance.Instance) error {
+			return restoreProjectInstances(s, r, op, originName, limit, projectInstances, localInstances)
 		})
 		if err != nil {
 			return err
@@ -635,6 +683,59 @@ func restoreClusterMember(d *Daemon, r *http.Request, skipInstances bool) respon
 	}
 
 	return operations.OperationResponse(op)
+}
+
+// restoreProjectInstances restores the instances of a single project.
+func restoreProjectInstances(s *state.State, r *http.Request, op *operations.Operation, originName string, limit *instanceLimiter, instances []instance.Instance, localInstances []instance.Instance) error {
+	restore := func(inst instance.Instance) error {
+		if slices.Contains(localInstances, inst) {
+			return restoreStartInstance(inst, op)
+		}
+
+		return restoreClusterMemberFunc(inst, op, originName, r, s)
+	}
+
+	// Only the instances getting started follow the boot order.
+	var ordered, unordered []instance.Instance
+	for _, inst := range instances {
+		action := inst.CanMigrate()
+		isLive := action == "live-migrate" || action == "refresh-migrate"
+		if slices.Contains(localInstances, inst) || (!isLive && inst.LocalConfig()["volatile.last_state.power"] == instance.PowerStateRunning) {
+			ordered = append(ordered, inst)
+		} else {
+			unordered = append(unordered, inst)
+		}
+	}
+
+	// Instances outside of the order don't wait for it.
+	var wg sync.WaitGroup
+	var unorderedErr error
+	wg.Go(func() {
+		unorderedErr = concurrentInstanceActions(limit, unordered, "Failed to restore instances", restore)
+	})
+
+	orderedErr := instancesInStartOrder(s.ShutdownCtx, limit, ordered, "Failed to restore instances", func(inst instance.Instance) (bool, error) {
+		err := restore(inst)
+
+		return err == nil, err
+	})
+
+	wg.Wait()
+
+	return errors.Join(orderedErr, unorderedErr)
+}
+
+// restoreStartInstance starts an instance left on the member being restored.
+func restoreStartInstance(inst instance.Instance, op *operations.Operation) error {
+	_ = op.ExtendMetadata(map[string]any{"evacuation_progress": fmt.Sprintf("Starting %q in project %q", inst.Name(), inst.Project().Name)})
+
+	// If configured for stateful stop, try restoring its state.
+	err := inst.Start(inst.CanMigrate() == "stateful-stop")
+	if err != nil {
+		return fmt.Errorf("Failed to start instance %q: %w", inst.Name(), err)
+	}
+
+	return nil
 }
 
 func restoreClusterMemberFunc(inst instance.Instance, op *operations.Operation, originName string, r *http.Request, s *state.State) error {
