@@ -4012,44 +4012,141 @@ func (o *NB) CreateLoadBalancer(ctx context.Context, loadBalancerName OVNLoadBal
 	return nil
 }
 
+// CreateSwitchLoadBalancer creates a switch-only, all-ports and protocols load balancer for hairpin SNAT.
+func (o *NB) CreateSwitchLoadBalancer(ctx context.Context, loadBalancerName OVNLoadBalancer, switchName OVNSwitch, listenAddress net.IP, targetAddress net.IP) error {
+	lbName := fmt.Sprintf("%s-hairpin", loadBalancerName)
+
+	// ipToString wraps IPv6 addresses in square brackets.
+	ipToString := func(ip net.IP) string {
+		if ip.To4() == nil {
+			return fmt.Sprintf("[%s]", ip.String())
+		}
+
+		return ip.String()
+	}
+
+	operations := []ovsdb.Operation{}
+
+	// Remove any existing load balancer.
+	lb := ovnNB.LoadBalancer{
+		Name: lbName,
+	}
+
+	err := o.get(ctx, &lb)
+	if err == nil || errors.Is(err, ErrTooMany) {
+		lb := ovnNB.LoadBalancer{
+			Name: lbName,
+		}
+
+		deleteOps, err := o.client.Where(&lb).Delete()
+		if err != nil {
+			return err
+		}
+
+		operations = append(operations, deleteOps...)
+	} else if !errors.Is(err, ErrNotFound) {
+		return err
+	}
+
+	// Get the logical switch.
+	ls, err := o.GetLogicalSwitch(ctx, switchName)
+	if err != nil {
+		return err
+	}
+
+	// No protocol is set so the portless VIP matches all traffic.
+	lb = ovnNB.LoadBalancer{
+		UUID: "lbhairpin",
+		Name: lbName,
+		Vips: map[string]string{ipToString(listenAddress): ipToString(targetAddress)},
+	}
+
+	createOps, err := o.client.Create(&lb)
+	if err != nil {
+		return err
+	}
+
+	operations = append(operations, createOps...)
+
+	// Add to the switch only.
+	updateOps, err := o.client.Where(ls).Mutate(ls, ovsModel.Mutation{
+		Field:   &ls.LoadBalancer,
+		Mutator: ovsdb.MutateOperationInsert,
+		Value:   []string{lb.UUID},
+	})
+	if err != nil {
+		return err
+	}
+
+	operations = append(operations, updateOps...)
+
+	// Apply the changes.
+	resp, err := o.client.Transact(ctx, operations...)
+	if err != nil {
+		return err
+	}
+
+	_, err = ovsdb.CheckOperationResults(resp, operations)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// DeleteSwitchLoadBalancer deletes the switch-only hairpin load balancer.
+func (o *NB) DeleteSwitchLoadBalancer(ctx context.Context, loadBalancerName OVNLoadBalancer) error {
+	lb := ovnNB.LoadBalancer{
+		Name: fmt.Sprintf("%s-hairpin", loadBalancerName),
+	}
+
+	err := o.get(ctx, &lb)
+	if errors.Is(err, ErrNotFound) {
+		return nil
+	} else if err != nil {
+		return err
+	}
+
+	operations, err := o.client.Where(&lb).Delete()
+	if err != nil {
+		return err
+	}
+
+	resp, err := o.client.Transact(ctx, operations...)
+	if err != nil {
+		return err
+	}
+
+	_, err = ovsdb.CheckOperationResults(resp, operations)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // DeleteLoadBalancer deletes the specified load balancer(s).
 func (o *NB) DeleteLoadBalancer(ctx context.Context, loadBalancerNames ...OVNLoadBalancer) error {
 	operations := []ovsdb.Operation{}
 	for _, loadBalancerName := range loadBalancerNames {
-		// Check for a TCP load-balancer.
-		lb := ovnNB.LoadBalancer{
-			Name: fmt.Sprintf("%s-tcp", loadBalancerName),
-		}
-
-		err := o.get(ctx, &lb)
-		if err == nil {
-			// Delete the load balancer.
-			deleteOps, err := o.client.Where(&lb).Delete()
-			if err != nil {
-				return err
+		// Check for TCP, UDP and hairpin load-balancers.
+		for _, suffix := range []string{"tcp", "udp", "hairpin"} {
+			lb := ovnNB.LoadBalancer{
+				Name: fmt.Sprintf("%s-%s", loadBalancerName, suffix),
 			}
 
-			operations = append(operations, deleteOps...)
-		} else if !errors.Is(err, ErrNotFound) {
-			return err
-		}
+			err := o.get(ctx, &lb)
+			if err == nil {
+				// Delete the load balancer.
+				deleteOps, err := o.client.Where(&lb).Delete()
+				if err != nil {
+					return err
+				}
 
-		// Check for a UDP load-balancer.
-		lb = ovnNB.LoadBalancer{
-			Name: fmt.Sprintf("%s-udp", loadBalancerName),
-		}
-
-		err = o.get(ctx, &lb)
-		if err == nil {
-			// Delete the load balancer.
-			deleteOps, err := o.client.Where(&lb).Delete()
-			if err != nil {
+				operations = append(operations, deleteOps...)
+			} else if !errors.Is(err, ErrNotFound) {
 				return err
 			}
-
-			operations = append(operations, deleteOps...)
-		} else if !errors.Is(err, ErrNotFound) {
-			return err
 		}
 	}
 
