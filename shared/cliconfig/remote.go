@@ -361,6 +361,25 @@ func (c *Config) GetImageServer(name string) (incus.ImageServer, error) {
 		return nil, fmt.Errorf("The remote \"%s\" doesn't exist", name)
 	}
 
+	// See if we can shortcut things through the keepalive daemon.
+	if !remote.Public && remote.Protocol == "incus" && remote.KeepAlive > 0 {
+		d, err := c.handleKeepAlive(remote, name)
+		if err == nil {
+			// Apply the project config
+			project := remote.Project
+			if c.ProjectOverride != "" {
+				project = c.ProjectOverride
+			}
+
+			if project != "" && project != api.ProjectDefaultName {
+				d = d.UseProject(project)
+			}
+
+			// Return the connection to the keepalive proxy.
+			return d, nil
+		}
+	}
+
 	var errs []error
 
 	for addr := range remote.RollingAddrs() {
