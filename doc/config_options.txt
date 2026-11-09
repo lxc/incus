@@ -3530,6 +3530,12 @@ The parent host device used when allocating a PCI device to an instance.
 The parent host device PCI slot name.
 ```
 
+```{config:option} volatile.<name>.last_state.rebar.<N>.size instance-volatile
+:shortdesc: "PCI original resizable BAR size"
+:type: "string"
+The original size in bytes of resizable BAR `N` of the PCI device.
+```
+
 ```{config:option} volatile.<name>.last_state.representor instance-volatile
 :shortdesc: "Representor name"
 :type: "string"

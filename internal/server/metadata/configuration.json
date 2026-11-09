@@ -3893,6 +3893,13 @@
 						}
 					},
 					{
+						"volatile.\u003cname\u003e.last_state.rebar.\u003cN\u003e.size": {
+							"longdesc": "The original size in bytes of resizable BAR `N` of the PCI device.",
+							"shortdesc": "PCI original resizable BAR size",
+							"type": "string"
+						}
+					},
+					{
 						"volatile.\u003cname\u003e.last_state.representor": {
 							"longdesc": "The representor port name",
 							"shortdesc": "Representor name",
