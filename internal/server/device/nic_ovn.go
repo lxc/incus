@@ -783,8 +783,45 @@ func (d *nicOVN) checkAddressConflict() error {
 	})
 }
 
+// portSharedWithOtherRecord checks if another record of the same logical instance, such as a temporary migration copy, uses this NIC's port.
+func (d *nicOVN) portSharedWithOtherRecord() (bool, error) {
+	instUUID := d.inst.LocalConfig()["volatile.uuid"]
+	if instUUID == "" {
+		return false, nil
+	}
+
+	shared := false
+	err := network.UsedByInstanceDevices(d.state, d.network.Project(), d.network.Name(), d.network.Type(), func(inst db.InstanceArgs, nicName string, _ map[string]string) error {
+		if nicName != d.name || inst.Config["volatile.uuid"] != instUUID {
+			return nil
+		}
+
+		if inst.Project == d.inst.Project().Name && inst.Name == d.inst.Name() {
+			return nil
+		}
+
+		shared = true
+
+		return db.ErrInstanceListStop
+	})
+	if err != nil && !errors.Is(err, db.ErrInstanceListStop) {
+		return false, err
+	}
+
+	return shared, nil
+}
+
 // Add is run when a device is added to a non-snapshot instance whether or not the instance is running.
 func (d *nicOVN) Add() error {
+	shared, err := d.portSharedWithOtherRecord()
+	if err != nil {
+		return err
+	}
+
+	if shared {
+		return nil
+	}
+
 	return d.network.InstanceDevicePortAdd(d.inst.LocalConfig()["volatile.uuid"], d.name, nicNormalizedAddressConfig(d.config))
 }
 
@@ -1531,6 +1568,15 @@ func (d *nicOVN) Remove(cleanupDependencies bool) error {
 	// The network is nil when the device config failed validation (e.g. network still pending).
 	if d.network == nil {
 		return fmt.Errorf("Failed removing OVN port for NIC %q: network %q could not be loaded", d.name, d.config["network"])
+	}
+
+	shared, err := d.portSharedWithOtherRecord()
+	if err != nil {
+		return err
+	}
+
+	if shared {
+		return nil
 	}
 
 	// Check for port groups that will become unused (and need deleting) as this NIC is deleted.
