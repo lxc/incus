@@ -476,8 +476,10 @@ func (d *qemu) agentClient(checkStarted bool) (*http.Client, error) {
 					TLSHandshakeTimeout:   time.Second * 3,
 				}
 
-				_, err := client.Get("https://agent/")
+				resp, err := client.Get("https://agent/")
 				if err == nil {
+					_ = resp.Body.Close()
+
 					return client, nil
 				}
 			}
