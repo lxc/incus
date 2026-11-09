@@ -214,6 +214,16 @@ test_network_ovn_basic() {
     ovn-nbctl --bare --format=csv --column=port_security find logical_switch_port | grep -xF "$(incus config get u4 volatile.eth0.hwaddr) 0.0.0.0"
     incus delete -f u4
 
+    # A second record of the same instance, as made by near-live migration, leaves its port alone.
+    U3_PORT="$(ovn-nbctl --bare --column=name list logical_switch_port | grep -F "$(incus config get u3 volatile.uuid)-eth0")"
+    incus export u3 "${TEST_DIR}/u3.tar.gz"
+    incus import "${TEST_DIR}/u3.tar.gz" u3-copy
+    rm "${TEST_DIR}/u3.tar.gz"
+    ovn-nbctl get logical_switch_port "${U3_PORT}" enabled | grep -xF true
+    incus delete u3-copy
+    ovn-nbctl get logical_switch_port "${U3_PORT}" enabled | grep -xF true
+    network_ovn_wait_ping u3 -- ping -c1 -4 -w5 "${U2_IPV4}"
+
     # Check sticky DHCPv4 allocations, so that when deleting an instance with a lower dynamic IP that restarting a
     # later instance doesn't cause it to be allocated the (now available) lower IP and instead it should keep the
     # IP it was already allocated. Also check that the newly launched instance that replaces the deleted one claims
