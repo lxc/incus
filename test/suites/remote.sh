@@ -610,6 +610,12 @@ test_remote_keepalive() {
     incus exec localhost:c1 -- true
     [ "$(pgrep -fc "incus remote proxy localhost: ${INCUS_CONF}/keepalive/localhost.socket")" -eq 1 ]
 
+    # Image commands go through the proxy too, so an unusable client key doesn't matter.
+    cp "${INCUS_CONF}/client.key" "${TEST_DIR}/keepalive.key"
+    echo garbage > "${INCUS_CONF}/client.key"
+    incus_remote image list localhost: -f csv -c l | grep -qx testimage
+    cp "${TEST_DIR}/keepalive.key" "${INCUS_CONF}/client.key"
+
     incus_remote remote set-keepalive localhost 0
     for pid in $(pgrep -f "incus remote proxy localhost: ${INCUS_CONF}/keepalive/localhost.socket"); do
         kill -9 "${pid}" || true

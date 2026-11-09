@@ -148,12 +148,13 @@ func (c *Config) getInstanceServer(args *incus.ConnectionArgs, remote Remote, ad
 			return nil, err
 		}
 
-		if remote.Project != "" && remote.Project != "default" {
-			d = d.UseProject(remote.Project)
+		project := remote.Project
+		if c.ProjectOverride != "" {
+			project = c.ProjectOverride
 		}
 
-		if c.ProjectOverride != "" {
-			d = d.UseProject(c.ProjectOverride)
+		if project != "" && project != api.ProjectDefaultName {
+			d = d.UseProject(project)
 		}
 
 		return d, nil
@@ -170,12 +171,13 @@ func (c *Config) getInstanceServer(args *incus.ConnectionArgs, remote Remote, ad
 		return nil, err
 	}
 
-	if remote.Project != "" && remote.Project != "default" {
-		d = d.UseProject(remote.Project)
+	project := remote.Project
+	if c.ProjectOverride != "" {
+		project = c.ProjectOverride
 	}
 
-	if c.ProjectOverride != "" {
-		d = d.UseProject(c.ProjectOverride)
+	if project != "" && project != api.ProjectDefaultName {
+		d = d.UseProject(project)
 	}
 
 	return d, nil
@@ -204,12 +206,13 @@ func (c *Config) GetInstanceServer(name string) (incus.InstanceServer, error) {
 		d, err := c.handleKeepAlive(remote, name)
 		if err == nil {
 			// Apply the project config
-			if remote.Project != "" && remote.Project != "default" {
-				d = d.UseProject(remote.Project)
+			project := remote.Project
+			if c.ProjectOverride != "" {
+				project = c.ProjectOverride
 			}
 
-			if c.ProjectOverride != "" {
-				d = d.UseProject(c.ProjectOverride)
+			if project != "" && project != api.ProjectDefaultName {
+				d = d.UseProject(project)
 			}
 
 			// Return the connection to the keepalive proxy.
@@ -256,12 +259,13 @@ func (c *Config) getImageServer(args *incus.ConnectionArgs, remote Remote, addr 
 			return nil, err
 		}
 
-		if remote.Project != "" && remote.Project != "default" {
-			d = d.UseProject(remote.Project)
+		project := remote.Project
+		if c.ProjectOverride != "" {
+			project = c.ProjectOverride
 		}
 
-		if c.ProjectOverride != "" {
-			d = d.UseProject(c.ProjectOverride)
+		if project != "" && project != api.ProjectDefaultName {
+			d = d.UseProject(project)
 		}
 
 		return d, nil
@@ -337,12 +341,13 @@ func (c *Config) getImageServer(args *incus.ConnectionArgs, remote Remote, addr 
 		return nil, err
 	}
 
-	if remote.Project != "" && remote.Project != "default" {
-		d = d.UseProject(remote.Project)
+	project := remote.Project
+	if c.ProjectOverride != "" {
+		project = c.ProjectOverride
 	}
 
-	if c.ProjectOverride != "" {
-		d = d.UseProject(c.ProjectOverride)
+	if project != "" && project != api.ProjectDefaultName {
+		d = d.UseProject(project)
 	}
 
 	return d, nil
@@ -359,6 +364,25 @@ func (c *Config) GetImageServer(name string) (incus.ImageServer, error) {
 	remote, ok := c.Remotes[name]
 	if !ok {
 		return nil, fmt.Errorf("The remote \"%s\" doesn't exist", name)
+	}
+
+	// See if we can shortcut things through the keepalive daemon.
+	if !remote.Public && remote.Protocol == "incus" && remote.KeepAlive > 0 {
+		d, err := c.handleKeepAlive(remote, name)
+		if err == nil {
+			// Apply the project config
+			project := remote.Project
+			if c.ProjectOverride != "" {
+				project = c.ProjectOverride
+			}
+
+			if project != "" && project != api.ProjectDefaultName {
+				d = d.UseProject(project)
+			}
+
+			// Return the connection to the keepalive proxy.
+			return d, nil
+		}
 	}
 
 	var errs []error
