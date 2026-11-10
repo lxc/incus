@@ -27,4 +27,9 @@ type NetworkAllocations struct {
 	//
 	// API extension: network_allocations_network
 	Network string `json:"network" yaml:"network"`
+
+	// Project of the network
+	//
+	// API extension: network_allocations_project
+	Project string `json:"project" yaml:"project"`
 }
