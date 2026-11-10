@@ -529,48 +529,24 @@ func (d *linstor) getVolumeUsage(vol Volume) (int64, error) {
 	l := d.logger.AddContext(logger.Ctx{"volume": vol.Name()})
 	l.Debug("Getting volume usage")
 
-	linstor, err := d.state.Linstor()
-	if err != nil {
-		return 0, err
-	}
-
-	usage, ok := d.getCachedVolumeUsage(vol)
-	if ok {
-		return usage, nil
-	}
-
-	resourceDefinition, err := d.getResourceDefinition(vol, false)
-	if err != nil {
-		return 0, err
-	}
-
-	// Fetch all resources for the given volume.
-	resources, err := linstor.Client.Resources.GetResourceView(context.TODO(), &linstorClient.ListOpts{
-		Resource: []string{resourceDefinition.Name},
-	})
-	if err != nil {
-		return 0, fmt.Errorf("Unable to get the resources for the resource definition: %w", err)
-	}
-
-	var resource *linstorClient.ResourceWithVolumes
-
-	// Find the first non DISKLESS resource.
-	for _, r := range resources {
-		l.Debug("Volume flags", logger.Ctx{"node": r.NodeName, "flags": r.Flags})
-		if !slices.Contains(r.Flags, "DISKLESS") {
-			resource = &r
+	// Ambiguous resource definitions need a direct lookup.
+	resourceDefinitionName, ok := d.getCachedResourceDefinitionName(vol)
+	if !ok {
+		resourceDefinition, err := d.getResourceDefinition(vol, false)
+		if err != nil {
+			return 0, err
 		}
+
+		resourceDefinitionName = resourceDefinition.Name
 	}
 
-	// If no diskful resource is found, usage cannot be determined.
-	if resource == nil {
-		l.Warn("No diskful resource found for volume")
-		return 0, nil
+	// Only go through the cache, a miss means the controller couldn't be queried or there is no diskful resource.
+	usage, ok := d.getCachedVolumeUsage(resourceDefinitionName, vol)
+	if !ok {
+		return 0, errors.New("Volume usage unavailable")
 	}
 
-	volumes := resource.Volumes
-
-	return volumes[d.getVolumeIndex(vol, len(volumes))].AllocatedSizeKib, nil
+	return usage, nil
 }
 
 // getVolumeIndex returns the index of the volume within its LINSTOR resource.
