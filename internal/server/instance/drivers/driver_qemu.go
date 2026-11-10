@@ -152,8 +152,17 @@ func isMonitorGoneError(err error) bool {
 	return false
 }
 
+// qemuStopHook is a running stop hook, done is closed once err is set.
+type qemuStopHook struct {
+	done chan struct{}
+	err  error
+}
+
 // qemuStopHooks tracks instances with a stop hook in progress.
-var qemuStopHooks sync.Map
+var (
+	qemuStopHooks   = map[string]*qemuStopHook{}
+	qemuStopHooksMu sync.Mutex
+)
 
 type monitorHook func(m *qmp.Monitor) error
 
@@ -835,18 +844,40 @@ func (d *qemu) pidWait(timeout time.Duration) bool {
 
 // onStop is run when the instance stops.
 func (d *qemu) onStop(target string, reason string) error {
-	d.logger.Debug("onStop hook started", logger.Ctx{"target": target, "reason": reason})
-	defer d.logger.Debug("onStop hook finished", logger.Ctx{"target": target, "reason": reason})
-
 	// Only run one stop hook at a time, a duplicate would race the cleanup and restart.
 	hookKey := project.Instance(d.Project().Name, d.Name())
-	_, running := qemuStopHooks.LoadOrStore(hookKey, struct{}{})
-	if running {
-		d.logger.Warn("Ignoring duplicate stop hook", logger.Ctx{"target": target, "reason": reason})
-		return nil
+
+	qemuStopHooksMu.Lock()
+	hook, running := qemuStopHooks[hookKey]
+	if !running {
+		hook = &qemuStopHook{done: make(chan struct{})}
+		qemuStopHooks[hookKey] = hook
 	}
 
-	defer qemuStopHooks.Delete(hookKey)
+	qemuStopHooksMu.Unlock()
+
+	if running {
+		// Wait for the running hook so a forced stop reports its outcome rather than a success.
+		d.logger.Warn("Waiting for running stop hook", logger.Ctx{"target": target, "reason": reason})
+		<-hook.done
+		return hook.err
+	}
+
+	hook.err = d.runStopHook(target, reason)
+
+	qemuStopHooksMu.Lock()
+	delete(qemuStopHooks, hookKey)
+	qemuStopHooksMu.Unlock()
+
+	close(hook.done)
+
+	return hook.err
+}
+
+// runStopHook performs the cleanup and restart handling of a stopped instance.
+func (d *qemu) runStopHook(target string, reason string) error {
+	d.logger.Debug("onStop hook started", logger.Ctx{"target": target, "reason": reason})
+	defer d.logger.Debug("onStop hook finished", logger.Ctx{"target": target, "reason": reason})
 
 	// Create/pick up operation.
 	op, err := d.onStopOperationSetup(target)
