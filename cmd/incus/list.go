@@ -1020,12 +1020,13 @@ func prepareInstanceServerFilters(filters []string, i any) []string {
 		key := membs[0]
 
 		if len(membs) == 1 {
+			// A bare name matches as a prefix, kept simple so the server can push it down to the database.
 			regexpValue := key
 			if !strings.Contains(key, "^") && !strings.Contains(key, "$") {
-				regexpValue = "^" + regexpValue + "$"
+				regexpValue = "^" + regexpValue + ".*"
 			}
 
-			filter = fmt.Sprintf("name=(%s|^%s.*)", regexpValue, key)
+			filter = "name=" + regexpValue
 		} else {
 			firstPart := key
 			if strings.Contains(key, ".") {
