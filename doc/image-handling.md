@@ -59,3 +59,11 @@ The following requirements are supported:
     :start-after: <!-- config group image-requirements start -->
     :end-before: <!-- config group image-requirements end -->
 ```
+
+The following property is used by Incus when creating the cached image volume on storage pools with {ref}`storage-optimized-image-storage`:
+
+% Include content from [config_options.txt](config_options.txt)
+```{include} config_options.txt
+    :start-after: <!-- config group image-volume start -->
+    :end-before: <!-- config group image-volume end -->
+```
