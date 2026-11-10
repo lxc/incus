@@ -279,7 +279,7 @@ func TestPrepareInstanceServerFilters(t *testing.T) {
 	filters := []string{"foo", "user.a=blah", "name=v1", "state=running"}
 
 	result := prepareInstanceServerFilters(filters, api.InstanceFull{})
-	assert.Equal(t, []string{"name=(^foo$|^foo.*)", "expanded_config.user.a=blah", "name=v1", "status=running"}, result)
+	assert.Equal(t, []string{"name=^foo.*", "expanded_config.user.a=blah", "name=v1", "status=running"}, result)
 }
 
 func TestRemoteColumn(t *testing.T) {
