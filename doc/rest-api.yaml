@@ -3691,6 +3691,13 @@ definitions:
                     API extension: network_allocations_network
                 type: string
                 x-go-name: Network
+            project:
+                description: |-
+                    Project of the network
+
+                    API extension: network_allocations_project
+                type: string
+                x-go-name: Project
             type:
                 description: Type of the entity consuming the network address
                 type: string
@@ -15873,7 +15880,7 @@ paths:
                     $ref: '#/responses/Conflict'
                 "500":
                     $ref: '#/responses/InternalServerError'
-            summary: Get the network allocations in use (`network`, `network-forward` and `load-balancer` and `instance`)
+            summary: Get the network allocations in use (`network`, `network-forward`, `network-load-balancer` and `instance`)
             tags:
                 - network-allocations
     /1.0/network-integrations:
