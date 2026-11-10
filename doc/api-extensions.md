@@ -3623,3 +3623,7 @@ The new `rebar.<N>.size` configuration keys set the size of BAR `N` on the host 
 ## `image_volume_size_hint`
 
 This adds a new image property, `volume.size_hint`, which sets the size of the cached image volume of a container image on block backed storage pools when it's smaller than the pool's `volume.size`.
+
+## `network_allocations_project`
+
+Adds the `project` field to the network allocations API response, holding the project of the network.
