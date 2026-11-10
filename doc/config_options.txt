@@ -4284,6 +4284,13 @@ User keys can be used in search.
 
 ```
 
+```{config:option} ovn.routes_table network_bridge-common
+:condition: "standard mode"
+:shortdesc: "Host routing table (VRF) ID that downstream OVN networks export their routes into"
+:type: "integer"
+
+```
+
 ```{config:option} raw.dnsmasq network_bridge-common
 :condition: "-"
 :default: "-"
@@ -5061,6 +5068,13 @@ User keys can be used in search.
 :defaultdesc: "`l2proxy`"
 :shortdesc: "Sets the method how OVN NIC external IPs will be advertised on uplink network: `l2proxy` (proxy ARP/NDP) or `routed`"
 :type: "string"
+
+```
+
+```{config:option} ovn.routes_table network_physical-ovn
+:condition: "standard mode"
+:shortdesc: "Host routing table (VRF) ID that downstream OVN networks export their routes into"
+:type: "integer"
 
 ```
 

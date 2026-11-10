@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"maps"
+	"math"
 	"net"
 	"slices"
 	"strconv"
@@ -185,6 +186,14 @@ func (n *physical) Validate(config map[string]string, clientType request.ClientT
 		// defaultdesc: `l2proxy`
 		// shortdesc: Sets the method how OVN NIC external IPs will be advertised on uplink network: `l2proxy` (proxy ARP/NDP) or `routed`
 		"ovn.ingress_mode": validate.Optional(validate.IsOneOf("l2proxy", "routed")),
+
+		// gendoc:generate(entity=network_physical, group=ovn, key=ovn.routes_table)
+		//
+		// ---
+		// type: integer
+		// condition: standard mode
+		// shortdesc: Host routing table (VRF) ID that downstream OVN networks export their routes into
+		"ovn.routes_table": validate.Optional(validate.IsInRange(1, math.MaxUint32-1)),
 
 		"volatile.last_state.created": validate.Optional(validate.IsBool),
 		"volatile.last_state.mtu":     validate.Optional(validate.IsNetworkMTU),
