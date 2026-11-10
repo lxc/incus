@@ -385,6 +385,11 @@ func (d *linstor) deleteResourceGroup() error {
 	return nil
 }
 
+// queryContext returns a context bounding a LINSTOR query so lookups fail rather than hang on a stalled controller.
+func (d *linstor) queryContext() (context.Context, context.CancelFunc) {
+	return context.WithTimeout(context.Background(), time.Minute)
+}
+
 // getVolumeResourceDefinitions returns all Linstor resource definitions matching a given volume.
 func (d *linstor) getVolumeResourceDefinitions(vol Volume, fetchVolumeDefinitions bool) ([]linstorClient.ResourceDefinitionWithVolumeDefinition, error) {
 	l := logger.AddContext(logger.Ctx{"vol": vol.name, "volType": vol.volType, "contentType": vol.contentType})
@@ -393,8 +398,11 @@ func (d *linstor) getVolumeResourceDefinitions(vol Volume, fetchVolumeDefinition
 		return nil, err
 	}
 
+	ctx, cancel := d.queryContext()
+	defer cancel()
+
 	// Query resource definitions that match the desired volume by its name.
-	resourceDefinitions, err := linstor.Client.ResourceDefinitions.GetAll(context.TODO(), linstorClient.RDGetAllRequest{
+	resourceDefinitions, err := linstor.Client.ResourceDefinitions.GetAll(ctx, linstorClient.RDGetAllRequest{
 		Props: []string{
 			LinstorAuxName + "=" + d.config[LinstorVolumePrefixConfigKey] + vol.name,
 			LinstorAuxType + "=" + string(vol.volType),
@@ -497,8 +505,11 @@ func (d *linstor) deleteDisklessResource(vol Volume) error {
 		return err
 	}
 
+	ctx, cancel := d.queryContext()
+	defer cancel()
+
 	// Fetch all resources for the given volume in the current node.
-	resources, err := linstor.Client.Resources.GetResourceView(context.TODO(), &linstorClient.ListOpts{
+	resources, err := linstor.Client.Resources.GetResourceView(ctx, &linstorClient.ListOpts{
 		Resource: []string{resourceDefinition.Name},
 		Node:     []string{d.getSatelliteName()},
 	})
@@ -512,7 +523,7 @@ func (d *linstor) deleteDisklessResource(vol Volume) error {
 	for _, r := range resources {
 		if slices.Contains(r.Flags, "DISKLESS") {
 			l.Debug("Deleting diskless resource")
-			err := linstor.Client.Resources.Delete(context.TODO(), r.Name, r.NodeName)
+			err := linstor.Client.Resources.Delete(ctx, r.Name, r.NodeName)
 			if err != nil {
 				return err
 			}

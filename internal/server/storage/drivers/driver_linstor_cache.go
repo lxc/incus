@@ -1,7 +1,6 @@
 package drivers
 
 import (
-	"context"
 	"slices"
 	"strconv"
 	"time"
@@ -17,7 +16,10 @@ func (d *linstor) getCachedResourceDefinitionName(vol Volume) (string, bool) {
 			return nil, err
 		}
 
-		resourceDefinitions, err := linstor.Client.ResourceDefinitions.GetAll(context.TODO(), linstorClient.RDGetAllRequest{})
+		ctx, cancel := d.queryContext()
+		defer cancel()
+
+		resourceDefinitions, err := linstor.Client.ResourceDefinitions.GetAll(ctx, linstorClient.RDGetAllRequest{})
 		if err != nil {
 			return nil, err
 		}
@@ -57,8 +59,11 @@ func (d *linstor) getCachedVolumeUsage(resourceDefinitionName string, vol Volume
 			return nil, err
 		}
 
+		ctx, cancel := d.queryContext()
+		defer cancel()
+
 		// Any resource listing makes the controller poll the satellites, so fetch everything in one go.
-		resources, err := linstor.Client.Resources.GetResourceView(context.TODO(), &linstorClient.ListOpts{})
+		resources, err := linstor.Client.Resources.GetResourceView(ctx, &linstorClient.ListOpts{})
 		if err != nil {
 			return nil, err
 		}
