@@ -3705,44 +3705,99 @@ func (o *NB) ClearPortGroupPortACLRules(ctx context.Context, portGroupName OVNPo
 	return nil
 }
 
+// ipToString wraps IPv6 addresses in square brackets.
+func ipToString(ip net.IP) string {
+	if ip.To4() == nil {
+		return fmt.Sprintf("[%s]", ip.String())
+	}
+
+	return ip.String()
+}
+
+// transact applies the operations and checks the results.
+func (o *NB) transact(ctx context.Context, operations []ovsdb.Operation) error {
+	if len(operations) == 0 {
+		return nil
+	}
+
+	resp, err := o.client.Transact(ctx, operations...)
+	if err != nil {
+		return err
+	}
+
+	_, err = ovsdb.CheckOperationResults(resp, operations)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// loadBalancerDeleteOps returns the operations deleting the named load balancers.
+func (o *NB) loadBalancerDeleteOps(ctx context.Context, names ...string) ([]ovsdb.Operation, error) {
+	operations := []ovsdb.Operation{}
+	for _, name := range names {
+		err := o.get(ctx, &ovnNB.LoadBalancer{Name: name})
+		if errors.Is(err, ErrNotFound) {
+			continue
+		} else if err != nil && !errors.Is(err, ErrTooMany) {
+			return nil, err
+		}
+
+		// Delete by name in case there are duplicates.
+		deleteOps, err := o.client.Where(&ovnNB.LoadBalancer{Name: name}).Delete()
+		if err != nil {
+			return nil, err
+		}
+
+		operations = append(operations, deleteOps...)
+	}
+
+	return operations, nil
+}
+
+// loadBalancerCreateOps returns the operations creating a load balancer on the switch and, if set, the router.
+func (o *NB) loadBalancerCreateOps(lb *ovnNB.LoadBalancer, lr *ovnNB.LogicalRouter, ls *ovnNB.LogicalSwitch) ([]ovsdb.Operation, error) {
+	operations, err := o.client.Create(lb)
+	if err != nil {
+		return nil, err
+	}
+
+	if lr != nil {
+		updateOps, err := o.client.Where(lr).Mutate(lr, ovsModel.Mutation{
+			Field:   &lr.LoadBalancer,
+			Mutator: ovsdb.MutateOperationInsert,
+			Value:   []string{lb.UUID},
+		})
+		if err != nil {
+			return nil, err
+		}
+
+		operations = append(operations, updateOps...)
+	}
+
+	updateOps, err := o.client.Where(ls).Mutate(ls, ovsModel.Mutation{
+		Field:   &ls.LoadBalancer,
+		Mutator: ovsdb.MutateOperationInsert,
+		Value:   []string{lb.UUID},
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return append(operations, updateOps...), nil
+}
+
 // CreateLoadBalancer creates a new load balancer (if doesn't exist) on the specified router and switch.
 // Providing an empty set of vips will delete the load balancer.
 func (o *NB) CreateLoadBalancer(ctx context.Context, loadBalancerName OVNLoadBalancer, routerName OVNRouter, switchName OVNSwitch, vips ...OVNLoadBalancerVIP) error {
 	lbTCPName := fmt.Sprintf("%s-tcp", loadBalancerName)
 	lbUDPName := fmt.Sprintf("%s-udp", loadBalancerName)
-	operations := []ovsdb.Operation{}
-
-	// ipToString wraps IPv6 addresses in square brackets.
-	ipToString := func(ip net.IP) string {
-		if ip.To4() == nil {
-			return fmt.Sprintf("[%s]", ip.String())
-		}
-
-		return ip.String()
-	}
 
 	// Remove existing load balancers if they exist.
-	for _, name := range []string{lbTCPName, lbUDPName} {
-		lb := ovnNB.LoadBalancer{
-			Name: name,
-		}
-
-		err := o.get(ctx, &lb)
-		if err == nil || errors.Is(err, ErrTooMany) {
-			// Delete the load balancer (by name in case there are duplicates).
-			lb := ovnNB.LoadBalancer{
-				Name: name,
-			}
-
-			deleteOps, err := o.client.Where(&lb).Delete()
-			if err != nil {
-				return err
-			}
-
-			operations = append(operations, deleteOps...)
-		} else if !errors.Is(err, ErrNotFound) {
-			return err
-		}
+	operations, err := o.loadBalancerDeleteOps(ctx, lbTCPName, lbUDPName)
+	if err != nil {
+		return err
 	}
 
 	// Get the logical router.
@@ -3960,116 +4015,72 @@ func (o *NB) CreateLoadBalancer(ctx context.Context, loadBalancerName OVNLoadBal
 			lbhcCount++
 		}
 
-		// Create the record.
-		createOps, err := o.client.Create(lb)
+		createOps, err := o.loadBalancerCreateOps(lb, lr, ls)
 		if err != nil {
 			return err
 		}
 
 		operations = append(operations, createOps...)
-
-		// Add to the router.
-		updateOps, err := o.client.Where(lr).Mutate(lr, ovsModel.Mutation{
-			Field:   &lr.LoadBalancer,
-			Mutator: ovsdb.MutateOperationInsert,
-			Value:   []string{lb.UUID},
-		})
-		if err != nil {
-			return err
-		}
-
-		operations = append(operations, updateOps...)
-
-		// Add to the switch.
-		updateOps, err = o.client.Where(ls).Mutate(ls, ovsModel.Mutation{
-			Field:   &ls.LoadBalancer,
-			Mutator: ovsdb.MutateOperationInsert,
-			Value:   []string{lb.UUID},
-		})
-		if err != nil {
-			return err
-		}
-
-		operations = append(operations, updateOps...)
 	}
 
-	// Check if anything to delete.
-	if len(operations) == 0 {
-		return nil
-	}
+	return o.transact(ctx, operations)
+}
 
-	// Apply the changes.
-	resp, err := o.client.Transact(ctx, operations...)
+// CreateSwitchLoadBalancer creates a switch-only, all-ports and protocols load balancer for hairpin SNAT.
+func (o *NB) CreateSwitchLoadBalancer(ctx context.Context, loadBalancerName OVNLoadBalancer, switchName OVNSwitch, listenAddress net.IP, targetAddress net.IP) error {
+	lbName := fmt.Sprintf("%s-hairpin", loadBalancerName)
+
+	operations, err := o.loadBalancerDeleteOps(ctx, lbName)
 	if err != nil {
 		return err
 	}
 
-	_, err = ovsdb.CheckOperationResults(resp, operations)
+	ls, err := o.GetLogicalSwitch(ctx, switchName)
 	if err != nil {
 		return err
 	}
 
-	return nil
+	// No protocol is set so the portless VIP matches all traffic.
+	lb := &ovnNB.LoadBalancer{
+		UUID: "lbhairpin",
+		Name: lbName,
+		Vips: map[string]string{ipToString(listenAddress): ipToString(targetAddress)},
+	}
+
+	createOps, err := o.loadBalancerCreateOps(lb, nil, ls)
+	if err != nil {
+		return err
+	}
+
+	return o.transact(ctx, append(operations, createOps...))
+}
+
+// DeleteSwitchLoadBalancer deletes the switch-only hairpin load balancer.
+func (o *NB) DeleteSwitchLoadBalancer(ctx context.Context, loadBalancerName OVNLoadBalancer) error {
+	operations, err := o.loadBalancerDeleteOps(ctx, fmt.Sprintf("%s-hairpin", loadBalancerName))
+	if err != nil {
+		return err
+	}
+
+	return o.transact(ctx, operations)
 }
 
 // DeleteLoadBalancer deletes the specified load balancer(s).
 func (o *NB) DeleteLoadBalancer(ctx context.Context, loadBalancerNames ...OVNLoadBalancer) error {
-	operations := []ovsdb.Operation{}
+	names := make([]string, 0, len(loadBalancerNames)*3)
 	for _, loadBalancerName := range loadBalancerNames {
-		// Check for a TCP load-balancer.
-		lb := ovnNB.LoadBalancer{
-			Name: fmt.Sprintf("%s-tcp", loadBalancerName),
-		}
-
-		err := o.get(ctx, &lb)
-		if err == nil {
-			// Delete the load balancer.
-			deleteOps, err := o.client.Where(&lb).Delete()
-			if err != nil {
-				return err
-			}
-
-			operations = append(operations, deleteOps...)
-		} else if !errors.Is(err, ErrNotFound) {
-			return err
-		}
-
-		// Check for a UDP load-balancer.
-		lb = ovnNB.LoadBalancer{
-			Name: fmt.Sprintf("%s-udp", loadBalancerName),
-		}
-
-		err = o.get(ctx, &lb)
-		if err == nil {
-			// Delete the load balancer.
-			deleteOps, err := o.client.Where(&lb).Delete()
-			if err != nil {
-				return err
-			}
-
-			operations = append(operations, deleteOps...)
-		} else if !errors.Is(err, ErrNotFound) {
-			return err
+		// Check for TCP, UDP and hairpin load-balancers.
+		for _, suffix := range []string{"tcp", "udp", "hairpin"} {
+			names = append(names, fmt.Sprintf("%s-%s", loadBalancerName, suffix))
 		}
 	}
 
-	// Check if anything to delete.
-	if len(operations) == 0 {
-		return nil
-	}
-
-	// Apply the changes.
-	resp, err := o.client.Transact(ctx, operations...)
+	operations, err := o.loadBalancerDeleteOps(ctx, names...)
 	if err != nil {
 		return err
 	}
 
-	_, err = ovsdb.CheckOperationResults(resp, operations)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return o.transact(ctx, operations)
 }
 
 // GetLoadBalancer gets the OVN database record for the load balancer.

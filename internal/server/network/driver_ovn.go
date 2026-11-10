@@ -7390,11 +7390,14 @@ func (n *ovn) forwardFlattenVIPs(listenAddress net.IP, portMaps []*forwardPortMa
 	return vips
 }
 
-// forwardApplyDefaultTargetNAT creates, refreshes or removes the dnat rule for a forward's default
-// target_address. A plain NAT rule is used instead of a portless Load_Balancer VIP so it can't collide
-// with a paired ipv4/ipv6.address.external snat rule on the same address.
-func (n *ovn) forwardApplyDefaultTargetNAT(listenAddress net.IP, targetAddress net.IP) error {
+// forwardApplyDefaultTargetNAT creates, refreshes or removes a forward's default target dnat rule and hairpin load balancer.
+func (n *ovn) forwardApplyDefaultTargetNAT(listenAddress net.IP, loadBalancerName networkOVN.OVNLoadBalancer, targetAddress net.IP) error {
 	err := n.ovnnb.DeleteLogicalRouterNAT(context.TODO(), n.getRouterName(), "dnat", false, listenAddress)
+	if err != nil {
+		return err
+	}
+
+	err = n.ovnnb.DeleteSwitchLoadBalancer(context.TODO(), loadBalancerName)
 	if err != nil {
 		return err
 	}
@@ -7403,7 +7406,12 @@ func (n *ovn) forwardApplyDefaultTargetNAT(listenAddress net.IP, targetAddress n
 		return nil
 	}
 
-	return n.ovnnb.CreateLogicalRouterNAT(context.TODO(), n.getRouterName(), "dnat", nil, listenAddress, targetAddress, false, true)
+	err = n.ovnnb.CreateLogicalRouterNAT(context.TODO(), n.getRouterName(), "dnat", nil, listenAddress, targetAddress, false, true)
+	if err != nil {
+		return err
+	}
+
+	return n.ovnnb.CreateSwitchLoadBalancer(context.TODO(), loadBalancerName, n.getIntSwitchName(), listenAddress, targetAddress)
 }
 
 // forwardApplyOVN applies the load balancer and default target NAT of a forward.
@@ -7411,12 +7419,14 @@ func (n *ovn) forwardApplyOVN(listenAddress string, portMaps []*forwardPortMap, 
 	listenIP := net.ParseIP(listenAddress)
 	vips := n.forwardFlattenVIPs(listenIP, portMaps)
 
-	err := n.ovnnb.CreateLoadBalancer(context.TODO(), n.getLoadBalancerName(listenAddress), n.getRouterName(), n.getIntSwitchName(), vips...)
+	loadBalancerName := n.getLoadBalancerName(listenAddress)
+
+	err := n.ovnnb.CreateLoadBalancer(context.TODO(), loadBalancerName, n.getRouterName(), n.getIntSwitchName(), vips...)
 	if err != nil {
 		return fmt.Errorf("Failed applying OVN load balancer: %w", err)
 	}
 
-	err = n.forwardApplyDefaultTargetNAT(listenIP, targetAddress)
+	err = n.forwardApplyDefaultTargetNAT(listenIP, loadBalancerName, targetAddress)
 	if err != nil {
 		return fmt.Errorf("Failed applying default target NAT rule: %w", err)
 	}
@@ -7850,7 +7860,7 @@ func (n *ovn) ForwardDelete(listenAddress string, clientType request.ClientType)
 			return fmt.Errorf("Failed deleting OVN load balancer: %w", err)
 		}
 
-		err = n.forwardApplyDefaultTargetNAT(net.ParseIP(forward.ListenAddress), nil)
+		err = n.forwardApplyDefaultTargetNAT(net.ParseIP(forward.ListenAddress), n.getLoadBalancerName(forward.ListenAddress), nil)
 		if err != nil {
 			return fmt.Errorf("Failed deleting default target NAT rule: %w", err)
 		}
