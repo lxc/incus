@@ -69,8 +69,8 @@ func (d *zfs) CreateVolume(vol Volume, filler *VolumeFiller, op *operations.Oper
 			canRestore := true
 
 			if vol.IsBlockBacked() && (vol.contentType == ContentTypeBlock || d.isBlockBacked(vol)) {
-				// For block volumes check if the cached image volume is larger than the current pool volume.size
-				// setting (if so we won't be able to resize the snapshot to that the smaller size later).
+				// For block volumes check if the cached image volume is larger than the size the new image
+				// volume will be created with (if so we won't be able to resize the snapshot to that the smaller size later).
 				volSize, err := d.getDatasetProperty(d.dataset(vol, true), "volsize")
 				if err != nil {
 					return err
@@ -81,10 +81,7 @@ func (d *zfs) CreateVolume(vol Volume, filler *VolumeFiller, op *operations.Oper
 					return err
 				}
 
-				poolVolSize := DefaultBlockSize
-				if vol.poolConfig["volume.size"] != "" {
-					poolVolSize = vol.poolConfig["volume.size"]
-				}
+				poolVolSize := vol.ConfigSize()
 
 				poolVolSizeBytes, err := units.ParseByteSizeString(poolVolSize)
 				if err != nil {
@@ -97,7 +94,7 @@ func (d *zfs) CreateVolume(vol Volume, filler *VolumeFiller, op *operations.Oper
 					return err
 				}
 
-				// If the cached volume size is different than the pool volume size, then we can't use the
+				// If the cached volume size is different than the new volume size, then we can't use the
 				// deleted cached image volume and instead we will rename it to a random UUID so it can't
 				// be restored in the future and a new cached image volume will be created instead.
 				if volSizeBytes != poolVolSizeBytes {
