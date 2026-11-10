@@ -442,6 +442,14 @@ test_storage() {
             incus launch testimage c12pool15 -s "incustest-$(basename "${INCUS_DIR}")-non-thinpool-pool15"
             incus list -c b c12pool15 | grep "incustest-$(basename "${INCUS_DIR}")-non-thinpool-pool15"
 
+            # Test that the image's volume.size_hint sizes the cached image volume
+            fingerprint="$(incus image list testimage -c F -f csv)"
+            incus image set-property testimage volume.size_hint 20MiB
+            incus init testimage c13pool14 -s "incustest-$(basename "${INCUS_DIR}")-pool14"
+            [ "$(lvs --noheadings --nosuffix --units b -o lv_size "incustest-$(basename "${INCUS_DIR}")-pool14/images_${fingerprint}" | tr -d ' ')" = "20971520" ]
+            incus delete c13pool14
+            incus image unset-property testimage volume.size_hint
+
             # Test that changing block filesystem works
             incus storage set "incustest-$(basename "${INCUS_DIR}")-pool6" volume.block.filesystem xfs
             incus storage set "incustest-$(basename "${INCUS_DIR}")-pool6" volume.size 300MiB
