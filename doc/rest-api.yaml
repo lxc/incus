@@ -15893,7 +15893,7 @@ paths:
                     $ref: '#/responses/Conflict'
                 "500":
                     $ref: '#/responses/InternalServerError'
-            summary: Get the network allocations in use (`network`, `network-forward`, `network-load-balancer` and `instance`)
+            summary: Get the network allocations in use (`network`, `instance`, `uplink`, `network-forward` and `network-load-balancer`)
             tags:
                 - network-allocations
     /1.0/network-integrations:
