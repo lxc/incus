@@ -91,7 +91,7 @@ func (d *linstor) getCachedVolumeUsage(resourceDefinitionName string, vol Volume
 		return results, nil
 	}
 
-	cache := getPropertyCache("linstor/usage", 100*time.Millisecond, 30*time.Second)
+	cache := getPropertyCache("linstor/usage", 100*time.Millisecond, time.Minute)
 
 	count, ok := cache.get(resourceDefinitionName, "count", fill)
 	if !ok {
