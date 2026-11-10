@@ -838,7 +838,7 @@ test_network_ovn_forward() {
     # Check basic forward default target address can be set (to non-existent target address).
     incus network forward set ovn-virtual-network 192.0.2.1 target_address="${ip4AddressPrefix}.2"
     incus network forward set ovn-virtual-network 2001:db8:1:2::1  target_address="${ip6AddressPrefix}::2"
-    ovn-nbctl list load_balancer | grep -cF name | grep -xF 0
+    ovn-nbctl list load_balancer | grep -cF name | grep -xF 2
     ovn-nbctl --bare --columns=type find nat type=dnat | grep -cF dnat | grep -xF 2
     incus network forward delete ovn-virtual-network 192.0.2.1
     incus network forward delete ovn-virtual-network 2001:db8:1:2::1
@@ -848,7 +848,7 @@ test_network_ovn_forward() {
     # Check basic forward can be created with target address (to non-existent target address).
     incus network forward create ovn-virtual-network 192.0.2.1 target_address="${ip4AddressPrefix}.2"
     incus network forward create ovn-virtual-network 2001:db8:1:2::1 target_address="${ip6AddressPrefix}::2"
-    ovn-nbctl list load_balancer | grep -cF name | grep -xF 0
+    ovn-nbctl list load_balancer | grep -cF name | grep -xF 2
     ovn-nbctl --bare --columns=type find nat type=dnat | grep -cF dnat | grep -xF 2
 
     # Check duplicate forwards cannot be created.
@@ -895,10 +895,10 @@ test_network_ovn_forward() {
     ! incus network set ovn-virtual-network2 ipv6.address=2001:db8:1:3::1/64 || false
 
     # Check network forwards are removed when network is removed.
-    ovn-nbctl list load_balancer | grep -cF name | grep -xF 0
+    ovn-nbctl list load_balancer | grep -cF name | grep -xF 4
     ovn-nbctl --bare --columns=type find nat type=dnat | grep -cF dnat | grep -xF 4
     incus network delete ovn-virtual-network2
-    ovn-nbctl list load_balancer | grep -cF name | grep -xF 0
+    ovn-nbctl list load_balancer | grep -cF name | grep -xF 2
     ovn-nbctl --bare --columns=type find nat type=dnat | grep -cF dnat | grep -xF 2
 
     # Create instance connected to ovn-virtual-network.
@@ -924,6 +924,10 @@ test_network_ovn_forward() {
     # Relies on static route (above) rather than neighbour adverts see https://github.com/ovn-org/ovn/issues/124
     ping -c1 -4 -w5 192.0.2.1
     ping -c1 -6 -w5 2001:db8:1:2::1
+
+    # Check the target can reach its own forward address (hairpin).
+    incus exec u1 -- ping -c1 -4 -w5 192.0.2.1
+    incus exec u1 -- ping -c1 -6 -w5 2001:db8:1:2::1
 
     # Check DNS TCP forwarding using default target rule.
     incus exec u1 -- systemctl mask dnsmasq
