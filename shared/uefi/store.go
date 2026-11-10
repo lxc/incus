@@ -9,6 +9,15 @@ import (
 	"github.com/lxc/incus/v7/shared/api"
 )
 
+// Size of an authenticated variable header.
+const authVarHeaderSize = 60
+
+// Variable states, as written by EDK2.
+const (
+	varStateAdded              = 0x3f
+	varStateInDeleteTransition = 0x3e
+)
+
 type blockMapEntry struct {
 	count uint32
 	size  uint32
@@ -171,7 +180,15 @@ func ParseNVRAM(data []byte) (*Store, error) {
 
 	varStoreLength := int(varSize) + int(headerLength)
 	s := &Store{attrs: attrs, blockMap: blockMap, fvLength: fvLength, varSize: varSize, fileSize: len(data), Vars: make(map[string]map[string]*api.InstanceNVRAMVariable)}
+
+	// Variables in the middle of a delete operation. Only valid if no added copy exists.
+	inDeleteTransition := make(map[string]map[string]*api.InstanceNVRAMVariable)
 	for r.pos() < varStoreLength {
+		// A variable header that does not fit is free space.
+		if r.pos()+authVarHeaderSize > varStoreLength {
+			break
+		}
+
 		start, err := r.readU16()
 		if err != nil {
 			return nil, err
@@ -226,25 +243,41 @@ func ParseNVRAM(data []byte) (*Store, error) {
 			return nil, err
 		}
 
-		name, err := r.readZn16(int(nameLen) / 2)
-		if err != nil {
-			return nil, err
+		// A record that extends past the store was not fully written, treat it as free space.
+		if uint64(r.pos())+uint64(nameLen)+uint64(dataLen) > uint64(varStoreLength) {
+			break
 		}
 
-		data, err := r.read(int(dataLen))
-		if err != nil {
-			return nil, err
-		}
-
-		if state == 0x3f {
-			varPut := api.InstanceNVRAMVariablePut{Attributes: ParseAttributes(rawAttributes), Timestamp: timestamp}
-			v := api.InstanceNVRAMVariable{InstanceNVRAMVariablePut: varPut, Binary: data}
-			_, ok := s.Vars[guid]
-			if !ok {
-				s.Vars[guid] = make(map[string]*api.InstanceNVRAMVariable)
+		// Name and data of records in other states may be incomplete, skip them.
+		if state != varStateAdded && state != varStateInDeleteTransition {
+			err = r.skip(int(nameLen) + int(dataLen))
+			if err != nil {
+				return nil, err
+			}
+		} else {
+			name, err := r.readZn16(int(nameLen) / 2)
+			if err != nil {
+				return nil, err
 			}
 
-			s.Vars[guid][name] = &v
+			data, err := r.read(int(dataLen))
+			if err != nil {
+				return nil, err
+			}
+
+			vars := s.Vars
+			if state == varStateInDeleteTransition {
+				vars = inDeleteTransition
+			}
+
+			varPut := api.InstanceNVRAMVariablePut{Attributes: ParseAttributes(rawAttributes), Timestamp: timestamp}
+			v := api.InstanceNVRAMVariable{InstanceNVRAMVariablePut: varPut, Binary: data}
+			_, ok := vars[guid]
+			if !ok {
+				vars[guid] = make(map[string]*api.InstanceNVRAMVariable)
+			}
+
+			vars[guid][name] = &v
 		}
 
 		err = r.seek((r.pos() + 0x3) &^ 0x3)
@@ -255,6 +288,21 @@ func ParseNVRAM(data []byte) (*Store, error) {
 
 	if r.pos() > varStoreLength {
 		return nil, fmt.Errorf("Read variable past the variable store")
+	}
+
+	for guid, vars := range inDeleteTransition {
+		for name, v := range vars {
+			if s.Has(guid, name) {
+				continue
+			}
+
+			_, ok := s.Vars[guid]
+			if !ok {
+				s.Vars[guid] = make(map[string]*api.InstanceNVRAMVariable)
+			}
+
+			s.Vars[guid][name] = v
+		}
 	}
 
 	err = r.seek(varStoreLength)
