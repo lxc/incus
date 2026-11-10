@@ -1,6 +1,7 @@
 package main
 
 import (
+	"cmp"
 	"context"
 	"errors"
 	"fmt"
@@ -29,7 +30,7 @@ var networkAllocationsCmd = APIEndpoint{
 
 // swagger:operation GET /1.0/network-allocations network-allocations network_allocations_get
 //
-//	Get the network allocations in use (`network`, `network-forward`, `network-load-balancer` and `instance`)
+//	Get the network allocations in use (`network`, `instance`, `uplink`, `network-forward` and `network-load-balancer`)
 //
 //	Returns a list of network allocations.
 //
@@ -93,6 +94,15 @@ func networkAllocationsGet(d *Daemon, r *http.Request) response.Response {
 	projects := []api.Project{*reqProject}
 	projectNetworks := map[string][]string{}
 
+	// OVN networks keyed by the name of their uplink network.
+	type allocationRouter struct {
+		project   string
+		name      string
+		addresses []string
+	}
+
+	routers := map[string][]allocationRouter{}
+
 	err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
 		if allProjects {
 			dbProjects, err := dbCluster.GetProjects(ctx, tx.Tx())
@@ -125,10 +135,40 @@ func networkAllocationsGet(d *Daemon, r *http.Request) response.Response {
 			}
 		}
 
+		// Get the uplink addresses of the OVN networks.
+		createdNetworks, err := tx.GetCreatedNetworks(ctx)
+		if err != nil {
+			return fmt.Errorf("Failed loading networks: %w", err)
+		}
+
+		for networkProjectName, networks := range createdNetworks {
+			for _, ovnNetwork := range networks {
+				if ovnNetwork.Type != "ovn" || ovnNetwork.Config["network"] == "" {
+					continue
+				}
+
+				router := allocationRouter{project: networkProjectName, name: ovnNetwork.Name}
+				for _, key := range []string{"volatile.network.ipv4.address", "volatile.network.ipv6.address"} {
+					if ovnNetwork.Config[key] != "" {
+						router.addresses = append(router.addresses, ovnNetwork.Config[key])
+					}
+				}
+
+				uplinkName := ovnNetwork.Config["network"]
+				routers[uplinkName] = append(routers[uplinkName], router)
+			}
+		}
+
 		return nil
 	})
 	if err != nil {
 		return response.SmartError(err)
+	}
+
+	for _, uplinkRouters := range routers {
+		slices.SortFunc(uplinkRouters, func(a, b allocationRouter) int {
+			return cmp.Or(cmp.Compare(a.project, b.project), cmp.Compare(a.name, b.name))
+		})
 	}
 
 	canViewNetwork, err := s.Authorizer.GetPermissionChecker(r.Context(), r, auth.EntitlementCanView, auth.ObjectTypeNetwork)
@@ -215,7 +255,13 @@ func networkAllocationsGet(d *Daemon, r *http.Request) response.Response {
 		netConf := n.Config()
 
 		for _, keyPrefix := range []string{"ipv4", "ipv6"} {
-			ipNet, _ := network.ParseIPCIDRToNet(netConf[fmt.Sprintf("%s.address", keyPrefix)])
+			// Physical networks only have their subnet in the gateway key.
+			address := netConf[fmt.Sprintf("%s.address", keyPrefix)]
+			if address == "" {
+				address = netConf[fmt.Sprintf("%s.gateway", keyPrefix)]
+			}
+
+			ipNet, _ := network.ParseIPCIDRToNet(address)
 			if ipNet == nil {
 				continue
 			}
@@ -283,6 +329,31 @@ func networkAllocationsGet(d *Daemon, r *http.Request) response.Response {
 					Hwaddr:  lease.Hwaddr,
 					NAT:     nat,
 				})
+			}
+		}
+
+		// Add the addresses of the OVN networks using this network as their uplink.
+		if projectName == api.ProjectDefaultName {
+			for _, router := range routers[networkName] {
+				if !canViewNetwork(auth.ObjectNetwork(router.project, router.name)) {
+					continue
+				}
+
+				for _, address := range router.addresses {
+					cidrAddr, nat, err := ipToCIDR(address, netConf)
+					if err != nil {
+						return response.SmartError(err)
+					}
+
+					result = append(result, api.NetworkAllocations{
+						Network: networkName,
+						Project: projectName,
+						Address: cidrAddr,
+						UsedBy:  api.NewURL().Path(version.APIVersion, "networks", router.name).Project(router.project).String(),
+						Type:    "uplink",
+						NAT:     nat,
+					})
+				}
 			}
 		}
 
