@@ -39,6 +39,33 @@ const lvmSnapshotSeparator = "-"
 // lvmEscapedHyphen used to escape hyphens in volume names to avoid conflicts with lvmSnapshotSeparator.
 const lvmEscapedHyphen = "--"
 
+// lvmPermanentErrors are LVM failures that retrying can't fix.
+var lvmPermanentErrors = []string{"insufficient free space", "already exists"}
+
+// lvmTryRunCommand runs an LVM command, retrying on failures that may be transient.
+func lvmTryRunCommand(name string, args ...string) (string, error) {
+	var output string
+	var err error
+
+	for attempt := range 20 {
+		if attempt > 0 {
+			time.Sleep(500 * time.Millisecond)
+		}
+
+		output, err = subprocess.RunCommandCLocale(name, args...)
+		if err == nil {
+			return output, nil
+		}
+
+		msg := strings.ToLower(err.Error())
+		if slices.ContainsFunc(lvmPermanentErrors, func(permErr string) bool { return strings.Contains(msg, permErr) }) {
+			return output, err
+		}
+	}
+
+	return output, err
+}
+
 // lvmThinpoolDefaultName is the default name for the thinpool volume.
 const lvmThinpoolDefaultName = "IncusThinPool"
 
@@ -467,7 +494,7 @@ func (d *lvm) createDefaultThinPool(lvmVersion, thinPoolName string, thinpoolSiz
 	}
 
 	// Create the thin pool volume.
-	_, err = subprocess.TryRunCommand("lvcreate", args...)
+	_, err = lvmTryRunCommand("lvcreate", args...)
 	if err != nil {
 		return fmt.Errorf("Error creating LVM thin pool named %q: %w", thinPoolName, err)
 	}
@@ -596,7 +623,7 @@ func (d *lvm) createLogicalVolume(vgName, thinPoolName string, vol Volume, makeT
 		}
 	}
 
-	_, err = subprocess.TryRunCommand("lvcreate", args...)
+	_, err = lvmTryRunCommand("lvcreate", args...)
 	if err != nil {
 		return fmt.Errorf("Error creating LVM logical volume %q: %w", lvFullName, err)
 	}
@@ -676,7 +703,7 @@ func (d *lvm) createLogicalVolumeSnapshot(vgName string, srcVol Volume, snapVol 
 		defer release()
 	}
 
-	_, err = subprocess.TryRunCommand("lvcreate", args...)
+	_, err = lvmTryRunCommand("lvcreate", args...)
 	if err != nil {
 		return "", err
 	}
@@ -751,7 +778,7 @@ func (d *lvm) renameLogicalVolume(volDevPath string, newVolDevPath string) error
 		return err
 	}
 
-	_, err = subprocess.TryRunCommand("lvrename", volDevPath, newVolDevPath)
+	_, err = lvmTryRunCommand("lvrename", volDevPath, newVolDevPath)
 	if err != nil {
 		return err
 	}
@@ -847,7 +874,7 @@ func (d *lvm) resizeLogicalVolume(lvPath string, sizeBytes int64) error {
 		args = append(args, "--fs=ignore")
 	}
 
-	_, err = subprocess.TryRunCommand("lvresize", args...)
+	_, err = lvmTryRunCommand("lvresize", args...)
 	if err != nil {
 		return err
 	}
