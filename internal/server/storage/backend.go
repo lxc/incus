@@ -9038,7 +9038,13 @@ func (b *backend) qcow2CreateSnapshot(vol drivers.Volume, snapVol drivers.Volume
 			return nil, err
 		}
 
-		reverter.Add(func() { _, _ = b.driver.UnmountVolumeSnapshot(snapVol, nil) })
+		// Until the instance switches to the new overlay, the snapshot volume is still its disk and must stay active.
+		reverter.Add(func() {
+			snapVol.MountRefCountDecrement()
+			if snapVol.IsVMBlock() {
+				_, _ = b.driver.UnmountVolumeSnapshot(snapVol.NewVMBlockFilesystemVolume(), nil)
+			}
+		})
 	}
 
 	snapVolDevPath, err := b.driver.GetQcow2BackingFilePath(snapVol)
