@@ -2626,6 +2626,20 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 		return err
 	}
 
+	// Ensure SELinux context is generated and persisted.
+	contextIsNew, err := d.selinuxEnsureContext()
+	if err != nil {
+		op.Done(err)
+		return err
+	}
+
+	// Label the files QEMU needs before it's started.
+	err = d.selinuxLabelFiles(contextIsNew)
+	if err != nil {
+		op.Done(err)
+		return err
+	}
+
 	// Run the qemu command via forkqemu so we can selectively increase ulimits.
 	forkQemuCmd := []string{
 		"forkqemu",
@@ -2651,12 +2665,6 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 	for i := range fdFiles {
 		// Pass through any file descriptors as 3+i (as first 3 file descriptors are taken as standard).
 		forkQemuCmd = append(forkQemuCmd, fmt.Sprintf("fd=%d", 3+i))
-	}
-
-	// Ensure SELinux context is generated and persisted.
-	contextIsNew, err := d.selinuxEnsureContext()
-	if err != nil {
-		return err
 	}
 
 	seCtx := d.localConfig["volatile.selinux.context"]
@@ -2870,12 +2878,6 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 			op.Done(err)
 			return err
 		}
-	}
-
-	// Label rootfs if SELinux context is set and labels are missing.
-	err = d.selinuxLabelFiles(contextIsNew)
-	if err != nil {
-		return err
 	}
 
 	// Start the VM.
@@ -14687,7 +14689,7 @@ func (d *qemu) selinuxEnsureContext() (bool, error) {
 	return previousCtx == "", nil
 }
 
-// selinuxLabelFiles applies SELinux file labels to the VM instance directory.
+// selinuxLabelFiles applies SELinux file labels to the VM instance, run and log directories.
 func (d *qemu) selinuxLabelFiles(contextIsNew bool) error {
 	if !d.state.OS.SELinuxEnabled {
 		return nil
@@ -14698,15 +14700,22 @@ func (d *qemu) selinuxLabelFiles(contextIsNew bool) error {
 		return nil
 	}
 
-	if !contextIsNew {
-		if d.localConfig["security.selinux.level"] != "" {
-			return nil
-		}
-	}
-
 	fileCtx := selinux.InstanceFileContext(d.state.OS, ctx, instancetype.VM, d.expandedConfig)
 	if fileCtx == "" {
 		return fmt.Errorf("Failed to derive file context from %q", ctx)
+	}
+
+	// The run and log directories are repopulated on every start, so always label them.
+	for _, path := range []string{d.RunPath(), d.LogPath()} {
+		err := selinux.LabelTree(path, fileCtx, "")
+		if err != nil {
+			return err
+		}
+	}
+
+	// Skip the instance directory if not first start and level is explicitly set.
+	if !contextIsNew && d.localConfig["security.selinux.level"] != "" {
+		return nil
 	}
 
 	return selinux.LabelTree(d.Path(), fileCtx, "")
