@@ -26,6 +26,8 @@ test_pki() {
             ./easyrsa gen-crl
             echo "yes" | ./easyrsa build-client-full incus-client nopass
             echo "yes" | ./easyrsa build-client-full incus-client-revoked nopass
+            echo "yes" | ./easyrsa --subject-alt-name="IP:127.0.0.1" build-server-full incus-server-a nopass
+            echo "yes" | ./easyrsa --subject-alt-name="IP:127.0.0.1" build-server-full incus-server-b nopass
             mkdir keys
             cp pki/private/* keys/
             cp pki/issued/* keys/
@@ -68,6 +70,7 @@ test_pki() {
     # Confirm that a valid client certificate works.
     (
         set -e
+        # shellcheck disable=SC2030
         export INCUS_CONF="${INC5_DIR}"
 
         # Try adding remote using an incorrect token.
@@ -127,6 +130,56 @@ test_pki() {
     cert="$(sed ':a;N;$!ba;s/\n/\\n/g' "${TEST_DIR}/pki/keys/incus-client.crt")"
     [ "$(curl -k -s -X POST -d "{\"trust_token\":\"${token}\",\"certificate\":\"${cert}\"}" "https://${INCUS5_ADDR}/1.0/certificates" | jq '.status_code')" -eq 200 ]
     INCUS_DIR="${INCUS5_DIR}" incus config trust show "$(cert_fingerprint "${TEST_DIR}/pki/keys/incus-client.crt")" | grep -xF "name: foo"
+
+    # Copies between two servers with CA-issued certificates, validated by the client through the CA alone.
+    if [ -e "${TEST_DIR}/pki/keys/incus-server-a.crt" ]; then
+        shutdown_incus "${INCUS5_DIR}"
+        cp "${TEST_DIR}/pki/keys/incus-server-a.crt" "${INCUS5_DIR}/server.crt"
+        cp "${TEST_DIR}/pki/keys/incus-server-a.key" "${INCUS5_DIR}/server.key"
+        respawn_incus "${INCUS5_DIR}" true
+
+        INCUS6_DIR=$(mktemp -d -p "${TEST_DIR}" XXX)
+        chmod +x "${INCUS6_DIR}"
+        cp "${TEST_DIR}/pki/keys/incus-server-b.crt" "${INCUS6_DIR}/server.crt"
+        cp "${TEST_DIR}/pki/keys/incus-server-b.key" "${INCUS6_DIR}/server.key"
+        cp "${TEST_DIR}/pki/keys/ca.crt" "${INCUS6_DIR}/server.ca"
+        spawn_incus "${INCUS6_DIR}" true
+        INCUS6_ADDR=$(cat "${INCUS6_DIR}/incus.addr")
+        INCUS_DIR="${INCUS6_DIR}" incus config set core.trust_ca_certificates true
+
+        cp "${TEST_DIR}/pki/keys/incus-client.crt" "${INC5_DIR}/client.crt"
+        cp "${TEST_DIR}/pki/keys/incus-client.key" "${INC5_DIR}/client.key"
+        (
+            set -e
+            # shellcheck disable=SC2031
+            export INCUS_CONF="${INC5_DIR}"
+
+            incus_remote remote add pki-a "${INCUS5_ADDR}"
+            incus_remote remote add pki-b "${INCUS6_ADDR}"
+            [ ! -e "${INC5_DIR}/servercerts/pki-a.crt" ]
+            [ ! -e "${INC5_DIR}/servercerts/pki-b.crt" ]
+
+            INCUS_DIR="${INCUS5_DIR}" ensure_import_testimage
+            incus_remote init pki-a:testimage pki-a:c1
+            incus_remote copy pki-a:c1 pki-b:c1
+            incus_remote info pki-b:c1 | grep -q "Status: STOPPED"
+
+            incus_remote image copy pki-a:testimage pki-b: --alias testimage
+            incus_remote image info pki-b:testimage | grep -q "Fingerprint"
+
+            incus_remote storage volume create pki-a:"incustest-$(basename "${INCUS5_DIR}")" vol1
+            incus_remote storage volume copy pki-a:"incustest-$(basename "${INCUS5_DIR}")/vol1" pki-b:"incustest-$(basename "${INCUS6_DIR}")/vol1"
+            incus_remote storage volume delete pki-b:"incustest-$(basename "${INCUS6_DIR}")" vol1
+            incus_remote storage volume delete pki-a:"incustest-$(basename "${INCUS5_DIR}")" vol1
+
+            incus_remote delete pki-a:c1 pki-b:c1
+            incus_remote image delete pki-a:testimage pki-b:testimage
+            incus_remote remote remove pki-a
+            incus_remote remote remove pki-b
+        )
+
+        kill_incus "${INCUS6_DIR}"
+    fi
 
     kill_incus "${INCUS5_DIR}"
 }
