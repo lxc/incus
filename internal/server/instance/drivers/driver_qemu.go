@@ -1514,7 +1514,7 @@ func (d *qemu) restoreState(monitor *qmp.Monitor) error {
 				return fmt.Errorf("Failed restoring checkpoint from source: %w", err)
 			}
 		} else {
-			pipeRead, pipeWrite, err := os.Pipe()
+			pipeRead, pipeWrite, err := d.statePipe()
 			if err != nil {
 				return err
 			}
@@ -1552,7 +1552,7 @@ func (d *qemu) restoreState(monitor *qmp.Monitor) error {
 
 		defer logger.WarnOnError(uncompressedState.Close, "Failed to close state reader")
 
-		pipeRead, pipeWrite, err := os.Pipe()
+		pipeRead, pipeWrite, err := d.statePipe()
 		if err != nil {
 			return err
 		}
@@ -1744,7 +1744,7 @@ func (d *qemu) saveState(monitor *qmp.Monitor) error {
 
 	defer logger.WarnOnError(compressedState.Close, "Failed to close state writer")
 
-	pipeRead, pipeWrite, err := os.Pipe()
+	pipeRead, pipeWrite, err := d.statePipe()
 	if err != nil {
 		return err
 	}
@@ -10705,7 +10705,7 @@ func (d *qemu) migrateSendLive(ctx context.Context, pool storagePools.Pool, clus
 
 		defer cleanup()
 	} else {
-		pipeRead, pipeWrite, err := os.Pipe()
+		pipeRead, pipeWrite, err := d.statePipe()
 		if err != nil {
 			return err
 		}
@@ -14734,6 +14734,16 @@ func (d *qemu) selinuxLabelFiles(contextIsNew bool) error {
 	}
 
 	return d.selinuxLabelPath(d.Path())
+}
+
+// statePipe returns a pipe for streaming VM state, a confined QEMU process gets a socket pair with its own label.
+func (d *qemu) statePipe() (*os.File, *os.File, error) {
+	ctx := d.localConfig["volatile.selinux.context"]
+	if !d.state.OS.SELinuxEnabled || ctx == "" {
+		return os.Pipe()
+	}
+
+	return selinux.SocketPair(ctx)
 }
 
 // selinuxLabelPath applies the instance SELinux file context to a path when SELinux is enabled.
