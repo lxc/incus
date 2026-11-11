@@ -3,6 +3,7 @@ package drivers
 import (
 	"fmt"
 	"sort"
+	"strconv"
 	"strings"
 
 	"github.com/lxc/incus/v7/internal/server/instance/drivers/cfg"
@@ -758,8 +759,8 @@ func qemuConsole() []cfg.Section {
 }
 
 type qemuDriveFirmwareOpts struct {
-	roPath    string
-	nvramPath string
+	roPath   string
+	nvramFDs []int
 }
 
 func qemuDriveFirmware(opts *qemuDriveFirmwareOpts) []cfg.Section {
@@ -776,12 +777,24 @@ func qemuDriveFirmware(opts *qemuDriveFirmwareOpts) []cfg.Section {
 	}}
 
 	// Unified firmware images (e.g. AMD SEV) carry their own variable store and have no writable drive.
-	if opts.nvramPath != "" {
+	if len(opts.nvramFDs) > 0 {
+		// The file is passed as an fdset so QEMU duplicates a descriptor rather than re-opening the path.
+		for _, fd := range opts.nvramFDs {
+			sections = append(sections, cfg.Section{
+				Name:    "add-fd",
+				Comment: "Firmware settings file descriptor",
+				Entries: map[string]string{
+					"fd":  strconv.Itoa(fd),
+					"set": "0",
+				},
+			})
+		}
+
 		sections = append(sections, cfg.Section{
 			Name:    "drive",
 			Comment: "Firmware settings (writable)",
 			Entries: map[string]string{
-				"file":   opts.nvramPath,
+				"file":   "/dev/fdset/0",
 				"if":     "pflash",
 				"format": "raw",
 				"unit":   "1",

@@ -865,7 +865,7 @@ func TestQemuConfigTemplates(t *testing.T) {
 			opts     qemuDriveFirmwareOpts
 			expected string
 		}{{
-			qemuDriveFirmwareOpts{"/tmp/ovmf.fd", "/tmp/settings.fd"},
+			qemuDriveFirmwareOpts{"/tmp/ovmf.fd", []int{4, 5}},
 			`# Firmware (read only)
 			[drive]
 			file = "/tmp/ovmf.fd"
@@ -874,14 +874,24 @@ func TestQemuConfigTemplates(t *testing.T) {
 			readonly = "on"
 			unit = "0"
 
+			# Firmware settings file descriptor
+			[add-fd]
+			fd = "4"
+			set = "0"
+
+			# Firmware settings file descriptor
+			[add-fd]
+			fd = "5"
+			set = "0"
+
 			# Firmware settings (writable)
 			[drive]
-			file = "/tmp/settings.fd"
+			file = "/dev/fdset/0"
 			format = "raw"
 			if = "pflash"
 			unit = "1"`,
 		}, {
-			qemuDriveFirmwareOpts{"/tmp/ovmf.amdsev.fd", ""},
+			qemuDriveFirmwareOpts{"/tmp/ovmf.amdsev.fd", nil},
 			`# Firmware (read only)
 			[drive]
 			file = "/tmp/ovmf.amdsev.fd"
