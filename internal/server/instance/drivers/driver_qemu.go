@@ -14704,7 +14704,7 @@ func (d *qemu) selinuxLabelFiles(contextIsNew bool) error {
 		}
 	}
 
-	fileCtx := selinux.InstanceFileContext(ctx, instancetype.VM, d.expandedConfig)
+	fileCtx := selinux.InstanceFileContext(d.state.OS, ctx, instancetype.VM, d.expandedConfig)
 	if fileCtx == "" {
 		return fmt.Errorf("Failed to derive file context from %q", ctx)
 	}
