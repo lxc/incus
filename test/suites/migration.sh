@@ -686,6 +686,25 @@ migration() {
     incus_remote rm -f l1:c1
     incus_remote rm -f l2:c1
 
+    # On btrfs, a snapshot subvolume unknown to the database used to break the copy and leave the target volume behind.
+    if [ "${incus_backend}" = "btrfs" ]; then
+        incus_remote init testimage l1:c1
+        incus_remote snapshot create l1:c1
+        btrfs subvolume snapshot -r "${INCUS_DIR}/storage-pools/${pool}/containers/c1" "${INCUS_DIR}/storage-pools/${pool}/containers-snapshots/c1/orphan"
+
+        incus_remote copy l1:c1 l2:c1
+        [ "$(incus_remote query l2:/1.0/instances/c1/snapshots | jq 'length')" = "1" ]
+
+        incus_remote snapshot create l1:c1
+        incus_remote copy l1:c1 l2:c1 --refresh
+        [ "$(incus_remote query l2:/1.0/instances/c1/snapshots | jq 'length')" = "2" ]
+        [ ! -e "${incus2_dir}/storage-pools/${remote_pool}/containers-snapshots/c1/orphan" ]
+
+        btrfs subvolume delete "${INCUS_DIR}/storage-pools/${pool}/containers-snapshots/c1/orphan"
+        incus_remote rm -f l1:c1
+        incus_remote rm -f l2:c1
+    fi
+
     # On zfs, this used to crash due to a websocket read issue.
     incus launch testimage c1
     incus snapshot create c1
