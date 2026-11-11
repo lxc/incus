@@ -6135,6 +6135,12 @@ func (d *qemu) addRootDriveConfig(qemuDev map[string]any, mountInfo *storagePool
 		return nil, err
 	}
 
+	// Label the metadata image for the confined QEMU process.
+	err = d.selinuxLabelPath(d.localImageMetadataDir())
+	if err != nil {
+		return nil, err
+	}
+
 	// Generate a new device config with the root device path expanded.
 	driveConf := deviceConfig.MountEntryItem{
 		DevName:      rootDriveConf.DevName,
@@ -6375,6 +6381,12 @@ func (d *qemu) addDriveConfig(qemuDev map[string]any, bootIndexes map[string]int
 			return nil, err
 		}
 
+		// Label the metadata image for the confined QEMU process.
+		err = d.selinuxLabelPath(d.localImageMetadataDir())
+		if err != nil {
+			return nil, err
+		}
+
 		if dataFilePath != "" {
 			driveConf.DevPath = qcow2Path
 			driveConf.DataFilePath = dataFilePath
@@ -6426,6 +6438,12 @@ func (d *qemu) addDriveConfig(qemuDev map[string]any, bootIndexes map[string]int
 			// Dependent disks get a metadata image like the root disk so they can hold persistent bitmaps.
 			if d.isDependentDisk(driveConf.DevName) && driveConf.FSType != "iso9660" && !slices.Contains(driveConf.Opts, "ro") {
 				qcow2Path, dataFilePath, err := d.ensureMetadataImage(srcDevPath, driveConf.DevName)
+				if err != nil {
+					return nil, err
+				}
+
+				// Label the metadata image for the confined QEMU process.
+				err = d.selinuxLabelPath(d.localImageMetadataDir())
 				if err != nil {
 					return nil, err
 				}
@@ -14694,7 +14712,25 @@ func (d *qemu) selinuxEnsureContext() (bool, error) {
 
 // selinuxLabelFiles applies SELinux file labels to the VM instance, run and log directories.
 func (d *qemu) selinuxLabelFiles(contextIsNew bool) error {
-	if !d.state.OS.SELinuxEnabled {
+	// The run and log directories are repopulated on every start, so always label them.
+	for _, path := range []string{d.RunPath(), d.LogPath()} {
+		err := d.selinuxLabelPath(path)
+		if err != nil {
+			return err
+		}
+	}
+
+	// Skip the instance directory if not first start and level is explicitly set.
+	if !contextIsNew && d.localConfig["security.selinux.level"] != "" {
+		return nil
+	}
+
+	return d.selinuxLabelPath(d.Path())
+}
+
+// selinuxLabelPath applies the instance SELinux file context to a path when SELinux is enabled.
+func (d *qemu) selinuxLabelPath(path string) error {
+	if !d.state.OS.SELinuxEnabled || !util.PathExists(path) {
 		return nil
 	}
 
@@ -14708,20 +14744,7 @@ func (d *qemu) selinuxLabelFiles(contextIsNew bool) error {
 		return fmt.Errorf("Failed to derive file context from %q", ctx)
 	}
 
-	// The run and log directories are repopulated on every start, so always label them.
-	for _, path := range []string{d.RunPath(), d.LogPath()} {
-		err := selinux.LabelTree(path, fileCtx, "")
-		if err != nil {
-			return err
-		}
-	}
-
-	// Skip the instance directory if not first start and level is explicitly set.
-	if !contextIsNew && d.localConfig["security.selinux.level"] != "" {
-		return nil
-	}
-
-	return selinux.LabelTree(d.Path(), fileCtx, "")
+	return selinux.LabelTree(path, fileCtx, "")
 }
 
 // buildDataFileInfo builds the "data-file" field for block device options.
