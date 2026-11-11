@@ -2130,7 +2130,7 @@ func (d *lxc) selinuxLabelFiles(contextIsNew bool) error {
 		return fmt.Errorf("Invalid security.selinux.label_rootfs value: %q", rootfsMode)
 	}
 
-	fileCtx := selinux.InstanceFileContext(ctx, instancetype.Container, d.expandedConfig)
+	fileCtx := selinux.InstanceFileContext(d.state.OS, ctx, instancetype.Container, d.expandedConfig)
 	if fileCtx == "" {
 		return fmt.Errorf("Failed to derive file context from %q", ctx)
 	}

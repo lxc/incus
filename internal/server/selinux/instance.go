@@ -87,7 +87,7 @@ func InstanceContext(s *sys.OS, instType instancetype.Type, localConfig map[stri
 }
 
 // InstanceFileContext derives a file context from an instance process context and type.
-func InstanceFileContext(processCtx string, instType instancetype.Type, expandedConfig map[string]string) string {
+func InstanceFileContext(s *sys.OS, processCtx string, instType instancetype.Type, expandedConfig map[string]string) string {
 	ctx, err := goselinux.NewContext(processCtx)
 	if err != nil {
 		logger.Warn("Failed to parse process label for file context", logger.Ctx{"label": processCtx, "error": err})
@@ -96,9 +96,9 @@ func InstanceFileContext(processCtx string, instType instancetype.Type, expanded
 
 	seType := expandedConfig["security.selinux.type"]
 	if seType == "" {
-		seType = "container_file_t"
+		seType = s.SELinuxContainerFileType
 		if instType == instancetype.VM {
-			seType = "qemu_image_t"
+			seType = s.SELinuxVMFileType
 		}
 	}
 
