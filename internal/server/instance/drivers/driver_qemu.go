@@ -5066,12 +5066,15 @@ func (d *qemu) generateQemuConfig(bs *qemuBootState, mountInfo *storagePools.Mou
 				return nil, fmt.Errorf("Failed resolving NVRAM file: %w", err)
 			}
 
-			nvRAMFile, err := os.Open(nvRAMPath)
-			if err != nil {
-				return nil, fmt.Errorf("Failed opening NVRAM file: %w", err)
-			}
+			// QEMU opens the drive read-only first and then read-write, so pass one descriptor for each mode.
+			for _, flags := range []int{os.O_RDONLY, os.O_RDWR} {
+				nvRAMFile, err := os.OpenFile(nvRAMPath, flags, 0)
+				if err != nil {
+					return nil, fmt.Errorf("Failed opening NVRAM file: %w", err)
+				}
 
-			driveFirmwareOpts.nvramPath = fmt.Sprintf("/dev/fd/%d", d.addFileDescriptor(fdFiles, nvRAMFile))
+				driveFirmwareOpts.nvramFDs = append(driveFirmwareOpts.nvramFDs, d.addFileDescriptor(fdFiles, nvRAMFile))
+			}
 		}
 
 		conf = append(conf, qemuDriveFirmware(&driveFirmwareOpts)...)
