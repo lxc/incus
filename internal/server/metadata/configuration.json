@@ -3533,7 +3533,7 @@
 					{
 						"security.selinux.domain": {
 							"condition": "container or virtual machine",
-							"defaultdesc": "auto-detected (`container_init_t` for containers, `qemu_t` for VMs)",
+							"defaultdesc": "auto-detected (`container_init_t` or `spc_t` for containers, `qemu_t` or `svirt_t` for VMs)",
 							"liveupdate": "no",
 							"longdesc": "Override the SELinux process domain for the instance.",
 							"shortdesc": "SELinux process domain override",
@@ -3563,7 +3563,7 @@
 					{
 						"security.selinux.type": {
 							"condition": "container or virtual machine",
-							"defaultdesc": "auto-detected (`container_file_t` for containers, `qemu_image_t` for VMs)",
+							"defaultdesc": "auto-detected (`container_file_t` for containers, `qemu_image_t` or `svirt_image_t` for VMs)",
 							"liveupdate": "no",
 							"longdesc": "Override the SELinux file type used for labeling instance storage.",
 							"shortdesc": "SELinux file type override",
