@@ -464,9 +464,14 @@ func httpsIncus(ctx context.Context, requestURL string, args *ConnectionArgs) (I
 
 	// Test the connection and seed the server information
 	if !args.SkipGetServer {
-		_, _, err := server.GetServer()
+		serverStatus, _, err := server.GetServer()
 		if err != nil {
 			return nil, err
+		}
+
+		// Record the server certificate when the connection was validated through a CA.
+		if server.httpCertificate == "" {
+			server.httpCertificate = serverStatus.Environment.Certificate
 		}
 	}
 
