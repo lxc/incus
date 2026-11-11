@@ -30,6 +30,7 @@ import (
 	"github.com/lxc/incus/v7/internal/server/dnsmasq/dhcpalloc"
 	firewallDrivers "github.com/lxc/incus/v7/internal/server/firewall/drivers"
 	"github.com/lxc/incus/v7/internal/server/ip"
+	"github.com/lxc/incus/v7/internal/server/locking"
 	"github.com/lxc/incus/v7/internal/server/network/acl"
 	addressset "github.com/lxc/incus/v7/internal/server/network/address-set"
 	"github.com/lxc/incus/v7/internal/server/project"
@@ -1046,6 +1047,14 @@ func (n *bridge) setup(oldConfig map[string]string) error {
 		return nil
 	}
 
+	// Concurrent setups would race on stopping and starting dnsmasq.
+	unlock, err := locking.Lock(context.TODO(), fmt.Sprintf("network.bridge.%s", n.name))
+	if err != nil {
+		return err
+	}
+
+	defer unlock()
+
 	n.logger.Debug("Setting up network")
 
 	reverter := revert.New()
@@ -1058,8 +1067,6 @@ func (n *bridge) setup(oldConfig map[string]string) error {
 			return err
 		}
 	}
-
-	var err error
 
 	// Build up the bridge interface's settings.
 	bridge := ip.Bridge{
