@@ -2383,6 +2383,15 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 		bs.MemoryTopology = memoryTopology
 	}
 
+	// Ensure SELinux context is generated and persisted.
+	contextIsNew, err := d.selinuxEnsureContext()
+	if err != nil {
+		op.Done(err)
+		return err
+	}
+
+	seCtx := d.localConfig["volatile.selinux.context"]
+
 	// Generate the QEMU configuration.
 	monHooks, err := d.generateQemuConfig(bs, mountInfo, qemuBus, vsockFD, devConfs, &fdFiles)
 	if err != nil {
@@ -2506,14 +2515,21 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 
 	// Attempt to drop privileges (doesn't work when restoring state).
 	if !stateful && d.state.OS.UnprivUser != "" {
-		qemuVer, _ := d.version()
-		qemuVer91, _ := version.NewDottedVersion("9.1.0")
+		qemuUID := int(d.state.OS.UnprivUID)
 
-		// Since QEMU 9.1 the parameter `runas` has been marked as deprecated.
-		if qemuVer != nil && qemuVer.Compare(qemuVer91) >= 0 {
-			qemuArgs = append(qemuArgs, "-run-with", fmt.Sprintf("user=%s", d.state.OS.UnprivUser))
+		// SELinux policies don't let the confined QEMU domain switch user, the domain confines it instead.
+		if seCtx != "" {
+			qemuUID = 0
 		} else {
-			qemuArgs = append(qemuArgs, "-runas", d.state.OS.UnprivUser)
+			qemuVer, _ := d.version()
+			qemuVer91, _ := version.NewDottedVersion("9.1.0")
+
+			// Since QEMU 9.1 the parameter `runas` has been marked as deprecated.
+			if qemuVer != nil && qemuVer.Compare(qemuVer91) >= 0 {
+				qemuArgs = append(qemuArgs, "-run-with", fmt.Sprintf("user=%s", d.state.OS.UnprivUser))
+			} else {
+				qemuArgs = append(qemuArgs, "-runas", d.state.OS.UnprivUser)
+			}
 		}
 
 		nvRAMPath, _ := d.nvramRunPath()
@@ -2521,7 +2537,7 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 			// Ensure UEFI nvram file is writable by the QEMU process.
 			// This is needed when doing stateful snapshots because the QEMU process will reopen the
 			// file for writing.
-			err = os.Chown(nvRAMPath, int(d.state.OS.UnprivUID), -1)
+			err = os.Chown(nvRAMPath, qemuUID, -1)
 			if err != nil {
 				op.Done(err)
 				return err
@@ -2535,7 +2551,7 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 		}
 
 		// Change ownership of main instance directory.
-		err = os.Chown(d.Path(), int(d.state.OS.UnprivUID), -1)
+		err = os.Chown(d.Path(), qemuUID, -1)
 		if err != nil {
 			op.Done(err)
 			return fmt.Errorf("Failed to chown instance path: %w", err)
@@ -2554,7 +2570,7 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 					return err
 				}
 
-				err = os.Chown(path, int(d.state.OS.UnprivUID), -1)
+				err = os.Chown(path, qemuUID, -1)
 				if err != nil {
 					return err
 				}
@@ -2626,13 +2642,6 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 		return err
 	}
 
-	// Ensure SELinux context is generated and persisted.
-	contextIsNew, err := d.selinuxEnsureContext()
-	if err != nil {
-		op.Done(err)
-		return err
-	}
-
 	// Label the files QEMU needs before it's started.
 	err = d.selinuxLabelFiles(contextIsNew)
 	if err != nil {
@@ -2667,7 +2676,6 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 		forkQemuCmd = append(forkQemuCmd, fmt.Sprintf("fd=%d", 3+i))
 	}
 
-	seCtx := d.localConfig["volatile.selinux.context"]
 	if seCtx != "" {
 		forkQemuCmd = append(forkQemuCmd, "secontext="+seCtx)
 	}
