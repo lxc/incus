@@ -24,6 +24,7 @@ import (
 	"github.com/lxc/incus/v7/shared/idmap"
 	"github.com/lxc/incus/v7/shared/ioprogress"
 	"github.com/lxc/incus/v7/shared/osinfo"
+	"github.com/lxc/incus/v7/shared/revert"
 	"github.com/lxc/incus/v7/shared/uefi"
 )
 
@@ -112,6 +113,8 @@ type Instance interface {
 	CanLiveMigrate() bool
 	CreateQcow2Snapshot(diskPath string, devName string, snapshotName string, backingFilename string, stateful bool) error
 	DeleteQcow2Snapshot(devName string, snapshotIndex int, backingFilename string) error
+	PrepareQcow2Snapshot(diskPath string, devName string) (Qcow2SnapshotSwitch, revert.Hook, error)
+	SwitchQcow2Snapshots(switches []Qcow2SnapshotSwitch) error
 	ExportQcow2Block(diskName string, blockIndex int) (func(), string, error)
 	ConnectNBD(diskName string, diskSize int64, writable bool) (net.Conn, func(), error)
 	ConnectNBDAllDisks(reuse bool) (net.Conn, func(), error)
@@ -244,6 +247,12 @@ type CriuMigrationArgs struct {
 	PreDumpDir   string
 	Features     liblxc.CriuFeatures
 	Op           *operationlock.InstanceOperation
+}
+
+// Qcow2SnapshotSwitch is a qcow2 overlay attached to a running instance, waiting to go on top of its disk.
+type Qcow2SnapshotSwitch struct {
+	Node    string
+	Overlay string
 }
 
 // Info represents information about an instance driver.

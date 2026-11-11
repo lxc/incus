@@ -13616,34 +13616,28 @@ func (d *qemu) GuestOS() osinfo.OSType {
 	return osType
 }
 
-// CreateQcow2Snapshot creates a qcow2 snapshot for a running instance.
-func (d *qemu) CreateQcow2Snapshot(devPath string, devName string, snapshotName string, backingFilename string, stateful bool) error {
+// attachQcow2Overlay adds the qcow2 image at devPath as the next overlay node of a disk, without a backing node.
+// Returns the current top node of the disk, the overlay node and a hook removing the overlay again.
+func (d *qemu) attachQcow2Overlay(monitor *qmp.Monitor, devPath string, devNode string) (string, string, revert.Hook, error) {
 	reverter := revert.New()
 	defer reverter.Fail()
 
-	monitor, err := d.qmpConnect()
-	if err != nil {
-		return err
-	}
-
-	devName = d.blockNodeName(linux.PathNameEncode(devName))
-
 	// Select all block devices related to a qcow2 backing chain.
-	blockDevs, err := d.fetchBlockDeviceChain(monitor, devName)
+	blockDevs, err := d.fetchBlockDeviceChain(monitor, devNode)
 	if err != nil {
-		return err
+		return "", "", nil, err
 	}
 
 	// Fetch the current maximum overlay index.
-	overlayNodeIndex := currentQcow2OverlayIndex(blockDevs, devName)
-	nextOverlayName := qcow2OverlayName(devName, overlayNodeIndex+1)
+	overlayNodeIndex := currentQcow2OverlayIndex(blockDevs, devNode)
+	nextOverlayName := qcow2OverlayName(devNode, overlayNodeIndex+1)
 
 	currentRootNode := blockDevs[len(blockDevs)-1]
 
 	// Open the overlay with the same caching as the layer it goes on top of.
 	protocol, err := monitor.GetBlockNodeProtocol(currentRootNode)
 	if err != nil {
-		return err
+		return "", "", nil, err
 	}
 
 	aioMode := "threads"
@@ -13653,21 +13647,21 @@ func (d *qemu) CreateQcow2Snapshot(devPath string, devName string, snapshotName 
 
 	f, err := os.OpenFile(devPath, driveOpenFlags(false, protocol.Direct), 0)
 	if err != nil {
-		return fmt.Errorf("Failed opening file descriptor for disk device %s: %w", devPath, err)
+		return "", "", nil, fmt.Errorf("Failed opening file descriptor for disk device %s: %w", devPath, err)
 	}
 
 	defer logger.WarnOnError(f.Close, "Failed to close file")
 
 	info, err := monitor.SendFileWithFDSet(nextOverlayName, f, false)
 	if err != nil {
-		return fmt.Errorf("Failed sending file descriptor of %q for disk device: %w", f.Name(), err)
+		return "", "", nil, fmt.Errorf("Failed sending file descriptor of %q for disk device: %w", f.Name(), err)
 	}
 
 	reverter.Add(func() { _ = monitor.RemoveFDFromFDSet(nextOverlayName) })
 
 	l2CacheSize, err := d.qcow2L2CacheSizeFromFile(devPath)
 	if err != nil {
-		return err
+		return "", "", nil, err
 	}
 
 	blockDev := map[string]any{
@@ -13676,6 +13670,7 @@ func (d *qemu) CreateQcow2Snapshot(devPath string, devName string, snapshotName 
 		"discard-no-unref": true,    // Keep discarded clusters allocated so that fragmentation can't grow the image.
 		"node-name":        nextOverlayName,
 		"read-only":        false,
+		"backing":          nil, // The current top node becomes the backing node when the overlay goes on top.
 		"file": map[string]any{
 			"driver":   "host_device",
 			"filename": fmt.Sprintf("/dev/fdset/%d", info.ID),
@@ -13694,10 +13689,35 @@ func (d *qemu) CreateQcow2Snapshot(devPath string, devName string, snapshotName 
 	// Add overlay block dev.
 	err = monitor.AddBlockDevice(blockDev, nil, false)
 	if err != nil {
-		return fmt.Errorf("Fail to add block device: %w", err)
+		return "", "", nil, fmt.Errorf("Fail to add block device: %w", err)
 	}
 
 	reverter.Add(func() { _ = monitor.RemoveBlockDevice(nextOverlayName) })
+
+	cleanup := reverter.Clone().Fail
+	reverter.Success()
+
+	return currentRootNode, nextOverlayName, cleanup, nil
+}
+
+// CreateQcow2Snapshot creates a qcow2 snapshot for a running instance.
+func (d *qemu) CreateQcow2Snapshot(devPath string, devName string, snapshotName string, backingFilename string, stateful bool) error {
+	reverter := revert.New()
+	defer reverter.Fail()
+
+	monitor, err := d.qmpConnect()
+	if err != nil {
+		return err
+	}
+
+	devName = d.blockNodeName(linux.PathNameEncode(devName))
+
+	currentRootNode, nextOverlayName, cleanup, err := d.attachQcow2Overlay(monitor, devPath, devName)
+	if err != nil {
+		return err
+	}
+
+	reverter.Add(cleanup)
 
 	// Take a snapshot of the root disk and redirect writes to the snapshot disk.
 	err = monitor.BlockDevSnapshot(currentRootNode, nextOverlayName)
@@ -13723,6 +13743,46 @@ func (d *qemu) CreateQcow2Snapshot(devPath string, devName string, snapshotName 
 	}
 
 	reverter.Success()
+	return nil
+}
+
+// PrepareQcow2Snapshot attaches the qcow2 image at devPath, which must already record its backing file,
+// for SwitchQcow2Snapshots to put on top of the disk.
+func (d *qemu) PrepareQcow2Snapshot(devPath string, devName string) (instance.Qcow2SnapshotSwitch, revert.Hook, error) {
+	monitor, err := d.qmpConnect()
+	if err != nil {
+		return instance.Qcow2SnapshotSwitch{}, nil, err
+	}
+
+	currentRootNode, nextOverlayName, cleanup, err := d.attachQcow2Overlay(monitor, devPath, d.blockNodeName(linux.PathNameEncode(devName)))
+	if err != nil {
+		return instance.Qcow2SnapshotSwitch{}, nil, err
+	}
+
+	return instance.Qcow2SnapshotSwitch{Node: currentRootNode, Overlay: nextOverlayName}, cleanup, nil
+}
+
+// SwitchQcow2Snapshots puts prepared overlays on top of their disks in a single transaction,
+// so all disks get snapshotted at the same point in time without pausing the instance.
+func (d *qemu) SwitchQcow2Snapshots(switches []instance.Qcow2SnapshotSwitch) error {
+	monitor, err := d.qmpConnect()
+	if err != nil {
+		return err
+	}
+
+	actions := make([]qmp.TransactionAction, 0, len(switches))
+	for _, sw := range switches {
+		actions = append(actions, qmp.TransactionAction{
+			Type: "blockdev-snapshot",
+			Data: map[string]any{"node": sw.Node, "overlay": sw.Overlay},
+		})
+	}
+
+	err = monitor.RunTransaction(actions)
+	if err != nil {
+		return fmt.Errorf("Failed taking storage snapshots: %w", err)
+	}
+
 	return nil
 }
 
