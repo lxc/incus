@@ -40,7 +40,7 @@ const lvmSnapshotSeparator = "-"
 const lvmEscapedHyphen = "--"
 
 // lvmPermanentErrors are LVM failures that retrying can't fix.
-var lvmPermanentErrors = []string{"insufficient free space", "already exists"}
+var lvmPermanentErrors = []string{"insufficient free space", "already exists", "failed to find logical volume"}
 
 // lvmTryRunCommand runs an LVM command, retrying on failures that may be transient.
 func lvmTryRunCommand(name string, args ...string) (string, error) {
@@ -731,14 +731,14 @@ func (d *lvm) acquireExclusive(vol Volume) (func(), error) {
 	lvmActivation.Lock()
 	defer lvmActivation.Unlock()
 
-	_, err := subprocess.TryRunCommand("lvchange", "--activate", "ey", "-y", "--ignoreactivationskip", volDevPath)
+	_, err := lvmTryRunCommand("lvchange", "--activate", "ey", "-y", "--ignoreactivationskip", volDevPath)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to acquire exclusive lock on LVM logical volume %q: %w", volDevPath, err)
 	}
 
 	return func() {
 		if vol.ContentType() == ContentTypeBlock && vol.ExpandedConfig("block.type") == BlockVolumeTypeQcow2 {
-			_, _ = subprocess.TryRunCommand("lvchange", "--activate", "sy", "--ignoreactivationskip", volDevPath)
+			_, _ = lvmTryRunCommand("lvchange", "--activate", "sy", "--ignoreactivationskip", volDevPath)
 		}
 	}, nil
 }
