@@ -804,6 +804,11 @@ func (d *btrfs) createVolumeFromMigrationOptimized(vol Volume, conn io.ReadWrite
 			return err
 		}
 
+		// Remove the received subvolumes on failure so that a retry doesn't find them.
+		if !volTargetArgs.Refresh {
+			reverter.Add(func() { _ = d.deleteSubvolume(op.dest, true) })
+		}
+
 		// Restore the "Received UUID" field which was cleared when making the subvolume
 		// read-write, as it's needed to resolve parents of incremental streams during
 		// optimized refresh (error: "cannot find parent subvolume").
