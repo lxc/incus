@@ -591,6 +591,11 @@ func (d *btrfs) CreateVolumeFromMigration(vol Volume, conn io.ReadWriteCloser, v
 			return err
 		}
 
+		negotiatedSnapshots := make([]string, 0, len(volTargetArgs.Snapshots))
+		for _, snapshot := range volTargetArgs.Snapshots {
+			negotiatedSnapshots = append(negotiatedSnapshots, snapshot.GetName())
+		}
+
 		// Reset list of snapshots which are to be received.
 		volTargetArgs.Snapshots = []*migration.Snapshot{}
 
@@ -613,6 +618,11 @@ func (d *btrfs) CreateVolumeFromMigration(vol Volume, conn io.ReadWriteCloser, v
 			receivedUUID, ok := localSubvolumes[migrationSnap.Snapshot]
 			// Skip this snapshot as it exists on both the source and target, and has the same GUID.
 			if ok && receivedUUID == migrationSnap.UUID {
+				continue
+			}
+
+			// Skip snapshots that weren't negotiated and aren't on the target, the source may describe subvolumes unknown to its database.
+			if !ok && migrationSnap.Snapshot != "" && !slices.Contains(negotiatedSnapshots, migrationSnap.Snapshot) {
 				continue
 			}
 
@@ -642,7 +652,14 @@ func (d *btrfs) CreateVolumeFromMigration(vol Volume, conn io.ReadWriteCloser, v
 
 		d.logger.Debug("Sent BTRFS migration meta data header", logger.Ctx{"name": vol.name, "header": migrationHeader})
 	} else {
-		syncSubvolumes = migrationHeader.Subvolumes
+		// Only keep the negotiated snapshots, the source may describe subvolumes unknown to its database.
+		for _, subVol := range migrationHeader.Subvolumes {
+			if subVol.Snapshot != "" && !slices.ContainsFunc(volTargetArgs.Snapshots, func(snapshot *migration.Snapshot) bool { return snapshot.GetName() == subVol.Snapshot }) {
+				continue
+			}
+
+			syncSubvolumes = append(syncSubvolumes, subVol)
+		}
 	}
 
 	return d.createVolumeFromMigrationOptimized(vol, conn, volTargetArgs, preFiller, syncSubvolumes, op)
@@ -1510,6 +1527,11 @@ func (d *btrfs) MigrateVolume(vol Volume, conn io.ReadWriteCloser, volSrcArgs *l
 		snapshots, err = d.volumeSnapshotsSorted(vol, op)
 		if err != nil {
 			return err
+		}
+
+		// Only describe the negotiated snapshots, the pool may hold subvolumes the database doesn't know about.
+		if !volSrcArgs.Refresh {
+			snapshots = slices.DeleteFunc(snapshots, func(snap string) bool { return !slices.Contains(volSrcArgs.Snapshots, snap) })
 		}
 	}
 
