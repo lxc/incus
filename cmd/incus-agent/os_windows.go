@@ -720,6 +720,11 @@ func osExitStatus(err error) (int, error) {
 }
 
 func osSetEnv(post *api.InstanceExecPost, env map[string]string) {
+	// Drop the Linux defaults that the daemon adds for all instances.
+	for _, key := range []string{"HOME", "USER", "LANG", "TERM"} {
+		delete(env, key)
+	}
+
 	// SystemRoot is already set by default
 	env["SystemDrive"] = "C:"
 
