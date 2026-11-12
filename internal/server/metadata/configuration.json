@@ -2635,6 +2635,17 @@
 						}
 					}
 				]
+			},
+			"volume": {
+				"keys": [
+					{
+						"volume.size_hint": {
+							"longdesc": "Size needed to unpack a container image. On block backed storage pools, it is used as the size of\nthe cached image volume when it is smaller than the pool's `volume.size` (or the default size).\nIt is ignored if invalid or smaller than the image file, and doesn't affect instance volume sizes.",
+							"shortdesc": "Size of the cached image volume for container images on block backed storage pools",
+							"type": "string"
+						}
+					}
+				]
 			}
 		},
 		"instance": {

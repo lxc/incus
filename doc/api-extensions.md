@@ -3619,3 +3619,7 @@ This adds a new `variant` configuration key to both `sriov` networks and NICs, a
 This adds support for PCIe resizable BARs to the `pci` and `gpu` (physical) devices of virtual machines.
 
 The new `rebar.<N>.size` configuration keys set the size of BAR `N` on the host before the device is passed to the VM, with the original size restored when the instance stops.
+
+## `image_volume_size_hint`
+
+This adds a new image property, `volume.size_hint`, which sets the size of the cached image volume of a container image on block backed storage pools when it's smaller than the pool's `volume.size`.

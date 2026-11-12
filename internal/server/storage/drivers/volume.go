@@ -652,6 +652,41 @@ func (v Volume) ConfigSize() string {
 	return size
 }
 
+// ConfigSizeFromHint returns the size to use for a new image volume given the image's size hint.
+// The hint is only used for block backed filesystem volumes and when it's smaller than ConfigSize.
+// An error is returned if the hint is invalid or smaller than minSizeBytes.
+func (v Volume) ConfigSizeFromHint(sizeHint string, minSizeBytes int64) (string, error) {
+	size := v.ConfigSize()
+
+	if sizeHint == "" || v.contentType != ContentTypeFS || !v.IsBlockBacked() {
+		return size, nil
+	}
+
+	hintBytes, err := units.ParseByteSizeString(sizeHint)
+	if err != nil {
+		return "", fmt.Errorf("Invalid size hint %q: %w", sizeHint, err)
+	}
+
+	if hintBytes <= 0 {
+		return "", fmt.Errorf("Invalid size hint %q: Must be greater than zero", sizeHint)
+	}
+
+	if hintBytes < minSizeBytes {
+		return "", fmt.Errorf("Invalid size hint %q: Smaller than the image (%d bytes)", sizeHint, minSizeBytes)
+	}
+
+	sizeBytes, err := units.ParseByteSizeString(size)
+	if err != nil {
+		return "", err
+	}
+
+	if hintBytes >= sizeBytes {
+		return size, nil
+	}
+
+	return fmt.Sprintf("%d", hintBytes), nil
+}
+
 // ConfigSizeFromSource derives the volume size to use for a new volume when copying from a source volume.
 // Where possible (if the source volume has a volatile.rootfs.size property), it checks that the source volume
 // isn't larger than the volume's "size" setting and the pool's "volume.size" setting.

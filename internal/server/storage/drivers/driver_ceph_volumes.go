@@ -78,17 +78,14 @@ func (d *ceph) CreateVolume(vol Volume, filler *VolumeFiller, op *operations.Ope
 		if volExists {
 			canRestore := true
 
-			// Check if the cached image volume is larger than the current pool volume.size setting
-			// (if so we won't be able to resize the snapshot to that the smaller size later).
+			// Check if the cached image volume is larger than the size the new image volume will be created
+			// with (if so we won't be able to resize the snapshot to that the smaller size later).
 			volSizeBytes, err := d.getVolumeSize(d.getRBDVolumeName(deletedVol, "", true))
 			if err != nil {
 				return err
 			}
 
-			poolVolSize := DefaultBlockSize
-			if vol.poolConfig["volume.size"] != "" {
-				poolVolSize = vol.poolConfig["volume.size"]
-			}
+			poolVolSize := vol.ConfigSize()
 
 			poolVolSizeBytes, err := units.ParseByteSizeString(poolVolSize)
 			if err != nil {

@@ -125,3 +125,66 @@ func Test_Volume_ConfigSizeFromSource(t *testing.T) {
 		assert.Equal(t, test.err, err)
 	}
 }
+
+// Test Volume_ConfigSizeFromHint.
+func Test_Volume_ConfigSizeFromHint(t *testing.T) {
+	nonBlockBackedDriver := dir{}
+	blockBackedDriver := lvm{}
+
+	tests := []struct {
+		vol     Volume
+		hint    string
+		minSize int64
+		err     bool
+		size    string
+	}{
+		{
+			// Check the pool's volume.size is used when there is no hint.
+			vol:  Volume{driver: &blockBackedDriver, volType: VolumeTypeImage, contentType: ContentTypeFS, poolConfig: map[string]string{"volume.size": "5GiB"}},
+			size: "5GiB",
+		},
+		{
+			// Check a hint smaller than the default block size is used.
+			vol:  Volume{driver: &blockBackedDriver, volType: VolumeTypeImage, contentType: ContentTypeFS},
+			hint: "1GiB",
+			size: "1073741824",
+		},
+		{
+			// Check the pool's volume.size is used when it's smaller than the hint.
+			vol:  Volume{driver: &blockBackedDriver, volType: VolumeTypeImage, contentType: ContentTypeFS, poolConfig: map[string]string{"volume.size": "1GiB"}},
+			hint: "2GiB",
+			size: "1GiB",
+		},
+		{
+			// Check a cached image volume sized from the pool is reduced to the hint on reuse.
+			vol:  Volume{driver: &blockBackedDriver, volType: VolumeTypeImage, contentType: ContentTypeFS, config: map[string]string{"block.filesystem": "ext4", "size": "5GiB"}, poolConfig: map[string]string{"volume.size": "5GiB"}},
+			hint: "1GiB",
+			size: "1073741824",
+		},
+		{
+			// Check the hint is ignored on non block backed pools.
+			vol:  Volume{driver: &nonBlockBackedDriver, volType: VolumeTypeImage, contentType: ContentTypeFS, poolConfig: map[string]string{"volume.size": "5GiB"}},
+			hint: "1GiB",
+			size: "5GiB",
+		},
+		{
+			// Check a malformed hint is rejected.
+			vol:  Volume{driver: &blockBackedDriver, volType: VolumeTypeImage, contentType: ContentTypeFS},
+			hint: "abc",
+			err:  true,
+		},
+		{
+			// Check a hint smaller than the image is rejected.
+			vol:     Volume{driver: &blockBackedDriver, volType: VolumeTypeImage, contentType: ContentTypeFS},
+			hint:    "1MiB",
+			minSize: 1024*1024 + 1,
+			err:     true,
+		},
+	}
+
+	for _, test := range tests {
+		size, err := test.vol.ConfigSizeFromHint(test.hint, test.minSize)
+		assert.Equal(t, test.size, size)
+		assert.Equal(t, test.err, err != nil)
+	}
+}

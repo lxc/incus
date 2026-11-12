@@ -2318,6 +2318,16 @@ The custom policy routing table ID to add IPv6 static routes to (in addition to 
 ```
 
 <!-- config group image-requirements end -->
+<!-- config group image-volume start -->
+```{config:option} volume.size_hint image-volume
+:shortdesc: "Size of the cached image volume for container images on block backed storage pools"
+:type: "string"
+Size needed to unpack a container image. On block backed storage pools, it is used as the size of
+the cached image volume when it is smaller than the pool's `volume.size` (or the default size).
+It is ignored if invalid or smaller than the image file, and doesn't affect instance volume sizes.
+```
+
+<!-- config group image-volume end -->
 <!-- config group instance-boot start -->
 ```{config:option} boot.autorestart instance-boot
 :liveupdate: "no"
