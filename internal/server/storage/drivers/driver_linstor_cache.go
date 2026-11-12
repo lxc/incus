@@ -62,8 +62,14 @@ func (d *linstor) getCachedVolumeUsage(resourceDefinitionName string, vol Volume
 		ctx, cancel := d.queryContext()
 		defer cancel()
 
-		// Any resource listing makes the controller poll the satellites, so fetch everything in one go.
-		resources, err := linstor.Client.Resources.GetResourceView(ctx, &linstorClient.ListOpts{})
+		// Any resource listing makes the controller poll the satellites, so concurrent lookups share
+		// a full view while a lone lookup only fetches its own resource.
+		opts := &linstorClient.ListOpts{}
+		if len(names) == 1 {
+			opts.Resource = names
+		}
+
+		resources, err := linstor.Client.Resources.GetResourceView(ctx, opts)
 		if err != nil {
 			return nil, err
 		}
