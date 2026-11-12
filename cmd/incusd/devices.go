@@ -7,10 +7,12 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"runtime"
 	"slices"
 	"sort"
 	"strconv"
 	"strings"
+	"sync"
 	"unsafe"
 
 	"golang.org/x/sys/unix"
@@ -680,13 +682,28 @@ func deviceEventListener(stateFunc func() *state.State) {
 func devicesRegister(instances []instance.Instance) {
 	logger.Debug("Registering running instances")
 
-	for _, inst := range instances {
-		if !inst.IsRunning() { // For VMs this will also trigger a connection to the QMP socket if running.
-			continue
-		}
+	// Checking a VM reconnects its monitor, so spread the instances over workers to keep startup short.
+	queue := make(chan instance.Instance)
+	wg := sync.WaitGroup{}
 
-		inst.RegisterDevices()
+	for range min(len(instances), max(runtime.NumCPU()/2, 1)) {
+		wg.Go(func() {
+			for inst := range queue {
+				if !inst.IsRunning() { // For VMs this will also trigger a connection to the QMP socket if running.
+					continue
+				}
+
+				inst.RegisterDevices()
+			}
+		})
 	}
+
+	for _, inst := range instances {
+		queue <- inst
+	}
+
+	close(queue)
+	wg.Wait()
 }
 
 // devicesRegisterPools re-registers the disk devices of running instances that use the given pools.
