@@ -27,6 +27,7 @@ type cmdAdminInit struct {
 
 	flagNetworkAddress  string
 	flagNetworkPort     int
+	flagNetworkEVPN     bool
 	flagStorageBackend  string
 	flagStorageDevice   string
 	flagStorageLoopSize int
@@ -55,6 +56,7 @@ func (c *cmdAdminInit) command() *cobra.Command {
 
 	cli.AddStringFlag(cmd.Flags(), &c.flagNetworkAddress, "network-address", "", "", i18n.G("Address to bind to (default: none)"))
 	cli.AddIntFlag(cmd.Flags(), &c.flagNetworkPort, "network-port", fmt.Sprintf(i18n.G("Port to bind to (default: %d)"), ports.HTTPSDefaultPort), -1)
+	cli.AddBoolFlag(cmd.Flags(), &c.flagNetworkEVPN, "network-evpn", i18n.G("Create an EVPN network"))
 	cli.AddStringFlag(cmd.Flags(), &c.flagStorageBackend, "storage-backend", "", "", i18n.G("Storage backend to use (btrfs, dir, lvm or zfs, default: dir)"))
 	cli.AddStringFlag(cmd.Flags(), &c.flagStorageDevice, "storage-create-device", "", "", i18n.G("Setup device based storage using DEVICE"))
 	cli.AddIntFlag(cmd.Flags(), &c.flagStorageLoopSize, "storage-create-loop", i18n.G("Setup loop based storage with SIZE in GiB"), -1)
@@ -82,7 +84,7 @@ func (c *cmdAdminInit) run(cmd *cobra.Command, args []string) error {
 		return errors.New(i18n.G("Can't use --minimal and --auto together"))
 	}
 
-	if !c.flagAuto && (c.flagNetworkAddress != "" || c.flagNetworkPort != -1 ||
+	if !c.flagAuto && (c.flagNetworkAddress != "" || c.flagNetworkPort != -1 || c.flagNetworkEVPN ||
 		c.flagStorageBackend != "" || c.flagStorageDevice != "" ||
 		c.flagStorageLoopSize != -1 || c.flagStoragePool != "") {
 		return errors.New(i18n.G("Configuration flags require --auto"))
@@ -90,7 +92,7 @@ func (c *cmdAdminInit) run(cmd *cobra.Command, args []string) error {
 
 	if c.flagDump && (c.flagAuto || c.flagMinimal ||
 		c.flagPreseed || c.flagNetworkAddress != "" ||
-		c.flagNetworkPort != -1 || c.flagStorageBackend != "" ||
+		c.flagNetworkPort != -1 || c.flagNetworkEVPN || c.flagStorageBackend != "" ||
 		c.flagStorageDevice != "" || c.flagStorageLoopSize != -1 ||
 		c.flagStoragePool != "") {
 		return errors.New(i18n.G("Can't use --dump with other flags"))
