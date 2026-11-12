@@ -10099,6 +10099,16 @@ func (d *lxc) DeleteQcow2Snapshot(devName string, snapshotIndex int, backingFile
 	return instance.ErrNotImplemented
 }
 
+// PrepareQcow2Snapshot attaches a qcow2 overlay to a running instance. Not supported by containers.
+func (d *lxc) PrepareQcow2Snapshot(diskPath string, devName string) (instance.Qcow2SnapshotSwitch, revert.Hook, error) {
+	return instance.Qcow2SnapshotSwitch{}, nil, instance.ErrNotImplemented
+}
+
+// SwitchQcow2Snapshots puts prepared qcow2 overlays on top of their disks. Not supported by containers.
+func (d *lxc) SwitchQcow2Snapshots(switches []instance.Qcow2SnapshotSwitch) error {
+	return instance.ErrNotImplemented
+}
+
 // ExportQcow2Block exports a qcow2 block device. Not supported by containers.
 func (d *lxc) ExportQcow2Block(diskName string, diskIndex int) (func(), string, error) {
 	return nil, "", instance.ErrNotImplemented

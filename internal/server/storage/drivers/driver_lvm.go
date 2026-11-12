@@ -838,7 +838,7 @@ func (d *lvm) Update(changedConfig map[string]string) error {
 	}
 
 	if changedConfig["lvm.thinpool_name"] != "" {
-		_, err := subprocess.TryRunCommand("lvrename", d.config["lvm.vg_name"], d.thinpoolName(), changedConfig["lvm.thinpool_name"])
+		_, err := lvmTryRunCommand("lvrename", d.config["lvm.vg_name"], d.thinpoolName(), changedConfig["lvm.thinpool_name"])
 		if err != nil {
 			return fmt.Errorf("Error renaming LVM thin pool from %q to %q: %w", d.thinpoolName(), changedConfig["lvm.thinpool_name"], err)
 		}

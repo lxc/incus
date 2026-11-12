@@ -80,6 +80,17 @@ func Qcow2Create(path string, backingPath string, size int64) error {
 	return nil
 }
 
+// Qcow2CreateOverlay creates a qcow2 image recording backingPath as its backing file without opening it,
+// for use while the backing image is still being written by a running instance.
+func Qcow2CreateOverlay(path string, backingPath string, size int64) error {
+	_, err := subprocess.RunCommand("qemu-img", "create", "-f", "qcow2", "-o", "lazy_refcounts=on", "-u", "-b", backingPath, "-F", "qcow2", path, fmt.Sprintf("%db", size))
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // Qcow2EnableLazyRefcounts turns on lazy refcounts on an existing qcow2 image, the image must not be in use.
 func Qcow2EnableLazyRefcounts(path string) error {
 	_, err := subprocess.RunCommand("qemu-img", "amend", "-f", "qcow2", "-o", "lazy_refcounts=on", path)

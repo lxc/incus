@@ -2074,7 +2074,7 @@ func (d *lvm) RestoreVolume(vol Volume, snapshotName string, op *operations.Oper
 
 		// Only resize when needed as newer LVM fails to grow snapshots already at full CoW capacity.
 		if needsGrow {
-			_, err = subprocess.TryRunCommand("lvresize", "-l", "+100%ORIGIN", "-f", snapLVPath)
+			_, err = lvmTryRunCommand("lvresize", "-l", "+100%ORIGIN", "-f", snapLVPath)
 			if err != nil {
 				return err
 			}
@@ -2090,7 +2090,7 @@ func (d *lvm) RestoreVolume(vol Volume, snapshotName string, op *operations.Oper
 
 		// Only resize when needed as newer LVM fails to grow snapshots already at full CoW capacity.
 		if needsGrow {
-			_, err = subprocess.TryRunCommand("lvresize", "-l", "+100%ORIGIN", "-f", snapLVPath)
+			_, err = lvmTryRunCommand("lvresize", "-l", "+100%ORIGIN", "-f", snapLVPath)
 			if err != nil {
 				return err
 			}
