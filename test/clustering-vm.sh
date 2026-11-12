@@ -261,6 +261,34 @@ check_following_volume() {
     incus storage volume list "${REMOTE}:local" --format csv --columns nL | grep -Fx "vol3,${1}"
 }
 
+# lv_locked checks that the given member can't activate a logical volume of the shared pool, even shared.
+lv_locked() {
+    if incus exec "${1}" -- lvchange --activate sy --ignoreactivationskip "shared/${2}"; then
+        incus exec "${1}" -- lvchange --activate n --ignoreactivationskip "shared/${2}"
+        return 1
+    fi
+
+    return 0
+}
+
+# check_locks checks that the volumes of v2 are locked exclusively by the member running it.
+check_locks() {
+    for lv in virtual-machines_v2.block virtual-machines_v2 custom_default_vol4.block; do
+        # The lock is only promoted once the previous member released the volume.
+        for _ in $(seq 30); do
+            if lv_locked "${1}" "${lv}"; then
+                break
+            fi
+
+            sleep 2
+        done
+
+        lv_locked "${1}" "${lv}"
+    done
+
+    ! lv_locked "${1}" custom_default_vol1.block || false
+}
+
 incus exec "${REMOTE}:v1" -- sh -c "echo live > /dev/shm/marker"
 incus exec "${REMOTE}:v2" -- sh -c "echo live > /dev/shm/marker"
 check_volumes
@@ -272,6 +300,38 @@ for i in $(seq 2 "${MEMBERS}") 1; do
     check_vm v2 "$(member "${i}")"
     check_volumes
 done
+
+log "Check the storage locks of the shared storage VM"
+incus storage volume create "${REMOTE}:shared" vol4 --type=block size=64MiB
+incus config device add "${REMOTE}:v2" vol4 disk pool=shared source=vol4 dependent=true
+check_locks "$(member 2)"
+
+incus move "${REMOTE}:v2" "${REMOTE}:v2" --target "$(member 2)"
+check_vm v2 "$(member 2)"
+check_locks "$(member 1)"
+
+incus snapshot create "${REMOTE}:v2" locks
+check_locks "$(member 1)"
+! lv_locked "$(member 1)" virtual-machines_v2-locks.block || false
+! lv_locked "$(member 1)" custom_default_vol4-locks.block || false
+incus snapshot delete "${REMOTE}:v2" locks
+check_locks "$(member 1)"
+
+incus stop -f "${REMOTE}:v2"
+incus snapshot create "${REMOTE}:v2" locks
+incus move "${REMOTE}:v2" "${REMOTE}:v2" --target "$(member 1)"
+incus start "${REMOTE}:v2"
+incus wait "${REMOTE}:v2" agent --timeout=120 --interval=2
+[ "$(incus list "${REMOTE}:" v2 -c L -f csv)" = "$(member 1)" ]
+check_locks "$(member 2)"
+! lv_locked "$(member 2)" virtual-machines_v2-locks.block || false
+! lv_locked "$(member 2)" custom_default_vol4-locks.block || false
+incus snapshot delete "${REMOTE}:v2" locks
+incus exec "${REMOTE}:v2" -- sh -c "echo live > /dev/shm/marker"
+
+incus config device remove "${REMOTE}:v2" vol4
+incus storage volume delete "${REMOTE}:shared" vol4
+check_volumes
 
 log "Live migrate the local storage VM"
 incus move "${REMOTE}:v1" "${REMOTE}:v1" --target "$(member 2)"
@@ -407,6 +467,31 @@ fi
 log "Heal the cluster after losing a member"
 incus config set "${REMOTE}:" cluster.offline_threshold=11 cluster.healing_threshold=15
 incus move "${REMOTE}:v2" "${REMOTE}:v2" --target "$(member 2)"
+check_vm v2 "$(member 2)"
+
+log "Don't heal a member which lost its network but still runs its VM"
+dev="$(incus exec "$(member 2)" -- sh -c "ip -o route show default | awk '{print \$5}'")"
+incus exec "$(member 2)" -- ip link set "${dev}" down
+sleep 90
+[ "$(incus list "${REMOTE}:" v2 -c L -f csv)" = "$(member 2)" ]
+incus exec "$(member 2)" -- pgrep -f -- "-name v2" > /dev/null
+found=""
+for i in $(seq "${MEMBERS}"); do
+    if incus exec "$(member "${i}")" -- grep -q "storage is still in use, retrying on the next run" /var/log/incus/incusd.log; then
+        found=1
+    fi
+done
+[ -n "${found}" ]
+
+incus exec "$(member 2)" -- ip link set "${dev}" up
+for _ in $(seq 60); do
+    if incus cluster list "${REMOTE}:" --format csv | grep "^$(member 2)," | grep -q "ONLINE"; then
+        break
+    fi
+
+    sleep 5
+done
+incus cluster list "${REMOTE}:" --format csv | grep "^$(member 2)," | grep -q "ONLINE"
 check_vm v2 "$(member 2)"
 
 incus stop -f "$(member 2)"

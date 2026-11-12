@@ -211,6 +211,14 @@ func (d *lvm) CreateVolumeFromMigration(vol Volume, conn io.ReadWriteCloser, vol
 			return err
 		}
 
+		// The source keeps using the volume until the live migration completes.
+		if volTargetArgs.Live && d.exclusiveVolume(vol) {
+			err := d.activateVolumeShared(vol)
+			if err != nil {
+				return err
+			}
+		}
+
 		if vol.IsVMBlock() {
 			fsVol := vol.NewVMBlockFilesystemVolume()
 			err := d.CreateVolumeFromMigration(fsVol, conn, volTargetArgs, preFiller, op)
@@ -1376,54 +1384,97 @@ func (d *lvm) RenameVolume(vol Volume, newVolName string, op *operations.Operati
 	}, false, op)
 }
 
+// SetVolumeAccessMode switches the lock of an active volume to the given access mode.
+func (d *lvm) SetVolumeAccessMode(vol Volume, mode VolumeAccessMode) error {
+	if !d.clustered || !d.exclusiveVolume(vol) {
+		return nil
+	}
+
+	activation := "ey"
+	revertActivation := "sy"
+	if mode == VolumeAccessModeShared {
+		activation = "sy"
+		revertActivation = "ey"
+	}
+
+	// Switch the VM's config volume before its block volume.
+	vols := []Volume{vol}
+	if vol.IsVMBlock() {
+		vols = []Volume{vol.NewVMBlockFilesystemVolume(), vol}
+	}
+
+	lvmActivation.Lock()
+	defer lvmActivation.Unlock()
+
+	reverter := revert.New()
+	defer reverter.Fail()
+
+	for _, v := range vols {
+		volPath := d.lvmPath(d.config["lvm.vg_name"], v.volType, v.contentType, v.name)
+		volDevPath, err := d.lvmDevPath(volPath)
+		if err != nil && !errors.Is(err, os.ErrNotExist) {
+			return err
+		}
+
+		if volDevPath == "" {
+			continue
+		}
+
+		_, err = subprocess.RunCommand("lvchange", "--activate", activation, "--ignoreactivationskip", volPath)
+		if err != nil {
+			return fmt.Errorf("Failed to switch lock mode of LVM logical volume %q: %w", volPath, err)
+		}
+
+		reverter.Add(func() {
+			_, _ = subprocess.RunCommand("lvchange", "--activate", revertActivation, "--ignoreactivationskip", volPath)
+		})
+	}
+
+	reverter.Success()
+
+	return nil
+}
+
+// IsVolumeLocked checks whether a volume is locked by another cluster member.
+func (d *lvm) IsVolumeLocked(vol Volume) (bool, error) {
+	if !d.clustered {
+		return false, nil
+	}
+
+	vols := []Volume{vol}
+	if vol.IsVMBlock() {
+		vols = append(vols, vol.NewVMBlockFilesystemVolume())
+	}
+
+	lvmActivation.Lock()
+	defer lvmActivation.Unlock()
+
+	for _, v := range vols {
+		volPath := d.lvmPath(d.config["lvm.vg_name"], v.volType, v.contentType, v.name)
+
+		// A local shared activation doesn't tell whether another member also holds the volume.
+		_, err := subprocess.RunCommand("lvchange", "--activate", "ey", "--ignoreactivationskip", volPath)
+		if err != nil {
+			runError, ok := errors.AsType[subprocess.RunError](err)
+			if ok && strings.Contains(runError.StdErr().String(), "locked by other host") {
+				return true, nil
+			}
+
+			return false, fmt.Errorf("Failed to activate LVM logical volume %q: %w", volPath, err)
+		}
+
+		_, err = subprocess.TryRunCommand("lvchange", "--activate", "n", "--ignoreactivationskip", volPath)
+		if err != nil {
+			return false, fmt.Errorf("Failed to deactivate LVM logical volume %q: %w", volPath, err)
+		}
+	}
+
+	return false, nil
+}
+
 // MigrateVolume sends a volume for migration.
 func (d *lvm) MigrateVolume(vol Volume, conn io.ReadWriteCloser, volSrcArgs *migration.VolumeSourceArgs, op *operations.Operation) error {
 	if d.clustered && volSrcArgs.ClusterMove && !volSrcArgs.StorageMove {
-		// Ensure the volume allows shared access.
-		if vol.volType == VolumeTypeVM || vol.IsCustomBlock() {
-			lvmActivation.Lock()
-			defer lvmActivation.Unlock()
-
-			// Block volume.
-			volPath := d.lvmPath(d.config["lvm.vg_name"], vol.volType, vol.contentType, vol.Name())
-			volDevPath, err := d.lvmDevPath(volPath)
-			if err != nil && !errors.Is(err, os.ErrNotExist) {
-				return err
-			}
-
-			if volDevPath != "" {
-				if vol.Type() == VolumeTypeVM || vol.ContentType() == ContentTypeBlock || vol.ContentType() == ContentTypeISO {
-					_, err := subprocess.RunCommand("lvchange", "--activate", "sy", "--ignoreactivationskip", volPath)
-					if err != nil {
-						return err
-					}
-				} else {
-					_, err := subprocess.RunCommand("lvchange", "--activate", "ey", "--ignoreactivationskip", volPath)
-					if err != nil {
-						return err
-					}
-				}
-			}
-
-			// Filesystem volume.
-			if vol.IsVMBlock() {
-				fsVol := vol.NewVMBlockFilesystemVolume()
-
-				volPath := d.lvmPath(d.config["lvm.vg_name"], fsVol.volType, fsVol.contentType, fsVol.Name())
-				volDevPath, err := d.lvmDevPath(volPath)
-				if err != nil && !errors.Is(err, os.ErrNotExist) {
-					return err
-				}
-
-				if volDevPath != "" {
-					_, err := subprocess.RunCommand("lvchange", "--activate", "sy", "--ignoreactivationskip", volPath)
-					if err != nil {
-						return err
-					}
-				}
-			}
-		}
-
 		return nil // When performing a cluster member move don't do anything on the source member.
 	}
 

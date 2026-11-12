@@ -100,6 +100,12 @@ type Driver interface {
 	// not mounted.
 	UnmountVolumeSnapshot(snapVol Volume, op *operations.Operation) (bool, error)
 
+	// SetVolumeAccessMode switches the lock of an active volume to the given access mode.
+	SetVolumeAccessMode(vol Volume, mode VolumeAccessMode) error
+
+	// IsVolumeLocked checks whether a volume is locked by another cluster member.
+	IsVolumeLocked(vol Volume) (bool, error)
+
 	CanRestoreVolume(vol Volume, snapshotName string) error
 	CreateVolumeSnapshot(snapVol Volume, op *operations.Operation) error
 	GetQcow2BackingFilePath(vol Volume) (string, error)
