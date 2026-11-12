@@ -385,6 +385,11 @@ func (d *linstor) deleteResourceGroup() error {
 	return nil
 }
 
+// queryContext returns a context bounding a LINSTOR query so lookups fail rather than hang on a stalled controller.
+func (d *linstor) queryContext() (context.Context, context.CancelFunc) {
+	return context.WithTimeout(context.Background(), time.Minute)
+}
+
 // getVolumeResourceDefinitions returns all Linstor resource definitions matching a given volume.
 func (d *linstor) getVolumeResourceDefinitions(vol Volume, fetchVolumeDefinitions bool) ([]linstorClient.ResourceDefinitionWithVolumeDefinition, error) {
 	l := logger.AddContext(logger.Ctx{"vol": vol.name, "volType": vol.volType, "contentType": vol.contentType})
@@ -393,8 +398,11 @@ func (d *linstor) getVolumeResourceDefinitions(vol Volume, fetchVolumeDefinition
 		return nil, err
 	}
 
+	ctx, cancel := d.queryContext()
+	defer cancel()
+
 	// Query resource definitions that match the desired volume by its name.
-	resourceDefinitions, err := linstor.Client.ResourceDefinitions.GetAll(context.TODO(), linstorClient.RDGetAllRequest{
+	resourceDefinitions, err := linstor.Client.ResourceDefinitions.GetAll(ctx, linstorClient.RDGetAllRequest{
 		Props: []string{
 			LinstorAuxName + "=" + d.config[LinstorVolumePrefixConfigKey] + vol.name,
 			LinstorAuxType + "=" + string(vol.volType),
@@ -497,8 +505,11 @@ func (d *linstor) deleteDisklessResource(vol Volume) error {
 		return err
 	}
 
+	ctx, cancel := d.queryContext()
+	defer cancel()
+
 	// Fetch all resources for the given volume in the current node.
-	resources, err := linstor.Client.Resources.GetResourceView(context.TODO(), &linstorClient.ListOpts{
+	resources, err := linstor.Client.Resources.GetResourceView(ctx, &linstorClient.ListOpts{
 		Resource: []string{resourceDefinition.Name},
 		Node:     []string{d.getSatelliteName()},
 	})
@@ -512,7 +523,7 @@ func (d *linstor) deleteDisklessResource(vol Volume) error {
 	for _, r := range resources {
 		if slices.Contains(r.Flags, "DISKLESS") {
 			l.Debug("Deleting diskless resource")
-			err := linstor.Client.Resources.Delete(context.TODO(), r.Name, r.NodeName)
+			err := linstor.Client.Resources.Delete(ctx, r.Name, r.NodeName)
 			if err != nil {
 				return err
 			}
@@ -529,48 +540,24 @@ func (d *linstor) getVolumeUsage(vol Volume) (int64, error) {
 	l := d.logger.AddContext(logger.Ctx{"volume": vol.Name()})
 	l.Debug("Getting volume usage")
 
-	linstor, err := d.state.Linstor()
-	if err != nil {
-		return 0, err
-	}
-
-	usage, ok := d.getCachedVolumeUsage(vol)
-	if ok {
-		return usage, nil
-	}
-
-	resourceDefinition, err := d.getResourceDefinition(vol, false)
-	if err != nil {
-		return 0, err
-	}
-
-	// Fetch all resources for the given volume.
-	resources, err := linstor.Client.Resources.GetResourceView(context.TODO(), &linstorClient.ListOpts{
-		Resource: []string{resourceDefinition.Name},
-	})
-	if err != nil {
-		return 0, fmt.Errorf("Unable to get the resources for the resource definition: %w", err)
-	}
-
-	var resource *linstorClient.ResourceWithVolumes
-
-	// Find the first non DISKLESS resource.
-	for _, r := range resources {
-		l.Debug("Volume flags", logger.Ctx{"node": r.NodeName, "flags": r.Flags})
-		if !slices.Contains(r.Flags, "DISKLESS") {
-			resource = &r
+	// Ambiguous resource definitions need a direct lookup.
+	resourceDefinitionName, ok := d.getCachedResourceDefinitionName(vol)
+	if !ok {
+		resourceDefinition, err := d.getResourceDefinition(vol, false)
+		if err != nil {
+			return 0, err
 		}
+
+		resourceDefinitionName = resourceDefinition.Name
 	}
 
-	// If no diskful resource is found, usage cannot be determined.
-	if resource == nil {
-		l.Warn("No diskful resource found for volume")
-		return 0, nil
+	// Only go through the cache, a miss means the controller couldn't be queried or there is no diskful resource.
+	usage, ok := d.getCachedVolumeUsage(resourceDefinitionName, vol)
+	if !ok {
+		return 0, errors.New("Volume usage unavailable")
 	}
 
-	volumes := resource.Volumes
-
-	return volumes[d.getVolumeIndex(vol, len(volumes))].AllocatedSizeKib, nil
+	return usage, nil
 }
 
 // getVolumeIndex returns the index of the volume within its LINSTOR resource.

@@ -81,8 +81,8 @@ func NewClient(controllerConnection, sslCACert, sslClientCert, sslClientKey stri
 		httpTransport.TLSClientConfig.Certificates = []tls.Certificate{clientCert}
 	}
 
-	// Setup the Linstor client.
-	httpClient := &http.Client{Transport: httpTransport}
+	// Setup the Linstor client, bounding requests so a stalled controller can't hang callers forever.
+	httpClient := &http.Client{Transport: httpTransport, Timeout: 5 * time.Minute}
 
 	parseConnection := func(connection string) (*url.URL, error) {
 		u, err := url.Parse(connection)

@@ -1,7 +1,6 @@
 package drivers
 
 import (
-	"context"
 	"slices"
 	"strconv"
 	"time"
@@ -17,7 +16,10 @@ func (d *linstor) getCachedResourceDefinitionName(vol Volume) (string, bool) {
 			return nil, err
 		}
 
-		resourceDefinitions, err := linstor.Client.ResourceDefinitions.GetAll(context.TODO(), linstorClient.RDGetAllRequest{})
+		ctx, cancel := d.queryContext()
+		defer cancel()
+
+		resourceDefinitions, err := linstor.Client.ResourceDefinitions.GetAll(ctx, linstorClient.RDGetAllRequest{})
 		if err != nil {
 			return nil, err
 		}
@@ -49,27 +51,29 @@ func (d *linstor) getCachedResourceDefinitionName(vol Volume) (string, bool) {
 	return cache.get(key, "name", fill)
 }
 
-// getCachedVolumeUsage returns the allocated size of a volume in KiB from the cache.
-func (d *linstor) getCachedVolumeUsage(vol Volume) (int64, bool) {
-	resourceDefinitionName, ok := d.getCachedResourceDefinitionName(vol)
-	if !ok {
-		return 0, false
-	}
-
+// getCachedVolumeUsage returns the allocated size in KiB of a volume on the named resource definition from the cache.
+func (d *linstor) getCachedVolumeUsage(resourceDefinitionName string, vol Volume) (int64, bool) {
 	fill := func(names []string) (map[string]map[string]string, error) {
 		linstor, err := d.state.Linstor()
 		if err != nil {
 			return nil, err
 		}
 
-		resources, err := linstor.Client.Resources.GetResourceView(context.TODO(), &linstorClient.ListOpts{
-			Resource: names,
-		})
+		ctx, cancel := d.queryContext()
+		defer cancel()
+
+		// Any resource listing makes the controller poll the satellites, so fetch everything in one go.
+		resources, err := linstor.Client.Resources.GetResourceView(ctx, &linstorClient.ListOpts{})
 		if err != nil {
 			return nil, err
 		}
 
+		// Record the requested resources without a diskful replica so they aren't looked up again.
 		results := map[string]map[string]string{}
+		for _, name := range names {
+			results[name] = map[string]string{}
+		}
+
 		for _, r := range resources {
 			// Only diskful resources carry allocation information.
 			if slices.Contains(r.Flags, "DISKLESS") {
@@ -87,7 +91,7 @@ func (d *linstor) getCachedVolumeUsage(vol Volume) (int64, bool) {
 		return results, nil
 	}
 
-	cache := getPropertyCache("linstor/usage", 100*time.Millisecond, 15*time.Second)
+	cache := getPropertyCache("linstor/usage", 100*time.Millisecond, time.Minute)
 
 	count, ok := cache.get(resourceDefinitionName, "count", fill)
 	if !ok {
