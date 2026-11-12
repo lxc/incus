@@ -135,6 +135,9 @@ var errQemuAgentOffline = errors.New("VM agent isn't currently running")
 // errQemuPIDMismatch is returned when the recorded PID no longer belongs to this instance's QEMU.
 var errQemuPIDMismatch = errors.New("PID doesn't match the running process")
 
+// errQemuCPURemovalPending is returned while the guest still holds a vCPU whose removal was requested.
+var errQemuCPURemovalPending = errors.New("A vCPU removal is still pending")
+
 // monitorGoneErrors are the errors caused by QEMU having gone away, as happens during a restart.
 var monitorGoneErrors = []error{qmp.ErrMonitorDisconnect, unix.ECONNREFUSED, fs.ErrNotExist, errQemuPIDMismatch}
 
@@ -526,7 +529,12 @@ func (d *qemu) getMonitorEventHandler() func(event string, data map[string]any) 
 	s := d.state
 
 	return func(event string, data map[string]any) {
-		if !slices.Contains([]string{qmp.EventVMShutdown, qmp.EventVMReset, qmp.EventAgentStarted, qmp.EventAgentStopped, qmp.EventAgentTemplated, qmp.EventRTCChange}, event) {
+		if event == qmp.EventDeviceDeleted {
+			devID, ok := data["device"].(string)
+			if !ok || !strings.HasPrefix(devID, "cpu") {
+				return // Only vCPU removals are tracked.
+			}
+		} else if !slices.Contains([]string{qmp.EventVMShutdown, qmp.EventVMReset, qmp.EventAgentStarted, qmp.EventAgentStopped, qmp.EventAgentTemplated, qmp.EventRTCChange}, event) {
 			return // Don't bother loading the instance from DB if we aren't going to handle the event.
 		}
 
@@ -556,6 +564,18 @@ func (d *qemu) getMonitorEventHandler() func(event string, data map[string]any) 
 		}
 
 		switch event {
+		case qmp.EventDeviceDeleted:
+			// The guest may release a vCPU long after its removal was requested.
+			monitor, err := d.qmpConnect()
+			if err != nil {
+				break
+			}
+
+			err = d.saveCPUCount(monitor)
+			if err != nil && !errors.Is(err, errQemuCPURemovalPending) {
+				d.logger.Warn("Failed recording vCPUs", logger.Ctx{"err": err})
+			}
+
 		case qmp.EventAgentStarted:
 			d.logger.Debug("Instance agent started")
 
@@ -1664,6 +1684,12 @@ func (d *qemu) saveState(monitor *qmp.Monitor) error {
 	d.logger.Debug("Stateful checkpoint starting", logger.Ctx{"target": statePath})
 	defer d.logger.Debug("Stateful checkpoint finished", logger.Ctx{"target": statePath})
 
+	// The restore needs the exact vCPUs the state is taken with.
+	err := d.saveCPUCount(monitor)
+	if err != nil {
+		return err
+	}
+
 	// Save the checkpoint to state file.
 	_ = os.Remove(statePath)
 
@@ -2695,9 +2721,14 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 
 	// Apply CPU pinning.
 	if bs.CPUTopology.VCPUs == nil {
-		if d.architectureSupportsCPUHotplug() && !bs.CPUTopology.Explicit && bs.CPUTopology.Cores > 1 {
-			// Hotplug the CPUs.
-			err := d.setCPUs(monitor, bs.CPUTopology.Cores)
+		if d.architectureSupportsCPUHotplug() && !bs.CPUTopology.Explicit {
+			// Hotplug the CPUs, matching a recorded live change over the topology.
+			count := bs.CPUTopology.Cores
+			if bs.CPUCount > 0 {
+				count = bs.CPUCount
+			}
+
+			err := d.setCPUs(monitor, count)
 			if err != nil {
 				err = fmt.Errorf("Failed to add CPUs: %w", err)
 				op.Done(err)
@@ -3757,7 +3788,18 @@ func (d *qemu) deviceAttachSingleNIC(deviceName string, nicConfig []deviceConfig
 		qemuDev["addr"] = "00.0"
 	}
 
-	monHook, err := d.addNetDevConfig(qemuBus, qemuDev, nil, nicConfig)
+	// Size the NIC queues like the ones added at boot when the boot state is known.
+	cpuCount := 0
+	bs, err := d.getBootState()
+	if err != nil {
+		return err
+	}
+
+	if bs.CPUTopology != nil {
+		cpuCount = bs.CPUTopology.Sockets * bs.CPUTopology.Cores * bs.CPUTopology.Threads
+	}
+
+	monHook, err := d.addNetDevConfig(qemuBus, qemuDev, nil, nicConfig, cpuCount)
 	if err != nil {
 		return err
 	}
@@ -5307,6 +5349,9 @@ func (d *qemu) generateQemuConfig(bs *qemuBootState, mountInfo *storagePools.Mou
 	// Record the mounts we are going to do inside the VM using the agent.
 	agentMounts := []instancetype.VMAgentMount{}
 
+	// Size the NIC queues from the boot topology so a stateful restore matches the source.
+	cpuCount := bs.CPUTopology.Sockets * bs.CPUTopology.Cores * bs.CPUTopology.Threads
+
 	// These devices are sorted so that NICs are added first to ensure that the first NIC can use the 5th
 	// PCIe bus port and will be consistently named enp5s0 for compatibility with network configuration in our
 	// existing VM images. Even on non-PCIe buses having NICs first means that their names won't change when
@@ -5386,7 +5431,7 @@ func (d *qemu) generateQemuConfig(bs *qemuBootState, mountInfo *storagePools.Mou
 						failoverDev["multifunction"] = true
 					}
 
-					monHook, err := d.addNetDevConfig(busName, failoverDev, bootIndexes, runConf.FailoverNetworkInterface)
+					monHook, err := d.addNetDevConfig(busName, failoverDev, bootIndexes, runConf.FailoverNetworkInterface, cpuCount)
 					if err != nil {
 						return nil, err
 					}
@@ -5403,7 +5448,7 @@ func (d *qemu) generateQemuConfig(bs *qemuBootState, mountInfo *storagePools.Mou
 				}
 			}
 
-			monHook, err := d.addNetDevConfig(busName, qemuDev, bootIndexes, runConf.NetworkInterface)
+			monHook, err := d.addNetDevConfig(busName, qemuDev, bootIndexes, runConf.NetworkInterface, cpuCount)
 			if err != nil {
 				return nil, err
 			}
@@ -6726,7 +6771,8 @@ func (d *qemu) addDriveConfig(qemuDev map[string]any, bootIndexes map[string]int
 
 // addNetDevConfig adds the qemu config required for adding a network device.
 // The qemuDev map is expected to be preconfigured with the settings for an existing port to use for the device.
-func (d *qemu) addNetDevConfig(busName string, qemuDev map[string]any, bootIndexes map[string]int, nicConfig []deviceConfig.RunConfigItem) (monitorHook, error) {
+// The queues are sized from cpuCount, or from the current vCPUs when zero.
+func (d *qemu) addNetDevConfig(busName string, qemuDev map[string]any, bootIndexes map[string]int, nicConfig []deviceConfig.RunConfigItem, cpuCount int) (monitorHook, error) {
 	reverter := revert.New()
 	defer reverter.Fail()
 
@@ -6802,12 +6848,16 @@ func (d *qemu) addNetDevConfig(busName string, qemuDev map[string]any, bootIndex
 			reverter := revert.New()
 			defer reverter.Fail()
 
-			cpus, err := m.QueryCPUs()
-			if err != nil {
-				return errors.New("Failed getting CPU list for NIC queues")
+			if cpuCount == 0 {
+				cpus, err := m.QueryCPUs()
+				if err != nil {
+					return errors.New("Failed getting CPU list for NIC queues")
+				}
+
+				cpuCount = len(cpus)
 			}
 
-			queueCount := configureQueues(len(cpus))
+			queueCount := configureQueues(cpuCount)
 
 			// Enable vhost_net offloading if available.
 			info := DriverStatuses()[instancetype.VM].Info
@@ -6892,7 +6942,7 @@ func (d *qemu) addNetDevConfig(busName string, qemuDev map[string]any, bootIndex
 			qemuDev["netdev"] = netDevID
 			qemuDev["mac"] = devHwaddr
 
-			err = m.AddNIC(qemuNetDev, qemuDev, connected)
+			err := m.AddNIC(qemuNetDev, qemuDev, connected)
 			if err != nil {
 				return fmt.Errorf("Failed setting up device %q: %w", devName, err)
 			}
@@ -8483,10 +8533,21 @@ func (d *qemu) Update(args db.InstanceArgs, userRequested bool) error {
 					return errors.New("Cannot change to CPU pinning or an explicit CPU topology when the VM is running")
 				}
 
+				monitor, err := d.qmpConnect()
+				if err != nil {
+					return err
+				}
+
 				// Hotplug the CPUs.
-				err = d.setCPUs(nil, limit)
+				err = d.setCPUs(monitor, limit)
 				if err != nil {
 					return fmt.Errorf("Failed updating cpu limit: %w", err)
+				}
+
+				// A removal the guest hasn't completed yet gets recorded once it does.
+				err = d.saveCPUCount(monitor)
+				if err != nil && !errors.Is(err, errQemuCPURemovalPending) {
+					return fmt.Errorf("Failed recording vCPUs: %w", err)
 				}
 
 			case "limits.memory":
@@ -13039,6 +13100,53 @@ func (d *qemu) mountTagName(name string, maxLength int) string {
 	return fmt.Sprintf("%s%s", qemuMountTagPrefix, internalInstance.HashName(name, maxLength))
 }
 
+// saveCPUCount records the number of plugged vCPUs in the boot state.
+// Slots are always filled from the top and freed from the bottom, so the count alone describes the layout.
+func (d *qemu) saveCPUCount(monitor *qmp.Monitor) error {
+	bs, err := d.getBootState()
+	if err != nil {
+		return err
+	}
+
+	if bs.CPUTopology == nil || bs.CPUTopology.Explicit || bs.CPUTopology.VCPUs != nil || !d.architectureSupportsCPUHotplug() {
+		return nil
+	}
+
+	cpus, err := monitor.QueryHotpluggableCPUs()
+	if err != nil {
+		return err
+	}
+
+	count := 0
+	freed := false
+	for _, cpu := range cpus {
+		if cpu.QOMPath == "" {
+			freed = true
+			continue
+		}
+
+		// A plugged slot below a free one is a removal the guest hasn't completed.
+		if freed && strings.HasPrefix(cpu.QOMPath, "/machine/peripheral") {
+			return errQemuCPURemovalPending
+		}
+
+		count++
+	}
+
+	// Only a count differing from the topology needs recording.
+	if count == bs.CPUTopology.Sockets*bs.CPUTopology.Cores*bs.CPUTopology.Threads {
+		count = 0
+	}
+
+	if bs.CPUCount == count {
+		return nil
+	}
+
+	bs.CPUCount = count
+
+	return d.saveBootState(*bs)
+}
+
 func (d *qemu) setCPUs(monitor *qmp.Monitor, count int) error {
 	if count == 0 {
 		return nil
@@ -13129,9 +13237,9 @@ func (d *qemu) setCPUs(monitor *qmp.Monitor, count int) error {
 			return errors.New("Unable to remove CPUs, not enough hotpluggable CPUs available")
 		}
 
-		// Less CPUs requested.
+		// Less CPUs requested, remove the most recently added ones (QEMU lists slots in reverse order).
 		for i := range totalReservedCPUs - count {
-			cpu := hotpluggedCPUs[i]
+			cpu := hotpluggedCPUs[len(hotpluggedCPUs)-1-i]
 
 			fields := strings.Split(cpu.QOMPath, "/")
 			devID := fields[len(fields)-1]
