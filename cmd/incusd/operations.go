@@ -62,14 +62,13 @@ func waitForOperations(ctx context.Context, clusterDB *db.Cluster, consoleShutdo
 	timeout := time.After(consoleShutdownTimeout)
 
 	defer func() {
-		_ = clusterDB.Transaction(ctx, func(ctx context.Context, tx *db.ClusterTx) error {
-			err := dbCluster.DeleteOperations(ctx, tx.Tx(), clusterDB.GetNodeID())
-			if err != nil {
-				logger.Error("Failed cleaning up operations")
-			}
-
-			return nil
+		// Return the error so the transaction gets retried when the database is busy.
+		err := clusterDB.Transaction(ctx, func(ctx context.Context, tx *db.ClusterTx) error {
+			return dbCluster.DeleteOperations(ctx, tx.Tx(), clusterDB.GetNodeID())
 		})
+		if err != nil {
+			logger.Error("Failed cleaning up operations", logger.Ctx{"err": err})
+		}
 	}()
 
 	// Check operation status every second.
