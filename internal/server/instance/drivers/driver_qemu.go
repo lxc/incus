@@ -13989,6 +13989,32 @@ func (d *qemu) DeleteQcow2Snapshot(devName string, snapshotIndex int, backingFil
 	return nil
 }
 
+// RenameQcow2Snapshot points the child of a renamed qcow2 snapshot of a running instance at its new path.
+func (d *qemu) RenameQcow2Snapshot(devName string, snapshotIndex int, backingFilename string) error {
+	monitor, err := d.qmpConnect()
+	if err != nil {
+		return err
+	}
+
+	devName = d.blockNodeName(linux.PathNameEncode(devName))
+
+	blockDevs, err := d.fetchBlockDeviceChain(monitor, devName)
+	if err != nil {
+		return err
+	}
+
+	if snapshotIndex < 0 || (snapshotIndex+1) >= len(blockDevs) {
+		return fmt.Errorf("Incorrect snapshot index: %d", snapshotIndex)
+	}
+
+	err = monitor.ChangeBackingFile(blockDevs[len(blockDevs)-1], blockDevs[snapshotIndex+1], backingFilename)
+	if err != nil {
+		return fmt.Errorf("Failed changing backing file: %w", err)
+	}
+
+	return nil
+}
+
 // ExportQcow2Block exports a qcow2 block device by exposing it through a QEMU NBD server.
 func (d *qemu) ExportQcow2Block(diskName string, blockIndex int) (func(), string, error) {
 	monitor, err := d.qmpConnect()
