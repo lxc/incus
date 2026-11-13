@@ -2239,12 +2239,19 @@ func (d *lvm) RenameVolumeSnapshot(snapVol Volume, newSnapshotName string, op *o
 		reverter.Add(func() { _ = os.Rename(newPath, oldPath) })
 	}
 
-	// For VMs, also rename the snapshot filesystem volume.
+	// For VMs, also rename the snapshot filesystem volume (qcow2 snapshots have none, their config is a subvolume of the parent's).
 	if snapVol.IsVMBlock() {
 		fsVol := snapVol.NewVMBlockFilesystemVolume()
-		err = d.RenameVolumeSnapshot(fsVol, newSnapshotName, op)
+		fsVolExists, err := d.logicalVolumeExists(d.lvmPath(d.config["lvm.vg_name"], fsVol.volType, fsVol.contentType, fsVol.name))
 		if err != nil {
 			return err
+		}
+
+		if fsVolExists {
+			err = d.RenameVolumeSnapshot(fsVol, newSnapshotName, op)
+			if err != nil {
+				return err
+			}
 		}
 	}
 
