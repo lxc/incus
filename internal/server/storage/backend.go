@@ -2698,6 +2698,8 @@ func (b *backend) RenameInstance(inst instance.Instance, newName string, op *ope
 		if err != nil {
 			return err
 		}
+
+		reverter.Add(func() { _ = b.qcow2Rename(vol, inst.Name(), inst.Project().Name, nil) })
 	}
 
 	// Rename each snapshot DB record to have the new parent volume prefix.
@@ -4001,12 +4003,38 @@ func (b *backend) RenameInstanceSnapshot(inst instance.Instance, newName string,
 	// Rename storage volume snapshot.
 	snapVol := b.GetVolume(volType, contentType, volStorageName, srcDBVol.Config)
 
-	if parentDBVol.Config["block.type"] == drivers.BlockVolumeTypeQcow2 {
-		parentVol := b.GetVolume(volType, contentType, project.Instance(inst.Project().Name, parentName), parentDBVol.Config)
-		err = b.qcow2RenameSnapshot(parentVol, snapVol, newVolName, inst.Project().Name, op)
+	parentInst, err := instance.LoadByProjectAndName(b.state, inst.Project().Name, parentName)
+	if err != nil {
+		return err
+	}
+
+	isQcow2 := parentDBVol.Config["block.type"] == drivers.BlockVolumeTypeQcow2
+	running := isQcow2 && parentInst.IsRunning()
+
+	// A running instance keeps its qcow2 snapshots mounted under their name.
+	if running {
+		mountedSnapVol := b.GetVolume(volType, contentType, volStorageName, parentDBVol.Config)
+		err = b.qcow2UnmountRunningSnapshot(mountedSnapVol, op)
 		if err != nil {
 			return err
 		}
+
+		reverter.Add(func() { _ = b.driver.MountVolumeSnapshot(mountedSnapVol, op) })
+	}
+
+	if isQcow2 {
+		rootDiskName, _, err := internalInstance.GetRootDiskDevice(parentInst.ExpandedDevices().CloneNative())
+		if err != nil {
+			return err
+		}
+
+		parentVol := b.GetVolume(volType, contentType, project.Instance(inst.Project().Name, parentName), parentDBVol.Config)
+		cleanup, err := b.qcow2RenameSnapshot(parentVol, snapVol, newVolName, inst.Project().Name, parentInst, rootDiskName, op)
+		if err != nil {
+			return err
+		}
+
+		reverter.Add(cleanup)
 	}
 
 	err = b.driver.RenameVolumeSnapshot(snapVol, newName, op)
@@ -4019,6 +4047,16 @@ func (b *backend) RenameInstanceSnapshot(inst instance.Instance, newName string,
 		newSnapVol := b.GetVolume(volType, contentType, project.Instance(inst.Project().Name, newVolName), nil)
 		_ = b.driver.RenameVolumeSnapshot(newSnapVol, oldSnapshotName, op)
 	})
+
+	if running {
+		newSnapVol := b.GetVolume(volType, contentType, project.Instance(inst.Project().Name, newVolName), parentDBVol.Config)
+		err = b.driver.MountVolumeSnapshot(newSnapVol, op)
+		if err != nil {
+			return err
+		}
+
+		reverter.Add(func() { _ = b.qcow2UnmountRunningSnapshot(newSnapVol, op) })
+	}
 
 	err = b.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
 		// Rename DB volume record.
@@ -4034,11 +4072,6 @@ func (b *backend) RenameInstanceSnapshot(inst instance.Instance, newName string,
 			return tx.RenameStoragePoolVolume(ctx, inst.Project().Name, newVolName, inst.Name(), volDBType, b.ID())
 		})
 	})
-
-	parentInst, err := instance.LoadByProjectAndName(b.state, inst.Project().Name, parentName)
-	if err != nil {
-		return err
-	}
 
 	// Rename the matching snapshots of the dependent volumes.
 	err = parentInst.ForEachDependentDiskType(func(dev deviceConfig.DeviceNamed) error {
@@ -7436,12 +7469,35 @@ func (b *backend) RenameCustomVolumeSnapshot(projectName, volName string, newSna
 	vol := b.GetVolume(drivers.VolumeTypeCustom, drivers.ContentType(volume.ContentType), volStorageName, volume.Config)
 	newVolName := drivers.GetSnapshotVolumeName(parentName, newSnapshotName)
 
+	reverter := revert.New()
+	defer reverter.Fail()
+
+	running := false
 	if parentVolume.Config["block.type"] == drivers.BlockVolumeTypeQcow2 {
-		parentVol := b.GetVolume(drivers.VolumeTypeCustom, drivers.ContentType(parentVolume.ContentType), project.StorageVolume(projectName, parentName), parentVolume.Config)
-		err = b.qcow2RenameSnapshot(parentVol, vol, newVolName, projectName, op)
+		inst, devName, err := b.volumeUsedByRunningInstance(parentVolume, projectName)
 		if err != nil {
 			return err
 		}
+
+		// A running instance keeps its qcow2 snapshots mounted under their name.
+		running = inst != nil
+		if running {
+			mountedVol := b.GetVolume(drivers.VolumeTypeCustom, drivers.ContentType(volume.ContentType), volStorageName, parentVolume.Config)
+			err = b.qcow2UnmountRunningSnapshot(mountedVol, op)
+			if err != nil {
+				return err
+			}
+
+			reverter.Add(func() { _ = b.driver.MountVolumeSnapshot(mountedVol, op) })
+		}
+
+		parentVol := b.GetVolume(drivers.VolumeTypeCustom, drivers.ContentType(parentVolume.ContentType), project.StorageVolume(projectName, parentName), parentVolume.Config)
+		cleanup, err := b.qcow2RenameSnapshot(parentVol, vol, newVolName, projectName, inst, devName, op)
+		if err != nil {
+			return err
+		}
+
+		reverter.Add(cleanup)
 	}
 
 	err = b.driver.RenameVolumeSnapshot(vol, newSnapshotName, op)
@@ -7449,18 +7505,30 @@ func (b *backend) RenameCustomVolumeSnapshot(projectName, volName string, newSna
 		return err
 	}
 
+	newVolStorageName := project.StorageVolume(projectName, newVolName)
+	reverter.Add(func() {
+		newVol := b.GetVolume(drivers.VolumeTypeCustom, drivers.ContentType(volume.ContentType), newVolStorageName, nil)
+		_ = b.driver.RenameVolumeSnapshot(newVol, oldSnapshotName, op)
+	})
+
+	if running {
+		newVol := b.GetVolume(drivers.VolumeTypeCustom, drivers.ContentType(volume.ContentType), newVolStorageName, parentVolume.Config)
+		err = b.driver.MountVolumeSnapshot(newVol, op)
+		if err != nil {
+			return err
+		}
+
+		reverter.Add(func() { _ = b.qcow2UnmountRunningSnapshot(newVol, op) })
+	}
+
 	err = b.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
 		return tx.RenameStoragePoolVolume(ctx, projectName, volName, newVolName, db.StoragePoolVolumeTypeCustom, b.ID())
 	})
 	if err != nil {
-		// Get the volume name on storage.
-		newVolStorageName := project.StorageVolume(projectName, newVolName)
-
-		// Revert rename.
-		newVol := b.GetVolume(drivers.VolumeTypeCustom, drivers.ContentType(volume.ContentType), newVolStorageName, nil)
-		_ = b.driver.RenameVolumeSnapshot(newVol, oldSnapshotName, op)
 		return err
 	}
+
+	reverter.Success()
 
 	b.state.Events.SendLifecycle(projectName, lifecycle.StorageVolumeSnapshotRenamed.Event(vol, string(vol.Type()), projectName, op, logger.Ctx{"old_name": oldSnapshotName}))
 
@@ -9388,32 +9456,108 @@ func (b *backend) qcow2RestoreSnapshot(vol drivers.Volume, snapVol drivers.Volum
 }
 
 // qcow2RenameSnapshot renames the QCOW2 volume snapshot.
-func (b *backend) qcow2RenameSnapshot(vol drivers.Volume, snapVol drivers.Volume, newVolName string, projectName string, op *operations.Operation) error {
+func (b *backend) qcow2RenameSnapshot(vol drivers.Volume, snapVol drivers.Volume, newVolName string, projectName string, inst instance.Instance, devName string, op *operations.Operation) (revert.Hook, error) {
 	// Return if this is not a qcow2 image.
 	if vol.Config()["block.type"] != drivers.BlockVolumeTypeQcow2 {
-		return nil
+		return func() {}, nil
 	}
+
+	reverter := revert.New()
+	defer reverter.Fail()
 
 	newSnapVol := b.GetVolume(vol.Type(), vol.ContentType(), ProjectVolume(projectName, newVolName, vol.Type()), nil)
 	newSnapVolDiskPath, err := b.driver.GetQcow2BackingFilePath(newSnapVol)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	snapVolDiskPath, err := b.driver.GetQcow2BackingFilePath(snapVol)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	// Get snapshots.
 	_, volName := project.StorageVolumeParts(vol.Name())
 	volSnaps, err := VolumeDBSnapshotsGet(b, projectName, volName, vol.Type())
 	if err != nil {
-		return err
+		return nil, err
 	}
 
+	// QEMU holds the chain of a running instance open, so it has to update the child itself.
+	if inst != nil && inst.IsRunning() {
+		_, snapName, _ := api.GetParentAndSnapshotName(snapVol.Name())
+
+		snapIndex := -1
+		for index, snap := range volSnaps {
+			_, currentSnapName, _ := api.GetParentAndSnapshotName(snap.Name)
+			if currentSnapName == snapName {
+				snapIndex = index
+				break
+			}
+		}
+
+		err = inst.RenameQcow2Snapshot(devName, snapIndex, newSnapVolDiskPath)
+		if err != nil {
+			return nil, err
+		}
+
+		reverter.Add(func() { _ = inst.RenameQcow2Snapshot(devName, snapIndex, snapVolDiskPath) })
+	} else {
+		err = b.qcow2RebaseRenamedSnapshot(vol, snapVolDiskPath, newSnapVolDiskPath, volSnaps, projectName, op)
+		if err != nil {
+			return nil, err
+		}
+
+		reverter.Add(func() {
+			_ = b.qcow2RebaseRenamedSnapshot(vol, newSnapVolDiskPath, snapVolDiskPath, volSnaps, projectName, nil)
+		})
+	}
+
+	if vol.IsVMBlock() {
+		fsParentVol := vol.NewVMBlockFilesystemVolume()
+		fsVol := snapVol.NewVMBlockFilesystemVolume()
+		_, oldName, _ := api.GetParentAndSnapshotName(snapVol.Name())
+		_, newName, _ := api.GetParentAndSnapshotName(newVolName)
+		err = drivers.Qcow2RenameConfigSnapshot(fsParentVol, fsVol, newName, op)
+		if err != nil {
+			return nil, err
+		}
+
+		reverter.Add(func() {
+			_ = drivers.Qcow2RenameConfigSnapshot(fsParentVol, newSnapVol.NewVMBlockFilesystemVolume(), oldName, nil)
+		})
+	}
+
+	cleanup := reverter.Clone().Fail
+	reverter.Success()
+
+	return cleanup, nil
+}
+
+// qcow2UnmountRunningSnapshot drops the mount a running instance holds on a qcow2 snapshot, which stays active in its backing chain.
+func (b *backend) qcow2UnmountRunningSnapshot(snapVol drivers.Volume, op *operations.Operation) error {
+	snapVol.MountRefCountDecrement()
+
+	if snapVol.IsVMBlock() {
+		fsVol := snapVol.NewVMBlockFilesystemVolume()
+		_, err := b.driver.UnmountVolumeSnapshot(fsVol, op)
+		if err != nil {
+			if linux.IsMountPoint(fsVol.MountPath()) {
+				fsVol.MountRefCountIncrement()
+			}
+
+			snapVol.MountRefCountIncrement()
+			return err
+		}
+	}
+
+	return nil
+}
+
+// qcow2RebaseRenamedSnapshot points the qcow2 images backed by a renamed snapshot at its new path.
+func (b *backend) qcow2RebaseRenamedSnapshot(vol drivers.Volume, snapVolDiskPath string, newSnapVolDiskPath string, volSnaps []db.StorageVolumeArgs, projectName string, op *operations.Operation) error {
 	// Update the metadata of the parent if it points to a renamed volume.
-	err = vol.MountWithSnapshotsTask(func(_ string, _ map[string]string, op *operations.Operation) error {
+	return vol.MountWithSnapshotsTask(func(_ string, _ map[string]string, op *operations.Operation) error {
 		parentDiskPath, err := b.driver.GetVolumeDiskPath(vol)
 		if err != nil {
 			return err
@@ -9454,21 +9598,6 @@ func (b *backend) qcow2RenameSnapshot(vol drivers.Volume, snapVol drivers.Volume
 
 		return nil
 	}, op)
-	if err != nil {
-		return err
-	}
-
-	if vol.IsVMBlock() {
-		fsParentVol := vol.NewVMBlockFilesystemVolume()
-		fsVol := snapVol.NewVMBlockFilesystemVolume()
-		_, newName, _ := api.GetParentAndSnapshotName(newVolName)
-		err = drivers.Qcow2RenameConfigSnapshot(fsParentVol, fsVol, newName, op)
-		if err != nil {
-			return err
-		}
-	}
-
-	return nil
 }
 
 // qcow2DeleteSnapshot deletes the QCOW2 volume snapshot.

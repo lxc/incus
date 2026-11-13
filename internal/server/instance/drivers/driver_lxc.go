@@ -10099,6 +10099,11 @@ func (d *lxc) DeleteQcow2Snapshot(devName string, snapshotIndex int, backingFile
 	return instance.ErrNotImplemented
 }
 
+// RenameQcow2Snapshot points the child of a renamed qcow2 snapshot at its new path. Not supported by containers.
+func (d *lxc) RenameQcow2Snapshot(devName string, snapshotIndex int, backingFilename string) error {
+	return instance.ErrNotImplemented
+}
+
 // PrepareQcow2Snapshot attaches a qcow2 overlay to a running instance. Not supported by containers.
 func (d *lxc) PrepareQcow2Snapshot(diskPath string, devName string) (instance.Qcow2SnapshotSwitch, revert.Hook, error) {
 	return instance.Qcow2SnapshotSwitch{}, nil, instance.ErrNotImplemented
