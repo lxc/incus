@@ -1320,17 +1320,23 @@ func (d *lvm) RenameVolume(vol Volume, newVolName string, op *operations.Operati
 				return err
 			}
 
-			releaseSnap, err := d.acquireExclusive(snapVol)
+			wasActive, err := d.lvActive(snapVol)
+			if err != nil {
+				return err
+			}
+
+			_, err = d.acquireExclusive(snapVol)
 			if err != nil {
 				return err
 			}
 
 			err = d.renameLogicalVolume(snapVolPath, newSnapVolPath)
 			if err != nil {
+				d.restoreActivation(snapVol, wasActive)
 				return err
 			}
 
-			releaseSnap()
+			d.restoreActivation(NewVolume(d, d.name, vol.volType, vol.contentType, newSnapVolName, snapVol.config, snapVol.poolConfig), wasActive)
 
 			reverter.Add(func() { _ = d.renameLogicalVolume(newSnapVolPath, snapVolPath) })
 		}
@@ -2210,12 +2216,19 @@ func (d *lvm) RenameVolumeSnapshot(snapVol Volume, newSnapshotName string, op *o
 	newSnapVolName := GetSnapshotVolumeName(parentName, newSnapshotName)
 	newVolPath := d.lvmPath(d.config["lvm.vg_name"], snapVol.volType, snapVol.contentType, newSnapVolName)
 
-	release, err := d.acquireExclusive(snapVol)
+	wasActive, err := d.lvActive(snapVol)
 	if err != nil {
 		return err
 	}
 
-	defer release()
+	_, err = d.acquireExclusive(snapVol)
+	if err != nil {
+		return err
+	}
+
+	// The lock is released under whichever name the volume ends up with.
+	lockedVol := snapVol
+	defer func() { d.restoreActivation(lockedVol, wasActive) }()
 
 	reverter := revert.New()
 	defer reverter.Fail()
@@ -2225,7 +2238,11 @@ func (d *lvm) RenameVolumeSnapshot(snapVol Volume, newSnapshotName string, op *o
 		return fmt.Errorf("Error renaming LVM logical volume: %w", err)
 	}
 
-	reverter.Add(func() { _ = d.renameLogicalVolume(newVolPath, volPath) })
+	lockedVol = NewVolume(d, d.name, snapVol.volType, snapVol.contentType, newSnapVolName, snapVol.config, snapVol.poolConfig)
+	reverter.Add(func() {
+		_ = d.renameLogicalVolume(newVolPath, volPath)
+		lockedVol = snapVol
+	})
 
 	oldPath := snapVol.MountPath()
 	newPath := GetVolumeMountPath(d.name, snapVol.volType, newSnapVolName)
