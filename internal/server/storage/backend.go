@@ -9897,6 +9897,23 @@ func (b *backend) qcow2BackingPaths(vol drivers.Volume, diskPath string, project
 	return backingPaths, nil
 }
 
+// qcow2BlockIndexes returns the position of each snapshot of a qcow2 volume in its block chain, oldest first,
+// along with the position of the volume itself.
+func (b *backend) qcow2BlockIndexes(vol drivers.Volume, projectName string, volName string) (map[string]int, int, error) {
+	volSnaps, err := VolumeDBSnapshotsGet(b, projectName, volName, vol.Type())
+	if err != nil {
+		return nil, 0, err
+	}
+
+	indexes := make(map[string]int, len(volSnaps))
+	for i, snap := range volSnaps {
+		_, snapName, _ := api.GetParentAndSnapshotName(snap.Name)
+		indexes[snapName] = i
+	}
+
+	return indexes, len(volSnaps), nil
+}
+
 // qcow2MigrateVolume migrates QCOW2 volume.
 func (b *backend) qcow2MigrateVolume(s *state.State, vol drivers.Volume, projectName string, conn io.ReadWriteCloser, volSrcArgs *localMigration.VolumeSourceArgs, op *operations.Operation) error {
 	l := b.logger.AddContext(logger.Ctx{"volName": vol.Name()})
@@ -10080,17 +10097,29 @@ func (b *backend) qcow2MigrateVolume(s *state.State, vol drivers.Volume, project
 		}, op)
 	}
 
-	// blockIndex identifies the block device by position rather than name.
-	// QEMU is unaware of snapshot names, but both snapshots and block
-	// devices are ordered from oldest to newest, allowing the index to
-	// reliably select the correct block device to export.
-	blockIndex := 0
+	// QEMU is unaware of snapshot names, so block devices are selected by their position in the chain,
+	// which a refresh can't derive from the snapshots it sends.
+	blockIndexes, volBlockIndex, err := b.qcow2BlockIndexes(vol, projectName, parentVolName)
+	if err != nil {
+		return err
+	}
+
+	// A snapshot being sent as the volume sits at its own position in the chain.
+	if vol.IsSnapshot() {
+		_, snapName, _ := api.GetParentAndSnapshotName(volName)
+		volBlockIndex = blockIndexes[snapName]
+	}
 
 	// Send all snapshots to target.
 	for _, snapName := range volSrcArgs.Snapshots {
 		snapshot, err := vol.NewSnapshot(snapName)
 		if err != nil {
 			return err
+		}
+
+		blockIndex, ok := blockIndexes[snapName]
+		if !ok {
+			return fmt.Errorf("Snapshot %q not found in the block chain of %q", snapName, vol.Name())
 		}
 
 		// Send snapshot to target (ensure local snapshot volume is mounted if needed).
@@ -10114,8 +10143,6 @@ func (b *backend) qcow2MigrateVolume(s *state.State, vol drivers.Volume, project
 		if err != nil {
 			return err
 		}
-
-		blockIndex += 1
 	}
 
 	// Send volume to target (ensure local volume is mounted if needed).
@@ -10128,7 +10155,7 @@ func (b *backend) qcow2MigrateVolume(s *state.State, vol drivers.Volume, project
 		}
 
 		if vol.IsVMBlock() || (drivers.IsContentBlock(vol.ContentType()) && vol.Type() == drivers.VolumeTypeCustom) {
-			err := sendBlockVol(vol, conn, blockIndex)
+			err := sendBlockVol(vol, conn, volBlockIndex)
 			if err != nil {
 				return err
 			}
@@ -10444,7 +10471,12 @@ func (b *backend) qcow2BackupVolume(vol drivers.Volume, dbVol *db.StorageVolume,
 		return nbdPath, cleanup, nil
 	}
 
-	blockIndex := 0
+	// QEMU is unaware of snapshot names, so block devices are selected by their position in the chain.
+	blockIndexes, volBlockIndex, err := b.qcow2BlockIndexes(vol, projectName, dbVol.Name)
+	if err != nil {
+		return err
+	}
+
 	// Handle snapshots.
 	if len(snapshots) > 0 {
 		for _, snapName := range snapshots {
@@ -10452,6 +10484,11 @@ func (b *backend) qcow2BackupVolume(vol drivers.Volume, dbVol *db.StorageVolume,
 			snapVol, err := vol.NewSnapshot(snapName)
 			if err != nil {
 				return err
+			}
+
+			blockIndex, ok := blockIndexes[snapName]
+			if !ok {
+				return fmt.Errorf("Snapshot %q not found in the block chain of %q", snapName, vol.Name())
 			}
 
 			err = vol.MountWithSnapshotsTask(func(parentMountPath string, snapsMountPath map[string]string, op *operations.Operation) error {
@@ -10479,7 +10516,7 @@ func (b *backend) qcow2BackupVolume(vol drivers.Volume, dbVol *db.StorageVolume,
 
 	// Copy the main volume itself.
 	err = vol.MountWithSnapshotsTask(func(mountPath string, _ map[string]string, op *operations.Operation) error {
-		diskPath, cleanup, err := getDiskPath(vol, blockIndex)
+		diskPath, cleanup, err := getDiskPath(vol, volBlockIndex)
 		if err != nil {
 			return err
 		}
