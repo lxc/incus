@@ -5,7 +5,9 @@ package selinux
 import (
 	"fmt"
 	"io/fs"
+	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 
 	goselinux "github.com/opencontainers/selinux/go-selinux"
@@ -13,6 +15,27 @@ import (
 
 	"github.com/lxc/incus/v7/shared/logger"
 )
+
+// SocketPair returns a connected pair of unix sockets created with the given SELinux label.
+func SocketPair(label string) (*os.File, *os.File, error) {
+	// The socket creation label is per thread.
+	runtime.LockOSThread()
+	defer runtime.UnlockOSThread()
+
+	err := goselinux.SetSocketLabel(label)
+	if err != nil {
+		return nil, nil, fmt.Errorf("Failed to set SELinux socket label %q: %w", label, err)
+	}
+
+	defer func() { _ = goselinux.SetSocketLabel("") }()
+
+	fds, err := unix.Socketpair(unix.AF_UNIX, unix.SOCK_STREAM|unix.SOCK_CLOEXEC, 0)
+	if err != nil {
+		return nil, nil, fmt.Errorf("Failed to create socket pair: %w", err)
+	}
+
+	return os.NewFile(uintptr(fds[0]), "socketpair-read"), os.NewFile(uintptr(fds[1]), "socketpair-write"), nil
+}
 
 // LabelTree recursively labels all entries under path with the given SELinux label without crossing filesystem boundaries.
 func LabelTree(path string, label string, skipPath string) error {

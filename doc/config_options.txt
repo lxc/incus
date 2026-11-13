@@ -3185,7 +3185,7 @@ When disabling this option, consider enabling {config:option}`instance-security:
 
 ```{config:option} security.selinux.domain instance-security
 :condition: "container or virtual machine"
-:defaultdesc: "auto-detected (`container_init_t` for containers, `qemu_t` for VMs)"
+:defaultdesc: "auto-detected (`container_init_t` or `spc_t` for containers, `qemu_t` or `svirt_t` for VMs)"
 :liveupdate: "no"
 :shortdesc: "SELinux process domain override"
 :type: "string"
@@ -3220,7 +3220,7 @@ Values set via profiles are ignored.
 
 ```{config:option} security.selinux.type instance-security
 :condition: "container or virtual machine"
-:defaultdesc: "auto-detected (`container_file_t` for containers, `qemu_image_t` for VMs)"
+:defaultdesc: "auto-detected (`container_file_t` for containers, `qemu_image_t` or `svirt_image_t` for VMs)"
 :liveupdate: "no"
 :shortdesc: "SELinux file type override"
 :type: "string"

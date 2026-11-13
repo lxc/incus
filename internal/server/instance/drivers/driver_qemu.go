@@ -1514,7 +1514,7 @@ func (d *qemu) restoreState(monitor *qmp.Monitor) error {
 				return fmt.Errorf("Failed restoring checkpoint from source: %w", err)
 			}
 		} else {
-			pipeRead, pipeWrite, err := os.Pipe()
+			pipeRead, pipeWrite, err := d.statePipe()
 			if err != nil {
 				return err
 			}
@@ -1552,7 +1552,7 @@ func (d *qemu) restoreState(monitor *qmp.Monitor) error {
 
 		defer logger.WarnOnError(uncompressedState.Close, "Failed to close state reader")
 
-		pipeRead, pipeWrite, err := os.Pipe()
+		pipeRead, pipeWrite, err := d.statePipe()
 		if err != nil {
 			return err
 		}
@@ -1744,7 +1744,7 @@ func (d *qemu) saveState(monitor *qmp.Monitor) error {
 
 	defer logger.WarnOnError(compressedState.Close, "Failed to close state writer")
 
-	pipeRead, pipeWrite, err := os.Pipe()
+	pipeRead, pipeWrite, err := d.statePipe()
 	if err != nil {
 		return err
 	}
@@ -2383,6 +2383,15 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 		bs.MemoryTopology = memoryTopology
 	}
 
+	// Ensure SELinux context is generated and persisted.
+	contextIsNew, err := d.selinuxEnsureContext()
+	if err != nil {
+		op.Done(err)
+		return err
+	}
+
+	seCtx := d.localConfig["volatile.selinux.context"]
+
 	// Generate the QEMU configuration.
 	monHooks, err := d.generateQemuConfig(bs, mountInfo, qemuBus, vsockFD, devConfs, &fdFiles)
 	if err != nil {
@@ -2506,14 +2515,21 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 
 	// Attempt to drop privileges (doesn't work when restoring state).
 	if !stateful && d.state.OS.UnprivUser != "" {
-		qemuVer, _ := d.version()
-		qemuVer91, _ := version.NewDottedVersion("9.1.0")
+		qemuUID := int(d.state.OS.UnprivUID)
 
-		// Since QEMU 9.1 the parameter `runas` has been marked as deprecated.
-		if qemuVer != nil && qemuVer.Compare(qemuVer91) >= 0 {
-			qemuArgs = append(qemuArgs, "-run-with", fmt.Sprintf("user=%s", d.state.OS.UnprivUser))
+		// SELinux policies don't let the confined QEMU domain switch user, the domain confines it instead.
+		if seCtx != "" {
+			qemuUID = 0
 		} else {
-			qemuArgs = append(qemuArgs, "-runas", d.state.OS.UnprivUser)
+			qemuVer, _ := d.version()
+			qemuVer91, _ := version.NewDottedVersion("9.1.0")
+
+			// Since QEMU 9.1 the parameter `runas` has been marked as deprecated.
+			if qemuVer != nil && qemuVer.Compare(qemuVer91) >= 0 {
+				qemuArgs = append(qemuArgs, "-run-with", fmt.Sprintf("user=%s", d.state.OS.UnprivUser))
+			} else {
+				qemuArgs = append(qemuArgs, "-runas", d.state.OS.UnprivUser)
+			}
 		}
 
 		nvRAMPath, _ := d.nvramRunPath()
@@ -2521,7 +2537,7 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 			// Ensure UEFI nvram file is writable by the QEMU process.
 			// This is needed when doing stateful snapshots because the QEMU process will reopen the
 			// file for writing.
-			err = os.Chown(nvRAMPath, int(d.state.OS.UnprivUID), -1)
+			err = os.Chown(nvRAMPath, qemuUID, -1)
 			if err != nil {
 				op.Done(err)
 				return err
@@ -2535,7 +2551,7 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 		}
 
 		// Change ownership of main instance directory.
-		err = os.Chown(d.Path(), int(d.state.OS.UnprivUID), -1)
+		err = os.Chown(d.Path(), qemuUID, -1)
 		if err != nil {
 			op.Done(err)
 			return fmt.Errorf("Failed to chown instance path: %w", err)
@@ -2554,7 +2570,7 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 					return err
 				}
 
-				err = os.Chown(path, int(d.state.OS.UnprivUID), -1)
+				err = os.Chown(path, qemuUID, -1)
 				if err != nil {
 					return err
 				}
@@ -2626,6 +2642,13 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 		return err
 	}
 
+	// Label the files QEMU needs before it's started.
+	err = d.selinuxLabelFiles(contextIsNew)
+	if err != nil {
+		op.Done(err)
+		return err
+	}
+
 	// Run the qemu command via forkqemu so we can selectively increase ulimits.
 	forkQemuCmd := []string{
 		"forkqemu",
@@ -2653,13 +2676,6 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 		forkQemuCmd = append(forkQemuCmd, fmt.Sprintf("fd=%d", 3+i))
 	}
 
-	// Ensure SELinux context is generated and persisted.
-	contextIsNew, err := d.selinuxEnsureContext()
-	if err != nil {
-		return err
-	}
-
-	seCtx := d.localConfig["volatile.selinux.context"]
 	if seCtx != "" {
 		forkQemuCmd = append(forkQemuCmd, "secontext="+seCtx)
 	}
@@ -2870,12 +2886,6 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 			op.Done(err)
 			return err
 		}
-	}
-
-	// Label rootfs if SELinux context is set and labels are missing.
-	err = d.selinuxLabelFiles(contextIsNew)
-	if err != nil {
-		return err
 	}
 
 	// Start the VM.
@@ -5064,12 +5074,15 @@ func (d *qemu) generateQemuConfig(bs *qemuBootState, mountInfo *storagePools.Mou
 				return nil, fmt.Errorf("Failed resolving NVRAM file: %w", err)
 			}
 
-			nvRAMFile, err := os.Open(nvRAMPath)
-			if err != nil {
-				return nil, fmt.Errorf("Failed opening NVRAM file: %w", err)
-			}
+			// QEMU opens the drive read-only first and then read-write, so pass one descriptor for each mode.
+			for _, flags := range []int{os.O_RDONLY, os.O_RDWR} {
+				nvRAMFile, err := os.OpenFile(nvRAMPath, flags, 0)
+				if err != nil {
+					return nil, fmt.Errorf("Failed opening NVRAM file: %w", err)
+				}
 
-			driveFirmwareOpts.nvramPath = fmt.Sprintf("/dev/fd/%d", d.addFileDescriptor(fdFiles, nvRAMFile))
+				driveFirmwareOpts.nvramFDs = append(driveFirmwareOpts.nvramFDs, d.addFileDescriptor(fdFiles, nvRAMFile))
+			}
 		}
 
 		conf = append(conf, qemuDriveFirmware(&driveFirmwareOpts)...)
@@ -6130,6 +6143,12 @@ func (d *qemu) addRootDriveConfig(qemuDev map[string]any, mountInfo *storagePool
 		return nil, err
 	}
 
+	// Label the metadata image for the confined QEMU process.
+	err = d.selinuxLabelPath(d.localImageMetadataDir())
+	if err != nil {
+		return nil, err
+	}
+
 	// Generate a new device config with the root device path expanded.
 	driveConf := deviceConfig.MountEntryItem{
 		DevName:      rootDriveConf.DevName,
@@ -6370,6 +6389,12 @@ func (d *qemu) addDriveConfig(qemuDev map[string]any, bootIndexes map[string]int
 			return nil, err
 		}
 
+		// Label the metadata image for the confined QEMU process.
+		err = d.selinuxLabelPath(d.localImageMetadataDir())
+		if err != nil {
+			return nil, err
+		}
+
 		if dataFilePath != "" {
 			driveConf.DevPath = qcow2Path
 			driveConf.DataFilePath = dataFilePath
@@ -6421,6 +6446,12 @@ func (d *qemu) addDriveConfig(qemuDev map[string]any, bootIndexes map[string]int
 			// Dependent disks get a metadata image like the root disk so they can hold persistent bitmaps.
 			if d.isDependentDisk(driveConf.DevName) && driveConf.FSType != "iso9660" && !slices.Contains(driveConf.Opts, "ro") {
 				qcow2Path, dataFilePath, err := d.ensureMetadataImage(srcDevPath, driveConf.DevName)
+				if err != nil {
+					return nil, err
+				}
+
+				// Label the metadata image for the confined QEMU process.
+				err = d.selinuxLabelPath(d.localImageMetadataDir())
 				if err != nil {
 					return nil, err
 				}
@@ -10674,7 +10705,7 @@ func (d *qemu) migrateSendLive(ctx context.Context, pool storagePools.Pool, clus
 
 		defer cleanup()
 	} else {
-		pipeRead, pipeWrite, err := os.Pipe()
+		pipeRead, pipeWrite, err := d.statePipe()
 		if err != nil {
 			return err
 		}
@@ -14687,9 +14718,37 @@ func (d *qemu) selinuxEnsureContext() (bool, error) {
 	return previousCtx == "", nil
 }
 
-// selinuxLabelFiles applies SELinux file labels to the VM instance directory.
+// selinuxLabelFiles applies SELinux file labels to the VM instance, run and log directories.
 func (d *qemu) selinuxLabelFiles(contextIsNew bool) error {
-	if !d.state.OS.SELinuxEnabled {
+	// The run and log directories are repopulated on every start, so always label them.
+	for _, path := range []string{d.RunPath(), d.LogPath()} {
+		err := d.selinuxLabelPath(path)
+		if err != nil {
+			return err
+		}
+	}
+
+	// Skip the instance directory if not first start and level is explicitly set.
+	if !contextIsNew && d.localConfig["security.selinux.level"] != "" {
+		return nil
+	}
+
+	return d.selinuxLabelPath(d.Path())
+}
+
+// statePipe returns a pipe for streaming VM state, a confined QEMU process gets a socket pair with its own label.
+func (d *qemu) statePipe() (*os.File, *os.File, error) {
+	ctx := d.localConfig["volatile.selinux.context"]
+	if !d.state.OS.SELinuxEnabled || ctx == "" {
+		return os.Pipe()
+	}
+
+	return selinux.SocketPair(ctx)
+}
+
+// selinuxLabelPath applies the instance SELinux file context to a path when SELinux is enabled.
+func (d *qemu) selinuxLabelPath(path string) error {
+	if !d.state.OS.SELinuxEnabled || !util.PathExists(path) {
 		return nil
 	}
 
@@ -14698,18 +14757,12 @@ func (d *qemu) selinuxLabelFiles(contextIsNew bool) error {
 		return nil
 	}
 
-	if !contextIsNew {
-		if d.localConfig["security.selinux.level"] != "" {
-			return nil
-		}
-	}
-
-	fileCtx := selinux.InstanceFileContext(ctx, instancetype.VM, d.expandedConfig)
+	fileCtx := selinux.InstanceFileContext(d.state.OS, ctx, instancetype.VM, d.expandedConfig)
 	if fileCtx == "" {
 		return fmt.Errorf("Failed to derive file context from %q", ctx)
 	}
 
-	return selinux.LabelTree(d.Path(), fileCtx, "")
+	return selinux.LabelTree(path, fileCtx, "")
 }
 
 // buildDataFileInfo builds the "data-file" field for block device options.

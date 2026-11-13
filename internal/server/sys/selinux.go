@@ -57,12 +57,14 @@ func (s *OS) initSELinux() []cluster.Warning {
 	switch ctx["type"] {
 	case "container_runtime_t":
 		s.SELinuxContainerType = "spc_t"
+		s.SELinuxContainerFileType = "container_file_t"
 		s.SELinuxVMType = "svirt_t"
-		logger.Debug("Setting SELinux instance contexts based on incusd context", logger.Ctx{"incusd": ctx["type"], "lxc": s.SELinuxContainerType, "qemu": s.SELinuxVMType})
+		s.SELinuxVMFileType = "svirt_image_t"
 	case "incusd_t":
 		s.SELinuxContainerType = "container_init_t"
+		s.SELinuxContainerFileType = "container_file_t"
 		s.SELinuxVMType = "qemu_t"
-		logger.Debug("Setting SELinux instance contexts based on incusd context", logger.Ctx{"incusd": ctx["type"], "lxc": s.SELinuxContainerType, "qemu": s.SELinuxVMType})
+		s.SELinuxVMFileType = "qemu_image_t"
 	default:
 		logger.Warn("SELinux daemon type not supported for instance confinement, disabling SELinux for instances", logger.Ctx{"type": ctx["type"]})
 		return dbWarnings
@@ -72,10 +74,12 @@ func (s *OS) initSELinux() []cluster.Warning {
 	s.SELinuxEnabled = true
 
 	logger.Info("SELinux support enabled", logger.Ctx{
-		"label":         label,
-		"containerType": s.SELinuxContainerType,
-		"vmType":        s.SELinuxVMType,
-		"mlsEnabled":    goselinux.MLSEnabled(),
+		"label":             label,
+		"containerType":     s.SELinuxContainerType,
+		"containerFileType": s.SELinuxContainerFileType,
+		"vmType":            s.SELinuxVMType,
+		"vmFileType":        s.SELinuxVMFileType,
+		"mlsEnabled":        goselinux.MLSEnabled(),
 	})
 
 	return dbWarnings
