@@ -1027,9 +1027,12 @@ func CreateInternal(s *state.State, args db.InstanceArgs, op *operations.Operati
 	}
 
 	reverter.Add(func() {
-		_ = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		err := s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
 			return tx.DeleteInstance(ctx, dbInst.Project, dbInst.Name)
 		})
+		if err != nil {
+			logger.Warn("Failed removing instance record after a failed creation", logger.Ctx{"project": dbInst.Project, "instance": dbInst.Name, "err": err})
+		}
 	})
 	inst, cleanup, err := Create(s, args, *p, partialDeviceValidation, op)
 	if err != nil {
