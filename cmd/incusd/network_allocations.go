@@ -1,6 +1,7 @@
 package main
 
 import (
+	"cmp"
 	"context"
 	"errors"
 	"fmt"
@@ -8,6 +9,7 @@ import (
 	"net/http"
 	"slices"
 
+	"github.com/lxc/incus/v7/internal/server/auth"
 	clusterRequest "github.com/lxc/incus/v7/internal/server/cluster/request"
 	"github.com/lxc/incus/v7/internal/server/db"
 	dbCluster "github.com/lxc/incus/v7/internal/server/db/cluster"
@@ -28,7 +30,7 @@ var networkAllocationsCmd = APIEndpoint{
 
 // swagger:operation GET /1.0/network-allocations network-allocations network_allocations_get
 //
-//	Get the network allocations in use (`network`, `network-forward` and `load-balancer` and `instance`)
+//	Get the network allocations in use (`network`, `instance`, `uplink`, `network-forward` and `network-load-balancer`)
 //
 //	Returns a list of network allocations.
 //
@@ -81,29 +83,147 @@ var networkAllocationsCmd = APIEndpoint{
 func networkAllocationsGet(d *Daemon, r *http.Request) response.Response {
 	s := d.State()
 
-	projectName, reqProject, err := project.NetworkProject(d.State().DB.Cluster, request.ProjectParam(r))
+	_, reqProject, err := project.NetworkProject(s.DB.Cluster, request.ProjectParam(r))
 	if err != nil {
 		return response.SmartError(err)
 	}
 
 	allProjects := util.IsTrue(request.QueryParam(r, "all-projects"))
 
-	var projectNames []string
-	if allProjects {
-		err = d.db.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
-			// Get all project names if no specific project requested.
-			projectNames, err = dbCluster.GetProjectNames(ctx, tx.Tx())
+	// Get the projects to report on and the networks of every network project they rely on.
+	projects := []api.Project{*reqProject}
+	projectNetworks := map[string][]string{}
+
+	// OVN networks keyed by the name of their uplink network.
+	type allocationRouter struct {
+		project   string
+		name      string
+		addresses []string
+	}
+
+	routers := map[string][]allocationRouter{}
+
+	err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
+		if allProjects {
+			dbProjects, err := dbCluster.GetProjects(ctx, tx.Tx())
 			if err != nil {
 				return fmt.Errorf("Failed loading projects: %w", err)
 			}
 
-			return nil
-		})
-		if err != nil {
-			return response.SmartError(err)
+			projects = make([]api.Project, 0, len(dbProjects))
+			for _, dbProject := range dbProjects {
+				p, err := dbProject.ToAPI(ctx, tx.Tx())
+				if err != nil {
+					return fmt.Errorf("Failed loading project %q: %w", dbProject.Name, err)
+				}
+
+				projects = append(projects, *p)
+			}
 		}
-	} else {
-		projectNames = []string{projectName}
+
+		for _, p := range projects {
+			for _, networkProjectName := range []string{project.NetworkProjectFromRecord(&p), api.ProjectDefaultName} {
+				_, ok := projectNetworks[networkProjectName]
+				if ok {
+					continue
+				}
+
+				projectNetworks[networkProjectName], err = tx.GetNetworks(ctx, networkProjectName)
+				if err != nil {
+					return fmt.Errorf("Failed loading networks: %w", err)
+				}
+			}
+		}
+
+		// Get the uplink addresses of the OVN networks.
+		createdNetworks, err := tx.GetCreatedNetworks(ctx)
+		if err != nil {
+			return fmt.Errorf("Failed loading networks: %w", err)
+		}
+
+		for networkProjectName, networks := range createdNetworks {
+			for _, ovnNetwork := range networks {
+				if ovnNetwork.Type != "ovn" || ovnNetwork.Config["network"] == "" {
+					continue
+				}
+
+				router := allocationRouter{project: networkProjectName, name: ovnNetwork.Name}
+				for _, key := range []string{"volatile.network.ipv4.address", "volatile.network.ipv6.address"} {
+					if ovnNetwork.Config[key] != "" {
+						router.addresses = append(router.addresses, ovnNetwork.Config[key])
+					}
+				}
+
+				uplinkName := ovnNetwork.Config["network"]
+				routers[uplinkName] = append(routers[uplinkName], router)
+			}
+		}
+
+		return nil
+	})
+	if err != nil {
+		return response.SmartError(err)
+	}
+
+	for _, uplinkRouters := range routers {
+		slices.SortFunc(uplinkRouters, func(a, b allocationRouter) int {
+			return cmp.Or(cmp.Compare(a.project, b.project), cmp.Compare(a.name, b.name))
+		})
+	}
+
+	canViewNetwork, err := s.Authorizer.GetPermissionChecker(r.Context(), r, auth.EntitlementCanView, auth.ObjectTypeNetwork)
+	if err != nil {
+		return response.SmartError(err)
+	}
+
+	canViewInstance, err := s.Authorizer.GetPermissionChecker(r.Context(), r, auth.EntitlementCanView, auth.ObjectTypeInstance)
+	if err != nil {
+		return response.SmartError(err)
+	}
+
+	// Work out which projects get to see each network.
+	type allocationNetwork struct {
+		project  string
+		name     string
+		projects []string
+	}
+
+	networks := []*allocationNetwork{}
+	networksByName := map[network.ProjectNetwork]*allocationNetwork{}
+
+	for _, p := range projects {
+		networkProjectName := project.NetworkProjectFromRecord(&p)
+		keys := make([]network.ProjectNetwork, 0, len(projectNetworks[networkProjectName]))
+
+		for _, networkName := range projectNetworks[networkProjectName] {
+			keys = append(keys, network.ProjectNetwork{ProjectName: networkProjectName, NetworkName: networkName})
+		}
+
+		// Include networks shared from the default project.
+		for _, networkName := range projectNetworks[api.ProjectDefaultName] {
+			if project.NetworkSharedFromDefault(&p, networkName) {
+				keys = append(keys, network.ProjectNetwork{ProjectName: api.ProjectDefaultName, NetworkName: networkName})
+			}
+		}
+
+		for _, key := range keys {
+			if !canViewNetwork(auth.ObjectNetwork(key.ProjectName, key.NetworkName)) {
+				continue
+			}
+
+			if !project.NetworkAllowed(p.Config, key.NetworkName, true) {
+				continue
+			}
+
+			entry, ok := networksByName[key]
+			if !ok {
+				entry = &allocationNetwork{project: key.ProjectName, name: key.NetworkName}
+				networksByName[key] = entry
+				networks = append(networks, entry)
+			}
+
+			entry.projects = append(entry.projects, p.Name)
+		}
 	}
 
 	// Returns IP address in its canonical CIDR form and whether the network is using NAT for that IP family.
@@ -122,155 +242,200 @@ func networkAllocationsGet(d *Daemon, r *http.Request) response.Response {
 
 	result := make([]api.NetworkAllocations, 0)
 
-	// Then, get all the networks, their network forwards and their network load balancers.
-	for _, projectName := range projectNames {
-		var networkNames []string
+	// Get all the networks, their attached instances, their network forwards and their network load balancers.
+	for _, entry := range networks {
+		networkName := entry.name
+		projectName := entry.project
 
-		err := d.db.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
-			var err error
-
-			networkNames, err = tx.GetNetworks(ctx, projectName)
-
-			return err
-		})
+		n, err := network.LoadByName(s, projectName, networkName)
 		if err != nil {
-			return response.SmartError(fmt.Errorf("Failed loading networks: %w", err))
+			return response.SmartError(fmt.Errorf("Failed loading network %q in project %q: %w", networkName, projectName, err))
 		}
 
-		// Get all the networks, their attached instances, their network forwards and their network load balancers.
-		for _, networkName := range networkNames {
-			ok, err := canAccessNetwork(s, r, projectName, reqProject.Config, networkName, true)
-			if err != nil {
-				return response.SmartError(err)
+		netConf := n.Config()
+
+		for _, keyPrefix := range []string{"ipv4", "ipv6"} {
+			// Physical networks only have their subnet in the gateway key.
+			address := netConf[fmt.Sprintf("%s.address", keyPrefix)]
+			if address == "" {
+				address = netConf[fmt.Sprintf("%s.gateway", keyPrefix)]
 			}
 
-			if !ok {
+			ipNet, _ := network.ParseIPCIDRToNet(address)
+			if ipNet == nil {
 				continue
 			}
 
-			n, err := network.LoadByName(d.State(), projectName, networkName)
-			if err != nil {
-				return response.SmartError(fmt.Errorf("Failed loading network %q in project %q: %w", networkName, projectName, err))
-			}
+			result = append(result, api.NetworkAllocations{
+				Network: networkName,
+				Project: projectName,
+				Address: ipNet.String(),
+				UsedBy:  api.NewURL().Path(version.APIVersion, "networks", networkName).Project(projectName).String(),
+				Type:    "network",
+				NAT:     util.IsTrue(netConf[fmt.Sprintf("%s.nat", keyPrefix)]),
+			})
+		}
 
-			netConf := n.Config()
-
-			for _, keyPrefix := range []string{"ipv4", "ipv6"} {
-				ipNet, _ := network.ParseIPCIDRToNet(netConf[fmt.Sprintf("%s.address", keyPrefix)])
-				if ipNet == nil {
-					continue
+		// Only query the projects that have instances on the network.
+		if allProjects {
+			instanceProjects := []string{}
+			err = network.UsedByInstanceDevices(s, projectName, networkName, n.Type(), func(inst db.InstanceArgs, _ string, _ map[string]string) error {
+				if !slices.Contains(instanceProjects, inst.Project) {
+					instanceProjects = append(instanceProjects, inst.Project)
 				}
 
-				result = append(result, api.NetworkAllocations{
-					Network: networkName,
-					Address: ipNet.String(),
-					UsedBy:  api.NewURL().Path(version.APIVersion, "networks", networkName).Project(projectName).String(),
-					Type:    "network",
-					NAT:     util.IsTrue(netConf[fmt.Sprintf("%s.nat", keyPrefix)]),
-				})
+				return nil
+			})
+			if err != nil {
+				return response.SmartError(fmt.Errorf("Failed getting instances for network %q in project %q: %w", networkName, projectName, err))
 			}
 
-			leases, err := n.Leases(projectName, clusterRequest.ClientTypeNormal)
+			entry.projects = slices.DeleteFunc(entry.projects, func(name string) bool {
+				return name != projectName && !slices.Contains(instanceProjects, name)
+			})
+		}
+
+		for _, instanceProjectName := range entry.projects {
+			leases, err := n.Leases(instanceProjectName, clusterRequest.ClientTypeNormal)
 			if err != nil && !errors.Is(err, network.ErrNotImplemented) {
 				return response.SmartError(fmt.Errorf("Failed getting leases for network %q in project %q: %w", networkName, projectName, err))
 			}
 
 			for _, lease := range leases {
-				if slices.Contains([]string{"static", "dynamic"}, lease.Type) {
-					cidrAddr, nat, err := ipToCIDR(lease.Address, netConf)
+				if !slices.Contains([]string{"static", "dynamic"}, lease.Type) {
+					continue
+				}
+
+				// Leases without a MAC can't be tied to a project, only report them for the network's own.
+				if lease.Hwaddr == "" && instanceProjectName != projectName {
+					continue
+				}
+
+				if !canViewInstance(auth.ObjectInstance(instanceProjectName, lease.Hostname)) {
+					continue
+				}
+
+				cidrAddr, nat, err := ipToCIDR(lease.Address, netConf)
+				if err != nil {
+					return response.SmartError(err)
+				}
+
+				result = append(result, api.NetworkAllocations{
+					Network: networkName,
+					Project: projectName,
+					Address: cidrAddr,
+					UsedBy:  api.NewURL().Path(version.APIVersion, "instances", lease.Hostname).Project(instanceProjectName).String(),
+					Type:    "instance",
+					Hwaddr:  lease.Hwaddr,
+					NAT:     nat,
+				})
+			}
+		}
+
+		// Add the addresses of the OVN networks using this network as their uplink.
+		if projectName == api.ProjectDefaultName {
+			for _, router := range routers[networkName] {
+				if !canViewNetwork(auth.ObjectNetwork(router.project, router.name)) {
+					continue
+				}
+
+				for _, address := range router.addresses {
+					cidrAddr, nat, err := ipToCIDR(address, netConf)
 					if err != nil {
 						return response.SmartError(err)
 					}
 
 					result = append(result, api.NetworkAllocations{
 						Network: networkName,
+						Project: projectName,
 						Address: cidrAddr,
-						UsedBy:  api.NewURL().Path(version.APIVersion, "instances", lease.Hostname).Project(projectName).String(),
-						Type:    "instance",
-						Hwaddr:  lease.Hwaddr,
+						UsedBy:  api.NewURL().Path(version.APIVersion, "networks", router.name).Project(router.project).String(),
+						Type:    "uplink",
 						NAT:     nat,
 					})
 				}
 			}
+		}
 
-			var forwards map[int64]*api.NetworkForward
+		var forwards []*api.NetworkForward
 
-			err = d.db.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
-				networkID := n.ID()
-				dbRecords, err := dbCluster.GetNetworkForwards(ctx, tx.Tx(), dbCluster.NetworkForwardFilter{
-					NetworkID: &networkID,
-				})
+		err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
+			networkID := n.ID()
+			dbRecords, err := dbCluster.GetNetworkForwards(ctx, tx.Tx(), dbCluster.NetworkForwardFilter{
+				NetworkID: &networkID,
+			})
+			if err != nil {
+				return err
+			}
+
+			forwards = make([]*api.NetworkForward, 0, len(dbRecords))
+			for _, dbRecord := range dbRecords {
+				forward, err := dbRecord.ToAPI(ctx, tx.Tx())
 				if err != nil {
 					return err
 				}
 
-				forwards = make(map[int64]*api.NetworkForward)
-				for _, dbRecord := range dbRecords {
-					forward, err := dbRecord.ToAPI(ctx, tx.Tx())
-					if err != nil {
-						return err
-					}
+				forwards = append(forwards, forward)
+			}
 
-					forwards[dbRecord.ID] = forward
-				}
+			return nil
+		})
+		if err != nil {
+			return response.SmartError(fmt.Errorf("Failed getting forwards for network %q in project %q: %w", networkName, projectName, err))
+		}
 
-				return nil
-			})
+		for _, forward := range forwards {
+			cidrAddr, _, err := ipToCIDR(forward.ListenAddress, netConf)
 			if err != nil {
-				return response.SmartError(fmt.Errorf("Failed getting forwards for network %q in project %q: %w", networkName, projectName, err))
+				return response.SmartError(err)
 			}
 
-			for _, forward := range forwards {
-				cidrAddr, _, err := ipToCIDR(forward.ListenAddress, netConf)
-				if err != nil {
-					return response.SmartError(err)
-				}
+			result = append(
+				result,
+				api.NetworkAllocations{
+					Network: networkName,
+					Project: projectName,
+					Address: cidrAddr,
+					UsedBy:  api.NewURL().Path(version.APIVersion, "networks", networkName, "forwards", forward.ListenAddress).Project(projectName).String(),
+					Type:    "network-forward",
+					NAT:     false, // Network forwards are ingress and so aren't affected by SNAT.
+				},
+			)
+		}
 
-				result = append(
-					result,
-					api.NetworkAllocations{
-						Network: networkName,
-						Address: cidrAddr,
-						UsedBy:  api.NewURL().Path(version.APIVersion, "networks", networkName, "forwards", forward.ListenAddress).Project(projectName).String(),
-						Type:    "network-forward",
-						NAT:     false, // Network forwards are ingress and so aren't affected by SNAT.
-					},
-				)
-			}
+		var dbLoadBalancers []dbCluster.NetworkLoadBalancer
+		err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
+			networkID := n.ID()
 
-			var dbLoadBalancers []dbCluster.NetworkLoadBalancer
-			err = d.db.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
-				networkID := n.ID()
-
-				// Get the load balancers.
-				dbLoadBalancers, err = dbCluster.GetNetworkLoadBalancers(ctx, tx.Tx(), dbCluster.NetworkLoadBalancerFilter{NetworkID: &networkID})
-				if err != nil {
-					return err
-				}
-
-				return nil
-			})
+			// Get the load balancers.
+			dbLoadBalancers, err = dbCluster.GetNetworkLoadBalancers(ctx, tx.Tx(), dbCluster.NetworkLoadBalancerFilter{NetworkID: &networkID})
 			if err != nil {
-				return response.SmartError(fmt.Errorf("Failed getting load-balancers for network %q in project %q: %w", networkName, projectName, err))
+				return err
 			}
 
-			for _, loadBalancer := range dbLoadBalancers {
-				cidrAddr, _, err := ipToCIDR(loadBalancer.ListenAddress, netConf)
-				if err != nil {
-					return response.SmartError(err)
-				}
+			return nil
+		})
+		if err != nil {
+			return response.SmartError(fmt.Errorf("Failed getting load-balancers for network %q in project %q: %w", networkName, projectName, err))
+		}
 
-				result = append(
-					result,
-					api.NetworkAllocations{
-						Network: networkName,
-						Address: cidrAddr,
-						UsedBy:  api.NewURL().Path(version.APIVersion, "networks", networkName, "load-balancers", loadBalancer.ListenAddress).Project(projectName).String(),
-						Type:    "network-load-balancer",
-						NAT:     false, // Network load-balancers are ingress and so aren't affected by SNAT.
-					},
-				)
+		for _, loadBalancer := range dbLoadBalancers {
+			cidrAddr, _, err := ipToCIDR(loadBalancer.ListenAddress, netConf)
+			if err != nil {
+				return response.SmartError(err)
 			}
+
+			result = append(
+				result,
+				api.NetworkAllocations{
+					Network: networkName,
+					Project: projectName,
+					Address: cidrAddr,
+					UsedBy:  api.NewURL().Path(version.APIVersion, "networks", networkName, "load-balancers", loadBalancer.ListenAddress).Project(projectName).String(),
+					Type:    "network-load-balancer",
+					NAT:     false, // Network load-balancers are ingress and so aren't affected by SNAT.
+				},
+			)
 		}
 	}
 
