@@ -1342,15 +1342,19 @@ func instancesPost(d *Daemon, r *http.Request) response.Response {
 
 	// Special handling for instance refresh.
 	// For all other situations, we're headed towards the scheduler, but for this case, we can short circuit it.
-	if s.ServerClustered && !clusterNotification && req.Source.Type == "migration" && req.Source.Refresh {
-		// The regular path checks this through AllowInstanceCreation, which isn't run here.
-		err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
-			return project.AllowInstanceMigrationSource(tx, targetProjectName, req)
-		})
-		if err != nil {
-			return response.SmartError(err)
+	localRefresh := false
+	if s.ServerClustered && !clusterNotification && (req.Source.Type == "migration" || req.Source.Type == "copy") && req.Source.Refresh {
+		if req.Source.Type == "migration" {
+			// The regular path checks this through AllowInstanceCreation, which isn't run here.
+			err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
+				return project.AllowInstanceMigrationSource(tx, targetProjectName, req)
+			})
+			if err != nil {
+				return response.SmartError(err)
+			}
 		}
 
+		// A refresh has to run on the member holding the instance, or the data lands in the wrong pool.
 		client, err := cluster.ConnectIfInstanceIsRemote(s, targetProjectName, req.Name, r)
 		if err != nil && !response.IsNotFoundError(err) {
 			return response.SmartError(err)
@@ -1367,10 +1371,13 @@ func instancesPost(d *Daemon, r *http.Request) response.Response {
 			return operations.ForwardedOperationResponse(&opAPI)
 		}
 
-		if err == nil {
+		if err == nil && req.Source.Type == "migration" {
 			// The instance is valid and the request wasn't forwarded, so the instance is local.
 			return createFromMigration(r.Context(), s, r, targetProjectName, nil, &req)
 		}
+
+		// A copy goes through the regular path but must stay on this member.
+		localRefresh = err == nil
 	}
 
 	var targetProject *api.Project
@@ -1385,6 +1392,11 @@ func instancesPost(d *Daemon, r *http.Request) response.Response {
 	target := request.QueryParam(r, "target")
 	if !s.ServerClustered && target != "" {
 		return response.BadRequest(errors.New("Target only allowed when clustered"))
+	}
+
+	// A refresh can only run where the instance is.
+	if localRefresh {
+		target = ""
 	}
 
 	// For a copy, check that the caller is allowed to view the source instance before any of its details are loaded.
@@ -1638,7 +1650,7 @@ func instancesPost(d *Daemon, r *http.Request) response.Response {
 		return response.BadRequest(err)
 	}
 
-	if s.ServerClustered && !clusterNotification && !clusterInternal {
+	if s.ServerClustered && !clusterNotification && !clusterInternal && !localRefresh {
 		// If a target was specified, limit the list of candidates to that target.
 		if targetMemberInfo != nil {
 			candidateMembers = []db.NodeInfo{*targetMemberInfo}
