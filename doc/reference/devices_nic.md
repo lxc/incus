@@ -10,11 +10,6 @@ NICs support hotplugging for both containers and VMs (with the exception of the 
 Network devices, also referred to as *Network Interface Controllers* or *NICs*, supply a connection to a network.
 Incus supports several different types of network devices (*NIC types*).
 
-```{note}
-When using a USB network adapter with a VM, mainline QEMU will replace the leading two bytes of a MAC address with `40:`.
-Those affected by this may want to manually set the `hwaddr` property to a MAC address starting with `40:` to align the host and guest reporting of the MAC.
-```
-
 ## `nictype` vs. `network`
 
 When adding a network device to an instance, there are two methods to specify the type of device that you want to add: through the `nictype` device option or the `network` device option.
