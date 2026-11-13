@@ -299,7 +299,12 @@ func createFromMigration(ctx context.Context, s *state.State, r *http.Request, p
 
 	// Early check for refresh and cluster same name move to check instance exists.
 	if req.Source.Refresh || (clusterMoveSourceName != "" && clusterMoveSourceName == req.Name) {
-		inst, err = instance.LoadByProjectAndName(s, projectName, req.Name)
+		if clusterMoveSourceName != "" {
+			inst, err = instance.LoadByProjectAndName(s, projectName, req.Name)
+		} else {
+			inst, err = loadRefreshTarget(s, projectName, req.Name)
+		}
+
 		if err != nil {
 			if !response.IsNotFoundError(err) {
 				return response.SmartError(err)
@@ -694,8 +699,14 @@ func createFromCopy(ctx context.Context, s *state.State, r *http.Request, projec
 
 	// When refreshing, the target keeps its own dependent volumes unless the request overrides them.
 	if req.Source.Refresh {
-		target, err := instance.LoadByProjectAndName(s, targetProject, req.Name)
-		if err == nil {
+		target, err := loadRefreshTarget(s, targetProject, req.Name)
+		if err != nil && !response.IsNotFoundError(err) {
+			return response.SmartError(err)
+		}
+
+		if err != nil {
+			req.Source.Refresh = false
+		} else {
 			sourceDevices := source.LocalDevices()
 			targetDevices := target.LocalDevices()
 
@@ -1890,6 +1901,37 @@ func clusterCopyContainerInternal(ctx context.Context, s *state.State, r *http.R
 
 	// Run the migration
 	return createFromMigration(ctx, s, nil, projectName, profiles, req)
+}
+
+// loadRefreshTarget loads the instance a refresh is for, removing a record left behind by an interrupted copy.
+// Volume records are member specific, so only the member holding the instance can tell.
+func loadRefreshTarget(s *state.State, projectName string, name string) (instance.Instance, error) {
+	inst, err := instance.LoadByProjectAndName(s, projectName, name)
+	if err != nil {
+		return nil, err
+	}
+
+	if s.ServerClustered && inst.Location() != s.ServerName {
+		return inst, nil
+	}
+
+	_, err = inst.StoragePool()
+	if err == nil {
+		return inst, nil
+	}
+
+	if !response.IsNotFoundError(err) {
+		return nil, err
+	}
+
+	logger.Warn("Removing instance record left without a storage volume", logger.Ctx{"project": projectName, "instance": name})
+
+	err = inst.Delete(true, false)
+	if err != nil {
+		return nil, fmt.Errorf("Failed removing instance record left without a storage volume: %w", err)
+	}
+
+	return nil, api.StatusErrorf(http.StatusNotFound, "Instance not found")
 }
 
 func instanceCreateFinish(s *state.State, req *api.InstancesPost, args db.InstanceArgs, op *operations.Operation) error {
