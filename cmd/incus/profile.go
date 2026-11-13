@@ -9,7 +9,6 @@ import (
 	"os"
 	"regexp"
 	"slices"
-	"sort"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -22,11 +21,6 @@ import (
 	cli "github.com/lxc/incus/v7/shared/cmd"
 	"github.com/lxc/incus/v7/shared/termios"
 )
-
-type profileColumn struct {
-	Name string
-	Data func(api.Profile) string
-}
 
 type cmdProfile struct {
 	global *cmdGlobal
@@ -71,7 +65,7 @@ func (c *cmdProfile) command() *cobra.Command {
 	cmd.AddCommand(profileGetCmd.command())
 
 	// List
-	profileListCmd := cmdProfileList{global: c.global, profile: c}
+	profileListCmd := cmdProfileList{global: c.global, profile: c, lister: &listable[api.Profile]{global: c.global}}
 	cmd.AddCommand(profileListCmd.command())
 
 	// Remove
@@ -667,10 +661,10 @@ func (c *cmdProfileGet) run(cmd *cobra.Command, args []string) error {
 
 // List.
 type cmdProfileList struct {
-	global          *cmdGlobal
-	profile         *cmdProfile
-	flagFormat      string
-	flagColumns     string
+	global  *cmdGlobal
+	profile *cmdProfile
+	lister  *listable[api.Profile]
+
 	flagAllProjects bool
 }
 
@@ -681,8 +675,7 @@ func (c *cmdProfileList) command() *cobra.Command {
 	cmd.Use = cli.U("list", cmdProfileListUsage...)
 	cmd.Aliases = []string{"ls"}
 	cmd.Short = i18n.G("List profiles")
-	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
-		`List profiles
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`List profiles
 
 Filters may be of the <key>=<value> form for property based filtering,
 or part of the profile name. Filters must be delimited by a ','.
@@ -690,28 +683,17 @@ or part of the profile name. Filters must be delimited by a ','.
 Examples:
   - "foo" lists all profiles that start with the name foo
   - "name=foo" lists all profiles that exactly have the name foo
-  - "description=.*bar.*" lists all profiles with a description that contains "bar"
-
-The -c option takes a (optionally comma-separated) list of arguments
-that control which profile attributes to output when displaying in table
-or csv format.
-
-Default column layout is: ndu
-
-Column shorthand chars:
-n - Profile Name
-d - Description
-u - Used By`,
-	))
-
-	cmd.RunE = c.run
-	cli.AddStringFlag(cmd.Flags(), &c.flagColumns, "columns|c", defaultProfileColumns, "", i18n.G("Columns"))
-	cli.AddStringFlag(cmd.Flags(), &c.flagFormat, "format|f", c.global.defaultListFormat(), "", i18n.G(`Format (csv|json|table|yaml|compact|markdown), use suffix ",noheader" to disable headers and ",header" to enable it if missing, e.g. csv,header`))
+  - "description=.*bar.*" lists all profiles with a description that contains "bar"`))
 	cli.AddBoolFlag(cmd.Flags(), &c.flagAllProjects, "all-projects", i18n.G("Display profiles from all projects"))
 
-	cmd.PreRunE = func(cmd *cobra.Command, _ []string) error {
-		return cli.ValidateFlagFormatForListOutput(cmd.Flag("format").Value.String())
-	}
+	c.lister.init(cmd, "ndu", map[rune]listColumn[api.Profile]{
+		'n': {i18n.G("NAME"), i18n.G("Name"), c.profileNameColumnData},
+		'e': {i18n.G("PROJECT"), i18n.G("Project"), c.projectNameColumnData},
+		'd': {i18n.G("DESCRIPTION"), i18n.G("Description"), c.descriptionColumnData},
+		'u': {i18n.G("USED BY"), i18n.G("Number of references"), c.usedByColumnData},
+	}, projectToggle)
+
+	cmd.RunE = c.run
 
 	cmd.ValidArgsFunction = func(_ *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		if len(args) == 0 {
@@ -722,47 +704,6 @@ u - Used By`,
 	}
 
 	return cmd
-}
-
-const (
-	defaultProfileColumns            = "ndu"
-	defaultProfileColumnsAllProjects = "endu"
-)
-
-func (c *cmdProfileList) parseColumns() ([]profileColumn, error) {
-	columnsShorthandMap := map[rune]profileColumn{
-		'n': {i18n.G("NAME"), c.profileNameColumnData},
-		'e': {i18n.G("PROJECT"), c.projectNameColumnData},
-		'd': {i18n.G("DESCRIPTION"), c.descriptionColumnData},
-		'u': {i18n.G("USED BY"), c.usedByColumnData},
-	}
-
-	// Add project column if --all-projects flag specified and no custom column was passed.
-	if c.flagAllProjects {
-		if c.flagColumns == defaultProfileColumns {
-			c.flagColumns = defaultProfileColumnsAllProjects
-		}
-	}
-
-	columnList := strings.Split(c.flagColumns, ",")
-	columns := []profileColumn{}
-
-	for _, columnEntry := range columnList {
-		if columnEntry == "" {
-			return nil, fmt.Errorf(i18n.G("Empty column entry (redundant, leading or trailing command) in '%s'"), c.flagColumns)
-		}
-
-		for _, columnRune := range columnEntry {
-			column, ok := columnsShorthandMap[columnRune]
-			if !ok {
-				return nil, fmt.Errorf(i18n.G("Unknown column shorthand char '%c' in '%s'"), columnRune, columnEntry)
-			}
-
-			columns = append(columns, column)
-		}
-	}
-
-	return columns, nil
 }
 
 func (c *cmdProfileList) profileNameColumnData(profile api.Profile) string {
@@ -794,6 +735,11 @@ func (c *cmdProfileList) run(cmd *cobra.Command, args []string) error {
 		return errors.New(i18n.G("Can't specify --project with --all-projects"))
 	}
 
+	err = c.lister.toggle(projectToggle, c.flagAllProjects)
+	if err != nil {
+		return err
+	}
+
 	flattenedFilters := []string{}
 	for _, filter := range filters {
 		flattenedFilters = append(flattenedFilters, strings.Split(filter, ",")...)
@@ -819,33 +765,11 @@ func (c *cmdProfileList) run(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	columns, err := c.parseColumns()
-	if err != nil {
-		return err
-	}
-
-	data := [][]string{}
-	for _, profile := range profiles {
-		line := []string{}
-		for _, column := range columns {
-			line = append(line, column.Data(profile))
-		}
-
-		data = append(data, line)
-	}
-
-	if len(data) == 0 {
+	if len(profiles) == 0 {
 		u.HintMissingSpace(args, i18n.G("No matching profile found"))
 	}
 
-	sort.Sort(cli.SortColumnsNaturally(data))
-
-	header := []string{}
-	for _, column := range columns {
-		header = append(header, column.Name)
-	}
-
-	return cli.RenderTable(os.Stdout, c.flagFormat, header, data, profiles)
+	return c.lister.run(profiles)
 }
 
 // Remove.

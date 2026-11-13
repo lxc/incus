@@ -37,10 +37,9 @@ import (
 	"github.com/lxc/incus/v7/shared/util"
 )
 
-type volumeColumn struct {
-	Name       string
-	Data       func(api.StorageVolume, api.StorageVolumeState) string
-	NeedsState bool
+type storageVolumeRowData struct {
+	volume api.StorageVolume
+	state  api.StorageVolumeState
 }
 
 type cmdStorageVolume struct {
@@ -123,7 +122,7 @@ Unless specified through a prefix, all volume operations affect "custom" (user c
 	cmd.AddCommand(storageVolumeInfoCmd.command())
 
 	// List
-	storageVolumeListCmd := cmdStorageVolumeList{global: c.global, storage: c.storage, storageVolume: c}
+	storageVolumeListCmd := cmdStorageVolumeList{global: c.global, storage: c.storage, storageVolume: c, lister: &listable[storageVolumeRowData]{global: c.global}}
 	cmd.AddCommand(storageVolumeListCmd.command())
 
 	// NBD
@@ -1480,12 +1479,9 @@ type cmdStorageVolumeList struct {
 	global        *cmdGlobal
 	storage       *cmdStorage
 	storageVolume *cmdStorageVolume
+	lister        *listable[storageVolumeRowData]
 
-	flagFormat      string
-	flagColumns     string
 	flagAllProjects bool
-
-	defaultColumns string
 }
 
 var cmdStorageVolumeListUsage = u.Usage{u.Pool.Remote(), u.Filter.List(0)}
@@ -1496,11 +1492,8 @@ func (c *cmdStorageVolumeList) command() *cobra.Command {
 	cmd.Aliases = []string{"ls"}
 	cmd.Short = i18n.G("List storage volumes")
 
-	c.defaultColumns = "etndcuL"
-	cli.AddStringFlag(cmd.Flags(), &c.flagColumns, "columns|c", c.defaultColumns, "", i18n.G("Columns"))
 	cli.AddBoolFlag(cmd.Flags(), &c.flagAllProjects, "all-projects", i18n.G("All projects"))
-	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
-		`List storage volumes
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`List storage volumes
 
 A single keyword like "vol" which will list any storage volume with a name starting by "vol".
 A regular expression on the storage volume name. (e.g. .*vol.*01$).
@@ -1508,28 +1501,18 @@ A key/value pair where the key is a storage volume field name. Multiple values m
 
 Examples:
   - "type=custom" will list all custom storage volumes
-  - "type=custom content_type=block" will list all custom block storage volumes
+  - "type=custom content_type=block" will list all custom block storage volumes`))
 
-== Columns ==
-The -c option takes a (optionally comma-separated) list of arguments
-that control which image attributes to output when displaying in table
-or csv format.
-
-Column shorthand chars:
-    c - Content type (filesystem or block)
-    d - Description
-    e - Project name
-    L - Location of the instance (e.g. its cluster member)
-    n - Name
-    t - Type of volume (custom, image, container or virtual-machine)
-    u - Number of references (used by)
-    U - Current disk usage`,
-	))
-	cli.AddStringFlag(cmd.Flags(), &c.flagFormat, "format|f", c.global.defaultListFormat(), "", i18n.G(`Format (csv|json|table|yaml|compact|markdown), use suffix ",noheader" to disable headers and ",header" to enable it if missing, e.g. csv,header`))
-
-	cmd.PreRunE = func(cmd *cobra.Command, _ []string) error {
-		return cli.ValidateFlagFormatForListOutput(cmd.Flag("format").Value.String())
-	}
+	c.lister.init(cmd, "tndcu", map[rune]listColumn[storageVolumeRowData]{
+		't': {i18n.G("TYPE"), i18n.G("Type"), c.typeColumnData},
+		'n': {i18n.G("NAME"), i18n.G("Name"), c.nameColumnData},
+		'd': {i18n.G("DESCRIPTION"), i18n.G("Description"), c.descriptionColumnData},
+		'c': {i18n.G("CONTENT-TYPE"), i18n.G("Content type (filesystem or block)"), c.contentTypeColumnData},
+		'u': {i18n.G("USED BY"), i18n.G("Number of references"), c.usedByColumnData},
+		'U': {i18n.G("USAGE"), i18n.G("Current disk usage"), c.usageColumnData},
+		'L': {i18n.G("LOCATION"), i18n.G("Location (cluster member)"), c.locationColumnData},
+		'e': {i18n.G("PROJECT"), i18n.G("Project"), c.projectColumnData},
+	}, projectToggle, locationToggle)
 
 	cmd.RunE = c.run
 
@@ -1552,6 +1535,20 @@ func (c *cmdStorageVolumeList) run(cmd *cobra.Command, args []string) error {
 
 	d := parsed[0].RemoteServer
 	poolName := parsed[0].RemoteObject.String
+
+	if c.global.flagProject != "" && c.flagAllProjects {
+		return errors.New(i18n.G("Can't specify --project with --all-projects"))
+	}
+
+	err = c.lister.toggle(projectToggle, c.flagAllProjects)
+	if err != nil {
+		return err
+	}
+
+	err = c.lister.toggle(locationToggle, d.IsClustered())
+	if err != nil {
+		return err
+	}
 
 	// Process the filters
 	filters := []string{}
@@ -1582,138 +1579,66 @@ func (c *cmdStorageVolumeList) run(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	// Process the columns
-	columns, err := c.parseColumns(d.IsClustered())
-	if err != nil {
-		return err
-	}
-
-	// Render the table
-	data := [][]string{}
-	for _, vol := range volumes {
-		row := []string{}
-		for _, column := range columns {
-			if column.NeedsState && !instance.IsSnapshot(vol.Name) && vol.Type != "image" {
-				state, err := d.UseProject(vol.Project).GetStoragePoolVolumeState(poolName, vol.Type, vol.Name)
-				if err != nil {
-					return err
-				}
-
-				row = append(row, column.Data(vol, *state))
-			} else {
-				row = append(row, column.Data(vol, api.StorageVolumeState{}))
-			}
-		}
-		data = append(data, row)
-	}
-
-	if len(columns) >= 2 {
-		sort.Sort(cli.ByNameAndType(data))
-	}
-
-	rawData := make([]*api.StorageVolume, len(volumes))
-	for i := range volumes {
-		rawData[i] = &volumes[i]
-	}
-
-	headers := []string{}
-	for _, column := range columns {
-		headers = append(headers, column.Name)
-	}
-
-	return cli.RenderTable(os.Stdout, c.flagFormat, headers, data, rawData)
-}
-
-func (c *cmdStorageVolumeList) parseColumns(clustered bool) ([]volumeColumn, error) {
-	columnsShorthandMap := map[rune]volumeColumn{
-		't': {Name: i18n.G("TYPE"), Data: c.typeColumnData},
-		'n': {Name: i18n.G("NAME"), Data: c.nameColumnData},
-		'd': {Name: i18n.G("DESCRIPTION"), Data: c.descriptionColumnData},
-		'c': {Name: i18n.G("CONTENT-TYPE"), Data: c.contentTypeColumnData},
-		'u': {Name: i18n.G("USED BY"), Data: c.usedByColumnData},
-		'U': {Name: i18n.G("USAGE"), Data: c.usageColumnData, NeedsState: true},
-	}
-
-	if clustered {
-		columnsShorthandMap['L'] = volumeColumn{Name: i18n.G("LOCATION"), Data: c.locationColumnData}
-	} else {
-		if c.flagColumns != c.defaultColumns {
-			if strings.ContainsAny(c.flagColumns, "L") {
-				return nil, errors.New(i18n.G("Can't specify column L when not clustered"))
-			}
-		}
-		c.flagColumns = strings.ReplaceAll(c.flagColumns, "L", "")
-	}
-
-	if c.flagAllProjects {
-		columnsShorthandMap['e'] = volumeColumn{Name: i18n.G("PROJECT"), Data: c.projectColumnData}
-	} else {
-		c.flagColumns = strings.ReplaceAll(c.flagColumns, "e", "")
-	}
-
-	columnList := strings.Split(c.flagColumns, ",")
-
-	columns := []volumeColumn{}
-	for _, columnEntry := range columnList {
-		if columnEntry == "" {
-			return nil, fmt.Errorf(i18n.G("Empty column entry (redundant, leading or trailing command) in '%s'"), c.flagColumns)
-		}
-
-		for _, columnRune := range columnEntry {
-			column, ok := columnsShorthandMap[columnRune]
-			if !ok {
-				return nil, fmt.Errorf(i18n.G("Unknown column shorthand char '%c' in '%s'"), columnRune, columnEntry)
+	needState := c.lister.hasColumn('U')
+	rows := make([]storageVolumeRowData, len(volumes))
+	for i, vol := range volumes {
+		if needState && !instance.IsSnapshot(vol.Name) && vol.Type != "image" {
+			state, err := d.UseProject(vol.Project).GetStoragePoolVolumeState(poolName, vol.Type, vol.Name)
+			if err != nil {
+				return err
 			}
 
-			columns = append(columns, column)
+			rows[i] = storageVolumeRowData{volume: vol, state: *state}
+		} else {
+			rows[i] = storageVolumeRowData{volume: vol}
 		}
 	}
 
-	return columns, nil
+	return c.lister.run(rows, volumes)
 }
 
-func (c *cmdStorageVolumeList) typeColumnData(vol api.StorageVolume, _ api.StorageVolumeState) string {
-	if instance.IsSnapshot(vol.Name) {
-		return fmt.Sprintf("%s (snapshot)", vol.Type)
+func (c *cmdStorageVolumeList) typeColumnData(r storageVolumeRowData) string {
+	if instance.IsSnapshot(r.volume.Name) {
+		return fmt.Sprintf("%s (snapshot)", r.volume.Type)
 	}
 
-	return vol.Type
+	return r.volume.Type
 }
 
-func (c *cmdStorageVolumeList) nameColumnData(vol api.StorageVolume, _ api.StorageVolumeState) string {
-	return vol.Name
+func (c *cmdStorageVolumeList) nameColumnData(r storageVolumeRowData) string {
+	return r.volume.Name
 }
 
-func (c *cmdStorageVolumeList) descriptionColumnData(vol api.StorageVolume, _ api.StorageVolumeState) string {
-	return vol.Description
+func (c *cmdStorageVolumeList) descriptionColumnData(r storageVolumeRowData) string {
+	return r.volume.Description
 }
 
-func (c *cmdStorageVolumeList) contentTypeColumnData(vol api.StorageVolume, _ api.StorageVolumeState) string {
-	if vol.ContentType == "" {
+func (c *cmdStorageVolumeList) contentTypeColumnData(r storageVolumeRowData) string {
+	if r.volume.ContentType == "" {
 		return "filesystem"
 	}
 
-	return vol.ContentType
+	return r.volume.ContentType
 }
 
-func (c *cmdStorageVolumeList) usedByColumnData(vol api.StorageVolume, _ api.StorageVolumeState) string {
-	return strconv.Itoa(len(vol.UsedBy))
+func (c *cmdStorageVolumeList) usedByColumnData(r storageVolumeRowData) string {
+	return strconv.Itoa(len(r.volume.UsedBy))
 }
 
-func (c *cmdStorageVolumeList) locationColumnData(vol api.StorageVolume, _ api.StorageVolumeState) string {
-	return vol.Location
+func (c *cmdStorageVolumeList) locationColumnData(r storageVolumeRowData) string {
+	return r.volume.Location
 }
 
-func (c *cmdStorageVolumeList) usageColumnData(_ api.StorageVolume, state api.StorageVolumeState) string {
-	if state.Usage != nil {
-		return units.GetByteSizeStringIEC(int64(state.Usage.Used), 2)
+func (c *cmdStorageVolumeList) usageColumnData(r storageVolumeRowData) string {
+	if r.state.Usage != nil {
+		return units.GetByteSizeStringIEC(int64(r.state.Usage.Used), 2)
 	}
 
 	return ""
 }
 
-func (c *cmdStorageVolumeList) projectColumnData(vol api.StorageVolume, _ api.StorageVolumeState) string {
-	return vol.Project
+func (c *cmdStorageVolumeList) projectColumnData(r storageVolumeRowData) string {
+	return r.volume.Project
 }
 
 // Move.

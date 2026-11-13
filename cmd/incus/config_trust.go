@@ -31,6 +31,11 @@ type cmdConfigTrust struct {
 	config *cmdConfig
 }
 
+type configTrustRowData struct {
+	Cert    api.Certificate
+	TLSCert *x509.Certificate
+}
+
 func (c *cmdConfigTrust) command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("trust")
@@ -50,11 +55,11 @@ func (c *cmdConfigTrust) command() *cobra.Command {
 	cmd.AddCommand(configTrustEditCmd.command())
 
 	// List
-	configTrustListCmd := cmdConfigTrustList{global: c.global, config: c.config, configTrust: c}
+	configTrustListCmd := cmdConfigTrustList{global: c.global, config: c.config, configTrust: c, lister: &listable[configTrustRowData]{global: c.global}}
 	cmd.AddCommand(configTrustListCmd.command())
 
 	// List tokens
-	configTrustListTokensCmd := cmdConfigTrustListTokens{global: c.global, config: c.config, configTrust: c}
+	configTrustListTokensCmd := cmdConfigTrustListTokens{global: c.global, config: c.config, configTrust: c, lister: &listable[*api.CertificateAddToken]{global: c.global}}
 	cmd.AddCommand(configTrustListTokensCmd.command())
 
 	// Remove
@@ -356,19 +361,7 @@ type cmdConfigTrustList struct {
 	global      *cmdGlobal
 	config      *cmdConfig
 	configTrust *cmdConfigTrust
-
-	flagFormat  string
-	flagColumns string
-}
-
-type certificateColumn struct {
-	Name string
-	Data func(rowData rowData) string
-}
-
-type rowData struct {
-	Cert    api.Certificate
-	TLSCert *x509.Certificate
+	lister      *listable[configTrustRowData]
 }
 
 var cmdConfigTrustListUsage = u.Usage{u.RemoteColonOpt, u.Filter.List(0)}
@@ -378,118 +371,65 @@ func (c *cmdConfigTrustList) command() *cobra.Command {
 	cmd.Use = cli.U("list", cmdConfigTrustListUsage...)
 	cmd.Aliases = []string{"ls"}
 	cmd.Short = i18n.G("List trusted clients")
-	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
-		`List trusted clients
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G("List trusted clients"))
 
-The -c option takes a (optionally comma-separated) list of arguments
-that control which certificate attributes to output when displaying in table
-or csv format.
-
-Default column layout is: ntdfe
-
-Column shorthand chars:
-	n - Name
-	t - Type
-	c - Common Name
-	f - Fingerprint (short)
-	F - Fingerprint (long)
-	d - Description
-	i - Issue date
-	e - Expiry date
-	r - Whether certificate is restricted
-	p - Newline-separated list of projects`,
-	))
-
-	cli.AddStringFlag(cmd.Flags(), &c.flagColumns, "columns|c", "ntdfe", "", i18n.G("Columns"))
-	cli.AddStringFlag(cmd.Flags(), &c.flagFormat, "format|f", c.global.defaultListFormat(), "", i18n.G(`Format (csv|json|table|yaml|compact|markdown), use suffix ",noheader" to disable headers and ",header" to enable it if missing, e.g. csv,header`))
-
-	cmd.PreRunE = func(cmd *cobra.Command, _ []string) error {
-		return cli.ValidateFlagFormatForListOutput(cmd.Flag("format").Value.String())
-	}
+	c.lister.init(cmd, "ntdfE", map[rune]listColumn[configTrustRowData]{
+		'n': {i18n.G("NAME"), i18n.G("Name"), c.nameColumnData},
+		't': {i18n.G("TYPE"), i18n.G("Certificate type"), c.typeColumnData},
+		'c': {i18n.G("COMMON NAME"), i18n.G("Common name"), c.commonNameColumnData},
+		'f': {i18n.G("FINGERPRINT"), i18n.G("Fingerprint (short)"), c.fingerprintColumnData},
+		'F': {i18n.G("FINGERPRINT"), i18n.G("Fingerprint (long)"), c.fingerprintFullColumnData},
+		'd': {i18n.G("DESCRIPTION"), i18n.G("Description"), c.descriptionColumnData},
+		'i': {i18n.G("ISSUE DATE"), i18n.G("Issue date"), c.issueDateColumnData},
+		'E': {i18n.G("EXPIRES"), i18n.G("Expiration date"), c.expiryDateColumnData},
+		'r': {i18n.G("RESTRICTED"), i18n.G("Whether the certificate is restricted"), c.restrictedColumnData},
+		'p': {i18n.G("PROJECTS"), i18n.G("Projects to which the certificate is confined"), c.projectColumnData},
+	})
 
 	cmd.RunE = c.run
 
 	return cmd
 }
 
-func (c *cmdConfigTrustList) parseColumns() ([]certificateColumn, error) {
-	columnsShorthandMap := map[rune]certificateColumn{
-		'n': {i18n.G("NAME"), c.nameColumnData},
-		't': {i18n.G("TYPE"), c.typeColumnData},
-		'c': {i18n.G("COMMON NAME"), c.commonNameColumnData},
-		'f': {i18n.G("FINGERPRINT"), c.fingerprintColumnData},
-		'F': {i18n.G("FINGERPRINT"), c.fingerprintFullColumnData},
-		'd': {i18n.G("DESCRIPTION"), c.descriptionColumnData},
-		'i': {i18n.G("ISSUE DATE"), c.issueDateColumnData},
-		'e': {i18n.G("EXPIRY DATE"), c.expiryDateColumnData},
-		'r': {i18n.G("RESTRICTED"), c.restrictedColumnData},
-		'p': {i18n.G("PROJECTS"), c.projectColumnData},
-	}
-
-	columnList := strings.Split(c.flagColumns, ",")
-
-	columns := []certificateColumn{}
-	for _, columnEntry := range columnList {
-		if columnEntry == "" {
-			return nil, fmt.Errorf(i18n.G("Empty column entry (redundant, leading or trailing command) in '%s'"), c.flagColumns)
-		}
-
-		for _, columnRune := range columnEntry {
-			column, ok := columnsShorthandMap[columnRune]
-			if !ok {
-				return nil, fmt.Errorf(i18n.G("Unknown column shorthand char '%c' in '%s'"), columnRune, columnEntry)
-			}
-
-			columns = append(columns, column)
-		}
-	}
-
-	return columns, nil
+func (c *cmdConfigTrustList) typeColumnData(r configTrustRowData) string {
+	return r.Cert.Type
 }
 
-func (c *cmdConfigTrustList) typeColumnData(rowData rowData) string {
-	return rowData.Cert.Type
+func (c *cmdConfigTrustList) nameColumnData(r configTrustRowData) string {
+	return r.Cert.Name
 }
 
-func (c *cmdConfigTrustList) nameColumnData(rowData rowData) string {
-	return rowData.Cert.Name
+func (c *cmdConfigTrustList) commonNameColumnData(r configTrustRowData) string {
+	return r.TLSCert.Subject.CommonName
 }
 
-func (c *cmdConfigTrustList) commonNameColumnData(rowData rowData) string {
-	return rowData.TLSCert.Subject.CommonName
+func (c *cmdConfigTrustList) fingerprintColumnData(r configTrustRowData) string {
+	return r.Cert.Fingerprint[0:12]
 }
 
-func (c *cmdConfigTrustList) fingerprintColumnData(rowData rowData) string {
-	return rowData.Cert.Fingerprint[0:12]
+func (c *cmdConfigTrustList) fingerprintFullColumnData(r configTrustRowData) string {
+	return r.Cert.Fingerprint
 }
 
-func (c *cmdConfigTrustList) fingerprintFullColumnData(rowData rowData) string {
-	return rowData.Cert.Fingerprint
+func (c *cmdConfigTrustList) descriptionColumnData(r configTrustRowData) string {
+	return r.Cert.Description
 }
 
-func (c *cmdConfigTrustList) descriptionColumnData(rowData rowData) string {
-	return rowData.Cert.Description
+func (c *cmdConfigTrustList) issueDateColumnData(r configTrustRowData) string {
+	return r.TLSCert.NotBefore.Local().Format(dateLayout)
 }
 
-func (c *cmdConfigTrustList) issueDateColumnData(rowData rowData) string {
-	return rowData.TLSCert.NotBefore.Local().Format(dateLayout)
+func (c *cmdConfigTrustList) expiryDateColumnData(r configTrustRowData) string {
+	return r.TLSCert.NotAfter.Local().Format(dateLayout)
 }
 
-func (c *cmdConfigTrustList) expiryDateColumnData(rowData rowData) string {
-	return rowData.TLSCert.NotAfter.Local().Format(dateLayout)
+func (c *cmdConfigTrustList) restrictedColumnData(r configTrustRowData) string {
+	return yesNo(r.Cert.Restricted)
 }
 
-func (c *cmdConfigTrustList) restrictedColumnData(rowData rowData) string {
-	if rowData.Cert.Restricted {
-		return i18n.G("yes")
-	}
-
-	return i18n.G("no")
-}
-
-func (c *cmdConfigTrustList) projectColumnData(rowData rowData) string {
+func (c *cmdConfigTrustList) projectColumnData(r configTrustRowData) string {
 	projects := []string{}
-	projects = append(projects, rowData.Cert.Projects...)
+	projects = append(projects, r.Cert.Projects...)
 
 	sort.Strings(projects)
 	return strings.Join(projects, "\n")
@@ -502,15 +442,7 @@ func (c *cmdConfigTrustList) run(cmd *cobra.Command, args []string) error {
 	}
 
 	d := parsed[0].RemoteServer
-	filters := parsed[1].StringList
-
-	// Process the columns
-	columns, err := c.parseColumns()
-	if err != nil {
-		return err
-	}
-
-	filters = prepareCertificatesFilters(filters)
+	filters := prepareCertificatesFilters(parsed[1].StringList)
 
 	// List trust relationships
 	trust, err := d.GetCertificatesWithFilter(filters)
@@ -518,8 +450,8 @@ func (c *cmdConfigTrustList) run(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	data := [][]string{}
-	for _, cert := range trust {
+	rows := make([]configTrustRowData, len(trust))
+	for i, cert := range trust {
 		certBlock, _ := pem.Decode([]byte(cert.Certificate))
 		if certBlock == nil {
 			return errors.New(i18n.G("Invalid certificate"))
@@ -530,28 +462,14 @@ func (c *cmdConfigTrustList) run(cmd *cobra.Command, args []string) error {
 			return err
 		}
 
-		rowData := rowData{cert, tlsCert}
-
-		row := []string{}
-		for _, column := range columns {
-			row = append(row, column.Data(rowData))
-		}
-
-		data = append(data, row)
+		rows[i] = configTrustRowData{cert, tlsCert}
 	}
 
-	if len(data) == 0 {
+	if len(rows) == 0 {
 		u.HintMissingSpace(args, i18n.G("No matching client found"))
 	}
 
-	sort.Sort(cli.StringList(data))
-
-	headers := []string{}
-	for _, column := range columns {
-		headers = append(headers, column.Name)
-	}
-
-	return cli.RenderTable(os.Stdout, c.flagFormat, headers, data, trust)
+	return c.lister.run(rows, trust)
 }
 
 // List tokens.
@@ -559,14 +477,7 @@ type cmdConfigTrustListTokens struct {
 	global      *cmdGlobal
 	config      *cmdConfig
 	configTrust *cmdConfigTrust
-
-	flagFormat  string
-	flagColumns string
-}
-
-type configTrustListTokenColumn struct {
-	Name string
-	Data func(*api.CertificateAddToken) string
+	lister      *listable[*api.CertificateAddToken]
 }
 
 var cmdConfigTrustListTokensUsage = u.Usage{u.RemoteColonOpt}
@@ -575,66 +486,17 @@ func (c *cmdConfigTrustListTokens) command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("list-tokens", cmdConfigTrustListTokensUsage...)
 	cmd.Short = i18n.G("List all active certificate add tokens")
-	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
-		`List all active certificate add tokens
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G("List all active certificate add tokens"))
 
-Default column layout: ntE
-
-== Columns ==
-The -c option takes a comma separated list of arguments that control
-which certificate add tokens attributes to output when displaying in
-table or csv format.
-
-Column arguments are either pre-defined shorthand chars (see below),
-or (extended) config keys.
-
-Commas between consecutive shorthand chars are optional.
-
-Pre-defined column shorthand chars:
-  n - Name
-  t - Token
-  E - Expires At`,
-	))
-	cli.AddStringFlag(cmd.Flags(), &c.flagFormat, "format|f", c.global.defaultListFormat(), "", i18n.G(`Format (csv|json|table|yaml|compact|markdown), use suffix ",noheader" to disable headers and ",header" to enable it if missing, e.g. csv,header`))
-	cli.AddStringFlag(cmd.Flags(), &c.flagColumns, "columns|c", defaultConfigTrustListTokenColumns, "", i18n.G("Columns"))
-
-	cmd.PreRunE = func(cmd *cobra.Command, _ []string) error {
-		return cli.ValidateFlagFormatForListOutput(cmd.Flag("format").Value.String())
-	}
+	c.lister.init(cmd, "ntE", map[rune]listColumn[*api.CertificateAddToken]{
+		'n': {i18n.G("NAME"), i18n.G("Name"), c.clientNameColumnData},
+		't': {i18n.G("TOKEN"), i18n.G("Token"), c.tokenColumnData},
+		'E': {i18n.G("EXPIRES"), i18n.G("Expiration date"), c.expiresAtColumnData},
+	})
 
 	cmd.RunE = c.run
 
 	return cmd
-}
-
-const defaultConfigTrustListTokenColumns = "ntE"
-
-func (c *cmdConfigTrustListTokens) parseColumns() ([]configTrustListTokenColumn, error) {
-	columnsShorthandMap := map[rune]configTrustListTokenColumn{
-		'n': {i18n.G("NAME"), c.clientNameColumnData},
-		't': {i18n.G("TOKEN"), c.tokenColumnData},
-		'E': {i18n.G("EXPIRES AT"), c.expiresAtColumnData},
-	}
-
-	columnList := strings.Split(c.flagColumns, ",")
-	columns := []configTrustListTokenColumn{}
-
-	for _, columnEntry := range columnList {
-		if columnEntry == "" {
-			return nil, fmt.Errorf(i18n.G("Empty column entry (redundant, leading or trailing command) in '%s'"), c.flagColumns)
-		}
-
-		for _, columnRune := range columnEntry {
-			column, ok := columnsShorthandMap[columnRune]
-			if !ok {
-				return nil, fmt.Errorf(i18n.G("Unknown column shorthand char '%c' in '%s'"), columnRune, columnEntry)
-			}
-
-			columns = append(columns, column)
-		}
-	}
-
-	return columns, nil
 }
 
 func (c *cmdConfigTrustListTokens) clientNameColumnData(token *api.CertificateAddToken) string {
@@ -667,15 +529,7 @@ func (c *cmdConfigTrustListTokens) run(cmd *cobra.Command, args []string) error 
 		return err
 	}
 
-	data := [][]string{}
 	joinTokens := []*api.CertificateAddToken{}
-
-	// Parse column flags.
-	columns, err := c.parseColumns()
-	if err != nil {
-		return err
-	}
-
 	for _, op := range ops {
 		if op.Class != api.OperationClassToken {
 			continue
@@ -690,23 +544,10 @@ func (c *cmdConfigTrustListTokens) run(cmd *cobra.Command, args []string) error 
 			continue // Operation is not a valid certificate add token operation.
 		}
 
-		line := []string{}
-		for _, column := range columns {
-			line = append(line, column.Data(joinToken))
-		}
-
 		joinTokens = append(joinTokens, joinToken)
-		data = append(data, line)
 	}
 
-	sort.Sort(cli.SortColumnsNaturally(data))
-
-	header := []string{}
-	for _, column := range columns {
-		header = append(header, column.Name)
-	}
-
-	return cli.RenderTable(os.Stdout, c.flagFormat, header, data, joinTokens)
+	return c.lister.run(joinTokens)
 }
 
 // Remove.

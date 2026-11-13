@@ -22,18 +22,12 @@ import (
 	"github.com/lxc/incus/v7/shared/units"
 )
 
-type topColumn struct {
-	Name string
-	Data func(displayData) string
-}
-
 type cmdTop struct {
 	global  *cmdGlobal
 	targets []string
+	lister  *listable[displayData]
 
 	flagAllProjects bool
-	flagColumns     string
-	flagFormat      string
 	flagRefresh     int
 }
 
@@ -43,70 +37,24 @@ func (c *cmdTop) command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("top", cmdTopUsage...)
 	cmd.Short = i18n.G("Display resource usage info per instance")
-	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
-		`Displays CPU usage, memory usage, and disk usage per instance
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G("Displays CPU usage, memory usage, and disk usage per instance"))
 
-Default column layout: numD
-
-== Columns ==
-The -c option takes a comma separated list of arguments that control
-which instance attributes to output when displaying in table or compact
-format.
-
-Column arguments are pre-defined shorthand chars (see below).
-Commas between consecutive shorthand chars are optional.
-
-Column shorthand chars:
-  D - disk usage
-  e - Project name
-  m - Memory usage
-  n - Instance name
-  u - CPU usage (in seconds)`,
-	))
+	c.lister.init(cmd, "numD", map[rune]listColumn[displayData]{
+		'e': {i18n.G("PROJECT"), i18n.G("Project"), c.projectColumnData},
+		'n': {i18n.G("NAME"), i18n.G("Name"), c.instanceNameColumnData},
+		'u': {i18n.G("CPU USAGE"), i18n.G("CPU usage (in seconds)"), c.cpuUsageColumnData},
+		'm': {i18n.G("MEM USAGE"), i18n.G("Memory usage"), c.memoryUsageColumnData},
+		'D': {i18n.G("DISK USAGE"), i18n.G("Disk usage"), c.diskUsageColumnData},
+	}, projectToggle)
 
 	cli.AddBoolFlag(cmd.Flags(), &c.flagAllProjects, "all-projects", i18n.G("Display instances from all projects"))
-	cli.AddStringFlag(cmd.Flags(), &c.flagColumns, "columns|c", defaultTopColumns, "", i18n.G("Columns"))
-	cli.AddStringFlag(cmd.Flags(), &c.flagFormat, "format|f", c.global.defaultListFormat(), "", i18n.G("Format (table|compact)"))
 	cli.AddIntFlag(cmd.Flags(), &c.flagRefresh, "refresh", i18n.G("Configure the refresh delay in seconds"), 10)
+
+	// This subcommand only supports a subset of out usual formats.
+	cmd.Flags().Lookup("format").Usage = i18n.G(`Format (table|compact), use suffix ",noheader" to disable headers, e.g. compact,header`)
 
 	cmd.RunE = c.run
 	return cmd
-}
-
-const (
-	defaultTopColumns            = "numD"
-	defaultTopColumnsAllProjects = "enumD"
-)
-
-func (c *cmdTop) parseColumns() ([]topColumn, error) {
-	columnsShorthandMap := map[rune]topColumn{
-		'e': {i18n.G("PROJECT"), c.projectColumnData},
-		'n': {i18n.G("INSTANCE NAME"), c.instanceNameColumnData},
-		'u': {i18n.G("CPU TIME(s)"), c.cpuUsageColumnData},
-		'm': {i18n.G("MEMORY"), c.memoryUsageColumnData},
-		'D': {i18n.G("DISK"), c.diskUsageColumnData},
-	}
-
-	columnList := strings.Split(c.flagColumns, ",")
-
-	columns := []topColumn{}
-
-	for _, columnEntry := range columnList {
-		if columnEntry == "" {
-			return nil, fmt.Errorf(i18n.G("Empty column entry (redundant, leading or trailing command) in '%s'"), c.flagColumns)
-		}
-
-		for _, columnRune := range columnEntry {
-			column, ok := columnsShorthandMap[columnRune]
-			if !ok {
-				return nil, fmt.Errorf(i18n.G("Unknown column shorthand char '%c' in '%s'"), columnRune, columnEntry)
-			}
-
-			columns = append(columns, column)
-		}
-	}
-
-	return columns, nil
 }
 
 func (c *cmdTop) projectColumnData(dd displayData) string {
@@ -118,7 +66,7 @@ func (c *cmdTop) instanceNameColumnData(dd displayData) string {
 }
 
 func (c *cmdTop) cpuUsageColumnData(dd displayData) string {
-	return fmt.Sprintf("%.2f", dd.cpuUsage)
+	return fmt.Sprintf("%.2fs", dd.cpuUsage)
 }
 
 func (c *cmdTop) memoryUsageColumnData(dd displayData) string {
@@ -147,14 +95,18 @@ func (c *cmdTop) run(cmd *cobra.Command, args []string) error {
 
 	d := parsed[0].RemoteServer
 
-	// Add project column if --all-projects flag specified and no -c was passed.
-	if c.flagAllProjects && c.flagColumns == defaultTopColumns {
-		c.flagColumns = defaultTopColumnsAllProjects
+	if c.global.flagProject != "" && c.flagAllProjects {
+		return errors.New(i18n.G("Can't specify --project with --all-projects"))
+	}
+
+	err = c.lister.toggle(projectToggle, c.flagAllProjects)
+	if err != nil {
+		return err
 	}
 
 	// Validate flags.
-	if !slices.Contains([]string{cli.TableFormatCompact, cli.TableFormatTable}, strings.SplitN(c.flagFormat, ",", 2)[0]) {
-		return fmt.Errorf(i18n.G("Invalid format %q"), c.flagFormat)
+	if !slices.Contains([]string{cli.TableFormatCompact, cli.TableFormatTable}, strings.SplitN(c.lister.flagFormat, ",", 2)[0]) {
+		return fmt.Errorf(i18n.G("Invalid format %q"), c.lister.flagFormat)
 	}
 
 	if c.flagRefresh < 10 {
@@ -404,30 +356,13 @@ func (c *cmdTop) updateDisplay(d incus.InstanceServer, refreshInterval time.Dura
 
 	// Perform sort operation
 	sortBySortingType(data, sortingType)
-
-	// Process the columns
-	columns, err := c.parseColumns()
+	header, formatted, err := c.lister.buildTableData(data)
 	if err != nil {
 		return err
 	}
 
-	dataFormatted := [][]string{}
-	for _, d := range data {
-		row := []string{}
-		for _, column := range columns {
-			row = append(row, column.Data(d))
-		}
-
-		dataFormatted = append(dataFormatted, row)
-	}
-
-	headers := []string{}
-	for _, column := range columns {
-		headers = append(headers, column.Name)
-	}
-
 	fmt.Print("\033[H\033[2J") // Clear the terminal on each tick
-	err = cli.RenderTable(os.Stdout, c.flagFormat, headers, dataFormatted, nil)
+	err = cli.RenderTable(os.Stdout, c.lister.flagFormat, header, formatted, nil)
 	if err != nil {
 		return err
 	}

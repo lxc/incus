@@ -30,11 +30,6 @@ type cmdStorage struct {
 	flagTarget string
 }
 
-type storageColumn struct {
-	Name string
-	Data func(api.StoragePool) string
-}
-
 func (c *cmdStorage) command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("storage")
@@ -62,7 +57,7 @@ func (c *cmdStorage) command() *cobra.Command {
 	cmd.AddCommand(storageInfoCmd.command())
 
 	// List
-	storageListCmd := cmdStorageList{global: c.global, storage: c}
+	storageListCmd := cmdStorageList{global: c.global, storage: c, lister: &listable[api.StoragePool]{global: c.global}}
 	cmd.AddCommand(storageListCmd.command())
 
 	// Set
@@ -628,9 +623,7 @@ func (c *cmdStorageInfo) run(cmd *cobra.Command, args []string) error {
 type cmdStorageList struct {
 	global  *cmdGlobal
 	storage *cmdStorage
-
-	flagFormat  string
-	flagColumns string
+	lister  *listable[api.StoragePool]
 }
 
 var cmdStorageListUsage = u.Usage{u.RemoteColonOpt, u.Filter.List(0)}
@@ -640,35 +633,16 @@ func (c *cmdStorageList) command() *cobra.Command {
 	cmd.Use = cli.U("list", cmdStorageListUsage...)
 	cmd.Aliases = []string{"ls"}
 	cmd.Short = i18n.G("List available storage pools")
-	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
-		`List available storage pools
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G("List available storage pools"))
 
-Default column layout: nDdus
-
-== Columns ==
-The -c option takes a comma separated list of arguments that control
-which storage pools attributes to output when displaying in table or csv
-format.
-
-Column arguments are either pre-defined shorthand chars (see below),
-or (extended) config keys.
-
-Commas between consecutive shorthand chars are optional.
-
-Pre-defined column shorthand chars:
-  n - Name
-  D - Driver
-  d - Description
-  S - Source
-  u - used by
-  s - state`,
-	))
-	cli.AddStringFlag(cmd.Flags(), &c.flagColumns, "columns|c", defaultStorageColumns, "", i18n.G("Columns"))
-	cli.AddStringFlag(cmd.Flags(), &c.flagFormat, "format|f", c.global.defaultListFormat(), "", i18n.G(`Format (csv|json|table|yaml|compact|markdown), use suffix ",noheader" to disable headers and ",header" to enable it if missing, e.g. csv,header`))
-
-	cmd.PreRunE = func(cmd *cobra.Command, _ []string) error {
-		return cli.ValidateFlagFormatForListOutput(cmd.Flag("format").Value.String())
-	}
+	c.lister.init(cmd, "nDdus", map[rune]listColumn[api.StoragePool]{
+		'n': {i18n.G("NAME"), i18n.G("Name"), c.storageNameColumnData},
+		'D': {i18n.G("DRIVER"), i18n.G("Driver"), c.driverColumnData},
+		'd': {i18n.G("DESCRIPTION"), i18n.G("Description"), c.descriptionColumnData},
+		'S': {i18n.G("SOURCE"), i18n.G("Source"), c.sourceColumnData},
+		'u': {i18n.G("USED BY"), i18n.G("Number of references"), c.usedByColumnData},
+		's': {i18n.G("STATE"), i18n.G("State"), c.stateColumnData},
+	})
 
 	cmd.RunE = c.run
 
@@ -681,40 +655,6 @@ Pre-defined column shorthand chars:
 	}
 
 	return cmd
-}
-
-const defaultStorageColumns = "nDdus"
-
-func (c *cmdStorageList) parseColumns() ([]storageColumn, error) {
-	columnsShorthandMap := map[rune]storageColumn{
-		'n': {i18n.G("NAME"), c.storageNameColumnData},
-		'D': {i18n.G("DRIVER"), c.driverColumnData},
-		'd': {i18n.G("DESCRIPTION"), c.descriptionColumnData},
-		'S': {i18n.G("SOURCE"), c.sourceColumnData},
-		'u': {i18n.G("USED BY"), c.usedByColumnData},
-		's': {i18n.G("STATE"), c.stateColumnData},
-	}
-
-	columnList := strings.Split(c.flagColumns, ",")
-
-	columns := []storageColumn{}
-
-	for _, columnEntry := range columnList {
-		if columnEntry == "" {
-			return nil, fmt.Errorf(i18n.G("Empty column entry (redundant, leading or trailing command) in '%s'"), c.flagColumns)
-		}
-
-		for _, columnRune := range columnEntry {
-			column, ok := columnsShorthandMap[columnRune]
-			if !ok {
-				return nil, fmt.Errorf(i18n.G("Unknown column shorthand char '%c' in '%s'"), columnRune, columnEntry)
-			}
-
-			columns = append(columns, column)
-		}
-	}
-
-	return columns, nil
 }
 
 func (c *cmdStorageList) storageNameColumnData(storage api.StoragePool) string {
@@ -756,34 +696,11 @@ func (c *cmdStorageList) run(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	// Parse column flags.
-	columns, err := c.parseColumns()
-	if err != nil {
-		return err
-	}
-
-	data := [][]string{}
-	for _, pool := range pools {
-		line := []string{}
-		for _, column := range columns {
-			line = append(line, column.Data(pool))
-		}
-
-		data = append(data, line)
-	}
-
-	if len(data) == 0 {
+	if len(pools) == 0 {
 		u.HintMissingSpace(args, i18n.G("No matching storage pool found"))
 	}
 
-	sort.Sort(cli.SortColumnsNaturally(data))
-
-	header := []string{}
-	for _, column := range columns {
-		header = append(header, column.Name)
-	}
-
-	return cli.RenderTable(os.Stdout, c.flagFormat, header, data, pools)
+	return c.lister.run(pools)
 }
 
 // Set.

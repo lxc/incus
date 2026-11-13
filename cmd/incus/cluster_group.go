@@ -7,8 +7,6 @@ import (
 	"maps"
 	"os"
 	"slices"
-	"sort"
-	"strings"
 
 	"github.com/spf13/cobra"
 	yaml "go.yaml.in/yaml/v4"
@@ -24,11 +22,6 @@ import (
 type cmdClusterGroup struct {
 	global  *cmdGlobal
 	cluster *cmdCluster
-}
-
-type clusterGroupColumn struct {
-	Name string
-	Data func(api.ClusterGroup) string
 }
 
 func (c *cmdClusterGroup) command() *cobra.Command {
@@ -54,7 +47,7 @@ func (c *cmdClusterGroup) command() *cobra.Command {
 	cmd.AddCommand(clusterGroupEditCmd.command())
 
 	// List
-	clusterGroupListCmd := cmdClusterGroupList{global: c.global, cluster: c.cluster}
+	clusterGroupListCmd := cmdClusterGroupList{global: c.global, cluster: c.cluster, lister: &listable[api.ClusterGroup]{global: c.global}}
 	cmd.AddCommand(clusterGroupListCmd.command())
 
 	// Remove
@@ -407,9 +400,7 @@ func (c *cmdClusterGroupEdit) helpTemplate() string {
 type cmdClusterGroupList struct {
 	global  *cmdGlobal
 	cluster *cmdCluster
-
-	flagFormat  string
-	flagColumns string
+	lister  *listable[api.ClusterGroup]
 }
 
 var cmdClusterGroupListUsage = u.Usage{u.RemoteColonOpt}
@@ -419,33 +410,13 @@ func (c *cmdClusterGroupList) command() *cobra.Command {
 	cmd.Use = cli.U("list", cmdClusterGroupListUsage...)
 	cmd.Aliases = []string{"ls"}
 	cmd.Short = i18n.G("List all the cluster groups")
-	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
-		`List all the cluster groups
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G("List all the cluster groups"))
 
-Default column layout: ndm
-
-== Columns ==
-The -c option takes a comma separated list of arguments that control
-which cluster groups attributes to output when displaying in table
-or csv format.
-
-Column arguments are either pre-defined shorthand chars (see below),
-or (extended) config keys.
-
-Commas between consecutive shorthand chars are optional.
-
-Pre-defined column shorthand chars:
-  n - Name
-  d - Description
-  m - Member`,
-	))
-
-	cli.AddStringFlag(cmd.Flags(), &c.flagColumns, "columns|c", defaultClusterGroupColumns, "", i18n.G("Columns"))
-	cli.AddStringFlag(cmd.Flags(), &c.flagFormat, "format|f", c.global.defaultListFormat(), "", i18n.G(`Format (csv|json|table|yaml|compact|markdown), use suffix ",noheader" to disable headers and ",header" to enable it if missing, e.g. csv,header`))
-
-	cmd.PreRunE = func(cmd *cobra.Command, _ []string) error {
-		return cli.ValidateFlagFormatForListOutput(cmd.Flag("format").Value.String())
-	}
+	c.lister.init(cmd, "ndm", map[rune]listColumn[api.ClusterGroup]{
+		'n': {i18n.G("NAME"), i18n.G("Name"), c.clusterGroupNameColumnData},
+		'm': {i18n.G("MEMBERS"), i18n.G("Members"), c.membersColumnData},
+		'd': {i18n.G("DESCRIPTION"), i18n.G("Description"), c.descriptionColumnData},
+	})
 
 	cmd.RunE = c.run
 
@@ -458,36 +429,6 @@ Pre-defined column shorthand chars:
 	}
 
 	return cmd
-}
-
-const defaultClusterGroupColumns = "ndm"
-
-func (c *cmdClusterGroupList) parseColumns() ([]clusterGroupColumn, error) {
-	columnsShorthandMap := map[rune]clusterGroupColumn{
-		'n': {i18n.G("NAME"), c.clusterGroupNameColumnData},
-		'm': {i18n.G("MEMBERS"), c.membersColumnData},
-		'd': {i18n.G("DESCRIPTION"), c.descriptionColumnData},
-	}
-
-	columnList := strings.Split(c.flagColumns, ",")
-	columns := []clusterGroupColumn{}
-
-	for _, columnEntry := range columnList {
-		if columnEntry == "" {
-			return nil, fmt.Errorf(i18n.G("Empty column entry (redundant, leading or trailing command) in '%s'"), c.flagColumns)
-		}
-
-		for _, columnRune := range columnEntry {
-			column, ok := columnsShorthandMap[columnRune]
-			if !ok {
-				return nil, fmt.Errorf(i18n.G("Unknown column shorthand char '%c' in '%s'"), columnRune, columnEntry)
-			}
-
-			columns = append(columns, column)
-		}
-	}
-
-	return columns, nil
 }
 
 func (c *cmdClusterGroupList) clusterGroupNameColumnData(group api.ClusterGroup) string {
@@ -525,31 +466,7 @@ func (c *cmdClusterGroupList) run(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	// Parse column flags.
-	columns, err := c.parseColumns()
-	if err != nil {
-		return err
-	}
-
-	// Render the table
-	data := [][]string{}
-	for _, group := range groups {
-		line := []string{}
-		for _, column := range columns {
-			line = append(line, column.Data(group))
-		}
-
-		data = append(data, line)
-	}
-
-	sort.Sort(cli.SortColumnsNaturally(data))
-
-	header := []string{}
-	for _, column := range columns {
-		header = append(header, column.Name)
-	}
-
-	return cli.RenderTable(os.Stdout, c.flagFormat, header, data, groups)
+	return c.lister.run(groups)
 }
 
 // Remove.

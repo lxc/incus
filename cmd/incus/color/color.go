@@ -6,7 +6,8 @@ import (
 	"github.com/lxc/incus/v7/internal/i18n"
 )
 
-func commandHeader(header string) string {
+// CommandHeader formats a command help section header.
+func CommandHeader(header string) string {
 	return color.New(color.FgHiCyan, color.Bold, color.Underline).Sprint(header)
 }
 
@@ -33,13 +34,13 @@ func Init(disable bool) {
 
 	ErrorPrefix = color.New(color.FgRed, color.Bold).Sprint(i18n.G("Error:"))
 	WarningPrefix = color.New(color.FgYellow, color.Bold).Sprint(i18n.G("Warning:"))
-	DescriptionPrefix = commandHeader(i18n.G("Description:"))
-	RawUsagePrefix = i18n.G("Usage:")
-	UsagePrefix = commandHeader(RawUsagePrefix)
-	AliasesPrefix = commandHeader(i18n.G("Aliases:"))
-	ExamplesPrefix = commandHeader(i18n.G("Examples:"))
-	AvailableCommandsPrefix = commandHeader(i18n.G("Available Commands:"))
-	FlagsPrefix = commandHeader(i18n.G("Flags:"))
-	GlobalFlagsPrefix = commandHeader(i18n.G("Global Flags:"))
-	AdditionalHelpTopicsPrefix = commandHeader(i18n.G("Additional Help Topics:"))
+	DescriptionPrefix = CommandHeader(i18n.G("Description"))
+	RawUsagePrefix = i18n.G("Usage")
+	UsagePrefix = CommandHeader(RawUsagePrefix)
+	AliasesPrefix = CommandHeader(i18n.G("Aliases"))
+	ExamplesPrefix = CommandHeader(i18n.G("Examples"))
+	AvailableCommandsPrefix = CommandHeader(i18n.G("Available Commands"))
+	FlagsPrefix = CommandHeader(i18n.G("Flags"))
+	GlobalFlagsPrefix = CommandHeader(i18n.G("Global Flags"))
+	AdditionalHelpTopicsPrefix = CommandHeader(i18n.G("Additional Help Topics"))
 }
