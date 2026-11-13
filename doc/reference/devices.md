@@ -20,8 +20,8 @@ Incus supports the following device types:
 | 4             | [`unix-block`](devices-unix-block)     | container | Unix block device               |
 | 5             | [`usb`](devices-usb)                   | -         | USB device                      |
 | 6             | [`gpu`](devices-gpu)                   | -         | GPU device                      |
-| 7             | [`infiniband`](devices-infiniband)     | container | InfiniBand device               |
-| 8             | [`proxy`](devices-proxy)               | container | Proxy device                    |
+| 7             | [`infiniband`](devices-infiniband)     | -         | InfiniBand device               |
+| 8             | [`proxy`](devices-proxy)               | -         | Proxy device                    |
 | 9             | [`unix-hotplug`](devices-unix-hotplug) | container | Unix hotplug device             |
 | 10            | [`tpm`](devices-tpm)                   | -         | TPM device                      |
 | 11            | [`pci`](devices-pci)                   | VM        | PCI device                      |
