@@ -2360,6 +2360,25 @@ func (b *backend) CreateInstanceFromMigration(inst instance.Instance, conn io.Re
 		return err
 	}
 
+	// A fresh copy isn't refreshing anything, so a record with no volume behind it is a leftover.
+	if dbVol != nil && !args.Refresh && !isRemoteClusterMove {
+		leftoverExists, err := b.driver.HasVolume(b.GetVolume(volType, contentType, project.Instance(inst.Project().Name, inst.Name()), nil))
+		if err != nil {
+			return err
+		}
+
+		if !leftoverExists {
+			l.Warn("Removing volume record left without a volume on storage")
+
+			err = VolumeDBDelete(b, inst.Project().Name, inst.Name(), volType)
+			if err != nil {
+				return err
+			}
+
+			dbVol = nil
+		}
+	}
+
 	// Prefer using existing volume config (to allow mounting existing volume correctly).
 	if dbVol != nil {
 		volumeConfig = dbVol.Config
