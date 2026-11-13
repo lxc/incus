@@ -2458,6 +2458,13 @@ func (b *backend) CreateInstanceFromMigration(inst instance.Instance, conn io.Re
 	// Create new volume database records when the storage pool is changed or
 	// when it is not a remote cluster move.
 	if !isRemoteClusterMove || args.StoragePool != "" {
+		// Keys the driver fills in for a volume of this type.
+		driverKeys := b.GetVolume(volType, contentType, volStorageName, map[string]string{})
+		err = b.driver.FillVolumeConfig(driverKeys)
+		if err != nil {
+			return fmt.Errorf("Failed filling volume config: %w", err)
+		}
+
 		for i, snapshot := range args.Snapshots {
 			snapName := snapshot.GetName()
 			newSnapshotName := drivers.GetSnapshotVolumeName(inst.Name(), snapName)
@@ -2476,7 +2483,26 @@ func (b *backend) CreateInstanceFromMigration(inst instance.Instance, conn io.Re
 				if len(srcInfo.Config.VolumeSnapshots) > i && srcInfo.Config.VolumeSnapshots[i] != nil && srcInfo.Config.VolumeSnapshots[i].Name == snapName {
 					// Check if snapshot volume config is available then use it.
 					snapDescription = srcInfo.Config.VolumeSnapshots[i].Description
-					snapConfig = srcInfo.Config.VolumeSnapshots[i].Config
+					snapConfig = maps.Clone(srcInfo.Config.VolumeSnapshots[i].Config)
+
+					// Snapshots from another kind of pool lack the keys this pool fills in for the parent.
+					if args.MigrationType.FSType == migration.MigrationFSType_RSYNC || args.MigrationType.FSType == migration.MigrationFSType_BLOCK_AND_RSYNC {
+						if snapConfig == nil {
+							snapConfig = map[string]string{}
+						}
+
+						for k := range driverKeys.Config() {
+							_, ok := snapConfig[k]
+							if ok || k == "size" {
+								continue
+							}
+
+							v, ok := vol.Config()[k]
+							if ok {
+								snapConfig[k] = v
+							}
+						}
+					}
 
 					if srcInfo.Config.VolumeSnapshots[i].ExpiresAt != nil {
 						snapExpiryDate = *srcInfo.Config.VolumeSnapshots[i].ExpiresAt
