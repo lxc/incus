@@ -1888,8 +1888,10 @@ func networkLeasesGet(d *Daemon, r *http.Request) response.Response {
 	return response.SyncResponse(true, leases)
 }
 
-func networkStartup(s *state.State) error {
+func networkStartup(stateFunc func() *state.State) error {
 	var err error
+
+	s := stateFunc()
 
 	// Cleanup leftover OVS ports.
 	vswitch, err := s.OVS()
@@ -2115,6 +2117,9 @@ func networkStartup(s *state.State) error {
 					return
 				case <-t.C:
 					t.Stop()
+
+					// Refresh the state as the daemon may have finished starting since.
+					s = stateFunc()
 
 					tryInstancesStart := initInPriorityOrder(false)
 
