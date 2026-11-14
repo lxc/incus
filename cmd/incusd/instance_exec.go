@@ -545,7 +545,22 @@ func (s *execWs) do(op *operations.Operation) error {
 				}
 
 				if i == execWSStdin {
-					err = <-ws.MirrorWrite(conn, ttys[i])
+					var n int64
+					n, err = util.SafeCopy(ttys[i], ws.NewWrapper(conn))
+
+					// Don't let truncated input pass as a regular end of input (a failed write isn't truncation).
+					var writeErr *fs.PathError
+					if err != nil && n > 0 && !errors.As(err, &writeErr) {
+						l.Warn("Exec stdin websocket ended unexpectedly, sending SIGPIPE to command", logger.Ctx{"err": err})
+						_ = cmd.Signal(unix.SIGPIPE)
+
+						// Let the signal land before the command sees the end of input.
+						select {
+						case <-waitAttachedChildIsDead.Done():
+						case <-time.After(time.Second):
+						}
+					}
+
 					_ = ttys[i].Close()
 				} else {
 					err = <-ws.MirrorRead(conn, linux.NewExecWrapper(waitAttachedChildIsDead, ptys[i]))
