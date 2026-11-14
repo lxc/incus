@@ -506,11 +506,11 @@ func (c *cmdStorageVolumeFilePull) command() *cobra.Command {
 	cmd.Short = i18n.G("Pull files from custom volumes")
 	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Pull files from custom volumes`))
 	cmd.Example = cli.FormatSection("", i18n.G(
-		`incus custom volume file pull local v1/foo/etc/hosts .
-   To pull /etc/hosts from the custom volume and write it to the current directory.
+		`incus storage volume file pull local v1/etc/hosts .
+   To pull /etc/hosts from the custom volume "v1" and write it to the current directory.
 
-incus file pull local v1 foo/etc/hosts -
-   To pull /etc/hosts from the custom volume and write its output to standard output.`,
+incus storage volume file pull local v1/etc/hosts -
+   To pull /etc/hosts from the custom volume "v1" and write its output to standard output.`,
 	))
 
 	cli.AddBoolFlag(cmd.Flags(), &c.storageVolumeFile.flagMkdir, "create-dirs|p", i18n.G("Create any directories necessary"))
@@ -703,7 +703,7 @@ func (c *cmdStorageVolumeFilePush) command() *cobra.Command {
 		`incus storage volume file push /etc/hosts local v1/etc/hosts
    To push /etc/hosts into the custom volume "v1".
 
-echo "Hello world" | incus storage volume file push - local v1 test
+echo "Hello world" | incus storage volume file push - local v1/test
    To read "Hello world" from standard input and write it into test in volume "v1".`,
 	))
 
