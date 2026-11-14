@@ -238,6 +238,10 @@ Custom commands can be defined through aliases, use "incus alias" to control tho
 	execCmd := cmdExec{global: &globalCmd}
 	app.AddCommand(execCmd.command())
 
+	// shell sub-command
+	shellCmd := cmdShell{cmdExec: &cmdExec{global: &globalCmd}}
+	app.AddCommand(shellCmd.command())
+
 	// export sub-command
 	exportCmd := cmdExport{global: &globalCmd}
 	app.AddCommand(exportCmd.command())

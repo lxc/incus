@@ -116,7 +116,12 @@ func (c *cmdExec) run(cmd *cobra.Command, args []string) error {
 		return errors.New(i18n.G("You can't pass -t or -T at the same time as --mode"))
 	}
 
-	// Set the environment
+	return c.runInstance(d, instanceName, command, c.flagUser)
+}
+
+func (c *cmdExec) runInstance(d incus.InstanceServer, instanceName string, command []string, user uint32) error {
+	var err error
+
 	env := map[string]string{}
 	myTerm, ok := c.getTERM()
 	if ok {
@@ -196,7 +201,7 @@ func (c *cmdExec) run(cmd *cobra.Command, args []string) error {
 		Environment: env,
 		Width:       width,
 		Height:      height,
-		User:        c.flagUser,
+		User:        user,
 		Group:       c.flagGroup,
 		Cwd:         c.flagCwd,
 	}
