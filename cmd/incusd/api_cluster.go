@@ -339,7 +339,7 @@ func clusterPutBootstrap(d *Daemon, r *http.Request, req api.ClusterPut) respons
 		}
 
 		// Restart the networks.
-		err = networkStartup(s)
+		err = networkStartup(d.State)
 		if err != nil {
 			return err
 		}
@@ -862,7 +862,7 @@ func clusterPutJoin(d *Daemon, r *http.Request, req api.ClusterPut) response.Res
 
 		// Start up networks so any post-join changes can be applied now that we have a Node ID.
 		logger.Debug("Starting networks after cluster join")
-		err = networkStartup(s)
+		err = networkStartup(d.State)
 		if err != nil {
 			logger.Errorf("Failed starting networks: %v", err)
 		}
