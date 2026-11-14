@@ -1405,10 +1405,8 @@ func (r *ProtocolIncus) ExecInstance(instanceName string, exec api.InstanceExecP
 			for {
 				select {
 				case <-dones[0]:
-					// Handle stdin finish, but don't wait for it if output channels
-					// have all finished.
+					// Keep the websocket open, closing it now can drop data still in transit.
 					dones[0] = nil
-					_ = stdConns[0].Close()
 				case <-dones[1]:
 					dones[1] = nil
 					_ = stdConns[1].Close()
@@ -1420,8 +1418,8 @@ func (r *ProtocolIncus) ExecInstance(instanceName string, exec api.InstanceExecP
 				}
 
 				if waitConns <= 0 {
-					// Close stdin websocket if defined and not already closed.
-					if dones[0] != nil {
+					// Close stdin websocket if defined.
+					if stdConns[0] != nil {
 						_ = stdConns[0].Close()
 					}
 
