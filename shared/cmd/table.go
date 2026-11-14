@@ -149,7 +149,12 @@ func RenderTable(w io.Writer, format string, header []string, data [][]string, r
 }
 
 func hierarchicalMerge(n int) tw.CellMerging {
-	indices := make([]int, max(0, n-1))
+	// An empty column list means every column, so single column tables must not merge at all.
+	if n < 2 {
+		return tw.CellMerging{}
+	}
+
+	indices := make([]int, n-1)
 	for i := range n - 1 {
 		indices[i] = i
 	}
