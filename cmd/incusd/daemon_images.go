@@ -62,10 +62,11 @@ func imageOperationLock(ctx context.Context, fingerprint string) (locking.Unlock
 	return locking.Lock(ctx, fmt.Sprintf("ImageOperation_%s", fingerprint))
 }
 
-// imageDownload resolves the image fingerprint and if not in the database, downloads it.
+// imageDownload resolves the image fingerprint and if not in the database, downloads it or links it from another project.
 func imageDownload(ctx context.Context, r *http.Request, s *state.State, op *operations.Operation, args *imageDownloadArgs) (*api.Image, bool, error) {
 	var err error
 	var ctxMap logger.Ctx
+	var linked bool
 
 	var remote incus.ImageServer
 	var info *api.Image
@@ -300,6 +301,8 @@ func imageDownload(ctx context.Context, r *http.Request, s *state.State, op *ope
 				return nil, false, err
 			}
 
+			linked = true
+
 			// Transfer image if needed (after database record has been created above).
 			if nodeAddress != "" {
 				// The image is available from another node, let's try to import it.
@@ -318,7 +321,7 @@ func imageDownload(ctx context.Context, r *http.Request, s *state.State, op *ope
 
 		// If not requested in a particular pool, we're done.
 		if args.StoragePool == "" {
-			return info, false, nil
+			return info, linked, nil
 		}
 
 		ctxMap["pool"] = args.StoragePool
@@ -344,7 +347,7 @@ func imageDownload(ctx context.Context, r *http.Request, s *state.State, op *ope
 
 		if slices.Contains(poolIDs, poolID) {
 			logger.Debug("Image already exists on storage pool", ctxMap)
-			return info, false, nil
+			return info, linked, nil
 		}
 
 		// Import the image in the pool.
@@ -358,7 +361,7 @@ func imageDownload(ctx context.Context, r *http.Request, s *state.State, op *ope
 		}
 
 		logger.Debug("Created image on storage pool", ctxMap)
-		return info, false, nil
+		return info, linked, nil
 	}
 
 	// Begin downloading
