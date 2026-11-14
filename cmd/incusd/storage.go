@@ -46,7 +46,9 @@ func readStoragePoolDriversCache() ([]api.ServerStorageDriverInfo, map[string]st
 	return supportedDrivers, usedDrivers
 }
 
-func storageStartup(s *state.State) error {
+func storageStartup(stateFunc func() *state.State) error {
+	s := stateFunc()
+
 	// Update the storage drivers supported and used cache in api_1.0.go.
 	storagePoolDriversCacheUpdate(s.ShutdownCtx, s)
 
@@ -130,6 +132,9 @@ func storageStartup(s *state.State) error {
 					return
 				case <-t.C:
 					t.Stop()
+
+					// Refresh the state as the daemon may have finished starting since.
+					s = stateFunc()
 
 					// Try initializing remaining storage pools in random order.
 					var initializedPools []string

@@ -1460,7 +1460,7 @@ func (d *Daemon) init() error {
 
 	// Mount the storage pools.
 	logger.Infof("Initializing storage pools")
-	err = storageStartup(d.State())
+	err = storageStartup(d.State)
 	if err != nil {
 		return err
 	}
@@ -1639,7 +1639,7 @@ func (d *Daemon) init() error {
 	if !d.serverClustered || !d.db.Cluster.LocalNodeIsEvacuated() {
 		logger.Infof("Initializing networks")
 
-		err = networkStartup(d.State())
+		err = networkStartup(d.State)
 		if err != nil {
 			return err
 		}

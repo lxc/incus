@@ -641,7 +641,7 @@ func restoreClusterMember(d *Daemon, r *http.Request, skipInstances bool) respon
 		})
 
 		// Restart the networks.
-		err = networkStartup(d.State())
+		err = networkStartup(d.State)
 		if err != nil {
 			return err
 		}
