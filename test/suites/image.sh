@@ -19,7 +19,16 @@ test_image_expiry() {
     incus_remote project create l2:p1 -c features.images=true -c features.profiles=false
     incus_remote init l1:testimage l2:c1 --project default
     incus_remote project switch l2:p1
+
+    # Reusing the image cached in the default project announces it in p1.
+    (INCUS_DIR="${INCUS2_DIR}" stdbuf -oL incus monitor --project p1 --type=lifecycle --format=json > "${TEST_DIR}/p1-events.log" 2>&1) &
+    MONITOR=$!
+    sleep 1
     incus_remote init l1:testimage l2:c2
+    sleep 1
+    kill "${MONITOR}" || true
+    jq -r 'select(.metadata.action == "image-created") | .metadata.source' "${TEST_DIR}/p1-events.log" | grep -q '^/1.0/images/'
+
     incus_remote project switch l2:default
 
     fp="$(incus_remote image info testimage | awk '/^Fingerprint/ {print $2}')"
