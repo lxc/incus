@@ -1359,7 +1359,8 @@ func (r *ProtocolIncus) ExecInstance(instanceName string, exec api.InstanceExecP
 		}
 	} else {
 		// Handle non-interactive sessions
-		dones := make(map[int]<-chan struct{})
+		var stdinDone <-chan struct{}
+		dones := make(map[int]chan error)
 		stdConns := map[int]*websocket.Conn{}
 
 		// Handle stdin
@@ -1371,7 +1372,7 @@ func (r *ProtocolIncus) ExecInstance(instanceName string, exec api.InstanceExecP
 			}()
 
 			stdConns[0] = conn
-			dones[0] = ws.MirrorDone(ws.MirrorRead(conn, args.Stdin))
+			stdinDone = ws.MirrorDone(ws.MirrorRead(conn, args.Stdin))
 		}
 
 		waitConns := 0 // Used for keeping track of when stdout and stderr have finished.
@@ -1384,7 +1385,7 @@ func (r *ProtocolIncus) ExecInstance(instanceName string, exec api.InstanceExecP
 			}
 
 			stdConns[1] = conns["1"]
-			dones[1] = ws.MirrorDone(ws.MirrorWrite(conns["1"], args.Stdout))
+			dones[1] = ws.MirrorWrite(conns["1"], args.Stdout)
 			waitConns++
 		}
 
@@ -1396,7 +1397,7 @@ func (r *ProtocolIncus) ExecInstance(instanceName string, exec api.InstanceExecP
 			}
 
 			stdConns[2] = conns["2"]
-			dones[2] = ws.MirrorDone(ws.MirrorWrite(conns["2"], args.Stderr))
+			dones[2] = ws.MirrorWrite(conns["2"], args.Stderr)
 			waitConns++
 		}
 
@@ -1404,17 +1405,26 @@ func (r *ProtocolIncus) ExecInstance(instanceName string, exec api.InstanceExecP
 		go func() {
 			for {
 				select {
-				case <-dones[0]:
+				case <-stdinDone:
 					// Keep the websocket open, closing it now can drop data still in transit.
-					dones[0] = nil
-				case <-dones[1]:
+					stdinDone = nil
+				case err := <-dones[1]:
 					dones[1] = nil
 					_ = stdConns[1].Close()
 					waitConns--
-				case <-dones[2]:
+
+					if err != nil && args.DataErr == nil {
+						args.DataErr = err
+					}
+
+				case err := <-dones[2]:
 					dones[2] = nil
 					_ = stdConns[2].Close()
 					waitConns--
+
+					if err != nil && args.DataErr == nil {
+						args.DataErr = err
+					}
 				}
 
 				if waitConns <= 0 {

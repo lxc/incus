@@ -713,6 +713,9 @@ type InstanceExecArgs struct {
 
 	// Channel that will be closed when all data operations are done
 	DataDone chan bool
+
+	// Set before DataDone is closed if the command output couldn't be fully received
+	DataErr error
 }
 
 // The InstanceFileArgs struct is used to pass the various options for a instance file upload.
