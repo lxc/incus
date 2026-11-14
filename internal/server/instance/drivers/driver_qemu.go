@@ -164,6 +164,19 @@ var (
 	qemuStopHooksMu sync.Mutex
 )
 
+// qemuLiveMigration is a live migration send, abortable until handedOver is closed, done is closed after its cleanup.
+type qemuLiveMigration struct {
+	cancel     context.CancelFunc
+	handedOver chan struct{}
+	done       chan struct{}
+}
+
+// qemuLiveMigrations tracks instances with a live migration send in progress.
+var (
+	qemuLiveMigrations   = map[string]*qemuLiveMigration{}
+	qemuLiveMigrationsMu sync.Mutex
+)
+
 type monitorHook func(m *qmp.Monitor) error
 
 // qemuLoad creates a Qemu instance from the supplied InstanceArgs.
@@ -874,6 +887,75 @@ func (d *qemu) onStop(target string, reason string) error {
 	return hook.err
 }
 
+// waitStopHook waits for a stop hook in progress on the instance, if any.
+func (d *qemu) waitStopHook() {
+	qemuStopHooksMu.Lock()
+	hook, running := qemuStopHooks[project.Instance(d.Project().Name, d.Name())]
+	qemuStopHooksMu.Unlock()
+
+	if running {
+		<-hook.done
+	}
+}
+
+// liveMigrationTrack registers a live migration send so a stopping guest can abort it.
+func (d *qemu) liveMigrationTrack(cancel context.CancelFunc) *qemuLiveMigration {
+	m := &qemuLiveMigration{cancel: cancel, handedOver: make(chan struct{}), done: make(chan struct{})}
+
+	qemuLiveMigrationsMu.Lock()
+	qemuLiveMigrations[project.Instance(d.Project().Name, d.Name())] = m
+	qemuLiveMigrationsMu.Unlock()
+
+	return m
+}
+
+// liveMigrationHandedOver marks the live migration send as no longer abortable.
+func (d *qemu) liveMigrationHandedOver() {
+	qemuLiveMigrationsMu.Lock()
+	defer qemuLiveMigrationsMu.Unlock()
+
+	m, ok := qemuLiveMigrations[project.Instance(d.Project().Name, d.Name())]
+	if ok {
+		close(m.handedOver)
+	}
+}
+
+// liveMigrationDone unregisters the live migration send once its cleanup is complete.
+func (d *qemu) liveMigrationDone(m *qemuLiveMigration) {
+	qemuLiveMigrationsMu.Lock()
+	delete(qemuLiveMigrations, project.Instance(d.Project().Name, d.Name()))
+	qemuLiveMigrationsMu.Unlock()
+
+	close(m.done)
+}
+
+// liveMigrationAbort cancels a live migration send still owning the guest state and waits for its cleanup.
+func (d *qemu) liveMigrationAbort() {
+	qemuLiveMigrationsMu.Lock()
+	m, ok := qemuLiveMigrations[project.Instance(d.Project().Name, d.Name())]
+	qemuLiveMigrationsMu.Unlock()
+
+	if !ok {
+		return
+	}
+
+	select {
+	case <-m.handedOver:
+		return
+	default:
+	}
+
+	d.logger.Warn("Aborting the live migration of a stopping instance")
+	m.cancel()
+
+	select {
+	case <-m.done:
+	case <-m.handedOver:
+	case <-time.After(5 * time.Minute):
+		d.logger.Error("Timed out waiting for the aborted live migration to clean up")
+	}
+}
+
 // runStopHook performs the cleanup and restart handling of a stopped instance.
 func (d *qemu) runStopHook(target string, reason string) error {
 	d.logger.Debug("onStop hook started", logger.Ctx{"target": target, "reason": reason})
@@ -892,6 +974,9 @@ func (d *qemu) runStopHook(target string, reason string) error {
 	if d.op == nil {
 		d.op = op.GetOperation()
 	}
+
+	// A guest stopping during its own live migration aborts it, let the transfer clean up first.
+	d.liveMigrationAbort()
 
 	// If QEMU is still running, stop it (handles reboot).
 	monitor, err := qmp.Connect(d.monitorPath(), qemuSerialChardevName, nil, d.QMPLogFilePath(), qemuDetachDisk(d.state, d.id))
@@ -9610,6 +9695,15 @@ func (d *qemu) MigrateSend(args instance.MigrateSendArgs) error {
 		return err
 	}
 
+	// Let a guest stopping during the transfer abort the migration, its stop hook then waits for the cleanup.
+	migrateCtx, cancelMigrate := context.WithCancel(context.Background())
+	defer cancelMigrate()
+
+	if args.Live {
+		defer d.waitStopHook()
+		defer d.liveMigrationDone(d.liveMigrationTrack(cancelMigrate))
+	}
+
 	// Wait for essential migration connections before negotiation.
 	connectionsCtx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
@@ -9911,7 +10005,7 @@ func (d *qemu) MigrateSend(args instance.MigrateSendArgs) error {
 		}
 	}
 
-	g, ctx := errgroup.WithContext(context.Background())
+	g, ctx := errgroup.WithContext(migrateCtx)
 
 	// Tracks whether a live cluster move completed the state hand-over to the target.
 	committed := false
@@ -10013,6 +10107,13 @@ func (d *qemu) MigrateSend(args instance.MigrateSendArgs) error {
 		err := g.Wait()
 		if err != nil {
 			if !committed {
+				if migrateCtx.Err() != nil {
+					err = errors.New("Instance stopped during the live migration")
+				}
+
+				// The instance stays here, so its volatile config must be persisted again.
+				d.volatileSetPersistDisable = false
+
 				op.Done(err)
 				return err
 			}
@@ -10832,6 +10933,7 @@ func (d *qemu) migrateSendLive(ctx context.Context, pool storagePools.Pool, clus
 	d.logger.Debug("Stateful migration checkpoint send finished")
 
 	// The state hand-over is complete, past this point the migration can no longer be reverted.
+	d.liveMigrationHandedOver()
 	if clusterMoveSourceName != "" {
 		*committed = true
 
