@@ -10240,15 +10240,34 @@ func (d *qemu) prepareEphemeralSnapshot(monitor *qmp.Monitor, diskName string, d
 	return snapshotDiskName, blockDevName, removeOverlay, nil
 }
 
+// resumeGuest resumes a paused guest, leaving a guest that shut down to its stop hook.
+func (d *qemu) resumeGuest(monitor *qmp.Monitor) error {
+	status, err := monitor.Status()
+	if err != nil {
+		return err
+	}
+
+	if status == "shutdown" {
+		return nil
+	}
+
+	err = monitor.Start()
+	if err != nil {
+		return err
+	}
+
+	d.resyncAgentClock()
+
+	return nil
+}
+
 // mergeEphemeralSnapshot merges an ephemeral snapshot back into its base disk and removes it.
 // On merge failure the overlay is kept attached as it still holds the guest's writes.
 func (d *qemu) mergeEphemeralSnapshot(monitor *qmp.Monitor, overlayNode string) error {
 	// Resume guest (this is needed as it will prevent merging the snapshot if paused).
-	err := monitor.Start()
+	err := d.resumeGuest(monitor)
 	if err != nil {
 		d.logger.Warn("Failed resuming instance", logger.Ctx{"err": err})
-	} else {
-		d.resyncAgentClock()
 	}
 
 	// Merge the snapshot back into the source disk so we don't lose writes,
@@ -10658,6 +10677,19 @@ func (d *qemu) migrateSendLive(ctx context.Context, pool storagePools.Pool, clus
 			return fmt.Errorf("Failed setting migration parameters: %w", err)
 		}
 
+		// Keep QEMU around if the guest shuts down so the snapshots can be merged back.
+		err = monitor.SetAction(map[string]string{"shutdown": "pause"})
+		if err != nil {
+			return err
+		}
+
+		reverter.Add(func() {
+			err := monitor.SetAction(map[string]string{"shutdown": "poweroff"})
+			if err != nil {
+				d.logger.Debug("Failed restoring the shutdown action", logger.Ctx{"err": err})
+			}
+		})
+
 		if !sameSharedStorage {
 			cleanup, err := d.createEphemeralSnapshot(rootDiskName, rootDiskSize)
 			if err != nil {
@@ -10828,11 +10860,9 @@ func (d *qemu) migrateSendLive(ctx context.Context, pool storagePools.Pool, clus
 	reverter.Add(func() {
 		_ = monitor.MigrateCancel()
 
-		err := monitor.Start()
+		err := d.resumeGuest(monitor)
 		if err != nil {
 			d.logger.Error("Failed resuming instance after failed migration", logger.Ctx{"err": err})
-		} else {
-			d.resyncAgentClock()
 		}
 	})
 
@@ -10914,6 +10944,11 @@ func (d *qemu) migrateSendLive(ctx context.Context, pool storagePools.Pool, clus
 		}
 	}
 
+	// A guest that stopped meanwhile must not be handed over.
+	if ctx.Err() != nil {
+		return ctx.Err()
+	}
+
 	// Finalize the migration state transfer (the guest OS will remain paused).
 	err = monitor.MigrateContinue("pre-switchover")
 	if err != nil {
@@ -10965,6 +11000,11 @@ func (d *qemu) migrateSendLive(ctx context.Context, pool storagePools.Pool, clus
 
 		d.resyncAgentClock()
 		d.logger.Debug("Resumed instance")
+
+		err = monitor.SetAction(map[string]string{"shutdown": "poweroff"})
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
