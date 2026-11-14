@@ -504,6 +504,13 @@ func (httpFS documentationHTTPDir) Open(name string) (http.File, error) {
 }
 
 func (d *Daemon) gatewayAccess(w http.ResponseWriter, r *http.Request) bool {
+	// The listeners serve requests before the daemon has finished bringing up its endpoints.
+	if d.endpoints == nil {
+		http.Error(w, "503 daemon is starting up", http.StatusServiceUnavailable)
+
+		return false
+	}
+
 	certs, err := d.getTrustedServerCertificates()
 	if err != nil {
 		http.Error(w, "403 failed to read trusted certificate cache", http.StatusForbidden)
