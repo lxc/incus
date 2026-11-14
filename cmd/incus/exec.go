@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"errors"
+	"fmt"
 	"io"
 	"os"
 	"strconv"
@@ -231,6 +232,10 @@ func (c *cmdExec) run(cmd *cobra.Command, args []string) error {
 
 	// Wait for any remaining I/O to be flushed
 	<-execArgs.DataDone
+
+	if execArgs.DataErr != nil {
+		return fmt.Errorf(i18n.G("Failed to receive the command output: %w"), execArgs.DataErr)
+	}
 
 	return nil
 }
