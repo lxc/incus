@@ -186,14 +186,26 @@ func (s *execWs) connect(op *operations.Operation, r *http.Request, w http.Respo
 func (s *execWs) do(op *operations.Operation) error {
 	s.instance.SetOperation(op)
 
+	// Output websockets which get closed by their reader once the client is gone.
+	lingering := map[int]bool{}
+
 	// Once this function ends ensure that any connected websockets are closed.
 	defer func() {
 		s.connsLock.Lock()
 		for i := range s.conns {
-			if s.conns[i] != nil {
-				_ = s.conns[i].Close()
+			if s.conns[i] == nil {
+				continue
 			}
+
+			if lingering[i] {
+				// Closing now can drop output still in transit, leave time for the client to get it.
+				_ = s.conns[i].SetReadDeadline(time.Now().Add(30 * time.Second))
+				continue
+			}
+
+			_ = s.conns[i].Close()
 		}
+
 		s.connsLock.Unlock()
 	}()
 
@@ -483,6 +495,10 @@ func (s *execWs) do(op *operations.Operation) error {
 
 				s.connsLock.Lock()
 				conn := s.conns[i]
+				if i != execWSStdin {
+					lingering[i] = true
+				}
+
 				s.connsLock.Unlock()
 
 				if i == execWSStdout {
@@ -505,6 +521,12 @@ func (s *execWs) do(op *operations.Operation) error {
 							l.Warn("Unexpected read on stdout websocket, killing command", logger.Ctx{"number": i, "err": err})
 							cmdKillOnce.Do(cmdKill)
 						}
+
+						for err == nil {
+							_, _, err = conn.ReadMessage()
+						}
+
+						_ = conn.Close()
 					}()
 				}
 
@@ -513,7 +535,12 @@ func (s *execWs) do(op *operations.Operation) error {
 					// avoid a situation where we hit an inactivity timeout on
 					// stderr during long exec sessions
 					go func() {
-						_, _, _ = conn.ReadMessage()
+						var err error
+						for err == nil {
+							_, _, err = conn.ReadMessage()
+						}
+
+						_ = conn.Close()
 					}()
 				}
 
