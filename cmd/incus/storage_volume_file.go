@@ -69,6 +69,10 @@ func (c *cmdStorageVolumeFile) command() *cobra.Command {
 	storageVolumeFileEditCmd := cmdStorageVolumeFileEdit{global: c.global, filePull: &storageVolumeFilePullCmd, filePush: &storageVolumeFilePushCmd}
 	cmd.AddCommand(storageVolumeFileEditCmd.command())
 
+	// List
+	storageVolumeFileListCmd := cmdStorageVolumeFileList{global: c.global, storage: c.storage, storageVolume: c.storageVolume, storageVolumeFile: c}
+	cmd.AddCommand(storageVolumeFileListCmd.command())
+
 	// Workaround for subcommand usage errors. See: https://github.com/spf13/cobra/issues/706
 	cmd.Args = cobra.NoArgs
 	cmd.Run = func(cmd *cobra.Command, _ []string) { _ = cmd.Usage() }
@@ -484,6 +488,60 @@ func (c *cmdStorageVolumeFileEdit) run(cmd *cobra.Command, args []string) error 
 	err = c.filePush.push(fname, parsed[0], parsed[1])
 	if err != nil {
 		return err
+	}
+
+	return nil
+}
+
+// List.
+type cmdStorageVolumeFileList struct {
+	global            *cmdGlobal
+	storage           *cmdStorage
+	storageVolume     *cmdStorageVolume
+	storageVolumeFile *cmdStorageVolumeFile
+}
+
+var cmdStorageVolumeFileListUsage = u.Usage{u.Pool.Remote(), u.MakePath(u.Volume, u.Path)}
+
+func (c *cmdStorageVolumeFileList) command() *cobra.Command {
+	cmd := &cobra.Command{}
+	cmd.Use = cli.U("list", cmdStorageVolumeFileListUsage...)
+	cmd.Aliases = []string{"ls"}
+	cmd.Short = i18n.G("List files in custom volumes")
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`List files in custom volumes`))
+	cmd.Example = cli.FormatSection("", i18n.G(
+		`incus storage volume file list local v1/
+   To list the files in the custom volume "v1".`,
+	))
+
+	cmd.RunE = c.run
+
+	return cmd
+}
+
+// run runs the post-parsing command logic.
+func (c *cmdStorageVolumeFileList) run(cmd *cobra.Command, args []string) error {
+	parsed, err := c.global.Parse(cmdStorageVolumeFileListUsage, cmd, args)
+	if err != nil {
+		return err
+	}
+
+	d := parsed[0].RemoteServer
+	poolName := parsed[0].RemoteObject.String
+	volName := parsed[1].List[0].String
+	fPath := "/" + parsed[1].List[1].String
+
+	_, resp, err := d.GetStorageVolumeFile(poolName, "custom", volName, fPath)
+	if err != nil {
+		return err
+	}
+
+	if resp.Type != "directory" {
+		return fmt.Errorf("Not a directory: %s", fPath)
+	}
+
+	for _, entry := range resp.Entries {
+		fmt.Println(entry)
 	}
 
 	return nil
