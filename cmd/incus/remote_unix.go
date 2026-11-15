@@ -133,6 +133,10 @@ func (c *cmdRemoteProxy) run(cmd *cobra.Command, args []string) error {
 	if ok {
 		httpTransport.DisableKeepAlives = false
 
+		// Hold on to connections used by parallel requests, dropping them before the server's 30s idle timeout.
+		httpTransport.MaxIdleConnsPerHost = 128
+		httpTransport.IdleConnTimeout = 20 * time.Second
+
 		// Keep spare TLS connections ready so websockets skip the handshake round trips.
 		if uri.Scheme == "https" && httpTransport.DialTLSContext != nil {
 			warm := newRemoteProxyDialer(httpTransport.DialTLSContext, 4, 128)
