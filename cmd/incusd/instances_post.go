@@ -299,7 +299,12 @@ func createFromMigration(ctx context.Context, s *state.State, r *http.Request, p
 
 	// Early check for refresh and cluster same name move to check instance exists.
 	if req.Source.Refresh || (clusterMoveSourceName != "" && clusterMoveSourceName == req.Name) {
-		inst, err = instance.LoadByProjectAndName(s, projectName, req.Name)
+		if clusterMoveSourceName != "" {
+			inst, err = instance.LoadByProjectAndName(s, projectName, req.Name)
+		} else {
+			inst, err = loadRefreshTarget(s, projectName, req.Name)
+		}
+
 		if err != nil {
 			if !response.IsNotFoundError(err) {
 				return response.SmartError(err)
@@ -694,8 +699,14 @@ func createFromCopy(ctx context.Context, s *state.State, r *http.Request, projec
 
 	// When refreshing, the target keeps its own dependent volumes unless the request overrides them.
 	if req.Source.Refresh {
-		target, err := instance.LoadByProjectAndName(s, targetProject, req.Name)
-		if err == nil {
+		target, err := loadRefreshTarget(s, targetProject, req.Name)
+		if err != nil && !response.IsNotFoundError(err) {
+			return response.SmartError(err)
+		}
+
+		if err != nil {
+			req.Source.Refresh = false
+		} else {
 			sourceDevices := source.LocalDevices()
 			targetDevices := target.LocalDevices()
 
@@ -1342,15 +1353,19 @@ func instancesPost(d *Daemon, r *http.Request) response.Response {
 
 	// Special handling for instance refresh.
 	// For all other situations, we're headed towards the scheduler, but for this case, we can short circuit it.
-	if s.ServerClustered && !clusterNotification && req.Source.Type == "migration" && req.Source.Refresh {
-		// The regular path checks this through AllowInstanceCreation, which isn't run here.
-		err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
-			return project.AllowInstanceMigrationSource(tx, targetProjectName, req)
-		})
-		if err != nil {
-			return response.SmartError(err)
+	localRefresh := false
+	if s.ServerClustered && !clusterNotification && (req.Source.Type == "migration" || req.Source.Type == "copy") && req.Source.Refresh {
+		if req.Source.Type == "migration" {
+			// The regular path checks this through AllowInstanceCreation, which isn't run here.
+			err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
+				return project.AllowInstanceMigrationSource(tx, targetProjectName, req)
+			})
+			if err != nil {
+				return response.SmartError(err)
+			}
 		}
 
+		// A refresh has to run on the member holding the instance, or the data lands in the wrong pool.
 		client, err := cluster.ConnectIfInstanceIsRemote(s, targetProjectName, req.Name, r)
 		if err != nil && !response.IsNotFoundError(err) {
 			return response.SmartError(err)
@@ -1367,10 +1382,13 @@ func instancesPost(d *Daemon, r *http.Request) response.Response {
 			return operations.ForwardedOperationResponse(&opAPI)
 		}
 
-		if err == nil {
+		if err == nil && req.Source.Type == "migration" {
 			// The instance is valid and the request wasn't forwarded, so the instance is local.
 			return createFromMigration(r.Context(), s, r, targetProjectName, nil, &req)
 		}
+
+		// A copy goes through the regular path but must stay on this member.
+		localRefresh = err == nil
 	}
 
 	var targetProject *api.Project
@@ -1385,6 +1403,11 @@ func instancesPost(d *Daemon, r *http.Request) response.Response {
 	target := request.QueryParam(r, "target")
 	if !s.ServerClustered && target != "" {
 		return response.BadRequest(errors.New("Target only allowed when clustered"))
+	}
+
+	// A refresh can only run where the instance is.
+	if localRefresh {
+		target = ""
 	}
 
 	// For a copy, check that the caller is allowed to view the source instance before any of its details are loaded.
@@ -1638,7 +1661,7 @@ func instancesPost(d *Daemon, r *http.Request) response.Response {
 		return response.BadRequest(err)
 	}
 
-	if s.ServerClustered && !clusterNotification && !clusterInternal {
+	if s.ServerClustered && !clusterNotification && !clusterInternal && !localRefresh {
 		// If a target was specified, limit the list of candidates to that target.
 		if targetMemberInfo != nil {
 			candidateMembers = []db.NodeInfo{*targetMemberInfo}
@@ -1878,6 +1901,37 @@ func clusterCopyContainerInternal(ctx context.Context, s *state.State, r *http.R
 
 	// Run the migration
 	return createFromMigration(ctx, s, nil, projectName, profiles, req)
+}
+
+// loadRefreshTarget loads the instance a refresh is for, removing a record left behind by an interrupted copy.
+// Volume records are member specific, so only the member holding the instance can tell.
+func loadRefreshTarget(s *state.State, projectName string, name string) (instance.Instance, error) {
+	inst, err := instance.LoadByProjectAndName(s, projectName, name)
+	if err != nil {
+		return nil, err
+	}
+
+	if s.ServerClustered && inst.Location() != s.ServerName {
+		return inst, nil
+	}
+
+	_, err = inst.StoragePool()
+	if err == nil {
+		return inst, nil
+	}
+
+	if !response.IsNotFoundError(err) {
+		return nil, err
+	}
+
+	logger.Warn("Removing instance record left without a storage volume", logger.Ctx{"project": projectName, "instance": name})
+
+	err = inst.Delete(true, false)
+	if err != nil {
+		return nil, fmt.Errorf("Failed removing instance record left without a storage volume: %w", err)
+	}
+
+	return nil, api.StatusErrorf(http.StatusNotFound, "Instance not found")
 }
 
 func instanceCreateFinish(s *state.State, req *api.InstancesPost, args db.InstanceArgs, op *operations.Operation) error {
