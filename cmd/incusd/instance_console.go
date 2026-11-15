@@ -724,10 +724,9 @@ func instanceConsoleLogGet(d *Daemon, r *http.Request) response.Response {
 
 		// Query the container's console ringbuffer.
 		console := liblxc.ConsoleLogOptions{
-			ClearLog:       false,
-			ReadLog:        true,
-			ReadMax:        0,
-			WriteToLogFile: false,
+			ClearLog: false,
+			ReadLog:  true,
+			ReadMax:  0,
 		}
 
 		// Send a ringbuffer request to the container.
