@@ -89,6 +89,10 @@ func (c *cmdDelete) deleteOne(p *u.Parsed) error {
 
 	ct, _, err := d.GetInstance(instanceName)
 	if err != nil {
+		if api.StatusErrorCheck(err) {
+			return err
+		}
+
 		return fmt.Errorf(i18n.G("Failed checking instance %s exists: %w"), formatRemote(conf, p), err)
 	}
 
