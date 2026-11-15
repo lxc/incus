@@ -116,6 +116,18 @@ SELECT nodes.id, nodes.address
 	defer logger.WarnOnError(rows.Close, "Failed to close rows")
 
 	if !rows.Next() {
+		_ = rows.Close()
+
+		// Report a missing project rather than a missing instance.
+		_, err := cluster.GetProject(ctx, c.tx, project)
+		if err != nil {
+			if api.StatusErrorCheck(err) {
+				return "", err
+			}
+
+			return "", fmt.Errorf("Failed loading project %q: %w", project, err)
+		}
+
 		return "", api.StatusErrorf(http.StatusNotFound, "Instance not found")
 	}
 
