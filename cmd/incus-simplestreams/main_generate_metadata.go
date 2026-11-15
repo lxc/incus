@@ -7,6 +7,7 @@ import (
 	"io"
 	"os"
 	"os/exec"
+	"strings"
 	"time"
 
 	"github.com/spf13/cobra"
@@ -21,6 +22,8 @@ import (
 
 type cmdGenerateMetadata struct {
 	global *cmdGlobal
+
+	flagOptions []string
 }
 
 func (c *cmdGenerateMetadata) command() *cobra.Command {
@@ -32,13 +35,17 @@ func (c *cmdGenerateMetadata) command() *cobra.Command {
 
 This command produces an incus.tar.xz tarball for use with an existing QCOW2 or squashfs disk image.
 
-This command will prompt for all of the metadata tarball fields:
- - Operating system name
- - Release
- - Variant
- - Architecture
- - Description
+This command will prompt for any of the metadata tarball fields not passed with --option:
+ - os (Operating system name)
+ - release (Release name)
+ - variant (Variant name)
+ - architecture (Architecture name)
+ - description (Description)
+
+Any other key passed with --option is written to the metadata as is, e.g. requirements.cdrom_agent=true.
 `)
+	cmd.Flags().StringArrayVarP(&c.flagOptions, "option", "o", nil, "Set a metadata property (key=value, may be passed multiple times)")
+
 	cmd.RunE = c.run
 
 	return cmd
@@ -62,6 +69,17 @@ func (c *cmdGenerateMetadata) run(cmd *cobra.Command, args []string) error {
 
 	defer logger.WarnOnError(metaFile.Close, "Failed to close file")
 
+	// Collect the supplied properties.
+	properties := map[string]string{}
+	for _, option := range c.flagOptions {
+		key, value, found := strings.Cut(option, "=")
+		if !found || key == "" {
+			return fmt.Errorf("Invalid option %q, expected key=value", option)
+		}
+
+		properties[key] = value
+	}
+
 	// Generate the metadata.
 	timestamp := time.Now().UTC()
 	metadata := api.ImageMetadata{
@@ -70,32 +88,41 @@ func (c *cmdGenerateMetadata) run(cmd *cobra.Command, args []string) error {
 	}
 
 	// Question - os
-	metaOS, err := asker.AskString("Operating system name: ", "", nil)
-	if err != nil {
-		return err
+	metaOS, ok := properties["os"]
+	if !ok {
+		metaOS, err = asker.AskString("Operating system name: ", "", nil)
+		if err != nil {
+			return err
+		}
 	}
 
 	metadata.Properties["os"] = metaOS
 
 	// Question - release
-	metaRelease, err := asker.AskString("Release name: ", "", nil)
-	if err != nil {
-		return err
+	metaRelease, ok := properties["release"]
+	if !ok {
+		metaRelease, err = asker.AskString("Release name: ", "", nil)
+		if err != nil {
+			return err
+		}
 	}
 
 	metadata.Properties["release"] = metaRelease
 
 	// Question - variant
-	metaVariant, err := asker.AskString("Variant name [default=\"default\"]: ", "default", nil)
-	if err != nil {
-		return err
+	metaVariant, ok := properties["variant"]
+	if !ok {
+		metaVariant, err = asker.AskString("Variant name [default=\"default\"]: ", "default", nil)
+		if err != nil {
+			return err
+		}
 	}
 
 	metadata.Properties["variant"] = metaVariant
 
 	// Question - architecture
 	var incusArch string
-	metaArchitecture, err := asker.AskString("Architecture name: ", "", func(value string) error {
+	checkArchitecture := func(value string) error {
 		id, err := osarch.ArchitectureID(value)
 		if err != nil {
 			return err
@@ -107,9 +134,19 @@ func (c *cmdGenerateMetadata) run(cmd *cobra.Command, args []string) error {
 		}
 
 		return nil
-	})
-	if err != nil {
-		return err
+	}
+
+	metaArchitecture, ok := properties["architecture"]
+	if ok {
+		err = checkArchitecture(metaArchitecture)
+		if err != nil {
+			return err
+		}
+	} else {
+		metaArchitecture, err = asker.AskString("Architecture name: ", "", checkArchitecture)
+		if err != nil {
+			return err
+		}
 	}
 
 	metadata.Properties["architecture"] = metaArchitecture
@@ -117,12 +154,20 @@ func (c *cmdGenerateMetadata) run(cmd *cobra.Command, args []string) error {
 
 	// Question - description
 	defaultDescription := fmt.Sprintf("%s %s (%s) (%s) (%s)", metaOS, metaRelease, metaVariant, metaArchitecture, timestamp.Format("200601021504"))
-	metaDescription, err := asker.AskString(fmt.Sprintf("Description [default=\"%s\"]: ", defaultDescription), defaultDescription, nil)
-	if err != nil {
-		return err
+	metaDescription, ok := properties["description"]
+	if !ok {
+		metaDescription, err = asker.AskString(fmt.Sprintf("Description [default=\"%s\"]: ", defaultDescription), defaultDescription, nil)
+		if err != nil {
+			return err
+		}
 	}
 
 	metadata.Properties["description"] = metaDescription
+
+	// Copy any other supplied property as is.
+	for key, value := range properties {
+		metadata.Properties[key] = value
+	}
 
 	// Generate YAML.
 	body, err := yaml.Dump(&metadata, yaml.WithV2Defaults())
