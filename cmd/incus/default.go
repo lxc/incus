@@ -81,6 +81,8 @@ func (c *cmdDefaultSet) set(cmd *cobra.Command, parsed []*u.Parsed) error {
 			err = c.setConsoleSpiceCommand(v)
 		case "no_color":
 			err = c.setNoColor(v)
+		case "webui_path":
+			err = c.setWebuiPath(v)
 		default:
 			err = fmt.Errorf(i18n.G("Invalid default %q"), k)
 		}
@@ -147,6 +149,12 @@ func (c *cmdDefaultSet) setNoColor(noColorStr string) error {
 	}
 
 	c.global.conf.Defaults.NoColor = noColor
+
+	return nil
+}
+
+func (c *cmdDefaultSet) setWebuiPath(webuiPath string) error {
+	c.global.conf.Defaults.WebuiPath = webuiPath
 
 	return nil
 }
