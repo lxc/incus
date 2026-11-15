@@ -102,6 +102,22 @@ test_storage_volume_attach() {
     incus delete -f c2
     incus storage volume delete "incustest-$(basename "${INCUS_DIR}")" testvolume
 
+    # Starting a container must not trip over another one sharing the volume that is still being created.
+    incus storage volume create "incustest-$(basename "${INCUS_DIR}")" testvolume-creating
+    incus init testimage c3
+    incus init testimage c4
+    incus storage volume attach "incustest-$(basename "${INCUS_DIR}")" testvolume-creating c3 testvolume /testvolume
+    incus storage volume attach "incustest-$(basename "${INCUS_DIR}")" testvolume-creating c4 testvolume /testvolume
+
+    # Drop c4's idmap the way it looks before its creation sets one.
+    incus admin sql global "DELETE FROM instances_config WHERE key IN ('volatile.idmap.next', 'volatile.idmap.current', 'volatile.last_state.idmap') AND instance_id = (SELECT id FROM instances WHERE name = 'c4' AND project_id = (SELECT id FROM projects WHERE name = 'default'))"
+    incus start c3
+    incus exec c3 -- stat /testvolume
+
+    incus delete -f c3
+    incus delete -f c4
+    incus storage volume delete "incustest-$(basename "${INCUS_DIR}")" testvolume-creating
+
     # Test attaching with --create to an existing container.
     incus launch testimage c1
     incus storage volume attach --create "incustest-$(basename "${INCUS_DIR}")" testvolume-create c1 testvolume-create /testvolume-create
