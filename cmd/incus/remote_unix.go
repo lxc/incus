@@ -3,10 +3,12 @@
 package main
 
 import (
+	"bufio"
 	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"net"
 	"net/http"
 	"net/http/httputil"
@@ -133,7 +135,7 @@ func (c *cmdRemoteProxy) run(cmd *cobra.Command, args []string) error {
 
 		// Keep spare TLS connections ready so websockets skip the handshake round trips.
 		if uri.Scheme == "https" && httpTransport.DialTLSContext != nil {
-			warm := newRemoteProxyDialer(httpTransport.DialTLSContext, 4)
+			warm := newRemoteProxyDialer(httpTransport.DialTLSContext, 4, 128)
 			httpTransport.DialTLSContext = warm.Dial
 		}
 	}
@@ -633,12 +635,15 @@ func (e *remoteProxyEvents) run(query string, hub *remoteProxyEventsHub) {
 // remoteProxyDialer keeps spare TLS connections ready to skip the handshake on the next request.
 type remoteProxyDialer struct {
 	dial func(ctx context.Context, network string, addr string) (net.Conn, error)
-	size int
+	min  int
+	max  int
 
 	mu      sync.Mutex
 	conns   map[string][]*remoteProxyWarmConn
 	filling map[string]int
 	lastUse time.Time
+	dials   []time.Time
+	peaks   map[int64]int
 }
 
 // remoteProxyWarmConn is a spare connection with a watcher noticing when the server closes it.
@@ -653,13 +658,44 @@ type remoteProxyWarmConn struct {
 	done  chan struct{}
 }
 
-func newRemoteProxyDialer(dial func(ctx context.Context, network string, addr string) (net.Conn, error), size int) *remoteProxyDialer {
+func newRemoteProxyDialer(dial func(ctx context.Context, network string, addr string) (net.Conn, error), minSize int, maxSize int) *remoteProxyDialer {
 	return &remoteProxyDialer{
 		dial:    dial,
-		size:    size,
+		min:     minSize,
+		max:     maxSize,
 		conns:   map[string][]*remoteProxyWarmConn{},
 		filling: map[string]int{},
+		peaks:   map[int64]int{},
 	}
+}
+
+// size returns the pool size, following the largest burst of dials over the last minute.
+func (d *remoteProxyDialer) size() int {
+	size := d.min
+
+	cutoff := time.Now().Unix() - 60
+	for second, peak := range d.peaks {
+		if second < cutoff {
+			delete(d.peaks, second)
+			continue
+		}
+
+		size = max(size, peak)
+	}
+
+	return min(size, d.max)
+}
+
+// record counts a dial towards the burst size, dials within a second of each other form a burst.
+func (d *remoteProxyDialer) record() {
+	now := time.Now()
+	d.lastUse = now
+
+	d.dials = slices.DeleteFunc(d.dials, func(t time.Time) bool { return now.Sub(t) > time.Second })
+	d.dials = append(d.dials, now)
+
+	second := now.Unix()
+	d.peaks[second] = max(d.peaks[second], len(d.dials))
 }
 
 // Dial hands out a spare connection when available and tops up the pool.
@@ -667,7 +703,7 @@ func (d *remoteProxyDialer) Dial(ctx context.Context, network string, addr strin
 	key := network + " " + addr
 
 	d.mu.Lock()
-	d.lastUse = time.Now()
+	d.record()
 
 	var warm *remoteProxyWarmConn
 
@@ -704,7 +740,7 @@ func (d *remoteProxyDialer) fill(network string, addr string) {
 	key := network + " " + addr
 
 	d.mu.Lock()
-	missing := d.size - len(d.conns[key]) - d.filling[key]
+	missing := d.size() - len(d.conns[key]) - d.filling[key]
 	if missing > 0 {
 		d.filling[key] += missing
 	}
@@ -726,7 +762,7 @@ func (d *remoteProxyDialer) fill(network string, addr string) {
 				return
 			}
 
-			// Retire it before the server's 3s request header timeout so it never gets handed out as the server closes it.
+			// Check on it before the server's 3s request header timeout closes it.
 			_ = conn.SetReadDeadline(time.Now().Add(2 * time.Second))
 
 			warm := &remoteProxyWarmConn{Conn: conn, network: network, addr: addr, done: make(chan struct{})}
@@ -737,26 +773,90 @@ func (d *remoteProxyDialer) fill(network string, addr string) {
 	}
 }
 
-// watch discards the spare connection once it expires or the server closes it.
-func (d *remoteProxyDialer) watch(key string, warm *remoteProxyWarmConn) {
-	// Nothing arrives on an idle connection, so a read only returns when it expires, is unusable or handed out.
-	_, err := warm.Read(make([]byte, 1))
+// keepAlive sends a trivial request so the server keeps the spare connection for its 30s idle timeout.
+func (d *remoteProxyDialer) keepAlive(warm *remoteProxyWarmConn) bool {
+	_ = warm.SetDeadline(time.Now().Add(5 * time.Second))
 
-	d.mu.Lock()
-	defer d.mu.Unlock()
-
-	if warm.taken {
-		warm.dead = !errors.Is(err, os.ErrDeadlineExceeded)
-		close(warm.done)
-		return
+	req, err := http.NewRequest(http.MethodHead, "https://"+warm.addr+"/", nil)
+	if err != nil {
+		return false
 	}
 
-	close(warm.done)
-	d.conns[key] = slices.DeleteFunc(d.conns[key], func(c *remoteProxyWarmConn) bool { return c == warm })
-	_ = warm.Close()
+	err = req.Write(warm)
+	if err != nil {
+		return false
+	}
 
-	// Replace it so the pool stays warm while the proxy is in use.
-	if time.Since(d.lastUse) < time.Minute {
-		go d.fill(warm.network, warm.addr)
+	// Anything left in the buffer would be lost to the next user of the connection.
+	br := bufio.NewReader(warm)
+	resp, err := http.ReadResponse(br, req)
+	if err != nil {
+		return false
+	}
+
+	_, err = io.Copy(io.Discard, resp.Body)
+	_ = resp.Body.Close()
+	if err != nil || resp.Close || br.Buffered() > 0 {
+		return false
+	}
+
+	// Retire it before the server's 30s idle timeout.
+	_ = warm.SetWriteDeadline(time.Time{})
+	_ = warm.SetReadDeadline(time.Now().Add(20 * time.Second))
+
+	return true
+}
+
+// watch keeps the spare connection alive while wanted and discards it once the server closes it.
+func (d *remoteProxyDialer) watch(key string, warm *remoteProxyWarmConn) {
+	for {
+		// Nothing arrives on an idle connection, so a read only returns when it expires, is unusable or handed out.
+		_, err := warm.Read(make([]byte, 1))
+
+		d.mu.Lock()
+
+		if warm.taken {
+			warm.dead = !errors.Is(err, os.ErrDeadlineExceeded)
+			close(warm.done)
+			d.mu.Unlock()
+
+			return
+		}
+
+		d.conns[key] = slices.DeleteFunc(d.conns[key], func(c *remoteProxyWarmConn) bool { return c == warm })
+
+		// Keep it while the pool is still wanted at this size, otherwise let it go.
+		keep := errors.Is(err, os.ErrDeadlineExceeded) && len(d.conns[key]) < d.size() && time.Since(d.lastUse) < time.Minute
+		if keep {
+			d.filling[key]++
+		}
+
+		d.mu.Unlock()
+
+		if keep && d.keepAlive(warm) {
+			d.mu.Lock()
+			d.filling[key]--
+			d.conns[key] = append(d.conns[key], warm)
+			d.mu.Unlock()
+
+			continue
+		}
+
+		close(warm.done)
+		_ = warm.Close()
+
+		d.mu.Lock()
+		if keep {
+			d.filling[key]--
+		}
+
+		d.mu.Unlock()
+
+		// Replace it so the pool stays warm while the proxy is in use.
+		if keep {
+			go d.fill(warm.network, warm.addr)
+		}
+
+		return
 	}
 }
