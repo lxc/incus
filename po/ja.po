@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: LXD\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2026-11-03 09:16-0500\n"
+"POT-Creation-Date: 2026-11-15 08:13-0500\n"
 "PO-Revision-Date: 2026-08-29 22:37+0000\n"
 "Last-Translator: Hiroaki Nakamura <hnakamur@gmail.com>\n"
 "Language-Team: Japanese <https://hosted.weblate.org/projects/incus/cli/ja/>\n"
@@ -2571,7 +2571,7 @@ msgstr "サーバから新しいインスタンス名を取得できませんで
 msgid "Directory import is not available on this platform"
 msgstr "このプラットフォーム上ではディレクトリのインポートは利用できません"
 
-#: cmd/incus/exec.go:71
+#: cmd/incus/exec.go:72
 msgid "Directory to run the command in (default /root)"
 msgstr "コマンドを実行するディレクトリ (デフォルト /root)"
 
@@ -2579,11 +2579,11 @@ msgstr "コマンドを実行するディレクトリ (デフォルト /root)"
 msgid "Disable authentication when using SSH SFTP listener"
 msgstr "SSH SFTP リスナーを使う際に認証を無効化します"
 
-#: cmd/incus/exec.go:67
+#: cmd/incus/exec.go:68
 msgid "Disable pseudo-terminal allocation"
 msgstr "擬似端末の割り当てを無効にします"
 
-#: cmd/incus/exec.go:68
+#: cmd/incus/exec.go:69
 msgid "Disable stdin (reads from /dev/null)"
 msgstr "標準入力を無効にします (/dev/null から読み込みます)"
 
@@ -2954,7 +2954,7 @@ msgstr "更新間隔を秒単位で入力:"
 msgid "Entry TTL"
 msgstr "TTLを指定します"
 
-#: cmd/incus/exec.go:64
+#: cmd/incus/exec.go:65
 #, fuzzy
 msgid ""
 "Environment variable to set (e.g. HOME=/home/foo) (may be passed multiple "
@@ -3128,11 +3128,11 @@ msgstr ""
 "は、データの不整合を修正するためのデータベースクエリーとしてホットフィックス"
 "をユーザーに提供する場合があります。"
 
-#: cmd/incus/exec.go:44
+#: cmd/incus/exec.go:45
 msgid "Execute commands in instances"
 msgstr "インスタンス内でコマンドを実行します"
 
-#: cmd/incus/exec.go:45
+#: cmd/incus/exec.go:46
 msgid ""
 "Execute commands in instances\n"
 "\n"
@@ -3629,6 +3629,11 @@ msgstr "ファイルから読み込めません: %w"
 msgid "Failed to read from stdin: %w"
 msgstr "標準入力から読み込めません: %w"
 
+#: cmd/incus/exec.go:237
+#, fuzzy, c-format
+msgid "Failed to receive the command output: %w"
+msgstr "設定のレンダリングに失敗しました: %w"
+
 #: cmd/incus/copy.go:391
 #, c-format
 msgid "Failed to refresh target instance '%s': %v"
@@ -3815,7 +3820,7 @@ msgstr "既存のバックアップファイルを上書きする強制"
 msgid "Force overwriting existing backup file"
 msgstr "既存のバックアップファイルを上書きする強制"
 
-#: cmd/incus/exec.go:66
+#: cmd/incus/exec.go:67
 msgid "Force pseudo-terminal allocation"
 msgstr "強制的に擬似端末を割り当てます"
 
@@ -4272,7 +4277,7 @@ msgstr "グローバルフラグ:"
 msgid "Granularity of the dirty bitmap in bytes"
 msgstr ""
 
-#: cmd/incus/exec.go:70
+#: cmd/incus/exec.go:71
 msgid "Group ID to run the command as (default 0)"
 msgstr "コマンドを実行する際のグループ ID (GID) (デフォルト 0)"
 
@@ -4722,7 +4727,7 @@ msgid "Invalid config key column format (too many fields): '%s'"
 msgstr ""
 "不正な設定項目のカラムフォーマットです (フィールド数が多すぎます): '%s'"
 
-#: cmd/incus/default.go:85
+#: cmd/incus/default.go:87
 #, fuzzy, c-format
 msgid "Invalid default %q"
 msgstr "不正なフォーマット %s"
@@ -4806,12 +4811,12 @@ msgstr "不正なソース %s"
 msgid "Invalid type %q"
 msgstr "不正な送り先 %s"
 
-#: cmd/incus/default.go:123
+#: cmd/incus/default.go:125
 #, fuzzy, c-format
 msgid "Invalid value %q for console_type"
 msgstr "不正な送り先 %s"
 
-#: cmd/incus/default.go:110
+#: cmd/incus/default.go:112
 #, fuzzy, c-format
 msgid "Invalid value %q for list_format"
 msgstr "不正なソース %s"
@@ -7717,6 +7722,11 @@ msgstr ""
 "未知のストレージプールやボリュームが見つかりません。実行することがありませ"
 "ん。"
 
+#: cmd/incus/webui_unix.go:51
+#, fuzzy, c-format
+msgid "No web UI found at %q"
+msgstr "%q に設定する値が指定されていません"
+
 #: cmd/incus/info.go:546
 #, c-format
 msgid "Node %d:\n"
@@ -7798,7 +7808,7 @@ msgstr ""
 msgid "Only remove signatures owned by the given owner"
 msgstr ""
 
-#: cmd/incus/webui.go:21 cmd/incus/webui.go:22
+#: cmd/incus/webui.go:23 cmd/incus/webui.go:24
 #, fuzzy
 msgid "Open the web interface"
 msgstr "ホストインターフェース"
@@ -7821,7 +7831,7 @@ msgstr "最適化されたストレージ"
 msgid "Override the source project"
 msgstr "プロジェクトを指定します"
 
-#: cmd/incus/exec.go:65
+#: cmd/incus/exec.go:66
 msgid "Override the terminal mode (auto, interactive or non-interactive)"
 msgstr "ターミナルモードを上書きします (auto, interactive, non-interactive)"
 
@@ -7921,6 +7931,11 @@ msgstr "%q のパスワードが拒否されました"
 #, fuzzy, c-format
 msgid "Path %s doesn't exist"
 msgstr "エイリアス %s は存在しません"
+
+#: cmd/incus/webui.go:26
+#, fuzzy
+msgid "Path to a local web UI directory"
+msgstr "別のサーバ用設定ディレクトリ"
 
 #: cmd/incus/admin_init_interactive.go:438
 msgid "Path to the existing block device:"
@@ -8203,7 +8218,7 @@ msgstr "不正なプロトコル: %s"
 msgid "Provided certificate path doesn't exist: %s"
 msgstr "クライアント %s の証明書追加トークン: %s"
 
-#: cmd/incus/remote_unix.go:52
+#: cmd/incus/remote_unix.go:53
 msgid "Proxy timeout (exits when no connections)"
 msgstr "プロキシータイムアウト (接続がない場合終了)"
 
@@ -8723,11 +8738,11 @@ msgstr "影響を受ける行: %d"
 msgid "Rule description"
 msgstr "説明"
 
-#: cmd/incus/remote_unix.go:45
+#: cmd/incus/remote_unix.go:46
 msgid "Run a local API proxy"
 msgstr "ローカルの API プロキシーを実行します"
 
-#: cmd/incus/remote_unix.go:46
+#: cmd/incus/remote_unix.go:47
 msgid "Run a local API proxy for the remote"
 msgstr "リモート接続用のローカルの API プロキシーを実行します"
 
@@ -9415,7 +9430,7 @@ msgstr "デバッグメッセージをすべて表示します"
 msgid "Show all information messages"
 msgstr "詳細な情報を出力します"
 
-#: cmd/incus/default.go:165 cmd/incus/default.go:166
+#: cmd/incus/default.go:173 cmd/incus/default.go:174
 #, fuzzy
 msgid "Show client defaults"
 msgstr "デフォルトのリモートを表示します"
@@ -10288,7 +10303,7 @@ msgstr ""
 "入力したストレージプール \"%s\" はすでに存在しています。他の名前を入力してく"
 "ださい。"
 
-#: cmd/incus/webui_unix.go:61
+#: cmd/incus/webui_unix.go:69
 msgid "The server doesn't have a web UI installed"
 msgstr "サーバーに Web UI がインストールされていません"
 
@@ -10736,7 +10751,7 @@ msgstr "クラスターメンバーの設定を削除します"
 msgid "Unset all profiles on the target instance"
 msgstr "移動先のインスタンスのすべてのプロファイルを削除します"
 
-#: cmd/incus/default.go:202 cmd/incus/default.go:203
+#: cmd/incus/default.go:210 cmd/incus/default.go:211
 msgid "Unset client defaults"
 msgstr "クライアントのデフォルト設定を削除する"
 
@@ -11033,7 +11048,7 @@ msgstr "サブコマンドを見るには help もしくは --help を使って�
 msgid "Used: %v"
 msgstr "使用済: %v"
 
-#: cmd/incus/exec.go:69
+#: cmd/incus/exec.go:70
 msgid "User ID to run the command as (default 0)"
 msgstr "コマンドを実行する際のユーザ ID (UID) (デフォルト 0)"
 
@@ -11201,7 +11216,7 @@ msgstr ""
 "ると理論的には、そうしない場合に比べて、親コンテナを攻撃してより多くの\n"
 "特権を得られる可能性があるため、安全性は若干低くなります。"
 
-#: cmd/incus/webui_unix.go:109
+#: cmd/incus/webui_unix.go:119
 #, c-format
 msgid "Web server running at: %s"
 msgstr "Web サーバーの実行 URL: %s"
@@ -11359,11 +11374,11 @@ msgstr "YES"
 msgid "You are currently missing the following:"
 msgstr "現在、次のものが不足しています:"
 
-#: cmd/incus/exec.go:112
+#: cmd/incus/exec.go:113
 msgid "You can't pass -t and -T at the same time"
 msgstr "-t と -T は同時に指定できません"
 
-#: cmd/incus/exec.go:116
+#: cmd/incus/exec.go:117
 msgid "You can't pass -t or -T at the same time as --mode"
 msgstr "--mode と同時に -t または -T は指定できません"
 
@@ -11721,7 +11736,7 @@ msgstr ""
 "   インスタンスの /etc/hosts ファイルを取得し、カレントディレクトリにコピーし"
 "ます。"
 
-#: cmd/incus/exec.go:57
+#: cmd/incus/exec.go:58
 msgid ""
 "incus exec c1 bash\n"
 "\tRun the \"bash\" command in instance \"c1\"\n"
@@ -12644,7 +12659,7 @@ msgstr "ネットワーク名:"
 msgid "no"
 msgstr "no"
 
-#: cmd/incus/default.go:146
+#: cmd/incus/default.go:148
 msgid "no_color must be boolean"
 msgstr "no_color は boolean 値である必要があります"
 
@@ -12813,7 +12828,7 @@ msgstr "予期しない %s; 期待 %s"
 msgid "unexpected end of argument; did you forget a suffix?"
 msgstr "引数の予期しない終了; サフィックスを忘れましたか?"
 
-#: cmd/incus/remote_unix.go:40
+#: cmd/incus/remote_unix.go:41
 #, fuzzy
 msgid "unix socket file"
 msgstr "ソケットファイル"
@@ -13171,10 +13186,6 @@ msgstr "「%s」"
 
 #~ msgid "No storage pool for target volume specified"
 #~ msgstr "コピー先のボリュームに対するストレージプールが指定されていません"
-
-#, c-format
-#~ msgid "No value found in %q"
-#~ msgstr "%q に設定する値が指定されていません"
 
 #~ msgid "Only \"custom\" volumes can be attached to instances"
 #~ msgstr "\"カスタム\" のボリュームのみがインスタンスにアタッチできます"
@@ -16771,9 +16782,6 @@ msgstr "「%s」"
 
 #~ msgid "Admin password for %s:"
 #~ msgstr "%s の管理者パスワード:"
-
-#~ msgid "Path to an alternate server directory"
-#~ msgstr "別のサーバ用設定ディレクトリ"
 
 #~ msgid "Bad syntax, expecting <device>,<key>=<value>: %s"
 #~ msgstr ""

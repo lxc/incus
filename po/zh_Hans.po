@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lxd\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2026-11-03 09:16-0500\n"
+"POT-Creation-Date: 2026-11-15 08:13-0500\n"
 "PO-Revision-Date: 2026-08-29 22:38+0000\n"
 "Last-Translator: meipeter <meipeter114514@outlook.com>\n"
 "Language-Team: Chinese (Simplified Han script) <https://hosted.weblate.org/"
@@ -2548,7 +2548,7 @@ msgstr "未从服务器获取新实例的名称"
 msgid "Directory import is not available on this platform"
 msgstr "目录导入在此平台上不可用"
 
-#: cmd/incus/exec.go:71
+#: cmd/incus/exec.go:72
 msgid "Directory to run the command in (default /root)"
 msgstr "运行命令的目录（默认/根目录）"
 
@@ -2556,11 +2556,11 @@ msgstr "运行命令的目录（默认/根目录）"
 msgid "Disable authentication when using SSH SFTP listener"
 msgstr "使用 SSH SFTP 监听器时禁用身份验证"
 
-#: cmd/incus/exec.go:67
+#: cmd/incus/exec.go:68
 msgid "Disable pseudo-terminal allocation"
 msgstr "禁用伪终端分配"
 
-#: cmd/incus/exec.go:68
+#: cmd/incus/exec.go:69
 msgid "Disable stdin (reads from /dev/null)"
 msgstr "禁用标准输入（从 /dev/null 读取）"
 
@@ -2923,7 +2923,7 @@ msgstr "输入新的延迟（秒）："
 msgid "Entry TTL"
 msgstr "条目 TTL"
 
-#: cmd/incus/exec.go:64
+#: cmd/incus/exec.go:65
 #, fuzzy
 msgid ""
 "Environment variable to set (e.g. HOME=/home/foo) (may be passed multiple "
@@ -3085,11 +3085,11 @@ msgstr ""
 "  开发团队有时会以数据库查询的形式向用户提供修补程序，以修复一些数据不一致的"
 "问题。"
 
-#: cmd/incus/exec.go:44
+#: cmd/incus/exec.go:45
 msgid "Execute commands in instances"
 msgstr "在实例中执行命令"
 
-#: cmd/incus/exec.go:45
+#: cmd/incus/exec.go:46
 msgid ""
 "Execute commands in instances\n"
 "\n"
@@ -3580,6 +3580,11 @@ msgstr "无法从标准输入读取：%w"
 msgid "Failed to read from stdin: %w"
 msgstr "无法从标准输入读取：%w"
 
+#: cmd/incus/exec.go:237
+#, fuzzy, c-format
+msgid "Failed to receive the command output: %w"
+msgstr "呈现配置失败：%w"
+
 #: cmd/incus/copy.go:391
 #, c-format
 msgid "Failed to refresh target instance '%s': %v"
@@ -3760,7 +3765,7 @@ msgstr ""
 msgid "Force overwriting existing backup file"
 msgstr ""
 
-#: cmd/incus/exec.go:66
+#: cmd/incus/exec.go:67
 msgid "Force pseudo-terminal allocation"
 msgstr "强制伪终端分配"
 
@@ -4197,7 +4202,7 @@ msgstr ""
 msgid "Granularity of the dirty bitmap in bytes"
 msgstr ""
 
-#: cmd/incus/exec.go:70
+#: cmd/incus/exec.go:71
 msgid "Group ID to run the command as (default 0)"
 msgstr "运行命令的组 ID（默认为 0）"
 
@@ -4623,7 +4628,7 @@ msgstr "'%s' 中的配置键 '%s' 无效"
 msgid "Invalid config key column format (too many fields): '%s'"
 msgstr "无效的配置键列格式（字段过多）：'%s'"
 
-#: cmd/incus/default.go:85
+#: cmd/incus/default.go:87
 #, fuzzy, c-format
 msgid "Invalid default %q"
 msgstr "无效的格式 %q"
@@ -4701,12 +4706,12 @@ msgstr "无效的卷 %s"
 msgid "Invalid type %q"
 msgstr "无效的类型 %q"
 
-#: cmd/incus/default.go:123
+#: cmd/incus/default.go:125
 #, fuzzy, c-format
 msgid "Invalid value %q for console_type"
 msgstr "节点类型无效"
 
-#: cmd/incus/default.go:110
+#: cmd/incus/default.go:112
 #, fuzzy, c-format
 msgid "Invalid value %q for list_format"
 msgstr "无效的卷 %s"
@@ -7071,6 +7076,11 @@ msgstr ""
 msgid "No unknown storage pools or volumes found. Nothing to do."
 msgstr ""
 
+#: cmd/incus/webui_unix.go:51
+#, c-format
+msgid "No web UI found at %q"
+msgstr ""
+
 #: cmd/incus/info.go:546
 #, c-format
 msgid "Node %d:\n"
@@ -7144,7 +7154,7 @@ msgstr ""
 msgid "Only remove signatures owned by the given owner"
 msgstr ""
 
-#: cmd/incus/webui.go:21 cmd/incus/webui.go:22
+#: cmd/incus/webui.go:23 cmd/incus/webui.go:24
 msgid "Open the web interface"
 msgstr ""
 
@@ -7165,7 +7175,7 @@ msgstr ""
 msgid "Override the source project"
 msgstr ""
 
-#: cmd/incus/exec.go:65
+#: cmd/incus/exec.go:66
 msgid "Override the terminal mode (auto, interactive or non-interactive)"
 msgstr ""
 
@@ -7261,6 +7271,10 @@ msgstr ""
 #: cmd/incus/cluster.go:1911
 #, c-format
 msgid "Path %s doesn't exist"
+msgstr ""
+
+#: cmd/incus/webui.go:26
+msgid "Path to a local web UI directory"
 msgstr ""
 
 #: cmd/incus/admin_init_interactive.go:438
@@ -7536,7 +7550,7 @@ msgstr "协议: %s"
 msgid "Provided certificate path doesn't exist: %s"
 msgstr "提供的证书路径不存在: %s"
 
-#: cmd/incus/remote_unix.go:52
+#: cmd/incus/remote_unix.go:53
 msgid "Proxy timeout (exits when no connections)"
 msgstr "代理已超时 (无连接时退出)"
 
@@ -8031,11 +8045,11 @@ msgstr ""
 msgid "Rule description"
 msgstr ""
 
-#: cmd/incus/remote_unix.go:45
+#: cmd/incus/remote_unix.go:46
 msgid "Run a local API proxy"
 msgstr ""
 
-#: cmd/incus/remote_unix.go:46
+#: cmd/incus/remote_unix.go:47
 msgid "Run a local API proxy for the remote"
 msgstr ""
 
@@ -8612,7 +8626,7 @@ msgstr ""
 msgid "Show all information messages"
 msgstr ""
 
-#: cmd/incus/default.go:165 cmd/incus/default.go:166
+#: cmd/incus/default.go:173 cmd/incus/default.go:174
 msgid "Show client defaults"
 msgstr ""
 
@@ -9419,7 +9433,7 @@ msgid ""
 "The requested storage pool \"%s\" already exists. Please choose another name."
 msgstr ""
 
-#: cmd/incus/webui_unix.go:61
+#: cmd/incus/webui_unix.go:69
 msgid "The server doesn't have a web UI installed"
 msgstr ""
 
@@ -9829,7 +9843,7 @@ msgstr ""
 msgid "Unset all profiles on the target instance"
 msgstr ""
 
-#: cmd/incus/default.go:202 cmd/incus/default.go:203
+#: cmd/incus/default.go:210 cmd/incus/default.go:211
 msgid "Unset client defaults"
 msgstr ""
 
@@ -10103,7 +10117,7 @@ msgstr ""
 msgid "Used: %v"
 msgstr ""
 
-#: cmd/incus/exec.go:69
+#: cmd/incus/exec.go:70
 msgid "User ID to run the command as (default 0)"
 msgstr ""
 
@@ -10243,7 +10257,7 @@ msgid ""
 "they otherwise would."
 msgstr ""
 
-#: cmd/incus/webui_unix.go:109
+#: cmd/incus/webui_unix.go:119
 #, c-format
 msgid "Web server running at: %s"
 msgstr ""
@@ -10383,11 +10397,11 @@ msgstr ""
 msgid "You are currently missing the following:"
 msgstr ""
 
-#: cmd/incus/exec.go:112
+#: cmd/incus/exec.go:113
 msgid "You can't pass -t and -T at the same time"
 msgstr ""
 
-#: cmd/incus/exec.go:116
+#: cmd/incus/exec.go:117
 msgid "You can't pass -t or -T at the same time as --mode"
 msgstr ""
 
@@ -10668,7 +10682,7 @@ msgid ""
 "standard output."
 msgstr ""
 
-#: cmd/incus/exec.go:57
+#: cmd/incus/exec.go:58
 msgid ""
 "incus exec c1 bash\n"
 "\tRun the \"bash\" command in instance \"c1\"\n"
@@ -11318,7 +11332,7 @@ msgstr ""
 msgid "no"
 msgstr ""
 
-#: cmd/incus/default.go:146
+#: cmd/incus/default.go:148
 msgid "no_color must be boolean"
 msgstr ""
 
@@ -11475,7 +11489,7 @@ msgstr ""
 msgid "unexpected end of argument; did you forget a suffix?"
 msgstr ""
 
-#: cmd/incus/remote_unix.go:40
+#: cmd/incus/remote_unix.go:41
 msgid "unix socket file"
 msgstr ""
 
