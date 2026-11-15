@@ -2749,6 +2749,12 @@ func (d *disk) storagePoolVolumeAttachShift(projectName, poolName, volumeName st
 						continue
 					}
 
+					// A container still being created has no idmap yet, it gets checked when it starts.
+					localConfig := ct.LocalConfig()
+					if localConfig["volatile.idmap.next"] == "" && localConfig["volatile.idmap.current"] == "" && localConfig["volatile.last_state.idmap"] == "" {
+						continue
+					}
+
 					var ctNextIdmap *idmap.Set
 
 					if ct.IsRunning() {
