@@ -703,6 +703,12 @@ func (d *zfs) Mount() (bool, error) {
 		return false, err
 	}
 
+	// Detach loop devices left on our zvols by an interrupted operation.
+	err = d.detachLoopDevices(d.config["zfs.pool_name"])
+	if err != nil {
+		return false, err
+	}
+
 	return imported, nil
 }
 
@@ -726,6 +732,12 @@ func (d *zfs) Unmount() (bool, error) {
 
 	if !exists {
 		return false, nil
+	}
+
+	// Detach loop devices left on our zvols as the export would otherwise hang on them.
+	err = d.detachLoopDevices(d.config["zfs.pool_name"])
+	if err != nil {
+		return false, err
 	}
 
 	// Export the pool.
