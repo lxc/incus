@@ -1136,9 +1136,11 @@ func migrateInstance(ctx context.Context, s *state.State, inst instance.Instance
 			return err
 		}
 
-		// Wait for the migration to complete.
+		// Wait for the migration to complete, letting the destination clean up after a source failure.
 		err = sourceOp.Wait(context.Background())
 		if err != nil {
+			_ = destOp.Wait()
+
 			return fmt.Errorf("Instance move to destination failed on source: %w", err)
 		}
 

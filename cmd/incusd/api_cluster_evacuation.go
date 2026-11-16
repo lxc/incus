@@ -312,15 +312,19 @@ func evacuateClusterMember(ctx context.Context, s *state.State, op *operations.O
 		return err
 	}
 
-	// Load the instance structs.
-	instances := make([]instance.Instance, len(dbInstances))
-	for i, dbInst := range dbInstances {
+	// Load the instance structs, skipping any deleted since the listing.
+	instances := make([]instance.Instance, 0, len(dbInstances))
+	for _, dbInst := range dbInstances {
 		inst, err := instance.LoadByProjectAndName(s, dbInst.Project, dbInst.Name)
+		if api.StatusErrorCheck(err, http.StatusNotFound) {
+			continue
+		}
+
 		if err != nil {
 			return fmt.Errorf("Failed to load instance: %w", err)
 		}
 
-		instances[i] = inst
+		instances = append(instances, inst)
 	}
 
 	// Perform the evacuation.
@@ -487,6 +491,17 @@ func evacuateActionStays(action string) bool {
 	return action == "stop" || action == "stateful-stop" || action == "force-stop"
 }
 
+// evacuateReloadInstance reloads the instance, returning nil if it was deleted since the evacuation started.
+func evacuateReloadInstance(s *state.State, inst instance.Instance) (instance.Instance, error) {
+	current, err := instance.LoadByProjectAndName(s, inst.Project().Name, inst.Name())
+	if api.StatusErrorCheck(err, http.StatusNotFound) {
+		logger.Info("Instance was deleted during its evacuation", logger.Ctx{"project": inst.Project().Name, "instance": inst.Name()})
+		return nil, nil
+	}
+
+	return current, err
+}
+
 // evacuateStopInstanceStep stops the instance if its action requires it.
 func evacuateStopInstanceStep(inst instance.Instance, plan evacuateInstancePlan, opts evacuateOpts) error {
 	if plan.action == "live-migrate" || plan.action == "refresh-migrate" || opts.stopInstance == nil || !plan.isRunning {
@@ -495,7 +510,17 @@ func evacuateStopInstanceStep(inst instance.Instance, plan evacuateInstancePlan,
 
 	_ = opts.op.ExtendMetadata(map[string]any{"evacuation_progress": fmt.Sprintf("Stopping %q in project %q", inst.Name(), inst.Project().Name)})
 
-	return opts.stopInstance(opts.s, inst, plan.action)
+	err := opts.stopInstance(opts.s, inst, plan.action)
+	if err == nil {
+		return nil
+	}
+
+	current, loadErr := evacuateReloadInstance(opts.s, inst)
+	if loadErr == nil && current == nil {
+		return nil
+	}
+
+	return err
 }
 
 // evacuateMoveInstanceStep moves the instance to another member if its action requires it.
@@ -506,9 +531,20 @@ func evacuateMoveInstanceStep(ctx context.Context, inst instance.Instance, plan 
 	action := plan.action
 	isRunning := plan.isRunning
 	if action == "live-migrate" || action == "refresh-migrate" {
-		// Can't live or refresh migrate if we're stopped.
+		// Not stopped by us, so it may have stopped on its own or been deleted since the plan was made.
+		isRunning = inst.IsRunning()
 		if !isRunning {
 			action = "migrate"
+
+			var err error
+			inst, err = evacuateReloadInstance(opts.s, inst)
+			if err != nil {
+				return err
+			}
+
+			if inst == nil {
+				return nil
+			}
 		}
 	} else if action != "migrate" {
 		// Done with this instance.
@@ -546,11 +582,44 @@ func evacuateMoveInstanceStep(ctx context.Context, inst instance.Instance, plan 
 
 	start := isRunning || instanceShouldAutoStart(inst)
 	err = opts.migrateInstance(ctx, opts.s, inst, sourceMemberInfo, targetMemberInfo, action, start, opts.op)
-	if err != nil {
+	if err == nil {
+		return nil
+	}
+
+	// The instance may have been deleted, stopped or restarted on its own during the migration.
+	current, loadErr := evacuateReloadInstance(opts.s, inst)
+	if loadErr == nil && current == nil {
+		return nil
+	}
+
+	if loadErr != nil || action == "migrate" {
 		return err
 	}
 
-	return nil
+	running := current.IsRunning()
+	if running {
+		// A reboot handled by the stop hook interrupts a live migration, retry it once.
+		if !current.LastUsedDate().After(inst.LastUsedDate()) {
+			return err
+		}
+
+		l.Warn("Live migration failed on an instance that restarted, retrying", logger.Ctx{"err": err})
+	} else {
+		action = "migrate"
+		l.Warn("Live migration failed on an instance that stopped, migrating it stopped", logger.Ctx{"err": err})
+	}
+
+	err = opts.migrateInstance(ctx, opts.s, current, sourceMemberInfo, targetMemberInfo, action, running || instanceShouldAutoStart(current), opts.op)
+	if err == nil {
+		return nil
+	}
+
+	current, loadErr = evacuateReloadInstance(opts.s, current)
+	if loadErr == nil && current == nil {
+		return nil
+	}
+
+	return err
 }
 
 // evacuateShutdown performs an evacuation of the local cluster member as part of the daemon shutdown sequence.
