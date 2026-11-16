@@ -582,6 +582,34 @@ func validateVolumeCommonRules(vol drivers.Volume) map[string]func(string) error
 	return rules
 }
 
+// ImageVirtualSize returns the virtual size of a qcow2 image file.
+func ImageVirtualSize(sysOS *sys.OS, imgPath string) (int64, error) {
+	// Force the qcow2 format rather than trusting qemu-img's detection and cap its CPU time and
+	// address space, as the image may be malicious.
+	cmd := []string{"prlimit", "--cpu=2", "--as=1073741824", "qemu-img", "info", "-f", "qcow2", "--output=json", imgPath}
+	imgJSON, err := apparmor.QemuImg(sysOS, cmd, imgPath, "", nil)
+	if err != nil {
+		return -1, fmt.Errorf("Failed reading image info %q: %w", imgPath, err)
+	}
+
+	imgInfo := struct {
+		Format      string `json:"format"`
+		VirtualSize int64  `json:"virtual-size"`
+	}{}
+
+	err = json.Unmarshal([]byte(imgJSON), &imgInfo)
+	if err != nil {
+		return -1, fmt.Errorf("Failed unmarshalling image info %q: %w (%q)", imgPath, err, imgJSON)
+	}
+
+	// Belt and braces qcow2 check.
+	if imgInfo.Format != drivers.BlockVolumeTypeQcow2 {
+		return -1, fmt.Errorf("Unexpected image format %q", imgInfo.Format)
+	}
+
+	return imgInfo.VirtualSize, nil
+}
+
 // ImageUnpack unpacks a filesystem image into the destination path.
 // There are several formats that images can come in:
 // Container Format A: Separate metadata tarball and root squashfs file.
@@ -667,36 +695,15 @@ func ImageUnpack(imageFile string, vol drivers.Volume, destBlockFile string, sys
 	// convertBlockImage converts the qcow2 block image file into a raw block device. If needed it will attempt
 	// to enlarge the destination volume to accommodate the unpacked qcow2 image file.
 	convertBlockImage := func(v drivers.Volume, imgPath string, dstPath string, tracker *ioprogress.ProgressTracker) (int64, error) {
-		// Get info about qcow2 file. Force input format to qcow2 so we don't rely on qemu-img's detection
-		// logic as that has been known to have vulnerabilities and we only support qcow2 images anyway.
-		// Use prlimit because qemu-img can consume considerable RAM & CPU time if fed a maliciously
-		// crafted disk image. Since cloud tenants are not to be trusted, ensure QEMU is limits to 1 GiB
-		// address space and 2 seconds CPU time, which ought to be more than enough for real world images.
-		cmd := []string{"prlimit", "--cpu=2", "--as=1073741824", "qemu-img", "info", "-f", "qcow2", "--output=json", imgPath}
-		imgJSON, err := apparmor.QemuImg(sysOS, cmd, imgPath, dstPath, tracker)
+		virtualSize, err := ImageVirtualSize(sysOS, imgPath)
 		if err != nil {
-			return -1, fmt.Errorf("Failed reading image info %q: %w", imgPath, err)
-		}
-
-		imgInfo := struct {
-			Format      string `json:"format"`
-			VirtualSize int64  `json:"virtual-size"`
-		}{}
-
-		err = json.Unmarshal([]byte(imgJSON), &imgInfo)
-		if err != nil {
-			return -1, fmt.Errorf("Failed unmarshalling image info %q: %w (%q)", imgPath, err, imgJSON)
-		}
-
-		// Belt and braces qcow2 check.
-		if imgInfo.Format != drivers.BlockVolumeTypeQcow2 {
-			return -1, fmt.Errorf("Unexpected image format %q", imgInfo.Format)
+			return -1, err
 		}
 
 		// Check whether image is allowed to be unpacked into pool volume. Create a partial image volume
 		// struct and then use it to check that target volume size can be set as needed.
 		imgVolConfig := map[string]string{
-			"volatile.rootfs.size": fmt.Sprintf("%d", imgInfo.VirtualSize),
+			"volatile.rootfs.size": fmt.Sprintf("%d", virtualSize),
 		}
 
 		imgVol := drivers.NewVolume(nil, "", drivers.VolumeTypeImage, drivers.ContentTypeBlock, "", imgVolConfig, nil)
@@ -715,7 +722,7 @@ func ImageUnpack(imageFile string, vol drivers.Volume, destBlockFile string, sys
 
 			// If the target volume's size is smaller than the image unpack size, then we need to
 			// increase the target volume's size.
-			if volSizeBytes < imgInfo.VirtualSize {
+			if volSizeBytes < virtualSize {
 				l.Debug("Increasing volume size", logger.Ctx{"imgPath": imgPath, "dstPath": dstPath, "oldSize": volSizeBytes, "newSize": newVolSize, "allowUnsafeResize": allowUnsafeResize})
 				err = vol.SetQuota(newVolSize, allowUnsafeResize, nil)
 				if err != nil {
@@ -759,13 +766,13 @@ func ImageUnpack(imageFile string, vol drivers.Volume, destBlockFile string, sys
 				return -1, err
 			}
 
-			return imgInfo.VirtualSize, nil
+			return virtualSize, nil
 		}
 
 		// Convert the qcow2 format to a raw block device.
 		l.Debug("Converting qcow2 image to raw disk", logger.Ctx{"imgPath": imgPath, "dstPath": dstPath})
 
-		cmd = []string{
+		cmd := []string{
 			"nice", "-n19", // Run with low priority to reduce CPU impact on other processes.
 			"qemu-img", "convert", "-p", "-f", "qcow2", "-O", "raw", "-t", "writeback",
 		}
@@ -801,7 +808,7 @@ func ImageUnpack(imageFile string, vol drivers.Volume, destBlockFile string, sys
 			return -1, fmt.Errorf("Failed converting image to raw at %q: %w", dstPath, err)
 		}
 
-		return imgInfo.VirtualSize, nil
+		return virtualSize, nil
 	}
 
 	var imgSize int64

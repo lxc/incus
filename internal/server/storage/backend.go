@@ -4970,6 +4970,14 @@ func (b *backend) ensureImage(l logger.Logger, fingerprint string, op *operation
 	newImgVol := imgVol.Clone()
 	hinted := b.applyImageSizeHint(l, newImgVol, image)
 
+	// Size a VM image volume from the image up front so the driver creates it at its final size.
+	if contentType == drivers.ContentTypeBlock {
+		err = b.applyImageVirtualSize(l, newImgVol, fingerprint)
+		if err != nil {
+			return false, err
+		}
+	}
+
 	err = b.driver.CreateVolume(newImgVol, &volFiller, op)
 	if err != nil {
 		if hinted {
@@ -5021,6 +5029,36 @@ func (b *backend) applyImageSizeHint(l logger.Logger, imgVol drivers.Volume, ima
 	imgVol.SetConfigSize(size)
 
 	return true
+}
+
+// applyImageVirtualSize sizes a VM image volume to hold the image's virtual size.
+func (b *backend) applyImageVirtualSize(l logger.Logger, imgVol drivers.Volume, fingerprint string) error {
+	// A unified image has to be unpacked before its qcow2 can be read, so only split images are sized up front.
+	imgPath := internalUtil.VarPath("images", fingerprint) + ".rootfs"
+	if !util.PathExists(imgPath) {
+		return nil
+	}
+
+	virtualSize, err := ImageVirtualSize(b.state.OS, imgPath)
+	if err != nil {
+		return err
+	}
+
+	srcVol := drivers.NewVolume(nil, "", drivers.VolumeTypeImage, drivers.ContentTypeBlock, "", map[string]string{"volatile.rootfs.size": fmt.Sprintf("%d", virtualSize)}, nil)
+
+	size, err := imgVol.ConfigSizeFromSource(srcVol)
+	if err != nil {
+		return err
+	}
+
+	if size == imgVol.ConfigSize() {
+		return nil
+	}
+
+	l.Debug("Using image virtual size for image volume", logger.Ctx{"size": size})
+	imgVol.SetConfigSize(size)
+
+	return nil
 }
 
 // shouldUseOptimizedImage determines if an optimized image should be used based on the provided volume config.
