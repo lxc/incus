@@ -1,18 +1,23 @@
 package drivers
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
 	"io"
+	"io/fs"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"slices"
 	"strings"
+	"unsafe"
 
 	"github.com/google/uuid"
+	"golang.org/x/sys/unix"
 
+	"github.com/lxc/incus/v7/internal/linux"
 	"github.com/lxc/incus/v7/internal/server/migration"
 	"github.com/lxc/incus/v7/shared/api"
 	"github.com/lxc/incus/v7/shared/ioprogress"
@@ -38,6 +43,67 @@ const (
 	// zfsMaxVolBlocksize is a maximum value for volblocksize property.
 	zfsMaxVolBlocksize = 128 * 1024
 )
+
+// zfsDatasetFromDevice returns the dataset behind a zvol device.
+func zfsDatasetFromDevice(devPath string) (string, error) {
+	// Open the device.
+	r, err := os.OpenFile(devPath, unix.O_RDONLY|unix.O_CLOEXEC, 0)
+	if err != nil {
+		return "", err
+	}
+
+	defer logger.WarnOnError(r.Close, "Failed to close file")
+
+	// Perform the BLKZNAME ioctl.
+	buf := [256]byte{}
+	_, _, errno := unix.Syscall(unix.SYS_IOCTL, uintptr(r.Fd()), linux.IoctlBlkZname, uintptr(unsafe.Pointer(&buf)))
+	if errno != 0 {
+		return "", errno
+	}
+
+	return string(bytes.Trim(buf[:], "\x00")), nil
+}
+
+// detachLoopDevices detaches the loop devices backed by zvols under the dataset or by removed zvols.
+func (d *zfs) detachLoopDevices(dataset string) error {
+	backingFiles, err := filepath.Glob("/sys/block/loop*/loop/backing_file")
+	if err != nil {
+		return err
+	}
+
+	for _, backingFile := range backingFiles {
+		// The loop device may have been detached in the meantime.
+		content, err := os.ReadFile(backingFile)
+		if err != nil {
+			continue
+		}
+
+		devPath := strings.TrimSpace(string(content))
+		if !strings.HasPrefix(devPath, "/dev/zd") {
+			continue
+		}
+
+		zvolDataset, err := zfsDatasetFromDevice(devPath)
+		if err != nil {
+			// A loop device on a removed zvol can never be used again.
+			if !errors.Is(err, unix.ENXIO) && !errors.Is(err, fs.ErrNotExist) {
+				continue
+			}
+		} else if zvolDataset != dataset && !strings.HasPrefix(zvolDataset, dataset+"/") {
+			continue
+		}
+
+		loopDevPath := "/dev/" + filepath.Base(filepath.Dir(filepath.Dir(backingFile)))
+		err = loopDeviceAutoDetach(loopDevPath)
+		if err != nil {
+			return err
+		}
+
+		d.logger.Warn("Detached stale loop device", logger.Ctx{"dev": loopDevPath, "backing": devPath, "dataset": zvolDataset})
+	}
+
+	return nil
+}
 
 func (d *zfs) dataset(vol Volume, deleted bool) string {
 	name, snapName, _ := api.GetParentAndSnapshotName(vol.name)
