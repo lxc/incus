@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: incus\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2026-11-03 09:16-0500\n"
+"POT-Creation-Date: 2026-11-15 08:13-0500\n"
 "PO-Revision-Date: 2026-08-29 22:40+0000\n"
 "Last-Translator: pesder <j_h_liau@yahoo.com.tw>\n"
 "Language-Team: Chinese (Traditional Han script) <https://hosted.weblate.org/"
@@ -2219,7 +2219,7 @@ msgstr ""
 msgid "Directory import is not available on this platform"
 msgstr ""
 
-#: cmd/incus/exec.go:71
+#: cmd/incus/exec.go:72
 msgid "Directory to run the command in (default /root)"
 msgstr ""
 
@@ -2227,11 +2227,11 @@ msgstr ""
 msgid "Disable authentication when using SSH SFTP listener"
 msgstr ""
 
-#: cmd/incus/exec.go:67
+#: cmd/incus/exec.go:68
 msgid "Disable pseudo-terminal allocation"
 msgstr ""
 
-#: cmd/incus/exec.go:68
+#: cmd/incus/exec.go:69
 msgid "Disable stdin (reads from /dev/null)"
 msgstr ""
 
@@ -2562,7 +2562,7 @@ msgstr ""
 msgid "Entry TTL"
 msgstr ""
 
-#: cmd/incus/exec.go:64
+#: cmd/incus/exec.go:65
 msgid ""
 "Environment variable to set (e.g. HOME=/home/foo) (may be passed multiple "
 "times)"
@@ -2701,11 +2701,11 @@ msgid ""
 "  set of database queries to fix some data inconsistency."
 msgstr ""
 
-#: cmd/incus/exec.go:44
+#: cmd/incus/exec.go:45
 msgid "Execute commands in instances"
 msgstr ""
 
-#: cmd/incus/exec.go:45
+#: cmd/incus/exec.go:46
 msgid ""
 "Execute commands in instances\n"
 "\n"
@@ -3180,6 +3180,11 @@ msgstr ""
 msgid "Failed to read from stdin: %w"
 msgstr ""
 
+#: cmd/incus/exec.go:237
+#, c-format
+msgid "Failed to receive the command output: %w"
+msgstr ""
+
 #: cmd/incus/copy.go:391
 #, c-format
 msgid "Failed to refresh target instance '%s': %v"
@@ -3359,7 +3364,7 @@ msgstr ""
 msgid "Force overwriting existing backup file"
 msgstr ""
 
-#: cmd/incus/exec.go:66
+#: cmd/incus/exec.go:67
 msgid "Force pseudo-terminal allocation"
 msgstr ""
 
@@ -3766,7 +3771,7 @@ msgstr ""
 msgid "Granularity of the dirty bitmap in bytes"
 msgstr ""
 
-#: cmd/incus/exec.go:70
+#: cmd/incus/exec.go:71
 msgid "Group ID to run the command as (default 0)"
 msgstr ""
 
@@ -4182,7 +4187,7 @@ msgstr ""
 msgid "Invalid config key column format (too many fields): '%s'"
 msgstr ""
 
-#: cmd/incus/default.go:85
+#: cmd/incus/default.go:87
 #, c-format
 msgid "Invalid default %q"
 msgstr ""
@@ -4260,12 +4265,12 @@ msgstr ""
 msgid "Invalid type %q"
 msgstr ""
 
-#: cmd/incus/default.go:123
+#: cmd/incus/default.go:125
 #, c-format
 msgid "Invalid value %q for console_type"
 msgstr ""
 
-#: cmd/incus/default.go:110
+#: cmd/incus/default.go:112
 #, c-format
 msgid "Invalid value %q for list_format"
 msgstr ""
@@ -6301,6 +6306,11 @@ msgstr ""
 msgid "No unknown storage pools or volumes found. Nothing to do."
 msgstr ""
 
+#: cmd/incus/webui_unix.go:51
+#, c-format
+msgid "No web UI found at %q"
+msgstr ""
+
 #: cmd/incus/info.go:546
 #, c-format
 msgid "Node %d:\n"
@@ -6374,7 +6384,7 @@ msgstr ""
 msgid "Only remove signatures owned by the given owner"
 msgstr ""
 
-#: cmd/incus/webui.go:21 cmd/incus/webui.go:22
+#: cmd/incus/webui.go:23 cmd/incus/webui.go:24
 msgid "Open the web interface"
 msgstr ""
 
@@ -6395,7 +6405,7 @@ msgstr ""
 msgid "Override the source project"
 msgstr ""
 
-#: cmd/incus/exec.go:65
+#: cmd/incus/exec.go:66
 msgid "Override the terminal mode (auto, interactive or non-interactive)"
 msgstr ""
 
@@ -6491,6 +6501,10 @@ msgstr ""
 #: cmd/incus/cluster.go:1911
 #, c-format
 msgid "Path %s doesn't exist"
+msgstr ""
+
+#: cmd/incus/webui.go:26
+msgid "Path to a local web UI directory"
 msgstr ""
 
 #: cmd/incus/admin_init_interactive.go:438
@@ -6761,7 +6775,7 @@ msgstr ""
 msgid "Provided certificate path doesn't exist: %s"
 msgstr ""
 
-#: cmd/incus/remote_unix.go:52
+#: cmd/incus/remote_unix.go:53
 msgid "Proxy timeout (exits when no connections)"
 msgstr ""
 
@@ -7236,11 +7250,11 @@ msgstr ""
 msgid "Rule description"
 msgstr ""
 
-#: cmd/incus/remote_unix.go:45
+#: cmd/incus/remote_unix.go:46
 msgid "Run a local API proxy"
 msgstr ""
 
-#: cmd/incus/remote_unix.go:46
+#: cmd/incus/remote_unix.go:47
 msgid "Run a local API proxy for the remote"
 msgstr ""
 
@@ -7815,7 +7829,7 @@ msgstr ""
 msgid "Show all information messages"
 msgstr ""
 
-#: cmd/incus/default.go:165 cmd/incus/default.go:166
+#: cmd/incus/default.go:173 cmd/incus/default.go:174
 msgid "Show client defaults"
 msgstr ""
 
@@ -8615,7 +8629,7 @@ msgid ""
 "The requested storage pool \"%s\" already exists. Please choose another name."
 msgstr ""
 
-#: cmd/incus/webui_unix.go:61
+#: cmd/incus/webui_unix.go:69
 msgid "The server doesn't have a web UI installed"
 msgstr ""
 
@@ -9025,7 +9039,7 @@ msgstr ""
 msgid "Unset all profiles on the target instance"
 msgstr ""
 
-#: cmd/incus/default.go:202 cmd/incus/default.go:203
+#: cmd/incus/default.go:210 cmd/incus/default.go:211
 msgid "Unset client defaults"
 msgstr ""
 
@@ -9279,7 +9293,7 @@ msgstr ""
 msgid "Used: %v"
 msgstr ""
 
-#: cmd/incus/exec.go:69
+#: cmd/incus/exec.go:70
 msgid "User ID to run the command as (default 0)"
 msgstr ""
 
@@ -9418,7 +9432,7 @@ msgid ""
 "they otherwise would."
 msgstr ""
 
-#: cmd/incus/webui_unix.go:109
+#: cmd/incus/webui_unix.go:119
 #, c-format
 msgid "Web server running at: %s"
 msgstr ""
@@ -9558,11 +9572,11 @@ msgstr ""
 msgid "You are currently missing the following:"
 msgstr ""
 
-#: cmd/incus/exec.go:112
+#: cmd/incus/exec.go:113
 msgid "You can't pass -t and -T at the same time"
 msgstr ""
 
-#: cmd/incus/exec.go:116
+#: cmd/incus/exec.go:117
 msgid "You can't pass -t or -T at the same time as --mode"
 msgstr ""
 
@@ -9835,7 +9849,7 @@ msgid ""
 "standard output."
 msgstr ""
 
-#: cmd/incus/exec.go:57
+#: cmd/incus/exec.go:58
 msgid ""
 "incus exec c1 bash\n"
 "\tRun the \"bash\" command in instance \"c1\"\n"
@@ -10474,7 +10488,7 @@ msgstr ""
 msgid "no"
 msgstr ""
 
-#: cmd/incus/default.go:146
+#: cmd/incus/default.go:148
 msgid "no_color must be boolean"
 msgstr ""
 
@@ -10627,7 +10641,7 @@ msgstr ""
 msgid "unexpected end of argument; did you forget a suffix?"
 msgstr ""
 
-#: cmd/incus/remote_unix.go:40
+#: cmd/incus/remote_unix.go:41
 msgid "unix socket file"
 msgstr ""
 

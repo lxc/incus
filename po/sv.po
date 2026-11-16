@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: incus\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2026-11-03 09:16-0500\n"
+"POT-Creation-Date: 2026-11-15 08:13-0500\n"
 "PO-Revision-Date: 2026-08-29 22:40+0000\n"
 "Last-Translator: Anonymous <noreply@weblate.org>\n"
 "Language-Team: Swedish <https://hosted.weblate.org/projects/incus/cli/sv/>\n"
@@ -2572,7 +2572,7 @@ msgstr "Hämtade inte namnet på den nya volym-ögonblicksbilden från servern"
 msgid "Directory import is not available on this platform"
 msgstr "Katalogimport är inte tillgängligt på denna plattform"
 
-#: cmd/incus/exec.go:71
+#: cmd/incus/exec.go:72
 msgid "Directory to run the command in (default /root)"
 msgstr "Katalog där kommandot ska köras (standard /root)"
 
@@ -2580,11 +2580,11 @@ msgstr "Katalog där kommandot ska köras (standard /root)"
 msgid "Disable authentication when using SSH SFTP listener"
 msgstr "Inaktivera autentisering vid användning av SSH SFTP-lyssnare"
 
-#: cmd/incus/exec.go:67
+#: cmd/incus/exec.go:68
 msgid "Disable pseudo-terminal allocation"
 msgstr "Inaktivera tilldelning av pseudoterminal"
 
-#: cmd/incus/exec.go:68
+#: cmd/incus/exec.go:69
 msgid "Disable stdin (reads from /dev/null)"
 msgstr "Inaktivera stdin (läser från /dev/null)"
 
@@ -2958,7 +2958,7 @@ msgstr "Ange ny fördröjning i sekunder:"
 msgid "Entry TTL"
 msgstr "Inmatning TTL"
 
-#: cmd/incus/exec.go:64
+#: cmd/incus/exec.go:65
 #, fuzzy
 msgid ""
 "Environment variable to set (e.g. HOME=/home/foo) (may be passed multiple "
@@ -3135,11 +3135,11 @@ msgstr ""
 "användarna i form av en\n"
 "  uppsättning databasfrågor för att åtgärda vissa datainkonsekvenser."
 
-#: cmd/incus/exec.go:44
+#: cmd/incus/exec.go:45
 msgid "Execute commands in instances"
 msgstr "Utför kommandon i instanser"
 
-#: cmd/incus/exec.go:45
+#: cmd/incus/exec.go:46
 msgid ""
 "Execute commands in instances\n"
 "\n"
@@ -3638,6 +3638,11 @@ msgstr "Det gick inte att läsa från filen: %w"
 msgid "Failed to read from stdin: %w"
 msgstr "Läsning från stdin misslyckades: %w"
 
+#: cmd/incus/exec.go:237
+#, fuzzy, c-format
+msgid "Failed to receive the command output: %w"
+msgstr "Det gick inte att rendera konfigurationen: %w"
+
 #: cmd/incus/copy.go:391
 #, c-format
 msgid "Failed to refresh target instance '%s': %v"
@@ -3821,7 +3826,7 @@ msgstr "Tvinga överskrivning av befintlig säkerhetskopia"
 msgid "Force overwriting existing backup file"
 msgstr "Tvinga överskrivning av befintlig säkerhetskopia"
 
-#: cmd/incus/exec.go:66
+#: cmd/incus/exec.go:67
 msgid "Force pseudo-terminal allocation"
 msgstr "Tvinga pseudo-terminaltilldelning"
 
@@ -4292,7 +4297,7 @@ msgstr "Globala flaggor:"
 msgid "Granularity of the dirty bitmap in bytes"
 msgstr ""
 
-#: cmd/incus/exec.go:70
+#: cmd/incus/exec.go:71
 msgid "Group ID to run the command as (default 0)"
 msgstr "Grupp-ID för att köra kommandot som (standard 0)"
 
@@ -4725,7 +4730,7 @@ msgstr "Ogiltig konfigurationsnyckel '%s' i '%s'"
 msgid "Invalid config key column format (too many fields): '%s'"
 msgstr "Ogiltigt format för konfigurationsnyckelkolumn (för många fält): '%s'"
 
-#: cmd/incus/default.go:85
+#: cmd/incus/default.go:87
 #, c-format
 msgid "Invalid default %q"
 msgstr "Ogiltigt standardvärde %q"
@@ -4806,12 +4811,12 @@ msgstr "Ogiltigt delnät %q för nätverk %q: %w"
 msgid "Invalid type %q"
 msgstr "Ogiltig typ %q"
 
-#: cmd/incus/default.go:123
+#: cmd/incus/default.go:125
 #, c-format
 msgid "Invalid value %q for console_type"
 msgstr "Ogiltigt värde %q för console_type"
 
-#: cmd/incus/default.go:110
+#: cmd/incus/default.go:112
 #, c-format
 msgid "Invalid value %q for list_format"
 msgstr "Ogiltigt värde %q för list_format"
@@ -7569,6 +7574,11 @@ msgstr "Inga lagringsbackends tillgängliga"
 msgid "No unknown storage pools or volumes found. Nothing to do."
 msgstr "Inga okända lagringspooler eller volymer hittades. Inget att göra."
 
+#: cmd/incus/webui_unix.go:51
+#, fuzzy, c-format
+msgid "No web UI found at %q"
+msgstr "Inget värde hittades i %q"
+
 #: cmd/incus/info.go:546
 #, c-format
 msgid "Node %d:\n"
@@ -7647,7 +7657,7 @@ msgstr ""
 msgid "Only remove signatures owned by the given owner"
 msgstr ""
 
-#: cmd/incus/webui.go:21 cmd/incus/webui.go:22
+#: cmd/incus/webui.go:23 cmd/incus/webui.go:24
 msgid "Open the web interface"
 msgstr "Öppna webbgränssnittet"
 
@@ -7668,7 +7678,7 @@ msgstr "Optimerad lagring"
 msgid "Override the source project"
 msgstr "Åsidosätt källprojektet"
 
-#: cmd/incus/exec.go:65
+#: cmd/incus/exec.go:66
 msgid "Override the terminal mode (auto, interactive or non-interactive)"
 msgstr ""
 "Åsidosätt terminalläget (automatiskt, interaktivt eller icke-interaktivt)"
@@ -7766,6 +7776,10 @@ msgstr "Lösenordet avvisat för %q"
 #, c-format
 msgid "Path %s doesn't exist"
 msgstr "Sökvägen %s finns inte"
+
+#: cmd/incus/webui.go:26
+msgid "Path to a local web UI directory"
+msgstr ""
 
 #: cmd/incus/admin_init_interactive.go:438
 msgid "Path to the existing block device:"
@@ -8044,7 +8058,7 @@ msgstr "Protokoll: %s"
 msgid "Provided certificate path doesn't exist: %s"
 msgstr "Angiven certifikatväg finns inte: %s"
 
-#: cmd/incus/remote_unix.go:52
+#: cmd/incus/remote_unix.go:53
 msgid "Proxy timeout (exits when no connections)"
 msgstr "Proxy-timeout (avslutas när inga anslutningar finns)"
 
@@ -8548,11 +8562,11 @@ msgstr "Berörda rader: %d"
 msgid "Rule description"
 msgstr "Regelbeskrivning"
 
-#: cmd/incus/remote_unix.go:45
+#: cmd/incus/remote_unix.go:46
 msgid "Run a local API proxy"
 msgstr "Kör en lokal API-proxy"
 
-#: cmd/incus/remote_unix.go:46
+#: cmd/incus/remote_unix.go:47
 msgid "Run a local API proxy for the remote"
 msgstr "Kör en lokal API-proxy för fjärrkontrollen"
 
@@ -9213,7 +9227,7 @@ msgstr "Visa alla felsökningsmeddelanden"
 msgid "Show all information messages"
 msgstr "Visa alla informationsmeddelanden"
 
-#: cmd/incus/default.go:165 cmd/incus/default.go:166
+#: cmd/incus/default.go:173 cmd/incus/default.go:174
 msgid "Show client defaults"
 msgstr "Visa klientstandardvärden"
 
@@ -10066,7 +10080,7 @@ msgid ""
 "The requested storage pool \"%s\" already exists. Please choose another name."
 msgstr "Den begärda lagringspoolen \"%s\" finns redan. Välj ett annat namn."
 
-#: cmd/incus/webui_unix.go:61
+#: cmd/incus/webui_unix.go:69
 msgid "The server doesn't have a web UI installed"
 msgstr "Servern har inte något webbgränssnitt installerat"
 
@@ -10499,7 +10513,7 @@ msgstr "Inaktivera konfigurationsnycklar för en klustermedlem"
 msgid "Unset all profiles on the target instance"
 msgstr "Inaktivera alla profiler på målinstansen"
 
-#: cmd/incus/default.go:202 cmd/incus/default.go:203
+#: cmd/incus/default.go:210 cmd/incus/default.go:211
 msgid "Unset client defaults"
 msgstr "Återställ klientens standardinställningar"
 
@@ -10773,7 +10787,7 @@ msgstr "Använd med help eller --help för att visa underkommandon"
 msgid "Used: %v"
 msgstr "Använd: %v"
 
-#: cmd/incus/exec.go:69
+#: cmd/incus/exec.go:70
 msgid "User ID to run the command as (default 0)"
 msgstr "Användar-ID för att köra kommandot som (standard 0)"
 
@@ -10938,7 +10952,7 @@ msgstr ""
 "de\n"
 "annars skulle ha."
 
-#: cmd/incus/webui_unix.go:109
+#: cmd/incus/webui_unix.go:119
 #, c-format
 msgid "Web server running at: %s"
 msgstr "Webbserver körs på: %s"
@@ -11092,11 +11106,11 @@ msgstr "JA"
 msgid "You are currently missing the following:"
 msgstr "Du saknar för närvarande följande:"
 
-#: cmd/incus/exec.go:112
+#: cmd/incus/exec.go:113
 msgid "You can't pass -t and -T at the same time"
 msgstr "Du kan inte använda -t och -T samtidigt"
 
-#: cmd/incus/exec.go:116
+#: cmd/incus/exec.go:117
 msgid "You can't pass -t or -T at the same time as --mode"
 msgstr "Du kan inte ange -t eller -T samtidigt som --mode"
 
@@ -11432,7 +11446,7 @@ msgstr ""
 "   För att hämta /etc/hosts från den anpassade volymen och skriva dess "
 "utdata till standard ut."
 
-#: cmd/incus/exec.go:57
+#: cmd/incus/exec.go:58
 msgid ""
 "incus exec c1 bash\n"
 "\tRun the \"bash\" command in instance \"c1\"\n"
@@ -12387,7 +12401,7 @@ msgstr "nytt %s namn"
 msgid "no"
 msgstr "nej"
 
-#: cmd/incus/default.go:146
+#: cmd/incus/default.go:148
 msgid "no_color must be boolean"
 msgstr "no_color måste vara ett booleskt värde"
 
@@ -12538,7 +12552,7 @@ msgstr "oväntade %s; förväntade %s"
 msgid "unexpected end of argument; did you forget a suffix?"
 msgstr "oväntat slut på argumentet; glömde du ett suffix?"
 
-#: cmd/incus/remote_unix.go:40
+#: cmd/incus/remote_unix.go:41
 msgid "unix socket file"
 msgstr "unix socket-fil"
 
@@ -12887,10 +12901,6 @@ msgstr "“%s”"
 
 #~ msgid "No storage pool for target volume specified"
 #~ msgstr "Ingen lagringspool för målvolym angiven"
-
-#, c-format
-#~ msgid "No value found in %q"
-#~ msgstr "Inget värde hittades i %q"
 
 #~ msgid "Only \"custom\" volumes can be attached to instances"
 #~ msgstr "Endast \"anpassade\" volymer kan kopplas till instanser"

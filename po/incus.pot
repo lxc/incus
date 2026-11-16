@@ -7,7 +7,7 @@
 msgid   ""
 msgstr  "Project-Id-Version: incus\n"
         "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-        "POT-Creation-Date: 2026-11-14 09:56-0500\n"
+        "POT-Creation-Date: 2026-11-15 08:13-0500\n"
         "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
         "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
         "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -3893,7 +3893,7 @@ msgstr  ""
 msgid   "Invalid config key column format (too many fields): '%s'"
 msgstr  ""
 
-#: cmd/incus/default.go:85
+#: cmd/incus/default.go:87
 #, c-format
 msgid   "Invalid default %q"
 msgstr  ""
@@ -3969,12 +3969,12 @@ msgstr  ""
 msgid   "Invalid type %q"
 msgstr  ""
 
-#: cmd/incus/default.go:123
+#: cmd/incus/default.go:125
 #, c-format
 msgid   "Invalid value %q for console_type"
 msgstr  ""
 
-#: cmd/incus/default.go:110
+#: cmd/incus/default.go:112
 #, c-format
 msgid   "Invalid value %q for list_format"
 msgstr  ""
@@ -5915,6 +5915,11 @@ msgstr  ""
 msgid   "No unknown storage pools or volumes found. Nothing to do."
 msgstr  ""
 
+#: cmd/incus/webui_unix.go:51
+#, c-format
+msgid   "No web UI found at %q"
+msgstr  ""
+
 #: cmd/incus/info.go:546
 #, c-format
 msgid   "Node %d:\n"
@@ -5985,7 +5990,7 @@ msgstr  ""
 msgid   "Only remove signatures owned by the given owner"
 msgstr  ""
 
-#: cmd/incus/webui.go:21 cmd/incus/webui.go:22
+#: cmd/incus/webui.go:23 cmd/incus/webui.go:24
 msgid   "Open the web interface"
 msgstr  ""
 
@@ -6097,6 +6102,10 @@ msgstr  ""
 #: cmd/incus/cluster.go:1911
 #, c-format
 msgid   "Path %s doesn't exist"
+msgstr  ""
+
+#: cmd/incus/webui.go:26
+msgid   "Path to a local web UI directory"
 msgstr  ""
 
 #: cmd/incus/admin_init_interactive.go:438
@@ -6352,7 +6361,7 @@ msgstr  ""
 msgid   "Provided certificate path doesn't exist: %s"
 msgstr  ""
 
-#: cmd/incus/remote_unix.go:52
+#: cmd/incus/remote_unix.go:53
 msgid   "Proxy timeout (exits when no connections)"
 msgstr  ""
 
@@ -6807,11 +6816,11 @@ msgstr  ""
 msgid   "Rule description"
 msgstr  ""
 
-#: cmd/incus/remote_unix.go:45
+#: cmd/incus/remote_unix.go:46
 msgid   "Run a local API proxy"
 msgstr  ""
 
-#: cmd/incus/remote_unix.go:46
+#: cmd/incus/remote_unix.go:47
 msgid   "Run a local API proxy for the remote"
 msgstr  ""
 
@@ -7345,7 +7354,7 @@ msgstr  ""
 msgid   "Show all information messages"
 msgstr  ""
 
-#: cmd/incus/default.go:165 cmd/incus/default.go:166
+#: cmd/incus/default.go:173 cmd/incus/default.go:174
 msgid   "Show client defaults"
 msgstr  ""
 
@@ -8105,7 +8114,7 @@ msgstr  ""
 msgid   "The requested storage pool \"%s\" already exists. Please choose another name."
 msgstr  ""
 
-#: cmd/incus/webui_unix.go:61
+#: cmd/incus/webui_unix.go:69
 msgid   "The server doesn't have a web UI installed"
 msgstr  ""
 
@@ -8471,7 +8480,7 @@ msgstr  ""
 msgid   "Unset all profiles on the target instance"
 msgstr  ""
 
-#: cmd/incus/default.go:202 cmd/incus/default.go:203
+#: cmd/incus/default.go:210 cmd/incus/default.go:211
 msgid   "Unset client defaults"
 msgstr  ""
 
@@ -8844,7 +8853,7 @@ msgid   "We detected that you are running inside an unprivileged container.\n"
         "they otherwise would."
 msgstr  ""
 
-#: cmd/incus/webui_unix.go:109
+#: cmd/incus/webui_unix.go:119
 #, c-format
 msgid   "Web server running at: %s"
 msgstr  ""
@@ -9757,7 +9766,7 @@ msgstr  ""
 msgid   "no"
 msgstr  ""
 
-#: cmd/incus/default.go:146
+#: cmd/incus/default.go:148
 msgid   "no_color must be boolean"
 msgstr  ""
 
@@ -9908,7 +9917,7 @@ msgstr  ""
 msgid   "unexpected end of argument; did you forget a suffix?"
 msgstr  ""
 
-#: cmd/incus/remote_unix.go:40
+#: cmd/incus/remote_unix.go:41
 msgid   "unix socket file"
 msgstr  ""
 

@@ -28,6 +28,7 @@ defaults:
   console_type: ""
   console_spice_command: ""
   no_color: false
+  webui_path: ""
 ```
 
 ## `remotes`
@@ -85,3 +86,6 @@ Defines an alternative SPICE command to provide the VGA console used by [`incus 
 
 ### `no_color`
 Disables CLI colors.
+
+### `webui_path`
+Path to a local copy of the web UI for [`incus webui`](incus_webui.md) to serve instead of the one offered by the server. It is overridden by the `--path` flag and the `INCUS_UI` environment variable.

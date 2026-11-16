@@ -7,12 +7,12 @@ msgid ""
 msgstr ""
 "Project-Id-Version: incus\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2026-11-03 09:16-0500\n"
+"POT-Creation-Date: 2026-11-15 08:13-0500\n"
 "PO-Revision-Date: 2026-11-03 21:12+0000\n"
 "Last-Translator: Américo Monteiro <a-"
 "monteiro@users.noreply.hosted.weblate.org>\n"
-"Language-Team: Portuguese <https://hosted.weblate.org/projects/incus/cli/pt/>"
-"\n"
+"Language-Team: Portuguese <https://hosted.weblate.org/projects/incus/cli/pt/"
+">\n"
 "Language: pt\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -2583,7 +2583,7 @@ msgstr "Não recebi o nome do novo instantâneo de volume a partir do servidor"
 msgid "Directory import is not available on this platform"
 msgstr "Importação de diretório não está disponível nesta plataforma"
 
-#: cmd/incus/exec.go:71
+#: cmd/incus/exec.go:72
 msgid "Directory to run the command in (default /root)"
 msgstr "Diretório para correr o comando em (predefinição /root)"
 
@@ -2591,11 +2591,11 @@ msgstr "Diretório para correr o comando em (predefinição /root)"
 msgid "Disable authentication when using SSH SFTP listener"
 msgstr "Desativa a autenticação quando se usa escuta SSH SFTP"
 
-#: cmd/incus/exec.go:67
+#: cmd/incus/exec.go:68
 msgid "Disable pseudo-terminal allocation"
 msgstr "Desativa alocação pseudo-terminal"
 
-#: cmd/incus/exec.go:68
+#: cmd/incus/exec.go:69
 msgid "Disable stdin (reads from /dev/null)"
 msgstr "Desativa stdin (lê de /dev/null)"
 
@@ -2970,7 +2970,7 @@ msgstr "Insira novo atraso em segundos:"
 msgid "Entry TTL"
 msgstr "Entrada TTL"
 
-#: cmd/incus/exec.go:64
+#: cmd/incus/exec.go:65
 msgid ""
 "Environment variable to set (e.g. HOME=/home/foo) (may be passed multiple "
 "times)"
@@ -3151,11 +3151,11 @@ msgstr ""
 "   como um conjunto de consultas de bases de dados para corrigir alguma "
 "inconsistência de dados."
 
-#: cmd/incus/exec.go:44
+#: cmd/incus/exec.go:45
 msgid "Execute commands in instances"
 msgstr "Executa comandos em instâncias"
 
-#: cmd/incus/exec.go:45
+#: cmd/incus/exec.go:46
 msgid ""
 "Execute commands in instances\n"
 "\n"
@@ -3659,6 +3659,11 @@ msgstr "Falhou ao ler do ficheiro: %w"
 msgid "Failed to read from stdin: %w"
 msgstr "Falhou ao ler do stdin: %w"
 
+#: cmd/incus/exec.go:237
+#, fuzzy, c-format
+msgid "Failed to receive the command output: %w"
+msgstr "Falhou ao renderizar a configuração: %w"
+
 #: cmd/incus/copy.go:391
 #, c-format
 msgid "Failed to refresh target instance '%s': %v"
@@ -3839,7 +3844,7 @@ msgstr "Forçar sobrescrever de ficheiro PEM existente"
 msgid "Force overwriting existing backup file"
 msgstr "Forçar sobrescrever de ficheiro de salvaguarda existente"
 
-#: cmd/incus/exec.go:66
+#: cmd/incus/exec.go:67
 msgid "Force pseudo-terminal allocation"
 msgstr "Força alocação de pseudo-terminal"
 
@@ -4308,7 +4313,7 @@ msgstr "Bandeiras Globais:"
 msgid "Granularity of the dirty bitmap in bytes"
 msgstr "Granularidade do mapa de bits em bytes"
 
-#: cmd/incus/exec.go:70
+#: cmd/incus/exec.go:71
 msgid "Group ID to run the command as (default 0)"
 msgstr "ID de grupo para correr o comando como (predefinição 0)"
 
@@ -4737,7 +4742,7 @@ msgid "Invalid config key column format (too many fields): '%s'"
 msgstr ""
 "Formato de coluna de chave de configuração inválido (demasiados campos): '%s'"
 
-#: cmd/incus/default.go:85
+#: cmd/incus/default.go:87
 #, c-format
 msgid "Invalid default %q"
 msgstr "Predefinição inválida %q"
@@ -4818,12 +4823,12 @@ msgstr "Sub-rede %q inválida para rede %q: %w"
 msgid "Invalid type %q"
 msgstr "Tipo inválido %q"
 
-#: cmd/incus/default.go:123
+#: cmd/incus/default.go:125
 #, c-format
 msgid "Invalid value %q for console_type"
 msgstr "Valor %q inválido para tipo de consola"
 
-#: cmd/incus/default.go:110
+#: cmd/incus/default.go:112
 #, c-format
 msgid "Invalid value %q for list_format"
 msgstr "Valor %q inválido para formato de lista"
@@ -6476,8 +6481,8 @@ msgstr ""
 "  - static={verdadeiro ou falso}\n"
 "  - global={verdadeiro ou falso}\n"
 "\n"
-"Os valores são correspondidos como expressões regulares. (ex. url=https://"
-".*:8443).\n"
+"Os valores são correspondidos como expressões regulares. (ex. "
+"url=https://.*:8443).\n"
 "\n"
 "Quando são passados vários filtros, eles são adicionados um no topo do "
 "outro,\n"
@@ -6489,8 +6494,8 @@ msgstr ""
 "quais atributos remotos são incluídos ao mostrar em tabela\n"
 "ou formato csv.\n"
 "\n"
-"Os argumentos de coluna são ou caracteres curtos predefinidos (veja abaixo)"
-",\n"
+"Os argumentos de coluna são ou caracteres curtos predefinidos (veja "
+"abaixo),\n"
 "ou chaves de configuração (estendidas).\n"
 "\n"
 "As vírgulas entre caracteres curtos consecutivos são opcionais.\n"
@@ -7657,6 +7662,11 @@ msgstr ""
 "Nenhuns pools ou volumes de armazenamento desconhecidos encontrados. Nada "
 "para fazer."
 
+#: cmd/incus/webui_unix.go:51
+#, fuzzy, c-format
+msgid "No web UI found at %q"
+msgstr "Nenhum valor encontrado em %q"
+
 #: cmd/incus/info.go:546
 #, c-format
 msgid "Node %d:\n"
@@ -7734,7 +7744,7 @@ msgstr "Apenas remove assinaturas do tipo fornecido"
 msgid "Only remove signatures owned by the given owner"
 msgstr "Apenas remove assinaturas que são propriedade do dono fornecido"
 
-#: cmd/incus/webui.go:21 cmd/incus/webui.go:22
+#: cmd/incus/webui.go:23 cmd/incus/webui.go:24
 msgid "Open the web interface"
 msgstr "Abrir a interface web"
 
@@ -7755,7 +7765,7 @@ msgstr "Armazenamento Otimizado"
 msgid "Override the source project"
 msgstr "Sobrepor o projeto fonte"
 
-#: cmd/incus/exec.go:65
+#: cmd/incus/exec.go:66
 msgid "Override the terminal mode (auto, interactive or non-interactive)"
 msgstr "Sobrepor o modo do terminal (auto, interativo ou não interativo)"
 
@@ -7852,6 +7862,10 @@ msgstr "Palavra passe rejeitada para %q"
 #, c-format
 msgid "Path %s doesn't exist"
 msgstr "Caminho %s não existe"
+
+#: cmd/incus/webui.go:26
+msgid "Path to a local web UI directory"
+msgstr ""
 
 #: cmd/incus/admin_init_interactive.go:438
 msgid "Path to the existing block device:"
@@ -8126,7 +8140,7 @@ msgstr "Protocolo: %s"
 msgid "Provided certificate path doesn't exist: %s"
 msgstr "O caminho do certificado fornecido não existe: %s"
 
-#: cmd/incus/remote_unix.go:52
+#: cmd/incus/remote_unix.go:53
 msgid "Proxy timeout (exits when no connections)"
 msgstr "Tempo limite do Proxy (termina quando não há ligações)"
 
@@ -8627,11 +8641,11 @@ msgstr "Linhas afetadas: %d"
 msgid "Rule description"
 msgstr "Descrição de regra"
 
-#: cmd/incus/remote_unix.go:45
+#: cmd/incus/remote_unix.go:46
 msgid "Run a local API proxy"
 msgstr "Corre o proxy API local"
 
-#: cmd/incus/remote_unix.go:46
+#: cmd/incus/remote_unix.go:47
 msgid "Run a local API proxy for the remote"
 msgstr "Corre o proxy API local para o remoto"
 
@@ -9298,7 +9312,7 @@ msgstr "Mostra todas as mensagens de depuração"
 msgid "Show all information messages"
 msgstr "Mostra todas as mensagens de informação"
 
-#: cmd/incus/default.go:165 cmd/incus/default.go:166
+#: cmd/incus/default.go:173 cmd/incus/default.go:174
 msgid "Show client defaults"
 msgstr "Mostrar predefinições dos clientes"
 
@@ -10160,7 +10174,7 @@ msgstr ""
 "O pool de armazenamento solicitado \"%s\" já existe. Por favor, escolha "
 "outro nome."
 
-#: cmd/incus/webui_unix.go:61
+#: cmd/incus/webui_unix.go:69
 msgid "The server doesn't have a web UI installed"
 msgstr "O servidor não tem uma Interface de Utilizador web instalada"
 
@@ -10597,7 +10611,7 @@ msgstr ""
 msgid "Unset all profiles on the target instance"
 msgstr "Retira definições de todos os perfis na instância alvo"
 
-#: cmd/incus/default.go:202 cmd/incus/default.go:203
+#: cmd/incus/default.go:210 cmd/incus/default.go:211
 msgid "Unset client defaults"
 msgstr "Desconfigurar predefinições dos clientes"
 
@@ -10883,7 +10897,7 @@ msgstr "Usa com ajuda ou --help para visualizar sub-comandos"
 msgid "Used: %v"
 msgstr "Usado: %v"
 
-#: cmd/incus/exec.go:69
+#: cmd/incus/exec.go:70
 msgid "User ID to run the command as (default 0)"
 msgstr "ID de utilizador para correr o comando como (predefinição 0)"
 
@@ -11049,7 +11063,7 @@ msgstr ""
 "em teoria atacar o seu contentor pai e ganhar mais privilégios do que caso\n"
 "contrário poderiam."
 
-#: cmd/incus/webui_unix.go:109
+#: cmd/incus/webui_unix.go:119
 #, c-format
 msgid "Web server running at: %s"
 msgstr "Servidor Web a correr em: %s"
@@ -11206,11 +11220,11 @@ msgstr "SIM"
 msgid "You are currently missing the following:"
 msgstr "Você tem atualmente em falta o seguinte:"
 
-#: cmd/incus/exec.go:112
+#: cmd/incus/exec.go:113
 msgid "You can't pass -t and -T at the same time"
 msgstr "Você não pode passar -t e -T ao mesmo tempo"
 
-#: cmd/incus/exec.go:116
+#: cmd/incus/exec.go:117
 msgid "You can't pass -t or -T at the same time as --mode"
 msgstr "Você não pode passar -t ou -T ao mesmo tempo como --mode"
 
@@ -11547,7 +11561,7 @@ msgstr ""
 "   Para puxar /etc/hosts a partir do volume personalizado e escrever o seu "
 "resultado na saída standard."
 
-#: cmd/incus/exec.go:57
+#: cmd/incus/exec.go:58
 msgid ""
 "incus exec c1 bash\n"
 "\tRun the \"bash\" command in instance \"c1\"\n"
@@ -12529,7 +12543,7 @@ msgstr "novo %s nome"
 msgid "no"
 msgstr "não"
 
-#: cmd/incus/default.go:146
+#: cmd/incus/default.go:148
 msgid "no_color must be boolean"
 msgstr "no_color tem de ser booleano"
 
@@ -12680,7 +12694,7 @@ msgstr "%s inesperado; esperado %s"
 msgid "unexpected end of argument; did you forget a suffix?"
 msgstr "fim de argumento inesperado; você esqueceu um sufixo?"
 
-#: cmd/incus/remote_unix.go:40
+#: cmd/incus/remote_unix.go:41
 msgid "unix socket file"
 msgstr "ficheiro socket unix"
 
@@ -13029,10 +13043,6 @@ msgstr "“%s”"
 
 #~ msgid "No storage pool for target volume specified"
 #~ msgstr "Nenhuma pool de armazenamento para o volume alvo especificado"
-
-#, c-format
-#~ msgid "No value found in %q"
-#~ msgstr "Nenhum valor encontrado em %q"
 
 #~ msgid "Only \"custom\" volumes can be attached to instances"
 #~ msgstr "Apenas volumes \"personalizados\" podem ser anexados a instâncias"

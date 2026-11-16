@@ -9,6 +9,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/fs"
 	"net"
 	"net/http"
 	"net/http/httputil"
@@ -257,6 +258,7 @@ type remoteProxyHandler struct {
 	events    *remoteProxyEvents
 
 	token string
+	uiDir string
 }
 
 func (h *remoteProxyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -315,6 +317,19 @@ func (h *remoteProxyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		// Check the user token against the expected value.
 		if token != h.token {
 			w.WriteHeader(http.StatusUnauthorized)
+			return
+		}
+	}
+
+	// Serve the UI from a local directory when configured.
+	if h.uiDir != "" {
+		if r.URL.Path == "/ui" {
+			http.Redirect(w, r, "/ui/", http.StatusMovedPermanently)
+			return
+		}
+
+		if strings.HasPrefix(r.URL.Path, "/ui/") {
+			http.StripPrefix("/ui/", http.FileServer(cliUIHTTPDir{http.Dir(h.uiDir)})).ServeHTTP(w, r)
 			return
 		}
 	}
@@ -416,6 +431,21 @@ func (h *remoteProxyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		h.api10Etag = ""
 		h.mu.Unlock()
 	}
+}
+
+// cliUIHTTPDir is like incusd's uiHTTPDir: serve index.html for missing paths.
+type cliUIHTTPDir struct {
+	http.FileSystem
+}
+
+// Open is part of the http.FileSystem interface.
+func (httpFS cliUIHTTPDir) Open(name string) (http.File, error) {
+	fsFile, err := httpFS.FileSystem.Open(name)
+	if err != nil && errors.Is(err, fs.ErrNotExist) {
+		return httpFS.FileSystem.Open("index.html")
+	}
+
+	return fsFile, err
 }
 
 // remoteProxyEvents shares upstream events websockets between local clients.
