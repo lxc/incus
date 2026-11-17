@@ -14,6 +14,7 @@ type Addr struct {
 	Address *net.IPNet
 	Scope   string
 	Family  Family
+	Flags   int
 }
 
 // Add adds new protocol address.
@@ -30,6 +31,7 @@ func (a *Addr) Add() error {
 	}, &netlink.Addr{
 		IPNet: a.Address,
 		Scope: scope,
+		Flags: a.Flags,
 	})
 	if err != nil {
 		return fmt.Errorf("Failed to add address %q: %w", a.Address.String(), err)
