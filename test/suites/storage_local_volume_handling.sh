@@ -151,6 +151,16 @@ test_storage_local_volume_handling() {
         incus storage volume move "${pool}1/vol1" "${pool}1/vol1" --project "${project}" --target-project default
         incus storage volume show "${pool}1" vol1 --project default
 
+        # Refresh a block volume with snapshots into another project on another pool
+        incus storage volume create "${pool}" vol5 --type=block size=4194304
+        incus storage volume snapshot create "${pool}" vol5
+        incus storage volume copy "${pool}/vol5" "${pool}1/vol5" --target-project "${project}"
+        incus storage volume snapshot create "${pool}" vol5
+        incus storage volume copy --refresh "${pool}/vol5" "${pool}1/vol5" --target-project "${project}"
+        incus storage volume snapshot show "${pool}1" vol5 snap1 --project "${project}"
+        incus storage volume delete "${pool}1" vol5 --project "${project}"
+        incus storage volume delete "${pool}" vol5
+
         incus project delete "${project}"
         incus storage volume delete "${pool}1" vol1
         incus storage volume delete "${pool}1" vol2
