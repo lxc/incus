@@ -13,7 +13,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"net"
 	"os"
 	"slices"
 	"strings"
@@ -309,16 +308,12 @@ func (c *cmdLowLevelNBD) run(cmd *cobra.Command, args []string) error {
 	}
 
 	// Proxy to a local listener.
-	listenAddr := c.flagAddress
-
-	if listenAddr == "" {
-		listenAddr = "127.0.0.1:0" // Listen on a random local port if not specified.
-	}
-
-	listener, err := net.Listen("tcp", listenAddr)
+	listener, err := nbdListen(c.global.conf, c.flagAddress)
 	if err != nil {
 		return fmt.Errorf(i18n.G("Failed to listen for connection: %w"), err)
 	}
+
+	defer func() { _ = listener.Close() }()
 
 	fmt.Printf(i18n.G("NBD listening on %v")+"\n", listener.Addr())
 
