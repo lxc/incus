@@ -9,9 +9,16 @@ import (
 	"net/http"
 	"net/netip"
 	"os"
+	"os/exec"
+	"path/filepath"
 	"strings"
 	"time"
 
+	"golang.org/x/sys/unix"
+
+	"github.com/lxc/incus/v7/internal/linux"
+	"github.com/lxc/incus/v7/internal/server/apparmor"
+	"github.com/lxc/incus/v7/internal/server/daemon"
 	"github.com/lxc/incus/v7/internal/server/db"
 	"github.com/lxc/incus/v7/internal/server/db/cluster"
 	deviceConfig "github.com/lxc/incus/v7/internal/server/device/config"
@@ -24,6 +31,7 @@ import (
 	"github.com/lxc/incus/v7/shared/api"
 	"github.com/lxc/incus/v7/shared/logger"
 	"github.com/lxc/incus/v7/shared/revert"
+	"github.com/lxc/incus/v7/shared/subprocess"
 	"github.com/lxc/incus/v7/shared/util"
 	"github.com/lxc/incus/v7/shared/validate"
 )
@@ -365,8 +373,14 @@ func (d *nicRouted) validateConfig(instConf instance.ConfigReader, partialValida
 					return fmt.Errorf("Invalid address %q", addrStr)
 				}
 
-				if routedNetworkSubnet(n, family, addr) == nil {
+				subnet := routedNetworkSubnet(n, family, addr)
+				if subnet == nil {
 					return fmt.Errorf("Device IP address %q not within network %q subnets", addrStr, n.Name())
+				}
+
+				// The subnet-router anycast address is used by the host for router advertisements.
+				if family == "ipv6" && addr.Equal(subnet.IP) {
+					return fmt.Errorf("Device IP address %q is reserved as the subnet-router anycast address", addrStr)
 				}
 			}
 		}
@@ -832,6 +846,13 @@ func (d *nicRouted) Start() (*deviceConfig.RunConfig, error) {
 		}
 	}
 
+	if d.dhcpEnabled("ipv6") {
+		err = d.setupDHCPv6Host(saveData["host_name"])
+		if err != nil {
+			return nil, fmt.Errorf("Failed preparing %q for DHCPv6: %w", saveData["host_name"], err)
+		}
+	}
+
 	err = d.volatileSet(saveData)
 	if err != nil {
 		return nil, err
@@ -843,6 +864,10 @@ func (d *nicRouted) Start() (*deviceConfig.RunConfig, error) {
 	// The host routes attract traffic, so a VM only gets them once it runs (after a live migration's hand-over).
 	if d.inst.Type() == instancetype.VM {
 		runConf.PostHooks = []func() error{d.setupHostRoutes}
+
+		if d.dhcpEnabled("ipv4") || d.dhcpEnabled("ipv6") {
+			runConf.PostHooks = append(runConf.PostHooks, func() error { return d.startDHCP(saveData["host_name"], mtu) })
+		}
 	} else {
 		err = d.setupHostRoutes()
 		if err != nil {
@@ -1117,6 +1142,11 @@ func (d *nicRouted) postStop() error {
 		d.effectiveParentName = network.GetHostDevice(d.config["parent"], d.config["vlan"])
 	}
 
+	err := d.stopDHCP()
+	if err != nil {
+		errs = append(errs, err)
+	}
+
 	// Delete host-side interface.
 	if network.InterfaceExists(d.config["host_name"]) {
 		// Removing host-side end of veth pair will delete the peer end too.
@@ -1151,7 +1181,7 @@ func (d *nicRouted) postStop() error {
 	}
 
 	// Remove reverse path filters.
-	err := d.state.Firewall.InstanceClearRPFilter(d.inst.Project().Name, d.inst.Name(), d.name)
+	err = d.state.Firewall.InstanceClearRPFilter(d.inst.Project().Name, d.inst.Name(), d.name)
 	if err != nil {
 		errs = append(errs, err)
 	}
@@ -1215,6 +1245,205 @@ func (d *nicRouted) ipHostAddress(ipFamily string) net.IP {
 	}
 
 	return nicRoutedIPGateway[ipFamily]
+}
+
+// dhcpEnabled returns whether the NIC's addresses of an IP family are handed out over DHCP (containers are configured directly).
+func (d *nicRouted) dhcpEnabled(keyPrefix string) bool {
+	if d.network == nil || d.inst.Type() != instancetype.VM {
+		return false
+	}
+
+	if util.IsFalse(d.network.Config()[fmt.Sprintf("%s.dhcp", keyPrefix)]) || d.config[fmt.Sprintf("%s.address", keyPrefix)] == "" {
+		return false
+	}
+
+	if !nicHasAutoGateway(d.config[fmt.Sprintf("%s.gateway", keyPrefix)]) {
+		return false
+	}
+
+	if keyPrefix == "ipv6" {
+		// Router advertisements must be sent from a link-local address.
+		return d.dhcpSubnet("ipv6") != nil && d.ipHostAddress("ipv6").IsLinkLocalUnicast()
+	}
+
+	return d.dhcpSubnet("ipv4") != nil
+}
+
+// dhcpSubnet returns the network subnet containing the NIC's address of an IP family.
+func (d *nicRouted) dhcpSubnet(keyPrefix string) *net.IPNet {
+	return routedNetworkSubnet(d.network, keyPrefix, net.ParseIP(d.config[fmt.Sprintf("%s.address", keyPrefix)]))
+}
+
+// setupDHCPv6Host prepares the host interface for DHCPv6, before it has carrier so no link-local address is generated.
+func (d *nicRouted) setupDHCPv6Host(hostName string) error {
+	// Keep the gateway address as the only router address, so that it is the same on all members.
+	err := localUtil.SysctlSet(fmt.Sprintf("net/ipv6/conf/%s/addr_gen_mode", hostName), "1")
+	if err != nil {
+		return err
+	}
+
+	// Allow resolving the instance's link-local address (as the kernel would), used by dnsmasq to identify the client.
+	_, linkLocal, _ := net.ParseCIDR("fe80::/64")
+	r := ip.Route{DevName: hostName, Route: linkLocal, Family: ip.FamilyV6, VRF: d.config["vrf"]}
+	err = r.Replace()
+	if err != nil {
+		return err
+	}
+
+	// Router advertisements need the prefix on the interface, so add the subnet-router anycast address.
+	subnet := d.dhcpSubnet("ipv6")
+	addr := ip.Addr{
+		DevName: hostName,
+		Address: subnet,
+		Family:  ip.FamilyV6,
+		Flags:   unix.IFA_F_NOPREFIXROUTE | unix.IFA_F_NODAD,
+	}
+
+	return addr.Add()
+}
+
+// dhcpPIDPath returns the path of the NIC's DHCP server PID file.
+func (d *nicRouted) dhcpPIDPath() string {
+	return filepath.Join(d.inst.DevicesPath(), fmt.Sprintf("dnsmasq.%s.pid", linux.PathNameEncode(d.name)))
+}
+
+// startDHCP runs dnsmasq to hand out the NIC's addresses as a /32 and /128 behind the host-side gateways.
+func (d *nicRouted) startDHCP(hostName string, mtu uint32) error {
+	_, err := exec.LookPath("dnsmasq")
+	if err != nil {
+		return errors.New("dnsmasq is required for DHCP on routed networks")
+	}
+
+	err = d.stopDHCP()
+	if err != nil {
+		return err
+	}
+
+	args := []string{
+		"--keep-in-foreground", "--port=0", "--bind-interfaces", "--except-interface=lo",
+		fmt.Sprintf("--interface=%s", hostName),
+		"--pid-file=", "--no-ping", "--leasefile-ro", "--dhcp-authoritative", "--dhcp-rapid-commit",
+	}
+
+	hostLine := d.config["hwaddr"]
+	var nameserversV4, nameserversV6 []string
+	for _, s := range util.SplitNTrimSpace(d.network.Config()["dns.nameservers"], ",", -1, true) {
+		if net.ParseIP(s).To4() != nil {
+			nameserversV4 = append(nameserversV4, s)
+		} else {
+			nameserversV6 = append(nameserversV6, fmt.Sprintf("[%s]", s))
+		}
+	}
+
+	if d.dhcpEnabled("ipv4") {
+		// The host interface only carries the gateway address, so the subnet is served as a shared network.
+		subnet := d.dhcpSubnet("ipv4")
+		gateway := d.ipHostAddress("ipv4").String()
+		hostLine += "," + d.config["ipv4.address"]
+
+		args = append(args,
+			fmt.Sprintf("--shared-network=%s,%s", hostName, subnet.IP.String()),
+			fmt.Sprintf("--dhcp-range=%s,static,%s,1h", subnet.IP.String(), net.IP(subnet.Mask).String()),
+			"--dhcp-option-force=1,255.255.255.255",
+			fmt.Sprintf("--dhcp-option-force=3,%s", gateway),
+			fmt.Sprintf("--dhcp-option-force=121,%s/32,0.0.0.0,0.0.0.0/0,%s", gateway, gateway),
+		)
+
+		if mtu > 0 {
+			args = append(args, fmt.Sprintf("--dhcp-option-force=26,%d", mtu))
+		}
+
+		if len(nameserversV4) > 0 {
+			args = append(args, fmt.Sprintf("--dhcp-option-force=6,%s", strings.Join(nameserversV4, ",")))
+		}
+	}
+
+	if d.dhcpEnabled("ipv6") {
+		// Advertise the subnet off-link and without SLAAC, so that all traffic goes through the gateway.
+		subnet := d.dhcpSubnet("ipv6")
+		prefixLen, _ := subnet.Mask.Size()
+		hostLine += fmt.Sprintf(",[%s]", d.config["ipv6.address"])
+
+		raParam := fmt.Sprintf("--ra-param=%s,60,1800", hostName)
+		if mtu > 0 {
+			raParam = fmt.Sprintf("--ra-param=%s,mtu:%d,60,1800", hostName, mtu)
+		}
+
+		args = append(args,
+			"--enable-ra", raParam,
+			fmt.Sprintf("--dhcp-range=%s,static,off-link,%d,1h", subnet.IP.String(), prefixLen),
+		)
+
+		if len(nameserversV6) > 0 {
+			args = append(args, fmt.Sprintf("--dhcp-option-force=option6:dns-server,%s", strings.Join(nameserversV6, ",")))
+		}
+	}
+
+	args = append(args, fmt.Sprintf("--dhcp-host=%s", hostLine))
+
+	if !daemon.Debug {
+		args = append(args, "--quiet-dhcp", "--quiet-dhcp6", "--quiet-ra")
+	}
+
+	if d.state.OS.UnprivGroup != "" {
+		args = append(args, "-g", d.state.OS.UnprivGroup)
+	}
+
+	logPath := filepath.Join(d.inst.LogPath(), fmt.Sprintf("dnsmasq.%s.%s.log", d.network.Name(), linux.PathNameEncode(d.name)))
+	p, err := subprocess.NewProcess("dnsmasq", args, "", logPath)
+	if err != nil {
+		return fmt.Errorf("Failed to create DHCP server subprocess: %w", err)
+	}
+
+	p.SetApparmor(apparmor.DnsmasqProfileName(d.network))
+
+	err = p.Start(context.Background())
+	if err != nil {
+		return fmt.Errorf("Failed to run DHCP server: dnsmasq %s: %w", strings.Join(args, " "), err)
+	}
+
+	// Check dnsmasq started OK.
+	ctx, cancel := context.WithTimeout(context.Background(), 500*time.Millisecond)
+	defer cancel()
+
+	_, err = p.Wait(ctx)
+	if !errors.Is(err, context.DeadlineExceeded) {
+		stderr, _ := os.ReadFile(logPath)
+		return fmt.Errorf("The DHCP server exited prematurely: %w (%q)", err, strings.TrimSpace(string(stderr)))
+	}
+
+	err = p.Save(d.dhcpPIDPath())
+	if err != nil {
+		_ = p.Stop()
+		return fmt.Errorf("Failed to save DHCP server subprocess details: %w", err)
+	}
+
+	return nil
+}
+
+// stopDHCP stops the NIC's DHCP server if running.
+func (d *nicRouted) stopDHCP() error {
+	pidPath := d.dhcpPIDPath()
+	if !util.PathExists(pidPath) {
+		return nil
+	}
+
+	p, err := subprocess.ImportProcess(pidPath)
+	if err != nil {
+		return fmt.Errorf("Could not read DHCP server PID file: %w", err)
+	}
+
+	err = p.Stop()
+	if err != nil && !errors.Is(err, subprocess.ErrNotRunning) {
+		return fmt.Errorf("Unable to stop DHCP server: %w", err)
+	}
+
+	err = os.Remove(pidPath)
+	if err != nil && !errors.Is(err, fs.ErrNotExist) {
+		return err
+	}
+
+	return nil
 }
 
 // assignAddresses assigns free addresses from the network's subnets to the IP families without a configured address.
