@@ -44,6 +44,7 @@ The following NICs can be added using the `nictype` or `network` options:
 - [`sriov`](nic-sriov): Passes a virtual function of an SR-IOV-enabled physical network device into the instance.
 - [`physical`](nic-physical): Passes a physical device from the host through to the instance.
   The targeted device will vanish from the host and appear in the instance.
+- [`routed`](nic-routed): Creates a virtual device pair to connect the host to the instance and sets up static routes and proxy ARP/NDP entries to allow the instance to join the network of a designated parent interface.
 
 The following NICs can be added using only the `network` option:
 
@@ -53,7 +54,6 @@ The following NICs can be added using only the `nictype` option:
 
 - [`ipvlan`](nic-ipvlan): Sets up a new network device based on an existing one, using the same MAC address but a different IP.
 - [`p2p`](nic-p2p): Creates a virtual device pair, putting one side in the instance and leaving the other side on the host.
-- [`routed`](nic-routed): Creates a virtual device pair to connect the host to the instance and sets up static routes and proxy ARP/NDP entries to allow the instance to join the network of a designated parent interface.
 
 The available device options depend on the NIC type and are listed in the tables in the following sections.
 
@@ -286,7 +286,7 @@ NIC devices of type `p2p` have the following device options:
 ### `nictype`: `routed`
 
 ```{note}
-You can select this NIC type only through the `nictype` option.
+You can select this NIC type through the `nictype` option or the `network` option (see {ref}`network-routed` for information about the managed `routed` network).
 ```
 
 A `routed` NIC creates a virtual device pair to connect the host to the instance and sets up static routes and proxy ARP/NDP entries to allow the instance to join the network of a designated parent interface.
@@ -306,6 +306,7 @@ IP addresses, gateways and routes
       fe80::1
 
   For VMs, the gateways must be configured manually or via a mechanism like `cloud-init` (see the {ref}`how to guide <instances-routed-nic-vm>`).
+  Alternatively, connect the NIC to a managed `routed` network, which hands out the addresses and gateways {ref}`over DHCP <network-routed-dhcp>`.
 
   ```{note}
   If your container image is configured to perform DHCP on the interface, it will likely remove the automatically added configuration.
