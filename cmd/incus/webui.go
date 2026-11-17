@@ -8,7 +8,9 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/spf13/cobra"
@@ -139,8 +141,18 @@ func (c *cmdWebui) run(cmd *cobra.Command, args []string) error {
 	uiURL := fmt.Sprintf("http://%s/ui?auth_token=%s", server.Addr().String(), token)
 	fmt.Printf(i18n.G("Web server running at: %s")+"\n", uiURL)
 
-	// Attempt to automatically open the web browser.
-	_ = util.OpenBrowser(uiURL)
+	// Attempt to automatically open the web browser, keeping the token off its command line.
+	redirect, err := c.redirectFile(uiURL)
+	if err == nil {
+		fileURL := url.URL{Scheme: "file", Path: "/" + strings.TrimPrefix(filepath.ToSlash(redirect), "/")}
+		_ = util.OpenBrowser(fileURL.String())
+
+		// Give the browser some time to load the file.
+		go func() {
+			time.Sleep(time.Minute)
+			_ = os.Remove(redirect)
+		}()
+	}
 
 	// Start the server.
 	err = http.Serve(server, &handler)
@@ -160,4 +172,40 @@ func (c *cmdWebui) resolveUIDir() string {
 	}
 
 	return ""
+}
+
+// redirectFile writes a private HTML file redirecting to the provided URL.
+func (c *cmdWebui) redirectFile(target string) (string, error) {
+	if c.global.conf.ConfigDir == "" {
+		return "", errors.New("No configuration directory")
+	}
+
+	dir := c.global.conf.ConfigPath("webui")
+
+	err := os.MkdirAll(dir, 0o700)
+	if err != nil {
+		return "", err
+	}
+
+	f, err := os.CreateTemp(dir, "*.html")
+	if err != nil {
+		return "", err
+	}
+
+	_, err = fmt.Fprintf(f, `<!DOCTYPE html><html><head><meta http-equiv="refresh" content="0;url=%s"></head></html>`+"\n", target)
+	if err != nil {
+		_ = f.Close()
+		_ = os.Remove(f.Name())
+
+		return "", err
+	}
+
+	err = f.Close()
+	if err != nil {
+		_ = os.Remove(f.Name())
+
+		return "", err
+	}
+
+	return f.Name(), nil
 }
