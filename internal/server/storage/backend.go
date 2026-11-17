@@ -5005,16 +5005,17 @@ func (b *backend) ensureImage(l logger.Logger, fingerprint string, op *operation
 	return false, nil
 }
 
-// applyImageSizeHint applies the image's size hint to a block backed container image volume.
+// applyImageSizeHint applies the image's size hint to an image volume.
 // Returns true if the volume's size was changed.
 func (b *backend) applyImageSizeHint(l logger.Logger, imgVol drivers.Volume, image *api.Image) bool {
 	// gendoc:generate(entity=image, group=volume, key=volume.size_hint)
-	// Size needed to unpack a container image. On block backed storage pools, it is used as the size of
-	// the cached image volume when it is smaller than the pool's `volume.size` (or the default size).
+	// Size of the cached image volume. For a container image on a block backed storage pool, it is used
+	// when it is smaller than the pool's `volume.size` (or the default size). For a virtual machine image,
+	// it is used when it is larger than that size, so the volume doesn't need a resize after unpacking.
 	// It is ignored if invalid or smaller than the image file, and doesn't affect instance volume sizes.
 	// ---
 	//  type: string
-	//  shortdesc: Size of the cached image volume for container images on block backed storage pools
+	//  shortdesc: Size of the cached image volume
 	size, err := imgVol.ConfigSizeFromHint(image.Properties["volume.size_hint"], image.Size)
 	if err != nil {
 		l.Warn("Ignoring invalid image size hint", logger.Ctx{"err": err})
