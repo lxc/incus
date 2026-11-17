@@ -6,16 +6,22 @@ import (
 	"fmt"
 	"io/fs"
 	"net"
+	"net/http"
+	"net/netip"
 	"os"
 	"strings"
 	"time"
 
+	"github.com/lxc/incus/v7/internal/server/db"
+	"github.com/lxc/incus/v7/internal/server/db/cluster"
 	deviceConfig "github.com/lxc/incus/v7/internal/server/device/config"
+	"github.com/lxc/incus/v7/internal/server/device/nictype"
 	"github.com/lxc/incus/v7/internal/server/instance"
 	"github.com/lxc/incus/v7/internal/server/instance/instancetype"
 	"github.com/lxc/incus/v7/internal/server/ip"
 	"github.com/lxc/incus/v7/internal/server/network"
 	localUtil "github.com/lxc/incus/v7/internal/server/util"
+	"github.com/lxc/incus/v7/shared/api"
 	"github.com/lxc/incus/v7/shared/logger"
 	"github.com/lxc/incus/v7/shared/revert"
 	"github.com/lxc/incus/v7/shared/util"
@@ -30,6 +36,8 @@ var nicRoutedIPGateway = map[string]net.IP{
 type nicRouted struct {
 	deviceCommon
 	effectiveParentName string
+	network             network.Network   // Populated in validateConfig().
+	assignedAddresses   map[string]string // Addresses assigned from the network, keyed by IP family.
 }
 
 // CanHotPlug returns whether the device can be managed whilst the instance is running.
@@ -61,6 +69,13 @@ func (d *nicRouted) validateConfig(instConf instance.ConfigReader, partialValida
 
 	requiredFields := []string{}
 	optionalFields := []string{
+		// gendoc:generate(entity=devices, group=nic_routed, key=network)
+		//
+		// ---
+		//  type: string
+		//  shortdesc: The managed network to link the device to (instead of specifying the `nictype` directly)
+		"network",
+
 		// gendoc:generate(entity=devices, group=nic_routed, key=name)
 		//
 		// ---
@@ -327,6 +342,81 @@ func (d *nicRouted) validateConfig(instConf instance.ConfigReader, partialValida
 		"connected",
 	}
 
+	checkWithManagedNetwork := func(n network.Network) error {
+		if n.Status() != api.NetworkStatusCreated {
+			return errors.New("Specified network is not fully created")
+		}
+
+		if n.Type() != "routed" {
+			return errors.New("Specified network must be of type routed")
+		}
+
+		for _, family := range []string{"ipv4", "ipv6"} {
+			key := fmt.Sprintf("%s.address", family)
+			// One address per family for now, as address assignment, conflict checks and DHCP handle a single one.
+			addresses := util.SplitNTrimSpace(d.config[key], ",", -1, true)
+			if len(addresses) > 1 {
+				return fmt.Errorf("Only one address can be set in %q when using a managed network", key)
+			}
+
+			for _, addrStr := range addresses {
+				addr := net.ParseIP(addrStr)
+				if addr == nil {
+					return fmt.Errorf("Invalid address %q", addrStr)
+				}
+
+				if routedNetworkSubnet(n, family, addr) == nil {
+					return fmt.Errorf("Device IP address %q not within network %q subnets", addrStr, n.Name())
+				}
+			}
+		}
+
+		return nil
+	}
+
+	if d.config["network"] != "" {
+		requiredFields = append(requiredFields, "network")
+
+		bannedKeys := []string{"nictype", "parent", "mtu", "vlan", "gvrp", "vrf", "ipv4.host_address", "ipv6.host_address", "ipv4.host_table", "ipv6.host_table", "ipv4.host_tables", "ipv6.host_tables", "ipv4.routes", "ipv6.routes"}
+		for _, bannedKey := range bannedKeys {
+			if d.config[bannedKey] != "" {
+				return fmt.Errorf("Cannot use %q property in conjunction with %q property", bannedKey, "network")
+			}
+		}
+
+		// api.ProjectDefaultName is used here because managed routed networks are in the default project.
+		d.network, err = network.LoadByName(d.state, api.ProjectDefaultName, d.config["network"])
+		if err != nil {
+			return fmt.Errorf("Error loading network config for %q: %w", d.config["network"], err)
+		}
+
+		// Use the addresses assigned on an earlier start unless addresses are configured or the network's subnets changed.
+		d.assignedAddresses = map[string]string{}
+		for _, family := range []string{"ipv4", "ipv6"} {
+			key := fmt.Sprintf("%s.address", family)
+			assigned := instConf.ExpandedConfig()[fmt.Sprintf("volatile.%s.%s", d.name, key)]
+
+			if d.config[key] == "" && routedNetworkSubnet(d.network, family, net.ParseIP(assigned)) != nil {
+				d.config[key] = assigned
+				d.assignedAddresses[family] = assigned
+			}
+		}
+
+		err = checkWithManagedNetwork(d.network)
+		if err != nil {
+			return err
+		}
+
+		netConfig := d.network.Config()
+		d.config["parent"] = netConfig["parent"]
+
+		for _, key := range []string{"mtu", "vlan", "gvrp", "vrf", "ipv4.gateway", "ipv6.gateway", "ipv4.host_address", "ipv6.host_address", "ipv4.host_tables", "ipv6.host_tables"} {
+			if d.config[key] == "" && netConfig[key] != "" {
+				d.config[key] = netConfig[key]
+			}
+		}
+	}
+
 	rules := nicValidationRules(requiredFields, optionalFields, instConf)
 
 	// gendoc:generate(entity=devices, group=nic_routed, key=ipv4.address)
@@ -406,6 +496,19 @@ func (d *nicRouted) validateConfig(instConf instance.ConfigReader, partialValida
 	// Ensure that VLAN setting is only used with parent setting.
 	if d.config["parent"] == "" && d.config["vlan"] != "" {
 		return errors.New("The vlan setting can only be used when combined with a parent interface")
+	}
+
+	return nil
+}
+
+// PreStartCheck checks the managed parent network is available (if relevant).
+func (d *nicRouted) PreStartCheck() error {
+	if d.network == nil {
+		return nil
+	}
+
+	if d.network.LocalStatus() == api.NetworkStatusUnavailable {
+		return api.StatusErrorf(503, "Network %q unavailable on this server", d.network.Name())
 	}
 
 	return nil
@@ -565,6 +668,11 @@ func (d *nicRouted) Start() (*deviceConfig.RunConfig, error) {
 	}
 
 	err := d.validateEnvironment()
+	if err != nil {
+		return nil, err
+	}
+
+	err = d.assignAddresses()
 	if err != nil {
 		return nil, err
 	}
@@ -1109,6 +1217,225 @@ func (d *nicRouted) ipHostAddress(ipFamily string) net.IP {
 	return nicRoutedIPGateway[ipFamily]
 }
 
+// assignAddresses assigns free addresses from the network's subnets to the IP families without a configured address.
+func (d *nicRouted) assignAddresses() error {
+	if d.network == nil {
+		return nil
+	}
+
+	conflicts, err := d.addressConflicts()
+	if err != nil {
+		return err
+	}
+
+	// Configured addresses must be unique, assigned ones are replaced if another NIC configured them since.
+	for _, family := range []string{"ipv4", "ipv6"} {
+		key := fmt.Sprintf("%s.address", family)
+		addr, err := netip.ParseAddr(d.config[key])
+		if err != nil || !conflicts[addr] {
+			continue
+		}
+
+		if d.assignedAddresses[family] == "" {
+			return api.StatusErrorf(http.StatusConflict, "IP address %q already used by another NIC on network %q", d.config[key], d.network.Name())
+		}
+
+		delete(d.assignedAddresses, family)
+		d.config[key] = ""
+	}
+
+	families := []string{}
+	for _, family := range []string{"ipv4", "ipv6"} {
+		if d.config[fmt.Sprintf("%s.address", family)] == "" && d.network.Config()[fmt.Sprintf("%s.subnets", family)] != "" {
+			families = append(families, family)
+		}
+	}
+
+	if len(families) == 0 {
+		return nil
+	}
+
+	assigned := map[string]string{}
+	err = d.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		// Collect the addresses of all other NICs on the network and of unmanaged routed NICs.
+		used := map[netip.Addr]bool{}
+		err := tx.InstanceList(ctx, func(inst db.InstanceArgs, _ api.Project) error {
+			for _, addr := range d.peerAddresses(&inst, families, false) {
+				used[addr] = true
+			}
+
+			return nil
+		})
+		if err != nil {
+			return err
+		}
+
+		changes := map[string]string{}
+		for _, family := range families {
+			hostAddr, ok := netip.AddrFromSlice(d.ipHostAddress(family))
+			if ok {
+				used[hostAddr.Unmap()] = true
+			}
+
+			subnets := []netip.Prefix{}
+			for _, subnetStr := range util.SplitNTrimSpace(d.network.Config()[fmt.Sprintf("%s.subnets", family)], ",", -1, true) {
+				subnet, err := netip.ParsePrefix(subnetStr)
+				if err != nil {
+					return err
+				}
+
+				subnets = append(subnets, subnet)
+			}
+
+			addr, err := routedFreeAddress(subnets, used)
+			if err != nil {
+				return fmt.Errorf("Failed assigning %s address from network %q: %w", family, d.network.Name(), err)
+			}
+
+			assigned[fmt.Sprintf("%s.address", family)] = addr.String()
+			changes[fmt.Sprintf("volatile.%s.%s.address", d.name, family)] = addr.String()
+		}
+
+		// Store the addresses in the same transaction, so that concurrent starts can't pick them too.
+		return tx.UpdateInstanceConfig(d.inst.ID(), changes)
+	})
+	if err != nil {
+		return err
+	}
+
+	// Also update the instance's in-memory config.
+	err = d.volatileSet(assigned)
+	if err != nil {
+		return err
+	}
+
+	for key, addr := range assigned {
+		d.config[key] = addr
+	}
+
+	return nil
+}
+
+// addressConflicts returns the NIC's addresses that are also used by another NIC on the same network.
+func (d *nicRouted) addressConflicts() (map[netip.Addr]bool, error) {
+	ours := map[netip.Addr]bool{}
+	addresses := []string{}
+	for _, family := range []string{"ipv4", "ipv6"} {
+		addrStr := d.config[fmt.Sprintf("%s.address", family)]
+		addr, err := netip.ParseAddr(addrStr)
+		if err != nil {
+			continue
+		}
+
+		ours[addr] = true
+		addresses = append(addresses, addr.String(), strings.ToLower(addrStr))
+	}
+
+	conflicts := map[netip.Addr]bool{}
+	err := d.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		candidateIDs, err := tx.GetNICConflictCandidateIDs(ctx, "", "", "", addresses)
+		if err != nil || len(candidateIDs) == 0 {
+			return err
+		}
+
+		filters := make([]cluster.InstanceFilter, 0, len(candidateIDs))
+		for _, id := range candidateIDs {
+			filters = append(filters, cluster.InstanceFilter{ID: &id})
+		}
+
+		return tx.InstanceList(ctx, func(inst db.InstanceArgs, _ api.Project) error {
+			for _, addr := range d.peerAddresses(&inst, []string{"ipv4", "ipv6"}, true) {
+				if ours[addr] {
+					conflicts[addr] = true
+				}
+			}
+
+			return nil
+		}, filters...)
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return conflicts, nil
+}
+
+// peerAddresses returns the configured or assigned addresses of an instance's other NICs on the same network and,
+// unless sameNetwork is set, the addresses of its unmanaged routed NICs.
+func (d *nicRouted) peerAddresses(inst *db.InstanceArgs, families []string, sameNetwork bool) []netip.Addr {
+	addresses := []netip.Addr{}
+	for devName, devConfig := range db.ExpandInstanceDevices(inst.Devices.Clone(), inst.Profiles) {
+		if devConfig["type"] != "nic" {
+			continue
+		}
+
+		if devConfig["network"] != d.config["network"] && (sameNetwork || devConfig["nictype"] != "routed") {
+			continue
+		}
+
+		// Skip ourselves, also when a temporary copy of the instance exists during migrations.
+		if instance.IsSameLogicalInstance(d.inst, inst) && devName == d.name {
+			continue
+		}
+
+		for _, family := range families {
+			key := fmt.Sprintf("%s.address", family)
+			addrStrs := util.SplitNTrimSpace(devConfig[key], ",", -1, true)
+			if len(addrStrs) == 0 {
+				addrStrs = []string{inst.Config[fmt.Sprintf("volatile.%s.%s", devName, key)]}
+			}
+
+			for _, addrStr := range addrStrs {
+				addr, err := netip.ParseAddr(addrStr)
+				if err == nil {
+					addresses = append(addresses, addr)
+				}
+			}
+		}
+	}
+
+	return addresses
+}
+
+// routedFreeAddress returns the first unused address of the subnets, skipping IPv4 network and broadcast and IPv6 subnet-router anycast addresses.
+func routedFreeAddress(subnets []netip.Prefix, used map[netip.Addr]bool) (netip.Addr, error) {
+	for _, subnet := range subnets {
+		subnet = subnet.Masked()
+
+		// IPv4 /31 and /32 subnets have no network and broadcast addresses.
+		hasNetworkAddress := subnet.Addr().Is6() || subnet.Bits() < 31
+
+		addr := subnet.Addr()
+		if hasNetworkAddress {
+			addr = addr.Next()
+		}
+
+		for ; subnet.Contains(addr); addr = addr.Next() {
+			if addr.Is4() && hasNetworkAddress && !subnet.Contains(addr.Next()) {
+				break
+			}
+
+			if !used[addr] {
+				return addr, nil
+			}
+		}
+	}
+
+	return netip.Addr{}, errors.New("No free address left")
+}
+
+// routedNetworkSubnet returns the subnet of a routed network containing the address, or nil if there is none.
+func routedNetworkSubnet(n network.Network, keyPrefix string, addr net.IP) *net.IPNet {
+	for _, subnetStr := range util.SplitNTrimSpace(n.Config()[fmt.Sprintf("%s.subnets", keyPrefix)], ",", -1, true) {
+		_, subnet, err := net.ParseCIDR(subnetStr)
+		if err == nil && subnet.Contains(addr) {
+			return subnet
+		}
+	}
+
+	return nil
+}
+
 func (d *nicRouted) isUniqueWithGatewayAutoMode(instConf instance.ConfigReader) error {
 	instDevs := instConf.ExpandedDevices()
 	for _, k := range []string{"ipv4.gateway", "ipv6.gateway"} {
@@ -1118,8 +1445,13 @@ func (d *nicRouted) isUniqueWithGatewayAutoMode(instConf instance.ConfigReader) 
 
 		// Check other routed NIC devices don't have auto set.
 		for nicName, nicConfig := range instDevs {
-			if nicName == d.name || nicConfig["nictype"] != "routed" {
+			if nicName == d.name {
 				continue // Skip ourselves.
+			}
+
+			nicType, err := nictype.NICType(d.state, instConf.Project().Name, nicConfig)
+			if err != nil || nicType != "routed" {
+				continue
 			}
 
 			if nicConfig[k] == "auto" || nicConfig[k] == "" {
