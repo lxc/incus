@@ -21,11 +21,9 @@ func (c *cmdAdminInit) runDump(d incus.InstanceServer) error {
 	var config api.InitLocalPreseed
 	config.Config = currentServer.Config
 
-	// Only retrieve networks in the default project as the preseed format doesn't support creating
-	// projects at this time.
-	networks, err := d.UseProject(api.ProjectDefaultName).GetNetworks()
+	networks, err := d.GetNetworksAllProjects()
 	if err != nil {
-		return fmt.Errorf(i18n.G("Failed to retrieve current server network configuration for project %q: %w"), api.ProjectDefaultName, err)
+		return fmt.Errorf(i18n.G("Failed to retrieve current server configuration: %w"), err)
 	}
 
 	for _, network := range networks {
@@ -39,7 +37,7 @@ func (c *cmdAdminInit) runDump(d incus.InstanceServer) error {
 		networksPost.Description = network.Description
 		networksPost.Name = network.Name
 		networksPost.Type = network.Type
-		networksPost.Project = api.ProjectDefaultName
+		networksPost.Project = network.Project
 
 		config.Networks = append(config.Networks, networksPost)
 	}
@@ -59,7 +57,7 @@ func (c *cmdAdminInit) runDump(d incus.InstanceServer) error {
 		config.StoragePools = append(config.StoragePools, storagePoolsPost)
 	}
 
-	profiles, err := d.GetProfiles()
+	profiles, err := d.GetProfilesAllProjects()
 	if err != nil {
 		return fmt.Errorf(i18n.G("Failed to retrieve current server configuration: %w"), err)
 	}
@@ -70,6 +68,7 @@ func (c *cmdAdminInit) runDump(d incus.InstanceServer) error {
 		profilesPost.Description = profile.Description
 		profilesPost.Devices = profile.Devices
 		profilesPost.Name = profile.Name
+		profilesPost.Project = profile.Project
 
 		config.Profiles = append(config.Profiles, profilesPost)
 	}
