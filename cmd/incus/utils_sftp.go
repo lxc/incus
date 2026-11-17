@@ -132,14 +132,31 @@ func sftpCreateFile(sftpConn *sftp.Client, targetPath string, args incus.Instanc
 // sftpRecursivePullFile pulls a remote path into targetDir.
 func sftpRecursivePullFile(sftpConn *sftp.Client, p string, targetDir string, quiet bool) error {
 	// Symlinks created during this transfer, which a malicious server must not be able to make us follow.
-	symlinks := map[string]struct{}{}
+	symlinks := map[string]os.FileInfo{}
 
 	return sftpRecursivePullEntry(sftpConn, p, targetDir, quiet, symlinks)
 }
 
+// sftpPlantedSymlink returns the symlink created during this transfer that the target refers to.
+// Symlinks are compared by identity as distinct names can refer to the same file on the local file system.
+func sftpPlantedSymlink(target string, symlinks map[string]os.FileInfo) (string, bool) {
+	info, err := os.Lstat(target)
+	if err != nil || info.Mode()&os.ModeSymlink == 0 {
+		return "", false
+	}
+
+	for name, planted := range symlinks {
+		if os.SameFile(info, planted) {
+			return name, true
+		}
+	}
+
+	return "", false
+}
+
 // sftpRecursivePullEntry pulls a remote path and, for directories, its content.
 // Pre-existing symlinks in the target are followed like cp does, but never ones created by this transfer.
-func sftpRecursivePullEntry(sftpConn *sftp.Client, p string, targetDir string, quiet bool, symlinks map[string]struct{}) error {
+func sftpRecursivePullEntry(sftpConn *sftp.Client, p string, targetDir string, quiet bool, symlinks map[string]os.FileInfo) error {
 	fInfo, err := sftpConn.Lstat(p)
 	if err != nil {
 		return err
@@ -158,14 +175,14 @@ func sftpRecursivePullEntry(sftpConn *sftp.Client, p string, targetDir string, q
 	logger.Infof("Pulling %s from %s (%s)", target, p, fileType)
 
 	// Never write through a symlink planted earlier in this same pull, replace it instead.
-	_, planted := symlinks[target]
+	name, planted := sftpPlantedSymlink(target, symlinks)
 	if planted {
 		err := os.Remove(target)
 		if err != nil {
 			return err
 		}
 
-		delete(symlinks, target)
+		delete(symlinks, name)
 	}
 
 	if fileType == "directory" {
@@ -262,7 +279,12 @@ func sftpRecursivePullEntry(sftpConn *sftp.Client, p string, targetDir string, q
 			return err
 		}
 
-		symlinks[target] = struct{}{}
+		linkInfo, err := os.Lstat(target)
+		if err != nil {
+			return err
+		}
+
+		symlinks[target] = linkInfo
 	} else {
 		return fmt.Errorf(i18n.G("Unknown file type '%s'"), fileType)
 	}
