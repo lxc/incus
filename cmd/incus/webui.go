@@ -1,12 +1,23 @@
 package main
 
 import (
+	"errors"
+	"fmt"
+	"net"
+	"net/http"
+	"net/url"
+	"os"
+	"path/filepath"
+	"sync"
+
+	"github.com/google/uuid"
 	"github.com/spf13/cobra"
 
 	"github.com/lxc/incus/v7/cmd/incus/color"
 	u "github.com/lxc/incus/v7/cmd/incus/usage"
 	"github.com/lxc/incus/v7/internal/i18n"
 	cli "github.com/lxc/incus/v7/shared/cmd"
+	"github.com/lxc/incus/v7/shared/util"
 )
 
 type cmdWebui struct {
@@ -27,4 +38,126 @@ func (c *cmdWebui) command() *cobra.Command {
 
 	cmd.RunE = c.run
 	return cmd
+}
+
+func (c *cmdWebui) run(cmd *cobra.Command, args []string) error {
+	parsed, err := c.global.Parse(cmdWebuiUsage, cmd, args)
+	if err != nil {
+		return err
+	}
+
+	d := parsed[0].RemoteServer
+
+	// Create localhost socket.
+	server, err := net.Listen("tcp", "127.0.0.1:0")
+	if err != nil {
+		return fmt.Errorf("Unable to setup TCP socket: %w", err)
+	}
+
+	// Get the connection info.
+	info, err := d.GetConnectionInfo()
+	if err != nil {
+		return err
+	}
+
+	uri, err := url.Parse(info.URL)
+	if err != nil {
+		return err
+	}
+
+	// Serve the UI locally when configured, otherwise check the remote.
+	uiDir := c.resolveUIDir()
+	if uiDir != "" {
+		if !util.PathExists(filepath.Join(uiDir, "index.html")) {
+			return fmt.Errorf(i18n.G("No web UI found at %q"), uiDir)
+		}
+	} else {
+		req, err := http.NewRequest("GET", fmt.Sprintf("%s/ui/", info.URL), nil)
+		if err != nil {
+			return err
+		}
+
+		resp, err := d.DoHTTP(req)
+		if err != nil {
+			return err
+		}
+
+		if resp.Body != nil {
+			_ = resp.Body.Close()
+		}
+
+		if resp.StatusCode == http.StatusNotFound {
+			return errors.New(i18n.G("The server doesn't have a web UI installed"))
+		}
+	}
+
+	// Enable keep-alive for proxied connections.
+	httpClient, err := d.GetHTTPClient()
+	if err != nil {
+		return err
+	}
+
+	httpTransport, ok := httpClient.Transport.(*http.Transport)
+	if ok {
+		httpTransport.DisableKeepAlives = false
+	}
+
+	// Get server info.
+	api10, api10Etag, err := d.GetServer()
+	if err != nil {
+		return err
+	}
+
+	// Generate credentials.
+	token := uuid.New().String()
+
+	// Handle inbound connections.
+	transport := remoteProxyTransport{
+		s:       d,
+		baseURL: uri,
+	}
+
+	connections := uint64(0)
+	transactions := uint64(0)
+
+	handler := remoteProxyHandler{
+		s:         d,
+		transport: transport,
+		api10:     api10,
+		api10Etag: api10Etag,
+		uiDir:     uiDir,
+
+		mu:           &sync.RWMutex{},
+		connections:  &connections,
+		transactions: &transactions,
+
+		token: token,
+		url:   "http://" + server.Addr().String(),
+	}
+
+	// Print address.
+	uiURL := fmt.Sprintf("http://%s/ui?auth_token=%s", server.Addr().String(), token)
+	fmt.Printf(i18n.G("Web server running at: %s")+"\n", uiURL)
+
+	// Attempt to automatically open the web browser.
+	_ = util.OpenBrowser(uiURL)
+
+	// Start the server.
+	err = http.Serve(server, &handler)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// resolveUIDir returns the local UI directory from the flag, INCUS_UI or the client defaults.
+func (c *cmdWebui) resolveUIDir() string {
+	for _, uiPath := range []string{c.flagPath, os.Getenv("INCUS_UI"), c.global.conf.Defaults.WebuiPath} {
+		if uiPath != "" {
+			return uiPath
+		}
+	}
+
+	return ""
 }
