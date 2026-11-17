@@ -662,12 +662,21 @@ func (v Volume) ConfigSize() string {
 }
 
 // ConfigSizeFromHint returns the size to use for a new image volume given the image's size hint.
-// The hint is only used for block backed filesystem volumes and when it's smaller than ConfigSize.
+// A block backed filesystem volume uses the hint when it's smaller than ConfigSize, a block volume
+// when it's larger, so the hint only ever saves space or avoids a resize after unpacking.
 // An error is returned if the hint is invalid or smaller than minSizeBytes.
 func (v Volume) ConfigSizeFromHint(sizeHint string, minSizeBytes int64) (string, error) {
 	size := v.ConfigSize()
 
-	if sizeHint == "" || v.contentType != ContentTypeFS || !v.IsBlockBacked() {
+	if sizeHint == "" {
+		return size, nil
+	}
+
+	if v.contentType == ContentTypeFS && !v.IsBlockBacked() {
+		return size, nil
+	}
+
+	if v.contentType != ContentTypeFS && v.contentType != ContentTypeBlock {
 		return size, nil
 	}
 
@@ -689,7 +698,11 @@ func (v Volume) ConfigSizeFromHint(sizeHint string, minSizeBytes int64) (string,
 		return "", err
 	}
 
-	if hintBytes >= sizeBytes {
+	if v.contentType == ContentTypeFS && hintBytes >= sizeBytes {
+		return size, nil
+	}
+
+	if v.contentType == ContentTypeBlock && hintBytes <= sizeBytes {
 		return size, nil
 	}
 

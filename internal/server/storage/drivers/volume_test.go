@@ -168,6 +168,24 @@ func Test_Volume_ConfigSizeFromHint(t *testing.T) {
 			size: "5GiB",
 		},
 		{
+			// Check a VM image volume is grown to a hint larger than the default block size.
+			vol:  Volume{driver: &blockBackedDriver, volType: VolumeTypeImage, contentType: ContentTypeBlock},
+			hint: "20GiB",
+			size: "21474836480",
+		},
+		{
+			// Check a VM image volume isn't shrunk to a hint smaller than the default block size.
+			vol:  Volume{driver: &blockBackedDriver, volType: VolumeTypeImage, contentType: ContentTypeBlock},
+			hint: "1GiB",
+			size: "10GiB",
+		},
+		{
+			// Check a VM image volume uses the hint on any pool, as block volumes are always block backed.
+			vol:  Volume{driver: &nonBlockBackedDriver, volType: VolumeTypeImage, contentType: ContentTypeBlock, poolConfig: map[string]string{"volume.size": "5GiB"}},
+			hint: "20GiB",
+			size: "21474836480",
+		},
+		{
 			// Check a malformed hint is rejected.
 			vol:  Volume{driver: &blockBackedDriver, volType: VolumeTypeImage, contentType: ContentTypeFS},
 			hint: "abc",
