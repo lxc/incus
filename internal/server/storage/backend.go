@@ -1334,7 +1334,7 @@ func (b *backend) CreateInstanceFromCopy(inst instance.Instance, src instance.In
 
 		var migrationSnapshots []*migration.Snapshot
 		if snapshots {
-			migrationSnapshots, err = VolumeSnapshotsToMigrationSnapshots(srcConfig.VolumeSnapshots, inst.Project().Name, srcPool, contentType, volType, src.Name())
+			migrationSnapshots, err = VolumeSnapshotsToMigrationSnapshots(srcConfig.VolumeSnapshots, src.Project().Name, srcPool, contentType, volType, src.Name())
 			if err != nil {
 				return err
 			}
@@ -1349,7 +1349,7 @@ func (b *backend) CreateInstanceFromCopy(inst instance.Instance, src instance.In
 		}
 
 		depSnapshots := snapshots && srcSnapName == ""
-		dependentVolumesOffer, err := GenerateDependentVolumesOffer(b.state, srcConfig, src.ExpandedDevices().CloneNative(), inst.Project().Name, depSnapshots, newDevices, nil, false)
+		dependentVolumesOffer, err := GenerateDependentVolumesOffer(b.state, srcConfig, src.ExpandedDevices().CloneNative(), src.Project().Name, depSnapshots, newDevices, nil, false)
 		if err != nil {
 			err := fmt.Errorf("Failed generating instance depending volumes offer: %w", err)
 			return err
@@ -1650,7 +1650,7 @@ func (b *backend) RefreshCustomVolume(projectName string, srcProjectName string,
 
 		var migrationSnapshots []*migration.Snapshot
 		if snapshots {
-			migrationSnapshots, err = VolumeSnapshotsToMigrationSnapshots(srcConfig.VolumeSnapshots, projectName, srcPool, contentType, drivers.VolumeTypeCustom, srcVolName)
+			migrationSnapshots, err = VolumeSnapshotsToMigrationSnapshots(srcConfig.VolumeSnapshots, srcProjectName, srcPool, contentType, drivers.VolumeTypeCustom, srcVolName)
 			if err != nil {
 				return err
 			}
@@ -1949,7 +1949,7 @@ func (b *backend) RefreshInstance(inst instance.Instance, src instance.Instance,
 		}
 
 		newDevices := inst.LocalDevices().CloneNative()
-		dependentVolumesOffer, err := GenerateDependentVolumesOffer(b.state, srcConfig, src.ExpandedDevices().CloneNative(), inst.Project().Name, snapshots, newDevices, nil, false)
+		dependentVolumesOffer, err := GenerateDependentVolumesOffer(b.state, srcConfig, src.ExpandedDevices().CloneNative(), src.Project().Name, snapshots, newDevices, nil, false)
 		if err != nil {
 			err := fmt.Errorf("Failed generating instance depending volumes offer: %w", err)
 			return err
