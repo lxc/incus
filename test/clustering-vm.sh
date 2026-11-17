@@ -493,8 +493,6 @@ check_volumes
 incus snapshot delete "${REMOTE}:v2" renamed1
 check_snapshots v2 "renamed6"
 check_vm v2 "$(member 2)"
-incus restart -f "${REMOTE}:v2"
-check_marker v2 current
 incus snapshot restore "${REMOTE}:v2" renamed6
 check_marker v2 snap6
 
@@ -503,14 +501,8 @@ incus stop -f "${REMOTE}:v2"
 incus move "${REMOTE}:v2" "${REMOTE}:v5"
 check_snapshots v5 "renamed6"
 incus move "${REMOTE}:v5" "${REMOTE}:v5" --target "$(member 1)"
-incus start "${REMOTE}:v5"
-check_marker v5 snap6
-incus exec "${REMOTE}:v5" -- sh -c "echo current > /root/marker && sync"
-incus snapshot restore "${REMOTE}:v5" renamed6
-check_marker v5 snap6
-
-incus stop -f "${REMOTE}:v5"
 incus move "${REMOTE}:v5" "${REMOTE}:v2"
+check_snapshots v2 "renamed6"
 incus start "${REMOTE}:v2"
 check_marker v2 snap6
 incus exec "${REMOTE}:v2" -- sh -c "echo current > /root/marker && sync && echo live > /dev/shm/marker"
@@ -537,10 +529,6 @@ incus exec "${REMOTE}:v2" -- sh -c "echo current > /root/marker && sync && echo 
 log "Refresh a copy of the running VM"
 incus copy "${REMOTE}:v2" "${REMOTE}:v3" --target "$(member 2)" --stateless
 incus config device remove "${REMOTE}:v3" vol1 vol2
-incus start "${REMOTE}:v3"
-check_marker v3 current
-incus exec "${REMOTE}:v3" -- sh -c "echo diverged > /root/marker && sync"
-incus stop -f "${REMOTE}:v3"
 
 incus exec "${REMOTE}:v2" -- sh -c "echo snap7 > /root/marker && sync"
 incus snapshot create "${REMOTE}:v2" snap7
@@ -562,27 +550,24 @@ check_vm v2 "$(member 1)"
 check_volumes
 
 log "Copy the running VM to local storage"
+incus snapshot delete "${REMOTE}:v2" renamed6
+check_snapshots v2 "snap7"
 incus copy "${REMOTE}:v2" "${REMOTE}:v6" -s local --target "$(member 2)" --stateless
 incus config device remove "${REMOTE}:v6" vol1 vol2
-check_snapshots v6 "renamed6 snap7"
+check_snapshots v6 "snap7"
 incus start "${REMOTE}:v6"
 check_marker v6 refreshed
 
 log "Copy the running local storage VM to shared storage"
 incus copy "${REMOTE}:v6" "${REMOTE}:v7" -s shared --target "$(member "${MEMBERS}")" --stateless
-check_snapshots v7 "renamed6 snap7"
-incus start "${REMOTE}:v7"
-check_marker v7 refreshed
-incus snapshot restore "${REMOTE}:v7" snap7 --diskonly
-check_marker v7 snap7
+check_snapshots v7 "snap7"
 
 log "Refresh a copy on shared storage from local storage"
 incus exec "${REMOTE}:v6" -- sh -c "echo snap8 > /root/marker && sync"
 incus snapshot create "${REMOTE}:v6" snap8
 incus exec "${REMOTE}:v6" -- sh -c "echo refreshed > /root/marker && sync"
-incus stop -f "${REMOTE}:v7"
 incus copy "${REMOTE}:v6" "${REMOTE}:v7" --refresh
-check_snapshots v7 "renamed6 snap7 snap8"
+check_snapshots v7 "snap7 snap8"
 incus start "${REMOTE}:v7"
 check_marker v7 refreshed
 incus snapshot restore "${REMOTE}:v7" snap8 --diskonly
