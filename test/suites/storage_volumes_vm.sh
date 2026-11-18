@@ -28,6 +28,9 @@ test_storage_volumes_vm() {
     incus profile set default security.nesting=true
 
     poolName="vmpool$$"
+    copyPoolName="vmcopy$$"
+    incus storage create "${copyPoolName}" dir
+    incus project create test-volumes-nostorage -c features.images=false -c features.storage.volumes=false
 
     for poolDriver in ${poolDriverList}; do
         if ! storage_backend_available "${poolDriver%%-*}"; then
@@ -201,6 +204,19 @@ test_storage_volumes_vm() {
             incus storage volume delete "${poolName}" images --project=default
         fi
 
+        echo "==> Copy a VM with snapshots and a dependent volume to another pool and project"
+        incus init images:debian/13 v3 --vm -s "${poolName}" --project test-volumes-nostorage
+        incus storage volume create "${poolName}" vol8 --type=block size=10MB --project test-volumes-nostorage
+        incus config device add v3 vol8 disk pool="${poolName}" source=vol8 dependent=true --project test-volumes-nostorage
+        incus snapshot create v3 --project test-volumes-nostorage
+        incus copy v3 v4 -s "${copyPoolName}" -d vol8,source=vol8-copy --project test-volumes-nostorage
+        incus copy v3 v3 -s "${copyPoolName}" --project test-volumes-nostorage --target-project test-volumes
+        incus snapshot create v3 --project test-volumes-nostorage
+        incus copy v3 v3 -s "${copyPoolName}" --project test-volumes-nostorage --target-project test-volumes --refresh
+        incus snapshot show v3 snap1
+        incus delete v3
+        incus delete v3 v4 --project test-volumes-nostorage
+
         echo "==> Deleting VM"
         incus rm v1
 
@@ -214,6 +230,8 @@ test_storage_volumes_vm() {
         incus storage rm "${poolName}"
     done
 
+    incus project delete test-volumes-nostorage
+    incus storage rm "${copyPoolName}"
     incus profile device remove default eth0
     incus project switch default
     incus project delete test-volumes

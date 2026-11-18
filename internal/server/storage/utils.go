@@ -1434,7 +1434,7 @@ func GenerateDependentVolumesOffer(s *state.State, config *backupConfig.Config, 
 
 		for _, volSnap := range volConfig.VolumeSnapshots {
 			// Set size for snapshot volume
-			snapSize, err := CalculateVolumeSnapshotSize(projectName, pool, drivers.ContentType(contentType), drivers.VolumeTypeCustom, volName, volSnap.Name)
+			snapSize, err := CalculateVolumeSnapshotSize(storageProjectName, pool, drivers.ContentType(contentType), drivers.VolumeTypeCustom, volName, volSnap.Name)
 			if err != nil {
 				return nil, err
 			}
