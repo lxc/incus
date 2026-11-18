@@ -3652,3 +3652,9 @@ The `parent` of an OVN network can now be a network of the default project share
 Adds a `keep_paused` field to `POST /1.0/instances/{name}` for live migrations to another server.
 When set, the instance is left paused on the source once the target runs it, rather than resumed.
 It can then be deleted, as `incus move` does, or resumed like any paused instance.
+## `nic_routed_acls`
+
+This adds support for network ACLs on `routed` NICs, through the `security.acls`, `security.acls.default.ingress.action`,
+`security.acls.default.egress.action`, `security.acls.default.ingress.logged` and `security.acls.default.egress.logged`
+configuration keys. The ACLs are taken from the instance's effective network project, and applied by `nftables` on the
+host side of the NIC.
