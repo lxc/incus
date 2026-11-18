@@ -346,6 +346,7 @@ run_standalone_network() {
     run_test test_network_ovn_basic "OVN network basics"
     run_test test_network_ovn_cluster_retry "OVN network creation retry in a cluster"
     run_test test_network_ovn_dhcp_reservation "OVN network DHCP reservations"
+    run_test test_network_ovn_dynamic_routing "OVN network dynamic routing"
     run_test test_network_ovn_forward "OVN network address forwards"
     run_test test_network_ovn_l3only "OVN network layer 3 only mode"
     run_test test_network_ovn_load_balancer "OVN network load balancers"
