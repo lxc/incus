@@ -1220,6 +1220,15 @@ var InstanceConfigKeysContainer = map[string]func(value string) error{
 
 // InstanceConfigKeysVM is a map of config key to validator. (keys applying to VM only).
 var InstanceConfigKeysVM = map[string]func(value string) error{
+	// gendoc:generate(entity=instance, group=boot, key=boot.args)
+	//
+	// ---
+	//  type: bool
+	//  liveupdate: yes
+	//  condition: kernel image
+	//  shortdesc: Arguments to pass to the kernel
+	"boot.args": validate.IsAny,
+
 	// gendoc:generate(entity=instance, group=boot, key=boot.pxe)
 	//
 	// ---
