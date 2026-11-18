@@ -5232,8 +5232,11 @@ func (d *qemu) generateQemuConfig(bs *qemuBootState, mountInfo *storagePools.Mou
 		}
 	}
 
+	biosSet := slices.Contains(rawOptions, "-bios")
+	kernelSet := slices.Contains(rawOptions, "-kernel")
+
 	// Allow disabling the UEFI firmware.
-	if slices.Contains(rawOptions, "-bios") || slices.Contains(rawOptions, "-kernel") {
+	if biosSet || kernelSet {
 		d.logger.Warn("Starting VM without default firmware (-bios or -kernel in raw.qemu)")
 	} else if d.architectureSupportsUEFI(d.architecture) {
 		// Determine expected firmware.
@@ -5561,7 +5564,7 @@ func (d *qemu) generateQemuConfig(bs *qemuBootState, mountInfo *storagePools.Mou
 
 	// Dynamic devices.
 	base := 0
-	if slices.Contains(rawOptions, "-kernel") {
+	if kernelSet {
 		base = 1
 	}
 
@@ -5762,7 +5765,7 @@ func (d *qemu) generateQemuConfig(bs *qemuBootState, mountInfo *storagePools.Mou
 	// process any user-specified overrides
 	confOverride, ok := d.expandedConfig["raw.qemu.conf"]
 	if ok {
-		d.conf, err = qemuRawCfgOverride(conf, confOverride)
+		d.conf, err = qemuRawCfgOverride(conf, confOverride, biosSet, kernelSet)
 		if err != nil {
 			return nil, err
 		}
