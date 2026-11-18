@@ -1218,16 +1218,15 @@ func doNetworkGet(s *state.State, r *http.Request, allNodes bool, projectName st
 	} else if util.PathExists(fmt.Sprintf("/sys/class/net/%s/bonding", apiNet.Name)) {
 		apiNet.Type = "bond"
 	} else {
-		vswitch, err := s.OVS()
-		if err != nil {
-			return api.Network{}, fmt.Errorf("Failed to connect to OVS: %w", err)
-		}
+		apiNet.Type = "unknown"
 
-		_, err = vswitch.GetBridge(context.TODO(), apiNet.Name)
+		// Check for an Open vSwitch bridge when Open vSwitch is available.
+		vswitch, err := s.OVS()
 		if err == nil {
-			apiNet.Type = "bridge"
-		} else {
-			apiNet.Type = "unknown"
+			_, err = vswitch.GetBridge(context.TODO(), apiNet.Name)
+			if err == nil {
+				apiNet.Type = "bridge"
+			}
 		}
 	}
 

@@ -228,6 +228,7 @@ run_standalone_core() {
     run_test test_init_auto "incus admin init auto"
     run_test test_init_interactive "incus admin init interactive"
     run_test test_init_preseed "incus admin init preseed"
+    run_test test_init_dump "incus admin init dump"
     run_test test_kernel_limits "kernel limits"
     run_test test_metrics "Metrics"
     run_test test_pki "PKI mode"
