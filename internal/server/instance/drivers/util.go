@@ -239,43 +239,31 @@ func findNextMemoryIndex(monitor *qmp.Monitor) (int, error) {
 	return memIndex + 1, nil
 }
 
-// getNodeResources updates the cluster resource cache..
+// getNodeResources returns the resources of a cluster member, using a local cache.
 func getNodeResources(s *state.State, name string, address string) (*api.Resources, error) {
 	resourcesPath := internalUtil.CachePath("resources", fmt.Sprintf("%s.yaml", name))
 
 	// Check if cache is recent (less than 24 hours).
 	fi, err := os.Stat(resourcesPath)
 	if err == nil && time.Since(fi.ModTime()) < 24*time.Hour {
-		data, err := os.ReadFile(resourcesPath)
+		res, err := loadCachedResources(resourcesPath)
 		if err == nil {
-			var res api.Resources
-			if yaml.Load(data, &res) == nil {
-				return &res, nil
-			}
+			return res, nil
 		}
 	} else if err != nil && !errors.Is(err, fs.ErrNotExist) {
 		return nil, err
 	}
 
-	var res *api.Resources
-	if name == s.ServerName {
-		// Handle the local node.
-		// We still cache the data as it's not particularly cheap to get.
-		res, err = resources.GetResources()
-		if err != nil {
-			return nil, err
-		}
-	} else {
-		// Handle remote nodes.
-		client, err := cluster.Connect(address, s.Endpoints.NetworkCert(), s.ServerCert(), nil, true)
-		if err != nil {
+	res, err := fetchNodeResources(s, name, address)
+	if err != nil {
+		// Fall back to the stale cache rather than leave the member out.
+		cached, cacheErr := loadCachedResources(resourcesPath)
+		if cacheErr != nil {
 			return nil, err
 		}
 
-		res, err = client.GetServerResources()
-		if err != nil {
-			return nil, err
-		}
+		logger.Warn("Using cached resources for cluster member", logger.Ctx{"name": name, "err": err})
+		return cached, nil
 	}
 
 	// Cache the data.
@@ -285,6 +273,38 @@ func getNodeResources(s *state.State, name string, address string) (*api.Resourc
 	}
 
 	return res, nil
+}
+
+// loadCachedResources reads a cached resources file.
+func loadCachedResources(path string) (*api.Resources, error) {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return nil, err
+	}
+
+	var res api.Resources
+	err = yaml.Load(data, &res)
+	if err != nil {
+		return nil, err
+	}
+
+	return &res, nil
+}
+
+// fetchNodeResources gets the current resources of a cluster member.
+func fetchNodeResources(s *state.State, name string, address string) (*api.Resources, error) {
+	// Handle the local node.
+	if name == s.ServerName {
+		return resources.GetResources()
+	}
+
+	// Handle remote nodes.
+	client, err := cluster.Connect(address, s.Endpoints.NetworkCert(), s.ServerCert(), nil, true)
+	if err != nil {
+		return nil, err
+	}
+
+	return client.GetServerResources()
 }
 
 type qcow2BlockdevKind int
