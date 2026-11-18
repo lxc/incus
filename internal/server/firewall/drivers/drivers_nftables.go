@@ -479,6 +479,84 @@ func (d Nftables) InstanceClearBridgeFilter(projectName string, instanceName str
 	return nil
 }
 
+// InstanceSetupRoutedFilter applies network ACLs to a routed NIC's host-side interface in the inet family.
+func (d Nftables) InstanceSetupRoutedFilter(projectName string, instanceName string, deviceName string, hostName string, vrf bool, aclRules []ACLRule) error {
+	deviceLabel := d.instanceDeviceLabel(projectName, instanceName, deviceName)
+
+	nftRules, err := d.aclRulesToNftRules(hostName, aclRules)
+	if err != nil {
+		return fmt.Errorf("Failed generating routed ACL rules for instance device %q: %w", deviceLabel, err)
+	}
+
+	// In a VRF, the input and forward hooks see the VRF device as iifname, so match the enslaved device instead.
+	inMatch := "iifname"
+	if vrf {
+		inMatch = "meta sdifname"
+	}
+
+	hostNameQuoted := "\"" + hostName + "\""
+	egressRules := func(rules ...string) []string {
+		out := make([]string, 0, len(rules))
+		for _, rule := range rules {
+			out = append(out, strings.Replace(rule, "iifname "+hostNameQuoted, inMatch+" "+hostNameQuoted, 1))
+		}
+
+		return out
+	}
+
+	tplFields := map[string]any{
+		"namespace":      nftablesNamespace,
+		"chainSeparator": nftablesChainSeparator,
+		"family":         "inet",
+		"deviceLabel":    deviceLabel,
+		"hostName":       hostName,
+		"inMatch":        inMatch,
+
+		// Egress rules match traffic from the instance, reject works in every inet hook.
+		"aclEgressDropRules":   egressRules(nftRules.inDropRules...),
+		"aclEgressRejectRules": egressRules(nftRules.inRejectRules...),
+		"aclEgressAcceptRules": egressRules(append(nftRules.inAcceptRules4, nftRules.inAcceptRules6...)...),
+		"aclEgressDefaultRule": egressRules(nftRules.defaultInRule)[0],
+
+		// Ingress rules match traffic to the instance.
+		"aclIngressDropRules":   nftRules.outDropRules,
+		"aclIngressAcceptRules": nftRules.outAcceptRules,
+		"aclIngressDefaultRule": nftRules.defaultOutRule,
+	}
+
+	// Replace any existing chains in the same transaction so a failure leaves them untouched.
+	existingChains, err := d.findChains([]string{"inet"}, deviceLabel, nftablesRoutedFilterChains...)
+	if err != nil {
+		return err
+	}
+
+	preamble := []string{}
+	for _, chain := range existingChains {
+		preamble = append(preamble, fmt.Sprintf("flush chain %s %s %s", chain.Family, nftablesNamespace, chain.Name), fmt.Sprintf("delete chain %s %s %s", chain.Family, nftablesNamespace, chain.Name))
+	}
+
+	tplFields["preamble"] = preamble
+
+	err = d.applyNftConfig(nftablesInstanceRoutedFilter, tplFields)
+	if err != nil {
+		return fmt.Errorf("Failed adding routed filter rules for instance device %q (%s): %w", deviceLabel, tplFields["family"], err)
+	}
+
+	return nil
+}
+
+// InstanceClearRoutedFilter removes the filter rules that apply network ACLs to a routed NIC.
+func (d Nftables) InstanceClearRoutedFilter(projectName string, instanceName string, deviceName string) error {
+	deviceLabel := d.instanceDeviceLabel(projectName, instanceName, deviceName)
+
+	err := d.removeChains([]string{"inet"}, deviceLabel, nftablesRoutedFilterChains...)
+	if err != nil {
+		return fmt.Errorf("Failed clearing routed filter rules for instance device %q: %w", deviceLabel, err)
+	}
+
+	return nil
+}
+
 // InstanceSetupProxyNAT creates DNAT rules for proxy devices.
 func (d Nftables) InstanceSetupProxyNAT(projectName string, instanceName string, deviceName string, forward *AddressForward) error {
 	if forward.ListenAddress == nil {
