@@ -609,6 +609,7 @@ var APIExtensions = []string{
 	"network_ovn_parent_shared",
 	"instance_migration_keep_paused",
 	"nic_routed_acls",
+	"kernel_boot",
 }
 
 // APIExtensionsCount returns the number of available API extensions.
