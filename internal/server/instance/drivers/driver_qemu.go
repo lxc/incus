@@ -2477,8 +2477,21 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 
 	seCtx := d.localConfig["volatile.selinux.context"]
 
+	var biosSet, kernelSet bool
+	var qemuArgsOverrides []string
+	if d.expandedConfig["raw.qemu"] != "" {
+		qemuArgsOverrides, err := shellquote.Split(d.expandedConfig["raw.qemu"])
+		if err != nil {
+			op.Done(err)
+			return err
+		}
+
+		biosSet = slices.Contains(qemuArgsOverrides, "-bios")
+		kernelSet = slices.Contains(qemuArgsOverrides, "-kernel")
+	}
+
 	// Generate the QEMU configuration.
-	monHooks, err := d.generateQemuConfig(bs, mountInfo, qemuBus, vsockFD, devConfs, &fdFiles)
+	monHooks, err := d.generateQemuConfig(bs, mountInfo, qemuBus, vsockFD, devConfs, &fdFiles, biosSet, kernelSet)
 	if err != nil {
 		op.Done(err)
 		return err
@@ -2668,16 +2681,6 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 		}
 	}
 
-	if d.expandedConfig["raw.qemu"] != "" {
-		fields, err := shellquote.Split(d.expandedConfig["raw.qemu"])
-		if err != nil {
-			op.Done(err)
-			return err
-		}
-
-		qemuArgs = append(qemuArgs, fields...)
-	}
-
 	// Apply the RTC configuration.
 	// This needs to happen close to writing the config file or the time might drift in between.
 	adjustment := d.getStartupRTCAdjustment()
@@ -2699,7 +2702,7 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 		})
 	}
 
-	d.cmdArgs = qemuArgs
+	d.cmdArgs = append(qemuArgs, qemuArgsOverrides...)
 
 	// Precompile the QEMU scriptlet
 	src, ok := d.expandedConfig["raw.qemu.scriptlet"]
@@ -5109,7 +5112,7 @@ func (d *qemu) gpuNativeContextConfig(devConfs []*deviceConfig.RunConfig) (bool,
 }
 
 // generateQemuConfig generates the QEMU configuration.
-func (d *qemu) generateQemuConfig(bs *qemuBootState, mountInfo *storagePools.MountInfo, busName string, vsockFD int, devConfs []*deviceConfig.RunConfig, fdFiles *[]*os.File) ([]monitorHook, error) {
+func (d *qemu) generateQemuConfig(bs *qemuBootState, mountInfo *storagePools.MountInfo, busName string, vsockFD int, devConfs []*deviceConfig.RunConfig, fdFiles *[]*os.File, biosSet bool, kernelSet bool) ([]monitorHook, error) {
 	var monHooks []monitorHook
 
 	guestOS := d.GuestOS()
@@ -5127,18 +5130,6 @@ func (d *qemu) generateQemuConfig(bs *qemuBootState, mountInfo *storagePools.Mou
 	if err != nil {
 		return nil, err
 	}
-
-	// Parse raw.qemu.
-	rawOptions := []string{}
-	if d.expandedConfig["raw.qemu"] != "" {
-		rawOptions, err = shellquote.Split(d.expandedConfig["raw.qemu"])
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	biosSet := slices.Contains(rawOptions, "-bios")
-	kernelSet := slices.Contains(rawOptions, "-kernel")
 
 	// Allow disabling the UEFI firmware.
 	if biosSet || kernelSet {
