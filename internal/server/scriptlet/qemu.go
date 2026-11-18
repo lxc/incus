@@ -87,6 +87,22 @@ func QEMURun(l logger.Logger, instance *api.Instance, cmdArgs *[]string, conf *[
 		return nil
 	}
 
+	// Check whether -bios or -kernel are in the current arguments
+	var biosSet, kernelSet bool
+	for _, arg := range *cmdArgs {
+		switch arg {
+		case "-bios":
+			biosSet = true
+		case "-kernel":
+			kernelSet = true
+		}
+
+		// If we've found both already, we can break early.
+		if biosSet && kernelSet {
+			break
+		}
+	}
+
 	runQMPFunc := func(thread *starlark.Thread, b *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
 		err := assertQEMUStarted(b.Name())
 		if err != nil {
@@ -260,7 +276,7 @@ func QEMURun(l logger.Logger, instance *api.Instance, cmdArgs *[]string, conf *[
 		}
 
 		// Check whether -bios or -kernel are in the new arguments, and convert them to string on the go.
-		var newFoundBios, newFoundKernel bool
+		var foundBios, foundKernel bool
 		var newCmdArgs []string
 		for _, argAny := range newCmdArgsListAny {
 			arg, ok := argAny.(string)
@@ -270,17 +286,6 @@ func QEMURun(l logger.Logger, instance *api.Instance, cmdArgs *[]string, conf *[
 
 			newCmdArgs = append(newCmdArgs, arg)
 
-			switch arg {
-			case "-bios":
-				newFoundBios = true
-			case "-kernel":
-				newFoundKernel = true
-			}
-		}
-
-		// Check whether -bios or -kernel are in the current arguments
-		var foundBios, foundKernel bool
-		for _, arg := range *cmdArgs {
 			switch arg {
 			case "-bios":
 				foundBios = true
@@ -294,8 +299,8 @@ func QEMURun(l logger.Logger, instance *api.Instance, cmdArgs *[]string, conf *[
 			}
 		}
 
-		if foundBios != newFoundBios || foundKernel != newFoundKernel {
-			return nil, errors.New("Addition or deletion of -bios or -kernel is unsupported")
+		if foundBios != biosSet || foundKernel != kernelSet {
+			return nil, errors.New("Addition or deletion of -bios or -kernel are unsupported in scriptlets, consider using raw.qemu")
 		}
 
 		*cmdArgs = newCmdArgs
@@ -350,9 +355,21 @@ func QEMURun(l logger.Logger, instance *api.Instance, cmdArgs *[]string, conf *[
 
 		// We want to further check the configuration structure, by trying to unmarshal it to a
 		// []cfg.Section.
-		_, err = unmarshalQEMUConf(confAny)
+		sections, err := unmarshalQEMUConf(confAny)
 		if err != nil {
 			return nil, fmt.Errorf("%s requires a valid configuration", b.Name())
+		}
+
+		// Because -bios and -kernel alter our configuration of QEMU VMs very early on, we do not
+		// support setting either of them if they are not already set.
+		for _, section := range sections {
+			if section.Name == "machine" {
+				_, foundBios := section.Entries["firmware"]
+				_, foundKernel := section.Entries["kernel"]
+				if foundBios && !biosSet || foundKernel && !kernelSet {
+					return nil, errors.New("Addition of [machine]/firmware or [machine]/kernel are unsupported in scriptlets, consider using raw.qemu")
+				}
+			}
 		}
 
 		cfgSections = newCfgSections
