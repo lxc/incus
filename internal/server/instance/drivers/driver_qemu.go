@@ -2478,6 +2478,21 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 	seCtx := d.localConfig["volatile.selinux.context"]
 
 	var biosSet, kernelSet bool
+	var kernelPath, initrdPath string
+	kernel, err := os.Open(filepath.Join(d.Path(), "kernel.img"))
+	if err == nil {
+		kernelSet = true
+		kernelPath = fmt.Sprintf("/proc/self/fd/%d", d.addFileDescriptor(&fdFiles, kernel))
+		initrd, err := os.Open(filepath.Join(d.Path(), "initrd.img"))
+		if err == nil {
+			initrdPath = fmt.Sprintf("/proc/self/fd/%d", d.addFileDescriptor(&fdFiles, initrd))
+		} else if !errors.Is(err, fs.ErrNotExist) {
+			return fmt.Errorf("Failed to open initrd image: %w", err)
+		}
+	} else if !errors.Is(err, fs.ErrNotExist) {
+		return fmt.Errorf("Failed to open kernel image: %w", err)
+	}
+
 	var qemuArgsOverrides []string
 	if d.expandedConfig["raw.qemu"] != "" {
 		qemuArgsOverrides, err := shellquote.Split(d.expandedConfig["raw.qemu"])
@@ -2487,7 +2502,7 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 		}
 
 		biosSet = slices.Contains(qemuArgsOverrides, "-bios")
-		kernelSet = slices.Contains(qemuArgsOverrides, "-kernel")
+		kernelSet = kernelSet || slices.Contains(qemuArgsOverrides, "-kernel")
 	}
 
 	// Generate the QEMU configuration.
@@ -2513,6 +2528,17 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 		"-readconfig", confFile,
 		"-pidfile", d.pidFilePath(),
 		"-D", d.LogFilePath(),
+	}
+
+	if kernelPath != "" {
+		qemuArgs = append(qemuArgs, "-kernel", kernelPath)
+		if initrdPath != "" {
+			qemuArgs = append(qemuArgs, "-initrd", initrdPath)
+		}
+
+		if d.expandedConfig["boot.args"] != "" {
+			qemuArgs = append(qemuArgs, "-append", d.expandedConfig["boot.args"])
+		}
 	}
 
 	// When a GPU is using virtio-gpu DRM native context, the guest needs a host-backed
