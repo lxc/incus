@@ -3627,3 +3627,7 @@ This adds a new image property, `volume.size_hint`, which sets the size of the c
 ## `network_allocations_project`
 
 Adds the `project` field to the network allocations API response, holding the project of the network.
+
+## `kernel_boot`
+
+When a `kernel.img` file is present at the root of a VM's configuration volume, the instance uses QEMU's Direct Linux Boot feature to boot it. Additionally, if an `initrd.img` file is present there, it is used as the instance's `initrd`. Finally, and again if `kernel.img` is there, the new `boot.args` VM configuration key allows passing command-line arguments to the booted kernel.
