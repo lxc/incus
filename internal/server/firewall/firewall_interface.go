@@ -34,6 +34,9 @@ type Firewall interface {
 	InstanceSetupProxyNAT(projectName string, instanceName string, deviceName string, forward *drivers.AddressForward) error
 	InstanceClearProxyNAT(projectName string, instanceName string, deviceName string) error
 
+	InstanceSetupRoutedFilter(projectName string, instanceName string, deviceName string, hostName string, vrf bool, aclRules []drivers.ACLRule) error
+	InstanceClearRoutedFilter(projectName string, instanceName string, deviceName string) error
+
 	InstanceSetupRPFilter(projectName string, instanceName string, deviceName string, hostName string) error
 	InstanceClearRPFilter(projectName string, instanceName string, deviceName string) error
 
