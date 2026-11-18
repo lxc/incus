@@ -321,8 +321,8 @@ func UsedBy(s *state.State, aclProjectName string, usageFunc func(ctx context.Co
 func isInUseByDevice(d deviceConfig.Device, matchACLNames ...string) []string {
 	matchedACLNames := []string{}
 
-	// Only NICs linked to managed networks can use network ACLs.
-	if d["type"] != "nic" || d["network"] == "" {
+	// Only NICs linked to managed networks, and routed NICs, can use network ACLs.
+	if d["type"] != "nic" || (d["network"] == "" && !IsRoutedNIC(d)) {
 		return matchedACLNames
 	}
 
@@ -335,7 +335,13 @@ func isInUseByDevice(d deviceConfig.Device, matchACLNames ...string) []string {
 	return matchedACLNames
 }
 
+// IsRoutedNIC returns whether the NIC device config is a routed NIC, which applies ACLs without a network.
+func IsRoutedNIC(d map[string]string) bool {
+	return d["type"] == "nic" && d["nictype"] == "routed" && d["network"] == ""
+}
+
 // NetworkACLUsage info about a network and what ACL it uses.
+// For a routed NIC, which has no network, Type is "routed" and Name is empty.
 type NetworkACLUsage struct {
 	ID              int64
 	Name            string
@@ -354,6 +360,11 @@ func NetworkUsage(s *state.State, aclProjectName string, aclNames []string, aclN
 	err := UsedBy(s, aclProjectName, func(ctx context.Context, tx *db.ClusterTx, matchedACLNames []string, usageType any, devName string, nicConfig map[string]string) error {
 		switch u := usageType.(type) {
 		case cluster.Profile:
+			// A routed NIC in a profile is applied through the instances using the profile.
+			if IsRoutedNIC(nicConfig) {
+				return nil
+			}
+
 			networkID, network, _, err := tx.GetNetworkInAnyState(ctx, aclProjectName, nicConfig["network"])
 			if err != nil {
 				return fmt.Errorf("Failed to load network %q: %w", nicConfig["network"], err)
@@ -372,6 +383,19 @@ func NetworkUsage(s *state.State, aclProjectName string, aclNames []string, aclN
 			}
 
 		case db.InstanceArgs:
+			if IsRoutedNIC(nicConfig) {
+				key := fmt.Sprintf("routed/%s/%s/%s", u.Project, u.Name, devName)
+				aclNets[key] = NetworkACLUsage{
+					Type:            "routed",
+					Config:          nicConfig,
+					InstanceProject: u.Project,
+					InstanceName:    u.Name,
+					DeviceName:      devName,
+				}
+
+				return nil
+			}
+
 			networkID, network, _, err := tx.GetNetworkInAnyState(ctx, aclProjectName, nicConfig["network"])
 			if err != nil {
 				return fmt.Errorf("Failed to load network %q: %w", nicConfig["network"], err)
