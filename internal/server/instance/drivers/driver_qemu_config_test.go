@@ -1725,7 +1725,7 @@ func TestQemuConfigTemplates(t *testing.T) {
 				key3 = "value3"`,
 		}}
 		for _, tc := range testCases {
-			overridden, err := qemuRawCfgOverride(tc.cfg, tc.overrides)
+			overridden, err := qemuRawCfgOverride(tc.cfg, tc.overrides, false, false)
 			if err != nil {
 				t.Error(err)
 			}
