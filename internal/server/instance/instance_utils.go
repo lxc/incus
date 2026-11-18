@@ -678,6 +678,11 @@ func ValidName(instanceName string, isSnapshot bool) error {
 		if strings.ContainsAny(snapshotName, " /") {
 			return errors.New("Invalid instance snapshot name: Cannot contain space or / characters")
 		}
+
+		// The snapshot name is used as a path segment.
+		if slices.Contains([]string{"", ".", ".."}, snapshotName) {
+			return errors.New("Invalid instance snapshot name: Cannot be empty or a relative path")
+		}
 	} else {
 		if strings.Contains(instanceName, instance.SnapshotDelimiter) {
 			return fmt.Errorf("The character %q is reserved for snapshots", instance.SnapshotDelimiter)
