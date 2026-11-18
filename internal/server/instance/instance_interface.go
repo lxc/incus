@@ -113,6 +113,7 @@ type Instance interface {
 	CanLiveMigrate() bool
 	CreateQcow2Snapshot(diskPath string, devName string, snapshotName string, backingFilename string, stateful bool) error
 	DeleteQcow2Snapshot(devName string, snapshotIndex int, backingFilename string) error
+	RenameQcow2Snapshot(devName string, snapshotIndex int, backingFilename string) error
 	PrepareQcow2Snapshot(diskPath string, devName string) (Qcow2SnapshotSwitch, revert.Hook, error)
 	SwitchQcow2Snapshots(switches []Qcow2SnapshotSwitch) error
 	ExportQcow2Block(diskName string, blockIndex int) (func(), string, error)

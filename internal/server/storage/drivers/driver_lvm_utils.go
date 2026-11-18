@@ -736,11 +736,50 @@ func (d *lvm) acquireExclusive(vol Volume) (func(), error) {
 		return nil, fmt.Errorf("Failed to acquire exclusive lock on LVM logical volume %q: %w", volDevPath, err)
 	}
 
-	return func() {
-		if vol.ContentType() == ContentTypeBlock && vol.ExpandedConfig("block.type") == BlockVolumeTypeQcow2 && !d.exclusiveVolume(vol) {
-			_, _ = lvmTryRunCommand("lvchange", "--activate", "sy", "--ignoreactivationskip", volDevPath)
-		}
-	}, nil
+	return func() { d.releaseExclusive(vol) }, nil
+}
+
+// lvActive returns whether the logical volume of a volume on a clustered pool is active on this member.
+func (d *lvm) lvActive(vol Volume) (bool, error) {
+	if !d.clustered {
+		return false, nil
+	}
+
+	_, err := d.lvmDevPath(d.lvmPath(d.config["lvm.vg_name"], vol.volType, vol.contentType, vol.name))
+	if errors.Is(err, os.ErrNotExist) {
+		return false, nil
+	} else if err != nil {
+		return false, fmt.Errorf("Failed to check activation of LVM logical volume %q: %w", vol.name, err)
+	}
+
+	return true, nil
+}
+
+// restoreActivation releases a volume locked by acquireExclusive, deactivating it if it wasn't active before.
+func (d *lvm) restoreActivation(vol Volume, wasActive bool) {
+	if !d.clustered {
+		return
+	}
+
+	if wasActive {
+		d.releaseExclusive(vol)
+		return
+	}
+
+	volDevPath := d.lvmPath(d.config["lvm.vg_name"], vol.volType, vol.contentType, vol.name)
+	_, _ = lvmTryRunCommand("lvchange", "--activate", "n", "--ignoreactivationskip", volDevPath)
+}
+
+// releaseExclusive switches a volume locked by acquireExclusive back to shared mode if several members may use it.
+func (d *lvm) releaseExclusive(vol Volume) {
+	if !d.clustered {
+		return
+	}
+
+	if vol.ContentType() == ContentTypeBlock && vol.ExpandedConfig("block.type") == BlockVolumeTypeQcow2 && !d.exclusiveVolume(vol) {
+		volDevPath := d.lvmPath(d.config["lvm.vg_name"], vol.volType, vol.contentType, vol.name)
+		_, _ = lvmTryRunCommand("lvchange", "--activate", "sy", "--ignoreactivationskip", volDevPath)
+	}
 }
 
 // acquireExclusiveIfActive switches the lock of an active volume to exclusive mode and leaves inactive ones alone.
