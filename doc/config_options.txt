@@ -2330,6 +2330,14 @@ It is ignored if invalid or smaller than the image file, and doesn't affect inst
 
 <!-- config group image-volume end -->
 <!-- config group instance-boot start -->
+```{config:option} boot.args instance-boot
+:condition: "kernel image"
+:liveupdate: "yes"
+:shortdesc: "Arguments to pass to the kernel"
+:type: "bool"
+
+```
+
 ```{config:option} boot.autorestart instance-boot
 :liveupdate: "no"
 :shortdesc: "Whether to automatically restart an instance on unexpected exit"
