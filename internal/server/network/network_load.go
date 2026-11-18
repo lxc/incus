@@ -16,6 +16,7 @@ var drivers = map[string]func() Network{
 	"sriov":    func() Network { return &sriov{} },
 	"ovn":      func() Network { return &ovn{} },
 	"physical": func() Network { return &physical{} },
+	"routed":   func() Network { return &routed{} },
 }
 
 // ProjectNetwork is a composite type of project name and network name.

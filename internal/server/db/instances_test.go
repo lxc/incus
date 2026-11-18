@@ -472,6 +472,7 @@ func TestGetNICConflictCandidateIDs(t *testing.T) {
 	addContainerConfig(t, tx, "c1", "volatile.eth0.hwaddr", "AA:BB:CC:DD:EE:01")
 	addContainerDevice(t, tx, "c2", "eth0", "nic", map[string]string{"hwaddr": "aa:bb:cc:dd:ee:02", "ipv4.address": "10.0.0.2/24"})
 	addContainerConfig(t, tx, "c3", "volatile.eth0.hwaddr", "aa:bb:cc:dd:ee:01")
+	addContainerConfig(t, tx, "c3", "volatile.eth1.ipv6.address", "2001:db8::3")
 
 	_, err = tx.Tx().Exec("INSERT INTO profiles(name, project_id, description) VALUES ('p1', 1, '')")
 	require.NoError(t, err)
@@ -518,6 +519,14 @@ func TestGetNICConflictCandidateIDs(t *testing.T) {
 	assert.Empty(t, ids)
 
 	ids, err = tx.GetNICConflictCandidateIDs(context.Background(), "node2", "", "aa:bb:cc:dd:ee:01", nil)
+	require.NoError(t, err)
+	assert.Equal(t, []int{3}, ids)
+
+	ids, err = tx.GetNICConflictCandidateIDs(context.Background(), "", "", "aa:bb:cc:dd:ee:01", nil)
+	require.NoError(t, err)
+	assert.Equal(t, []int{1, 3}, ids)
+
+	ids, err = tx.GetNICConflictCandidateIDs(context.Background(), "", "", "", []string{"2001:db8::3"})
 	require.NoError(t, err)
 	assert.Equal(t, []int{3}, ids)
 }

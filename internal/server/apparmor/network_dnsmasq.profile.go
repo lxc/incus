@@ -36,6 +36,7 @@ profile "{{ .name }}" flags=(attach_disconnected,mediate_deleted) {
 
   # Logging path
   {{ .logPath }}/dnsmasq.{{ .networkName }}.log rw,
+  {{ .logPath }}/*/dnsmasq.{{ .networkName }}.*.log rw,
 
   # Additional system files
   @{PROC}/sys/net/ipv6/conf/*/mtu r,

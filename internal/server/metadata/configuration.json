@@ -2053,6 +2053,13 @@
 						}
 					},
 					{
+						"network": {
+							"longdesc": "",
+							"shortdesc": "The managed network to link the device to (instead of specifying the `nictype` directly)",
+							"type": "string"
+						}
+					},
+					{
 						"parent": {
 							"longdesc": "",
 							"shortdesc": "The name of the parent host device to join the instance to",
@@ -3844,6 +3851,20 @@
 						"volatile.\u003cname\u003e.io.bus": {
 							"longdesc": "The IO bus stores the actual IO bus being used, checked in case `io.bus=auto`.",
 							"shortdesc": "IO bus in use",
+							"type": "string"
+						}
+					},
+					{
+						"volatile.\u003cname\u003e.ipv4.address": {
+							"longdesc": "The address is assigned from the network's `ipv4.subnets` when no `ipv4.address` property is set on a NIC of a `routed` network.",
+							"shortdesc": "Assigned IPv4 address",
+							"type": "string"
+						}
+					},
+					{
+						"volatile.\u003cname\u003e.ipv6.address": {
+							"longdesc": "The address is assigned from the network's `ipv6.subnets` when no `ipv6.address` property is set on a NIC of a `routed` network.",
+							"shortdesc": "Assigned IPv6 address",
 							"type": "string"
 						}
 					},
@@ -5685,6 +5706,137 @@
 							"defaultdesc": "`l2proxy`",
 							"longdesc": "",
 							"shortdesc": "Sets the method how OVN NIC external IPs will be advertised on uplink network: `l2proxy` (proxy ARP/NDP) or `routed`",
+							"type": "string"
+						}
+					}
+				]
+			}
+		},
+		"network_routed": {
+			"common": {
+				"keys": [
+					{
+						"dns.nameservers": {
+							"longdesc": "",
+							"shortdesc": "DNS server IPs to advertise to DHCP clients",
+							"type": "string"
+						}
+					},
+					{
+						"gvrp": {
+							"defaultdesc": "`false`",
+							"longdesc": "",
+							"shortdesc": "Register VLAN using GARP VLAN Registration Protocol",
+							"type": "bool"
+						}
+					},
+					{
+						"mtu": {
+							"longdesc": "",
+							"shortdesc": "The MTU inherited by routed NICs linked to this network",
+							"type": "integer"
+						}
+					},
+					{
+						"parent": {
+							"longdesc": "",
+							"shortdesc": "Existing interface to use for neighbor proxy entries",
+							"type": "string"
+						}
+					},
+					{
+						"vlan": {
+							"longdesc": "",
+							"shortdesc": "The VLAN ID inherited by routed NICs linked to this network",
+							"type": "integer"
+						}
+					},
+					{
+						"vrf": {
+							"longdesc": "",
+							"shortdesc": "VRF inherited by routed NICs linked to this network",
+							"type": "string"
+						}
+					}
+				]
+			},
+			"ipv4": {
+				"keys": [
+					{
+						"ipv4.dhcp": {
+							"defaultdesc": "`true`",
+							"longdesc": "",
+							"shortdesc": "Whether to hand out the IPv4 address of virtual machine NICs over DHCP",
+							"type": "bool"
+						}
+					},
+					{
+						"ipv4.gateway": {
+							"defaultdesc": "`auto`",
+							"longdesc": "",
+							"shortdesc": "IPv4 gateway mode inherited by routed NICs (`auto` or `none`)",
+							"type": "string"
+						}
+					},
+					{
+						"ipv4.host_address": {
+							"longdesc": "",
+							"shortdesc": "Host-side IPv4 gateway address inherited by routed NICs",
+							"type": "string"
+						}
+					},
+					{
+						"ipv4.host_tables": {
+							"longdesc": "",
+							"shortdesc": "Comma-separated routing table IDs inherited by routed NICs",
+							"type": "string"
+						}
+					},
+					{
+						"ipv4.subnets": {
+							"longdesc": "",
+							"shortdesc": "Comma-separated list of IPv4 subnets that routed NIC addresses must be in and are assigned from",
+							"type": "string"
+						}
+					}
+				]
+			},
+			"ipv6": {
+				"keys": [
+					{
+						"ipv6.dhcp": {
+							"defaultdesc": "`true`",
+							"longdesc": "",
+							"shortdesc": "Whether to hand out the IPv6 address of virtual machine NICs over DHCPv6",
+							"type": "bool"
+						}
+					},
+					{
+						"ipv6.gateway": {
+							"defaultdesc": "`auto`",
+							"longdesc": "",
+							"shortdesc": "IPv6 gateway mode inherited by routed NICs (`auto` or `none`)",
+							"type": "string"
+						}
+					},
+					{
+						"ipv6.host_address": {
+							"longdesc": "",
+							"shortdesc": "Host-side IPv6 gateway address inherited by routed NICs",
+							"type": "string"
+						}
+					},
+					{
+						"ipv6.host_tables": {
+							"longdesc": "",
+							"shortdesc": "Comma-separated routing table IDs inherited by routed NICs",
+							"type": "string"
+						}
+					},
+					{
+						"ipv6.subnets": {
+							"longdesc": "",
+							"shortdesc": "Comma-separated list of IPv6 subnets that routed NIC addresses must be in and are assigned from",
 							"type": "string"
 						}
 					}

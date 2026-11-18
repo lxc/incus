@@ -1822,6 +1822,12 @@ The custom policy routing table ID to add IPv6 static routes to (in addition to 
 
 ```
 
+```{config:option} network devices-nic_routed
+:shortdesc: "The managed network to link the device to (instead of specifying the `nictype` directly)"
+:type: "string"
+
+```
+
 ```{config:option} parent devices-nic_routed
 :shortdesc: "The name of the parent host device to join the instance to"
 :type: "string"
@@ -3493,6 +3499,18 @@ The network device MAC address is used when no `hwaddr` property is set on the d
 The IO bus stores the actual IO bus being used, checked in case `io.bus=auto`.
 ```
 
+```{config:option} volatile.<name>.ipv4.address instance-volatile
+:shortdesc: "Assigned IPv4 address"
+:type: "string"
+The address is assigned from the network's `ipv4.subnets` when no `ipv4.address` property is set on a NIC of a `routed` network.
+```
+
+```{config:option} volatile.<name>.ipv6.address instance-volatile
+:shortdesc: "Assigned IPv6 address"
+:type: "string"
+The address is assigned from the network's `ipv6.subnets` when no `ipv6.address` property is set on a NIC of a `routed` network.
+```
+
 ```{config:option} volatile.<name>.last_state.created instance-volatile
 :shortdesc: "Whether the network device physical device was created"
 :type: "string"
@@ -5076,6 +5094,113 @@ User keys can be used in search.
 ```
 
 <!-- config group network_physical-ovn end -->
+<!-- config group network_routed-common start -->
+```{config:option} dns.nameservers network_routed-common
+:shortdesc: "DNS server IPs to advertise to DHCP clients"
+:type: "string"
+
+```
+
+```{config:option} gvrp network_routed-common
+:defaultdesc: "`false`"
+:shortdesc: "Register VLAN using GARP VLAN Registration Protocol"
+:type: "bool"
+
+```
+
+```{config:option} mtu network_routed-common
+:shortdesc: "The MTU inherited by routed NICs linked to this network"
+:type: "integer"
+
+```
+
+```{config:option} parent network_routed-common
+:shortdesc: "Existing interface to use for neighbor proxy entries"
+:type: "string"
+
+```
+
+```{config:option} vlan network_routed-common
+:shortdesc: "The VLAN ID inherited by routed NICs linked to this network"
+:type: "integer"
+
+```
+
+```{config:option} vrf network_routed-common
+:shortdesc: "VRF inherited by routed NICs linked to this network"
+:type: "string"
+
+```
+
+<!-- config group network_routed-common end -->
+<!-- config group network_routed-ipv4 start -->
+```{config:option} ipv4.dhcp network_routed-ipv4
+:defaultdesc: "`true`"
+:shortdesc: "Whether to hand out the IPv4 address of virtual machine NICs over DHCP"
+:type: "bool"
+
+```
+
+```{config:option} ipv4.gateway network_routed-ipv4
+:defaultdesc: "`auto`"
+:shortdesc: "IPv4 gateway mode inherited by routed NICs (`auto` or `none`)"
+:type: "string"
+
+```
+
+```{config:option} ipv4.host_address network_routed-ipv4
+:shortdesc: "Host-side IPv4 gateway address inherited by routed NICs"
+:type: "string"
+
+```
+
+```{config:option} ipv4.host_tables network_routed-ipv4
+:shortdesc: "Comma-separated routing table IDs inherited by routed NICs"
+:type: "string"
+
+```
+
+```{config:option} ipv4.subnets network_routed-ipv4
+:shortdesc: "Comma-separated list of IPv4 subnets that routed NIC addresses must be in and are assigned from"
+:type: "string"
+
+```
+
+<!-- config group network_routed-ipv4 end -->
+<!-- config group network_routed-ipv6 start -->
+```{config:option} ipv6.dhcp network_routed-ipv6
+:defaultdesc: "`true`"
+:shortdesc: "Whether to hand out the IPv6 address of virtual machine NICs over DHCPv6"
+:type: "bool"
+
+```
+
+```{config:option} ipv6.gateway network_routed-ipv6
+:defaultdesc: "`auto`"
+:shortdesc: "IPv6 gateway mode inherited by routed NICs (`auto` or `none`)"
+:type: "string"
+
+```
+
+```{config:option} ipv6.host_address network_routed-ipv6
+:shortdesc: "Host-side IPv6 gateway address inherited by routed NICs"
+:type: "string"
+
+```
+
+```{config:option} ipv6.host_tables network_routed-ipv6
+:shortdesc: "Comma-separated routing table IDs inherited by routed NICs"
+:type: "string"
+
+```
+
+```{config:option} ipv6.subnets network_routed-ipv6
+:shortdesc: "Comma-separated list of IPv6 subnets that routed NIC addresses must be in and are assigned from"
+:type: "string"
+
+```
+
+<!-- config group network_routed-ipv6 end -->
 <!-- config group network_sriov-common start -->
 ```{config:option} failover network_sriov-common
 :condition: "-"

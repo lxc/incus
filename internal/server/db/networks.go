@@ -605,6 +605,7 @@ const (
 	NetworkTypeSriov                       // Network type sriov.
 	NetworkTypeOVN                         // Network type ovn.
 	NetworkTypePhysical                    // Network type physical.
+	NetworkTypeRouted                      // Network type routed.
 )
 
 // NetworkNode represents a network node.
@@ -733,6 +734,8 @@ func networkFillType(network *api.Network, netType NetworkType) {
 		network.Type = "ovn"
 	case NetworkTypePhysical:
 		network.Type = "physical"
+	case NetworkTypeRouted:
+		network.Type = "routed"
 	default:
 		network.Type = "" // Unknown
 	}
