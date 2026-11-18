@@ -414,7 +414,7 @@ func (d *common) Update(config *api.NetworkAddressSetPut, clientType request.Cli
 		if v.Type == "ovn" {
 			delete(asNets, k)
 			asOVNNets[k] = v
-		} else if v.Type != "bridge" {
+		} else if v.Type != "bridge" && v.Type != "routed" {
 			return fmt.Errorf("Unsupported network type %q using address set %q", v.Type, d.info.Name)
 		}
 	}
@@ -422,7 +422,13 @@ func (d *common) Update(config *api.NetworkAddressSetPut, clientType request.Cli
 	// Apply address set changes to non-OVN networks on this member.
 	if len(asNets) > 0 {
 		for _, asNet := range asNets {
-			if asNet.DeviceName != "" {
+			if asNet.Type == "routed" {
+				// Routed NIC filters reference the sets in the inet table.
+				err = FirewallApplyAddressSetsForACLRules(d.state, "inet", d.projectName, asNet.ACLNames)
+				if err != nil {
+					return err
+				}
+			} else if asNet.DeviceName != "" {
 				err = FirewallApplyAddressSetsForACLRules(d.state, "bridge", d.projectName, asNet.ACLNames)
 				if err != nil {
 					return err
