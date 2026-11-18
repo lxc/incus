@@ -334,6 +334,7 @@ run_standalone_network() {
     run_test test_container_devices_nic_p2p "container devices - nic - p2p"
     run_test test_container_devices_nic_physical "container devices - nic - physical"
     run_test test_container_devices_nic_routed "container devices - nic - routed"
+    run_test test_container_devices_nic_routed_acl "container devices - nic - routed - acl"
     run_test test_container_devices_nic_sriov "container devices - nic - sriov"
     run_test test_container_devices_proxy "container devices - proxy"
     run_test test_network_acl "network ACL management"
