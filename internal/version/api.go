@@ -602,6 +602,7 @@ var APIExtensions = []string{
 	"pci_rebar",
 	"image_volume_size_hint",
 	"network_allocations_project",
+	"nic_routed_acls",
 }
 
 // APIExtensionsCount returns the number of available API extensions.

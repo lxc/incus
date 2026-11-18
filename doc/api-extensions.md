@@ -3627,3 +3627,10 @@ This adds a new image property, `volume.size_hint`, which sets the size of the c
 ## `network_allocations_project`
 
 Adds the `project` field to the network allocations API response, holding the project of the network.
+
+## `nic_routed_acls`
+
+This adds support for network ACLs on `routed` NICs, through the `security.acls`, `security.acls.default.ingress.action`,
+`security.acls.default.egress.action`, `security.acls.default.ingress.logged` and `security.acls.default.egress.logged`
+configuration keys. The ACLs are taken from the instance's effective network project, and applied by `nftables` on the
+host side of the NIC.
