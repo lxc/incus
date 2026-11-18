@@ -2099,6 +2099,45 @@
 						}
 					},
 					{
+						"security.acls": {
+							"longdesc": "",
+							"shortdesc": "Comma-separated list of network ACLs to apply",
+							"type": "string"
+						}
+					},
+					{
+						"security.acls.default.egress.action": {
+							"default": "reject",
+							"longdesc": "",
+							"shortdesc": "Action to use for egress traffic that doesn't match any ACL rule",
+							"type": "string"
+						}
+					},
+					{
+						"security.acls.default.egress.logged": {
+							"default": "false",
+							"longdesc": "",
+							"shortdesc": "Whether to log egress traffic that doesn't match any ACL rule",
+							"type": "bool"
+						}
+					},
+					{
+						"security.acls.default.ingress.action": {
+							"default": "reject",
+							"longdesc": "",
+							"shortdesc": "Action to use for ingress traffic that doesn't match any ACL rule (`reject` drops ingress traffic)",
+							"type": "string"
+						}
+					},
+					{
+						"security.acls.default.ingress.logged": {
+							"default": "false",
+							"longdesc": "",
+							"shortdesc": "Whether to log ingress traffic that doesn't match any ACL rule",
+							"type": "bool"
+						}
+					},
+					{
 						"vlan": {
 							"longdesc": "",
 							"shortdesc": "The VLAN ID to attach to",

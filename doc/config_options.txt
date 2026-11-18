@@ -1873,6 +1873,40 @@ The custom policy routing table ID to add IPv6 static routes to (in addition to 
 
 ```
 
+```{config:option} security.acls devices-nic_routed
+:shortdesc: "Comma-separated list of network ACLs to apply"
+:type: "string"
+
+```
+
+```{config:option} security.acls.default.egress.action devices-nic_routed
+:default: "reject"
+:shortdesc: "Action to use for egress traffic that doesn't match any ACL rule"
+:type: "string"
+
+```
+
+```{config:option} security.acls.default.egress.logged devices-nic_routed
+:default: "false"
+:shortdesc: "Whether to log egress traffic that doesn't match any ACL rule"
+:type: "bool"
+
+```
+
+```{config:option} security.acls.default.ingress.action devices-nic_routed
+:default: "reject"
+:shortdesc: "Action to use for ingress traffic that doesn't match any ACL rule (`reject` drops ingress traffic)"
+:type: "string"
+
+```
+
+```{config:option} security.acls.default.ingress.logged devices-nic_routed
+:default: "false"
+:shortdesc: "Whether to log ingress traffic that doesn't match any ACL rule"
+:type: "bool"
+
+```
+
 ```{config:option} vlan devices-nic_routed
 :shortdesc: "The VLAN ID to attach to"
 :type: "integer"
