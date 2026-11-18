@@ -2,7 +2,7 @@
 # How to configure network ACLs
 
 ```{note}
-Network ACLs are available for the {ref}`OVN NIC type <nic-ovn>`, the {ref}`network-ovn` and the {ref}`network-bridge` (with some exceptions, see {ref}`network-acls-bridge-limitations`).
+Network ACLs are available for the {ref}`OVN NIC type <nic-ovn>`, the {ref}`network-ovn`, the {ref}`network-bridge` (with some exceptions, see {ref}`network-acls-bridge-limitations`) and the {ref}`routed NIC type <nic-routed>` (see {ref}`network-acls-routed-limitations`).
 ```
 
 Network {abbr}`ACLs (Access Control Lists)` define traffic rules that allow controlling network access between different instances connected to the same network, and access to and from other networks.
@@ -233,3 +233,16 @@ When using network ACLs with a bridge network, be aware of the following limitat
 - {ref}`ACL groups and network selectors <network-acls-selectors>` are not supported.
 - Baseline network service rules are added before ACL rules (in their respective INPUT/OUTPUT chains), because we cannot differentiate between INPUT/OUTPUT and FORWARD traffic once we have jumped into the ACL chain.
   Because of this, ACL rules cannot be used to block baseline service rules.
+
+(network-acls-routed-limitations)=
+## Routed NIC limitations
+
+A routed NIC has no network, so its ACLs are set on the NIC (or in a profile) and come from the instance's effective network project.
+The rules are applied with `nftables` on the host side of the NIC, and cover traffic to and from the host as well as traffic routed through it.
+When using network ACLs with a routed NIC, be aware of the following limitations:
+
+- {ref}`ACL groups and network selectors <network-acls-selectors>` are not supported.
+- Neighbor discovery, multicast listener reports and ICMP error messages between the instance and the host side of the NIC are always allowed, so the link keeps working.
+  Pinging the gateway (`169.254.0.1` or `fe80::1`) needs an egress rule like any other traffic.
+- `reject` rules for ingress traffic, and the default ingress action `reject`, drop the traffic instead.
+- `allow-stateless` is not supported.
