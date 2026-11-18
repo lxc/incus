@@ -502,6 +502,7 @@ jobs:
           - parent
           - parent_snat
           - cluster_retry
+          - dynamic_routing
 
     steps:
       - name: Checkout
