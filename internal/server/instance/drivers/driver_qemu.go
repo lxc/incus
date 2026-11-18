@@ -2540,6 +2540,25 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 	seCtx := d.localConfig["volatile.selinux.context"]
 
 	var biosSet, kernelSet bool
+	var kernelPath, initrdPath string
+	kernel, err := os.Open(filepath.Join(d.Path(), "kernel.img"))
+	if err == nil {
+		kernelSet = true
+		kernelPath = fmt.Sprintf("/proc/self/fd/%d", d.addFileDescriptor(&fdFiles, kernel))
+		initrd, err := os.Open(filepath.Join(d.Path(), "initrd.img"))
+		if err == nil {
+			initrdPath = fmt.Sprintf("/proc/self/fd/%d", d.addFileDescriptor(&fdFiles, initrd))
+		} else if !errors.Is(err, fs.ErrNotExist) {
+			err = fmt.Errorf("Failed to open initrd image: %w", err)
+			op.Done(err)
+			return err
+		}
+	} else if !errors.Is(err, fs.ErrNotExist) {
+		err = fmt.Errorf("Failed to open kernel image: %w", err)
+		op.Done(err)
+		return err
+	}
+
 	var qemuArgsOverrides []string
 	if d.expandedConfig["raw.qemu"] != "" {
 		qemuArgsOverrides, err = shellquote.Split(d.expandedConfig["raw.qemu"])
@@ -2549,7 +2568,7 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 		}
 
 		biosSet = slices.Contains(qemuArgsOverrides, "-bios")
-		kernelSet = slices.Contains(qemuArgsOverrides, "-kernel")
+		kernelSet = kernelSet || slices.Contains(qemuArgsOverrides, "-kernel")
 	}
 
 	// Generate the QEMU configuration.
@@ -2575,6 +2594,41 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 		"-readconfig", confFile,
 		"-pidfile", d.pidFilePath(),
 		"-D", d.LogFilePath(),
+	}
+
+	if kernelPath != "" {
+		qemuArgs = append(qemuArgs, "-kernel", kernelPath)
+		if initrdPath != "" {
+			qemuArgs = append(qemuArgs, "-initrd", initrdPath)
+		}
+
+		if d.expandedConfig["boot.kernel.cmdline"] != "" {
+			qemuArgs = append(qemuArgs, "-append", d.expandedConfig["boot.kernel.cmdline"])
+		} else {
+			cmdlineF, err := os.Open(filepath.Join(d.Path(), "kernel.cmdline"))
+			if err == nil {
+				defer logger.WarnOnError(cmdlineF.Close, "Failed to close kernel command-line arguments file")
+				// Accept up to 4096 characters, fail if the file is bigger.
+				cmdline, err := io.ReadAll(io.LimitReader(cmdlineF, 4097))
+				if err != nil {
+					err = fmt.Errorf("Could not read kernel command-line arguments file: %w", err)
+					op.Done(err)
+					return err
+				}
+
+				if len(cmdline) > 4096 {
+					err = fmt.Errorf("kernel.cmdline exceeds 4096 bytes")
+					op.Done(err)
+					return err
+				}
+
+				qemuArgs = append(qemuArgs, "-append", string(cmdline))
+			} else if !errors.Is(err, fs.ErrNotExist) {
+				err = fmt.Errorf("Could not read kernel command-line arguments file: %w", err)
+				op.Done(err)
+				return err
+			}
+		}
 	}
 
 	// When a GPU is using virtio-gpu DRM native context, the guest needs a host-backed
@@ -5227,8 +5281,10 @@ func (d *qemu) generateQemuConfig(bs *qemuBootState, mountInfo *storagePools.Mou
 	}
 
 	// Allow disabling the UEFI firmware.
-	if biosSet || kernelSet {
-		d.logger.Warn("Starting VM without default firmware (-bios or -kernel in raw.qemu)")
+	if biosSet {
+		d.logger.Warn("Starting VM without default firmware (BIOS overridden)")
+	} else if kernelSet {
+		d.logger.Info("Starting VM without default firmware (booting a kernel)")
 	} else if d.architectureSupportsUEFI(d.architecture) {
 		// Determine expected firmware.
 		firmware, err := d.selectedFirmware()
