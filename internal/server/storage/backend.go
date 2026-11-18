@@ -4970,6 +4970,14 @@ func (b *backend) ensureImage(l logger.Logger, fingerprint string, op *operation
 	newImgVol := imgVol.Clone()
 	hinted := b.applyImageSizeHint(l, newImgVol, image)
 
+	// Size a VM image volume from the image up front so the driver creates it at its final size.
+	if contentType == drivers.ContentTypeBlock {
+		err = b.applyImageVirtualSize(l, newImgVol, fingerprint)
+		if err != nil {
+			return false, err
+		}
+	}
+
 	err = b.driver.CreateVolume(newImgVol, &volFiller, op)
 	if err != nil {
 		if hinted {
@@ -4997,16 +5005,17 @@ func (b *backend) ensureImage(l logger.Logger, fingerprint string, op *operation
 	return false, nil
 }
 
-// applyImageSizeHint applies the image's size hint to a block backed container image volume.
+// applyImageSizeHint applies the image's size hint to an image volume.
 // Returns true if the volume's size was changed.
 func (b *backend) applyImageSizeHint(l logger.Logger, imgVol drivers.Volume, image *api.Image) bool {
 	// gendoc:generate(entity=image, group=volume, key=volume.size_hint)
-	// Size needed to unpack a container image. On block backed storage pools, it is used as the size of
-	// the cached image volume when it is smaller than the pool's `volume.size` (or the default size).
+	// Size of the cached image volume. For a container image on a block backed storage pool, it is used
+	// when it is smaller than the pool's `volume.size` (or the default size). For a virtual machine image,
+	// it is used when it is larger than that size, so the volume doesn't need a resize after unpacking.
 	// It is ignored if invalid or smaller than the image file, and doesn't affect instance volume sizes.
 	// ---
 	//  type: string
-	//  shortdesc: Size of the cached image volume for container images on block backed storage pools
+	//  shortdesc: Size of the cached image volume
 	size, err := imgVol.ConfigSizeFromHint(image.Properties["volume.size_hint"], image.Size)
 	if err != nil {
 		l.Warn("Ignoring invalid image size hint", logger.Ctx{"err": err})
@@ -5021,6 +5030,36 @@ func (b *backend) applyImageSizeHint(l logger.Logger, imgVol drivers.Volume, ima
 	imgVol.SetConfigSize(size)
 
 	return true
+}
+
+// applyImageVirtualSize sizes a VM image volume to hold the image's virtual size.
+func (b *backend) applyImageVirtualSize(l logger.Logger, imgVol drivers.Volume, fingerprint string) error {
+	// A unified image has to be unpacked before its qcow2 can be read, so only split images are sized up front.
+	imgPath := internalUtil.VarPath("images", fingerprint) + ".rootfs"
+	if !util.PathExists(imgPath) {
+		return nil
+	}
+
+	virtualSize, err := ImageVirtualSize(b.state.OS, imgPath)
+	if err != nil {
+		return err
+	}
+
+	srcVol := drivers.NewVolume(nil, "", drivers.VolumeTypeImage, drivers.ContentTypeBlock, "", map[string]string{"volatile.rootfs.size": fmt.Sprintf("%d", virtualSize)}, nil)
+
+	size, err := imgVol.ConfigSizeFromSource(srcVol)
+	if err != nil {
+		return err
+	}
+
+	if size == imgVol.ConfigSize() {
+		return nil
+	}
+
+	l.Debug("Using image virtual size for image volume", logger.Ctx{"size": size})
+	imgVol.SetConfigSize(size)
+
+	return nil
 }
 
 // shouldUseOptimizedImage determines if an optimized image should be used based on the provided volume config.
