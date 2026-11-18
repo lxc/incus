@@ -2759,6 +2759,15 @@
 						}
 					},
 					{
+						"boot.kernel.cmdline": {
+							"condition": "virtual machine",
+							"liveupdate": "no",
+							"longdesc": "This overrides the command line passed to a kernel booted directly from the configuration volume.",
+							"shortdesc": "Command-line arguments to pass to the kernel",
+							"type": "string"
+						}
+					},
+					{
 						"boot.pxe": {
 							"condition": "virtual machine",
 							"defaultdesc": "no",

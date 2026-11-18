@@ -2440,6 +2440,14 @@ Valid values are: `stop`, `force-stop` or `stateful-stop`
 Number of seconds to wait for the instance to shut down before it is force-stopped.
 ```
 
+```{config:option} boot.kernel.cmdline instance-boot
+:condition: "virtual machine"
+:liveupdate: "no"
+:shortdesc: "Command-line arguments to pass to the kernel"
+:type: "string"
+This overrides the command line passed to a kernel booted directly from the configuration volume.
+```
+
 ```{config:option} boot.pxe instance-boot
 :condition: "virtual machine"
 :defaultdesc: "no"
