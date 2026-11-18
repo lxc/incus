@@ -18,6 +18,9 @@ import (
 	"github.com/lxc/incus/v7/internal/server/instance/instancetype"
 	"github.com/lxc/incus/v7/internal/server/ip"
 	"github.com/lxc/incus/v7/internal/server/network"
+	"github.com/lxc/incus/v7/internal/server/network/acl"
+	addressSet "github.com/lxc/incus/v7/internal/server/network/address-set"
+	"github.com/lxc/incus/v7/internal/server/project"
 	localUtil "github.com/lxc/incus/v7/internal/server/util"
 	"github.com/lxc/incus/v7/shared/logger"
 	"github.com/lxc/incus/v7/shared/revert"
@@ -51,7 +54,7 @@ func (d *nicRouted) UpdatableFields(oldDevice Type) []string {
 		return []string{}
 	}
 
-	return []string{"limits.ingress", "limits.egress", "limits.max", "limits.ingress.burst", "limits.egress.burst", "limits.max.burst", "limits.ingress.bucket", "limits.egress.bucket", "limits.max.bucket", "limits.priority", "queue.discipline", "queue.discipline.attach", "connected"}
+	return []string{"limits.ingress", "limits.egress", "limits.max", "limits.ingress.burst", "limits.egress.burst", "limits.max.burst", "limits.ingress.bucket", "limits.egress.bucket", "limits.max.bucket", "limits.priority", "queue.discipline", "queue.discipline.attach", "connected", "security.acls", "security.acls.default.ingress.action", "security.acls.default.egress.action", "security.acls.default.ingress.logged", "security.acls.default.egress.logged"}
 }
 
 // validateConfig checks the supplied config for correctness.
@@ -331,6 +334,45 @@ func (d *nicRouted) validateConfig(instConf instance.ConfigReader, partialValida
 		//  required: no
 		//  shortdesc: Whether the NIC is connected to the host network
 		"connected",
+
+		// gendoc:generate(entity=devices, group=nic_routed, key=security.acls)
+		//
+		// ---
+		//  type: string
+		//  shortdesc: Comma-separated list of network ACLs to apply
+		"security.acls",
+
+		// gendoc:generate(entity=devices, group=nic_routed, key=security.acls.default.ingress.action)
+		//
+		// ---
+		//  type: string
+		//  default: reject
+		//  shortdesc: Action to use for ingress traffic that doesn't match any ACL rule (`reject` drops ingress traffic)
+		"security.acls.default.ingress.action",
+
+		// gendoc:generate(entity=devices, group=nic_routed, key=security.acls.default.egress.action)
+		//
+		// ---
+		//  type: string
+		//  default: reject
+		//  shortdesc: Action to use for egress traffic that doesn't match any ACL rule
+		"security.acls.default.egress.action",
+
+		// gendoc:generate(entity=devices, group=nic_routed, key=security.acls.default.ingress.logged)
+		//
+		// ---
+		//  type: bool
+		//  default: false
+		//  shortdesc: Whether to log ingress traffic that doesn't match any ACL rule
+		"security.acls.default.ingress.logged",
+
+		// gendoc:generate(entity=devices, group=nic_routed, key=security.acls.default.egress.logged)
+		//
+		// ---
+		//  type: bool
+		//  default: false
+		//  shortdesc: Whether to log egress traffic that doesn't match any ACL rule
+		"security.acls.default.egress.logged",
 	}
 
 	rules := nicValidationRules(requiredFields, optionalFields, instConf)
@@ -425,6 +467,38 @@ func (d *nicRouted) validateConfig(instConf instance.ConfigReader, partialValida
 	// Ensure that VLAN setting is only used with parent setting.
 	if d.config["parent"] == "" && d.config["vlan"] != "" {
 		return errors.New("The vlan setting can only be used when combined with a parent interface")
+	}
+
+	// Check the security ACL(s) and their default actions.
+	if d.config["security.acls"] != "" {
+		if d.state.Firewall.String() != "nftables" {
+			return errors.New("Security ACLs are only supported when using nftables firewall")
+		}
+
+		// A routed NIC has no network, so its ACLs come from the instance's effective network project.
+		networkProjectName, _, err := project.NetworkProject(d.state.DB.Cluster, instConf.Project().Name)
+		if err != nil {
+			return fmt.Errorf("Failed loading network project name: %w", err)
+		}
+
+		aclNames := util.SplitNTrimSpace(d.config["security.acls"], ",", -1, true)
+
+		err = acl.Exists(d.state, networkProjectName, aclNames...)
+		if err != nil {
+			return err
+		}
+
+		err = acl.ValidateFirewallACLs(d.state, networkProjectName, aclNames...)
+		if err != nil {
+			return err
+		}
+	}
+
+	for _, direction := range []string{"ingress", "egress"} {
+		err = acl.ValidateFirewallAction(d.config[fmt.Sprintf("security.acls.default.%s.action", direction)])
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
@@ -681,6 +755,18 @@ func (d *nicRouted) Start() (*deviceConfig.RunConfig, error) {
 	err = d.state.Firewall.InstanceSetupRPFilter(d.inst.Project().Name, d.inst.Name(), d.name, saveData["host_name"])
 	if err != nil {
 		return nil, fmt.Errorf("Error setting up reverse path filter: %w", err)
+	}
+
+	reverter.Add(func() { _ = d.state.Firewall.InstanceClearRPFilter(d.inst.Project().Name, d.inst.Name(), d.name) })
+
+	// Apply the network ACLs before the host routes attract any traffic.
+	if d.config["security.acls"] != "" {
+		err = d.setFilters(d.config)
+		if err != nil {
+			return nil, err
+		}
+
+		reverter.Add(func() { d.removeFilters() })
 	}
 
 	// Perform host-side address configuration.
@@ -1052,10 +1138,69 @@ func (d *nicRouted) Update(oldDevices deviceConfig.Devices, isRunning bool) erro
 			return err
 		}
 
+		// Apply the network ACLs (also on ACL changes, through a device reload), or remove them if unset.
+		if d.config["security.acls"] != "" {
+			err = d.setFilters(d.config)
+			if err != nil {
+				return err
+			}
+		} else if oldDevices[d.name]["security.acls"] != "" {
+			d.removeFilters()
+		}
+
 		return d.setNICLink()
 	}
 
 	return nil
+}
+
+// setFilters applies the network ACLs in security.acls to the host-side interface.
+func (d *nicRouted) setFilters(config deviceConfig.Device) error {
+	if config["security.acls"] == "" {
+		return nil
+	}
+
+	if config["host_name"] == "" {
+		return errors.New("Failed to set network filters: require host_name defined")
+	}
+
+	networkProjectName, _, err := project.NetworkProject(d.state.DB.Cluster, d.inst.Project().Name)
+	if err != nil {
+		return fmt.Errorf("Failed loading network project name: %w", err)
+	}
+
+	aclNames := util.SplitNTrimSpace(config["security.acls"], ",", -1, true)
+
+	aclRules, err := acl.FirewallACLRules(d.state, d.name, networkProjectName, config)
+	if err != nil {
+		return err
+	}
+
+	// The rules of a routed NIC live in the inet table, so its address sets must be there too.
+	err = addressSet.FirewallApplyAddressSetsForACLRules(d.state, "inet", networkProjectName, aclNames)
+	if err != nil {
+		return err
+	}
+
+	err = d.state.Firewall.InstanceSetupRoutedFilter(d.inst.Project().Name, d.inst.Name(), d.name, config["host_name"], config["vrf"] != "", aclRules)
+	if err != nil {
+		return fmt.Errorf("Failed setting up network ACLs: %w", err)
+	}
+
+	return nil
+}
+
+// removeFilters removes the network ACL rules of the NIC, and the address sets no rule uses anymore.
+func (d *nicRouted) removeFilters() {
+	err := d.state.Firewall.InstanceClearRoutedFilter(d.inst.Project().Name, d.inst.Name(), d.name)
+	if err != nil {
+		d.logger.Error("Failed to remove network ACL filters", logger.Ctx{"err": err})
+	}
+
+	err = d.state.Firewall.NetworkDeleteAddressSetsIfUnused("inet")
+	if err != nil {
+		d.logger.Error("Failed to remove unused network address sets", logger.Ctx{"err": err})
+	}
 }
 
 // Stop is run when the device is removed from the instance.
@@ -1132,6 +1277,9 @@ func (d *nicRouted) postStop() error {
 	if err != nil {
 		errs = append(errs, err)
 	}
+
+	// Remove network ACL filters, including those of ACLs no longer in the config.
+	d.removeFilters()
 
 	if len(errs) > 0 {
 		return fmt.Errorf("%v", errs)
