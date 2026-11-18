@@ -746,8 +746,14 @@ func osSetEnv(post *api.InstanceExecPost, env map[string]string) {
 	env["ComSpec"] = fmt.Sprintf("%s\\cmd.exe", system32)
 	env["DriverData"] = fmt.Sprintf("%s\\Drivers\\DriverData", system32)
 
+	username := env["USERNAME"]
 	// User profile directories
-	env["USERPROFILE"] = fmt.Sprintf("%s\\config\\systemprofile", system32)
+	if username != "" {
+		env["USERPROFILE"] = fmt.Sprintf("%s\\Users\\%s", env["SystemDrive"], username)
+	} else {
+		env["USERPROFILE"] = fmt.Sprintf("%s\\config\\systemprofile", system32)
+	}
+
 	env["LOCALAPPDATA"] = fmt.Sprintf("%s\\AppData\\Local", env["USERPROFILE"])
 	env["APPDATA"] = fmt.Sprintf("%s\\AppData\\Roaming", env["USERPROFILE"])
 
@@ -763,6 +769,9 @@ func osSetEnv(post *api.InstanceExecPost, env map[string]string) {
 	// Set the default working directory.
 	if post.Cwd == "" {
 		post.Cwd = system32
+		if username != "" {
+			post.Cwd = env["USERPROFILE"]
+		}
 	}
 }
 
