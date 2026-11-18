@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: LXD\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2026-11-15 08:13-0500\n"
+"POT-Creation-Date: 2026-11-18 22:15+0000\n"
 "PO-Revision-Date: 2026-08-29 22:36+0000\n"
 "Last-Translator: Dklfajsjfi49wefklsf32 "
 "<nlincus@users.noreply.hosted.weblate.org>\n"
@@ -3780,17 +3780,12 @@ msgstr "Akzeptiere Zertifikat"
 msgid "Failed to retrieve current cluster config: %w"
 msgstr "Akzeptiere Zertifikat"
 
-#: cmd/incus/admin_init_dump.go:18 cmd/incus/admin_init_dump.go:49
-#: cmd/incus/admin_init_dump.go:64 cmd/incus/admin_init_dump.go:79
-#: cmd/incus/admin_init_dump.go:93 cmd/incus/cluster.go:816
+#: cmd/incus/admin_init_dump.go:18 cmd/incus/admin_init_dump.go:26
+#: cmd/incus/admin_init_dump.go:47 cmd/incus/admin_init_dump.go:62
+#: cmd/incus/admin_init_dump.go:78 cmd/incus/admin_init_dump.go:92
+#: cmd/incus/cluster.go:816
 #, fuzzy, c-format
 msgid "Failed to retrieve current server configuration: %w"
-msgstr "Akzeptiere Zertifikat"
-
-#: cmd/incus/admin_init_dump.go:28
-#, fuzzy, c-format
-msgid ""
-"Failed to retrieve current server network configuration for project %q: %w"
 msgstr "Akzeptiere Zertifikat"
 
 #: cmd/incus/admin_init_auto.go:131
@@ -7508,7 +7503,7 @@ msgstr "Ungültiges Ziel %s"
 msgid "Provided certificate path doesn't exist: %s"
 msgstr "der Name des Ursprung Containers muss angegeben werden"
 
-#: cmd/incus/remote_unix.go:53
+#: cmd/incus/remote_unix.go:55
 msgid "Proxy timeout (exits when no connections)"
 msgstr ""
 
@@ -8027,11 +8022,11 @@ msgstr ""
 msgid "Rule description"
 msgstr "Fingerabdruck: %s\n"
 
-#: cmd/incus/remote_unix.go:46
+#: cmd/incus/remote_unix.go:48
 msgid "Run a local API proxy"
 msgstr ""
 
-#: cmd/incus/remote_unix.go:47
+#: cmd/incus/remote_unix.go:49
 msgid "Run a local API proxy for the remote"
 msgstr ""
 
@@ -11803,7 +11798,7 @@ msgstr ""
 msgid "unexpected end of argument; did you forget a suffix?"
 msgstr ""
 
-#: cmd/incus/remote_unix.go:41
+#: cmd/incus/remote_unix.go:43
 msgid "unix socket file"
 msgstr ""
 
@@ -11850,6 +11845,11 @@ msgstr ""
 #, c-format
 msgid "“%s”"
 msgstr ""
+
+#, fuzzy, c-format
+#~ msgid ""
+#~ "Failed to retrieve current server network configuration for project %q: %w"
+#~ msgstr "Akzeptiere Zertifikat"
 
 #~ msgid ""
 #~ "incus query -X DELETE --wait /1.0/instances/c1\n"

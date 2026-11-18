@@ -7,12 +7,12 @@ msgid ""
 msgstr ""
 "Project-Id-Version: incus\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2026-11-15 08:13-0500\n"
+"POT-Creation-Date: 2026-11-18 22:15+0000\n"
 "PO-Revision-Date: 2026-11-16 19:26+0000\n"
 "Last-Translator: Américo Monteiro <a-"
 "monteiro@users.noreply.hosted.weblate.org>\n"
-"Language-Team: Portuguese <https://hosted.weblate.org/projects/incus/cli/pt/>"
-"\n"
+"Language-Team: Portuguese <https://hosted.weblate.org/projects/incus/cli/pt/"
+">\n"
 "Language: pt\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -3710,19 +3710,13 @@ msgstr "Falhou ao obter informação do agrupamento: %w"
 msgid "Failed to retrieve current cluster config: %w"
 msgstr "Falhou ao obter configuração do agrupamento atual: %w"
 
-#: cmd/incus/admin_init_dump.go:18 cmd/incus/admin_init_dump.go:49
-#: cmd/incus/admin_init_dump.go:64 cmd/incus/admin_init_dump.go:79
-#: cmd/incus/admin_init_dump.go:93 cmd/incus/cluster.go:816
+#: cmd/incus/admin_init_dump.go:18 cmd/incus/admin_init_dump.go:26
+#: cmd/incus/admin_init_dump.go:47 cmd/incus/admin_init_dump.go:62
+#: cmd/incus/admin_init_dump.go:78 cmd/incus/admin_init_dump.go:92
+#: cmd/incus/cluster.go:816
 #, c-format
 msgid "Failed to retrieve current server configuration: %w"
 msgstr "Falhou ao obter configuração do servidor atual: %w"
-
-#: cmd/incus/admin_init_dump.go:28
-#, c-format
-msgid ""
-"Failed to retrieve current server network configuration for project %q: %w"
-msgstr ""
-"Falhou ao obter configuração de rede do servidor atual para projeto %q: %w"
 
 #: cmd/incus/admin_init_auto.go:131
 #, c-format
@@ -8140,7 +8134,7 @@ msgstr "Protocolo: %s"
 msgid "Provided certificate path doesn't exist: %s"
 msgstr "O caminho do certificado fornecido não existe: %s"
 
-#: cmd/incus/remote_unix.go:53
+#: cmd/incus/remote_unix.go:55
 msgid "Proxy timeout (exits when no connections)"
 msgstr "Tempo limite do Proxy (termina quando não há ligações)"
 
@@ -8641,11 +8635,11 @@ msgstr "Linhas afetadas: %d"
 msgid "Rule description"
 msgstr "Descrição de regra"
 
-#: cmd/incus/remote_unix.go:46
+#: cmd/incus/remote_unix.go:48
 msgid "Run a local API proxy"
 msgstr "Corre o proxy API local"
 
-#: cmd/incus/remote_unix.go:47
+#: cmd/incus/remote_unix.go:49
 msgid "Run a local API proxy for the remote"
 msgstr "Corre o proxy API local para o remoto"
 
@@ -12694,7 +12688,7 @@ msgstr "%s inesperado; esperado %s"
 msgid "unexpected end of argument; did you forget a suffix?"
 msgstr "fim de argumento inesperado; você esqueceu um sufixo?"
 
-#: cmd/incus/remote_unix.go:41
+#: cmd/incus/remote_unix.go:43
 msgid "unix socket file"
 msgstr "ficheiro socket unix"
 
@@ -12740,6 +12734,12 @@ msgstr "zona"
 #, c-format
 msgid "“%s”"
 msgstr "“%s”"
+
+#, c-format
+#~ msgid ""
+#~ "Failed to retrieve current server network configuration for project %q: %w"
+#~ msgstr ""
+#~ "Falhou ao obter configuração de rede do servidor atual para projeto %q: %w"
 
 #~ msgid "Manually trigger the generation of a client certificate"
 #~ msgstr "Acionar manualmente a geração de um certificado de cliente"
