@@ -168,6 +168,9 @@ func (c *cmdAdminInit) runAuto(d incus.InstanceServer, server *api.Server) (*api
 		network := api.InitNetworksProjectPost{}
 		network.Name = fmt.Sprintf("incusbr%d", idx)
 		network.Project = api.ProjectDefaultName
+		if c.flagNetworkEVPN {
+			network.Type = "evpn"
+		}
 		config.Networks = append(config.Networks, network)
 
 		// Add it to the profile
