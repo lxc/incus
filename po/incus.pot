@@ -8165,10 +8165,6 @@ msgstr  ""
 msgid   "This command is not supported on clusters, use \"incus cluster update-certificate\" instead"
 msgstr  ""
 
-#: cmd/incus/webui_windows.go:14
-msgid   "This command isn't supported on Windows"
-msgstr  ""
-
 #: cmd/incus/usage/parse.go:121
 msgid   "This command was called with --explain; its arguments are valid, but no further processing is done"
 msgstr  ""
