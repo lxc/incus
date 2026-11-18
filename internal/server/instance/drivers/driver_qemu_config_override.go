@@ -2,6 +2,7 @@ package drivers
 
 import (
 	"bufio"
+	"errors"
 	"fmt"
 	"maps"
 	"strconv"
@@ -23,7 +24,9 @@ type section struct {
 }
 
 // qemuRawCfgOverride generates a new QEMU configuration from an original one and an override entry.
-func qemuRawCfgOverride(conf []cfg.Section, confOverride string) ([]cfg.Section, error) {
+// Because -bios and -kernel alter our configuration of QEMU VMs very early on, we do not support
+// setting either of them if they are not already set.
+func qemuRawCfgOverride(conf []cfg.Section, confOverride string, biosSet bool, kernelSet bool) ([]cfg.Section, error) {
 	// We define a data structure optimized for lookup and insertion…
 	indexedSections := map[string]map[int]*sectionContent{}
 	// … and another one keeping insertion order. This saves us a few cycles at the expense of a few
@@ -158,10 +161,18 @@ func qemuRawCfgOverride(conf []cfg.Section, confOverride string) ([]cfg.Section,
 	res := []cfg.Section{}
 	for _, orderedSection := range orderedSections {
 		if len((*orderedSection.content).entries) > 0 {
+			if orderedSection.name == "machine" {
+				_, foundBios := orderedSection.content.entries["firmware"]
+				_, foundKernel := orderedSection.content.entries["kernel"]
+				if foundBios && !biosSet || foundKernel && !kernelSet {
+					return nil, errors.New("Addition of [machine]/firmware or [machine]/kernel are unsupported in raw.qemu.conf, consider using raw.qemu")
+				}
+			}
+
 			res = append(res, cfg.Section{
 				Name:    orderedSection.name,
-				Comment: (*orderedSection.content).comment,
-				Entries: (*orderedSection.content).entries,
+				Comment: orderedSection.content.comment,
+				Entries: orderedSection.content.entries,
 			})
 		}
 	}
