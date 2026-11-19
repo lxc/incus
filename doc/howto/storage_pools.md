@@ -228,5 +228,7 @@ If you need more storage, you can increase the size of your storage pool by chan
 
     incus storage set <pool_name> size=<new_size>
 
-This will only work for loop-backed storage pools that are managed by Incus.
+This will only work for loop-backed storage pools that are managed by Incus and for `lvmcluster` storage pools.
+For `lvmcluster`, you must first grow the underlying block device outside of Incus, then set `size` to `max` to use all the available space.
+If the pool was created from a single block device rather than from an existing volume group, you can also set `size` to a specific new size.
 You can only grow the pool (increase its size), not shrink it.
