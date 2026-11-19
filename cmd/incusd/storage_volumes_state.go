@@ -127,6 +127,18 @@ func storagePoolVolumeTypeStateGet(d *Daemon, r *http.Request) response.Response
 		return response.SmartError(err)
 	}
 
+	resp := forwardedResponseIfTargetIsRemote(s, r)
+	if resp != nil {
+		return resp
+	}
+
+	if volumeType == db.StoragePoolVolumeTypeCustom {
+		resp = forwardedResponseIfVolumeIsRemote(s, r, poolName, projectName, volumeName, volumeType)
+		if resp != nil {
+			return resp
+		}
+	}
+
 	// Load the storage pool.
 	pool, err := storagePools.LoadByName(s, poolName)
 	if err != nil {
