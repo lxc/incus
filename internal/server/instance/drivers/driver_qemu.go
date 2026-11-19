@@ -9877,8 +9877,10 @@ func (d *qemu) MigrateSend(args instance.MigrateSendArgs) error {
 			op.Done(err)
 			return err
 		}
+	}
 
-		// The target can only activate the volumes once they're shared.
+	// The target can only activate the volumes once they're shared, dependent disks stay in place even when the root moves.
+	if args.Live && clusterMove {
 		d.stopStorageLock()
 
 		err = pool.SetInstanceAccessMode(d, storageDrivers.VolumeAccessModeShared, d.op)
@@ -11435,12 +11437,19 @@ func (d *qemu) MigrateReceive(args instance.MigrateReceiveArgs) error {
 			return err
 		}
 
-		// Notify the shared disks that they're going to be accessed from another system,
-		// but only when performing a move within the same storage pool.
-		if !storageMove && args.ClusterMoveSourceName != "" {
+		// Notify the shared disks that they're going to be accessed from another system.
+		if args.ClusterMoveSourceName != "" {
 			for _, dev := range d.expandedDevices.Sorted() {
 				if dev.Config["type"] != "disk" || dev.Config["path"] == "/" || dev.Config["pool"] == "" {
 					continue
+				}
+
+				// When the root moves pool, only the live dependent disks staying in place need preparing.
+				if storageMove {
+					migrated := slices.ContainsFunc(dependentVolumes, func(v localMigration.DependentVolumeArgs) bool { return v.DeviceName == dev.Name })
+					if !args.Live || migrated || util.IsFalseOrEmpty(dev.Config["dependent"]) {
+						continue
+					}
 				}
 
 				// Load the pool for the disk.
@@ -11454,17 +11463,20 @@ func (d *qemu) MigrateReceive(args instance.MigrateReceiveArgs) error {
 					continue
 				}
 
-				// Setup the volume entry.
-				extraTargetArgs := localMigration.VolumeTargetArgs{
-					Live:                  args.Live,
-					ClusterMoveSourceName: args.ClusterMoveSourceName,
-					StoragePool:           args.StoragePool,
-				}
-
 				volName, _ := internalInstance.SplitVolumeSource(dev.Config["source"])
 				dbVol, err := storagePools.VolumeDBGet(diskPool, storageProjectName, volName, storageDrivers.VolumeTypeCustom)
 				if err != nil {
 					return fmt.Errorf("Failed loading custom volume for device %q: %w", dev.Name, err)
+				}
+
+				if storageMove && dbVol.ContentType != string(storageDrivers.ContentTypeBlock) {
+					continue
+				}
+
+				// Setup the volume entry.
+				extraTargetArgs := localMigration.VolumeTargetArgs{
+					Live:                  args.Live,
+					ClusterMoveSourceName: args.ClusterMoveSourceName,
 				}
 
 				vol := diskPool.GetVolume(storageDrivers.VolumeTypeCustom, storageDrivers.ContentType(dbVol.ContentType), project.StorageVolume(storageProjectName, volName), dbVol.Config)
@@ -11587,7 +11599,7 @@ func (d *qemu) MigrateReceive(args instance.MigrateReceiveArgs) error {
 
 		reverter.Success()
 
-		if args.Live && clusterMove && !storageMove && pool.Driver().Info().Remote {
+		if args.Live && clusterMove {
 			d.lockStorageExclusive(d, pool)
 		}
 
