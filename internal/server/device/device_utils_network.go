@@ -239,15 +239,16 @@ func networkRestorePhysicalNIC(hostName string, volatile map[string]string) erro
 // networkCreateVethPair creates and configures a veth pair. It will set the hwaddr and mtu settings
 // in the supplied config to the newly created peer interface. If mtu is not specified, but parent
 // is supplied in config, then the MTU of the new peer interface will inherit the parent MTU.
-// Accepts the name of the host side interface as a parameter and returns the peer interface name and MTU used.
-func networkCreateVethPair(hostName string, m deviceConfig.Device) (string, uint32, error) {
+// Accepts the name and optional MAC address of the host side interface, and returns the peer interface name and MTU used.
+func networkCreateVethPair(hostName string, hostHwaddr net.HardwareAddr, m deviceConfig.Device) (string, uint32, error) {
 	var err error
 
 	veth := &ip.Veth{
 		Link: ip.Link{
-			Name:   hostName,
-			Up:     true,
-			Master: m["vrf"],
+			Name:    hostName,
+			Up:      true,
+			Master:  m["vrf"],
+			Address: hostHwaddr,
 		},
 		Peer: ip.Link{
 			Name: network.RandomDevName("veth"),
@@ -331,9 +332,9 @@ func networkCreateVethPair(hostName string, m deviceConfig.Device) (string, uint
 	return veth.Peer.Name, veth.Peer.MTU, nil
 }
 
-// networkCreateTap creates and configures a TAP device.
+// networkCreateTap creates and configures a TAP device, with an optional host-side MAC address.
 // Returns the MTU used.
-func networkCreateTap(hostName string, m deviceConfig.Device) (uint32, error) {
+func networkCreateTap(hostName string, hostHwaddr net.HardwareAddr, m deviceConfig.Device) (uint32, error) {
 	tuntap := &ip.Tuntap{
 		Name:       hostName,
 		Mode:       "tap",
@@ -350,6 +351,14 @@ func networkCreateTap(hostName string, m deviceConfig.Device) (uint32, error) {
 	defer reverter.Fail()
 
 	link := &ip.Link{Name: hostName}
+
+	if hostHwaddr != nil {
+		err = link.SetAddress(hostHwaddr)
+		if err != nil {
+			return 0, fmt.Errorf("Failed to set the MAC address of the tap interface %q: %w", hostName, err)
+		}
+	}
+
 	err = link.SetUp()
 	if err != nil {
 		return 0, fmt.Errorf("Failed to bring up the tap interface %q: %w", hostName, err)
