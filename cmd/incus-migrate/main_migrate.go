@@ -302,18 +302,21 @@ type cmdMigrate struct {
 func (c *cmdMigrate) command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = "incus-migrate"
-	cmd.Short = "Physical to instance migration tool"
+	cmd.Short = "Instance and volume import tool"
 	cmd.Long = `Description:
-  Physical to instance migration tool
+  Instance and volume import tool
 
-  This tool lets you turn any Linux filesystem (including your current one)
-  into an instance on a remote host.
+  This tool lets you create a container, a virtual machine or a custom
+  storage volume on a local or remote Incus server from existing data.
 
-  It will setup a clean mount tree made of the root filesystem and any
-  additional mount you list, then transfer this through the migration
-  API to create a new instance from it.
+  Containers are created from a Linux root filesystem (including your
+  current one) and any additional mount you list. Virtual machines are
+  created from a disk, a partition, a disk image or an OVA file. Custom
+  volumes are created from a disk or a filesystem.
 
-  The same set of options as ` + "`incus launch`" + ` are also supported.
+  The tool is interactive. It asks for the target server, what to create
+  and how to configure it, then transfers the data through the migration
+  API.
 `
 	cmd.RunE = c.run
 	cmd.Flags().StringVar(&c.flagRsyncArgs, "rsync-args", "", "Extra arguments to pass to rsync (for file transfers)"+"``")
