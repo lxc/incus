@@ -56,7 +56,7 @@
 							"default": "`true`",
 							"longdesc": "",
 							"required": "no",
-							"shortdesc": "Only for VMs: Whether the disk is attached or ejected",
+							"shortdesc": "Only for VMs: Whether the disk is attached or ejected (only for custom ISO volumes)",
 							"type": "bool"
 						}
 					},
@@ -90,7 +90,7 @@
 					{
 						"dependent": {
 							"default": "`false`",
-							"longdesc": "",
+							"longdesc": "A dependent disk ties a custom storage volume to the instance.\nThe volume is snapshotted, restored, copied, moved, exported and deleted together with the instance.\n\nA dependent volume cannot be attached to another instance or snapshotted on its own.\nIt cannot use `security.shared` or any `snapshots.*` option, and a volume that already has snapshots cannot be made dependent.\n\nWhen the instance moves to another cluster member, dependent volumes on shared storage are taken over rather than transferred.\nLive migration is not supported with dependent file system volumes.",
 							"required": "no",
 							"shortdesc": "Specifies if the disk is instance dependent",
 							"type": "bool"
@@ -116,7 +116,7 @@
 					{
 						"io.cache": {
 							"default": "`none`",
-							"longdesc": "This controls what bus a disk device should be attached to.\n\nFor block devices (disks), this is one of:\n- `none` (default)\n- `writeback`\n- `unsafe`\n\nFor file systems (shared directories or custom volumes), this is one of:\n- `none` (default)\n- `metadata`\n- `unsafe`",
+							"longdesc": "This controls the caching mode used for the disk device.\n\nFor block devices (disks), this is one of:\n- `none` (default)\n- `writeback`\n- `unsafe`\n\nFor file systems (shared directories or custom volumes), this is one of:\n- `none` (default)\n- `metadata`\n- `unsafe`",
 							"required": "no",
 							"shortdesc": "Only for VMs: Override the caching mode for the device",
 							"type": "string"
@@ -199,8 +199,8 @@
 					},
 					{
 						"path": {
-							"longdesc": "This controls which path inside the instance the disk should be mounted on.\n\nWith containers, this option supports mounting file system disk devices, and paths and single files within them.\n\nWith VMs, this option supports mounting file system disk devices and paths within them. Mounting single files is not supported.",
-							"required": "yes",
+							"longdesc": "This controls which path inside the instance the disk should be mounted on.\n\nWith containers, this option supports mounting file system disk devices, and paths and single files within them.\n\nWith VMs, this option supports mounting file system disk devices and paths within them. Mounting single files is not supported.\n\nThe path is required for file system disks (`/` identifies the root disk). It cannot be set for block or ISO disks attached to VMs.",
+							"required": "for file system disks",
 							"shortdesc": "Path inside the instance where the disk will be mounted (only for file system disk devices)",
 							"type": "string"
 						}
@@ -295,7 +295,7 @@
 							"longdesc": "",
 							"required": "no",
 							"shortdesc": "Only for VMs: Set the disk World Wide Name (only supported on `virtio-scsi` bus)",
-							"type": "bool"
+							"type": "string"
 						}
 					}
 				]
@@ -2704,9 +2704,10 @@
 					},
 					{
 						"boot.pxe": {
+							"condition": "virtual machine",
 							"defaultdesc": "no",
-							"liveupdate": "yes",
-							"longdesc": "",
+							"liveupdate": "no",
+							"longdesc": "This controls IPv4 and IPv6 PXE support in the UEFI firmware of the virtual machine.\n\nThe option is read when the virtual machine starts and must be set on the instance itself, a value inherited from a profile is ignored.",
 							"shortdesc": "Whether to enable PXE boot",
 							"type": "bool"
 						}
@@ -2844,7 +2845,7 @@
 					{
 						"cluster.evacuate": {
 							"defaultdesc": "`auto`",
-							"liveupdate": "no",
+							"liveupdate": "yes",
 							"longdesc": "The `cluster.evacuate` provides control over how instances are handled when a cluster member is being\nevacuated.\n\nAvailable Modes:\n  - `auto` *(default)*: The system will automatically decide the best evacuation method based on the\n     instance's type and configured devices:\n    + If any device is not suitable for migration, the instance will not be migrated (only stopped).\n    + Live migration will be used only for virtual machines with the `migration.stateful` setting\n      enabled and for which all its devices can be migrated as well.\n  - `live-migrate`: Instances are live-migrated to another server. This means the instance remains running\n     and operational during the migration process, ensuring minimal disruption.\n  - `refresh-migrate`: Instances are migrated to another server through a series of incremental\n     transfers, keeping the instance running until the last one. This isn't a live migration, but the\n     downtime is limited to the final transfer. Only supported for containers.\n  - `migrate`: In this mode, instances are migrated to another server in the cluster. The migration\n     process will not be live, meaning there will be a brief downtime for the instance during the\n     migration.\n  -  `stop`: Instances are not migrated. Instead, they are stopped on the current server.\n  -  `stateful-stop`: Instances are not migrated. Instead, they are stopped on the current server\n     but with their runtime state (memory) stored on disk for resuming on restore.\n  -  `force-stop`: Instances are not migrated. Instead, they are forcefully stopped.\n\nSee {ref}`cluster-evacuate` for more information.",
 							"shortdesc": "What to do when evacuating the instance",
 							"type": "string"
@@ -2878,7 +2879,7 @@
 					},
 					{
 						"smbios11.*": {
-							"liveupdate": "yes",
+							"liveupdate": "no",
 							"longdesc": "`SMBIOS Type 11` configuration keys.",
 							"shortdesc": "Free-form `SMBIOS Type 11` key/value",
 							"type": "string"
@@ -2886,7 +2887,7 @@
 					},
 					{
 						"systemd.credential-binary.*": {
-							"liveupdate": "yes",
+							"liveupdate": "yes (containers only)",
 							"longdesc": "Systemd credential key/value pair passed as a read-only bind mount in containers and as `SMBIOS Type 11` data in virtual machines. The value is Base64 encoded.",
 							"shortdesc": "Systemd credential key/value, where value is Base64 encoded",
 							"type": "string"
@@ -2894,7 +2895,7 @@
 					},
 					{
 						"systemd.credential.*": {
-							"liveupdate": "yes",
+							"liveupdate": "yes (containers only)",
 							"longdesc": "Systemd credential key/value pair passed as a read-only bind mount in containers and as `SMBIOS Type 11` data in virtual machines.",
 							"shortdesc": "Systemd credential key/value",
 							"type": "string"
@@ -3041,7 +3042,7 @@
 					},
 					{
 						"raw.apparmor": {
-							"liveupdate": "yes",
+							"liveupdate": "yes (containers only)",
 							"longdesc": "The specified entries are appended to the generated profile.",
 							"shortdesc": "AppArmor profile entries",
 							"type": "blob"
@@ -3153,7 +3154,7 @@
 					},
 					{
 						"limits.cpu.nodes": {
-							"liveupdate": "yes",
+							"liveupdate": "yes (containers only)",
 							"longdesc": "A comma-separated list of NUMA node IDs or ranges to place the instance CPUs on.\nAlternatively, the value `balanced` may be used to have Incus pick the least busy NUMA node on startup.\n\nSee {ref}`instance-options-limits-cpu-container` for more information.",
 							"shortdesc": "Which NUMA nodes to place the instance CPUs on",
 							"type": "string"
@@ -3172,7 +3173,7 @@
 					{
 						"limits.disk.priority": {
 							"defaultdesc": "`5` (medium)",
-							"liveupdate": "yes",
+							"liveupdate": "yes (containers only)",
 							"longdesc": "Controls how much priority to give to the instance's I/O requests when under load.\n\nSpecify an integer between 0 and 10.",
 							"shortdesc": "Priority of the instance's I/O requests",
 							"type": "integer"
@@ -3237,7 +3238,7 @@
 						"limits.memory.hotplug": {
 							"condition": "virtual machine",
 							"defaultdesc": "`true`",
-							"liveupdate": "yes",
+							"liveupdate": "no",
 							"longdesc": "If this option is set to `false`, disable memory hotplug entirely.\nAlternatively, it can be set to a bytes value which will define an upper limit for hotplugged memory.\nThe value must be greater than or equal to limits.memory.",
 							"shortdesc": "Control upper limit for hotplugged memory or disable memory hotplug.",
 							"type": "string"
@@ -3354,7 +3355,7 @@
 						"security.agent.metrics": {
 							"condition": "virtual machine",
 							"defaultdesc": "`true`",
-							"liveupdate": "no",
+							"liveupdate": "yes",
 							"longdesc": "",
 							"shortdesc": "Whether the `incus-agent` is queried for state information and metrics",
 							"type": "bool"
@@ -3419,7 +3420,7 @@
 					{
 						"security.guestapi": {
 							"defaultdesc": "`true`",
-							"liveupdate": "no",
+							"liveupdate": "yes",
 							"longdesc": "See {ref}`dev-incus` for more information.",
 							"shortdesc": "Whether `/dev/incus` is present in the instance",
 							"type": "bool"
@@ -6493,7 +6494,7 @@
 					{
 						"cluster.rebalance.batch": {
 							"defaultdesc": "`1`",
-							"longdesc": "",
+							"longdesc": "Only virtual machines that can be live-migrated are moved.\nA re-balancing run stops once this number of instances has been moved.",
 							"scope": "global",
 							"shortdesc": "Maximum number of instances to move during one re-balancing run",
 							"type": "integer"
@@ -6502,7 +6503,7 @@
 					{
 						"cluster.rebalance.cooldown": {
 							"defaultdesc": "`6H`",
-							"longdesc": "",
+							"longdesc": "An instance moved by a re-balancing run is not considered again until this amount of time has passed.\nThe value is a sequence of space-separated `\u003cinteger\u003e\u003cunit\u003e` fields, with the unit being one of `S`, `M`, `H`, `d`, `w`, `m` or `y`.",
 							"scope": "global",
 							"shortdesc": "Amount of time during which an instance will not be moved again",
 							"type": "string"
@@ -6511,7 +6512,7 @@
 					{
 						"cluster.rebalance.interval": {
 							"defaultdesc": "`0`",
-							"longdesc": "",
+							"longdesc": "On every run, the cluster leader scores each online cluster member by averaging its memory usage and its 1-minute load average relative to its CPU count, both as percentages.\nMembers are compared per CPU architecture, and virtual machines are live-migrated from the most loaded member to less loaded ones.",
 							"scope": "global",
 							"shortdesc": "How often (in minutes) to consider re-balancing things. 0 to disable (default)",
 							"type": "integer"
@@ -6520,7 +6521,7 @@
 					{
 						"cluster.rebalance.threshold": {
 							"defaultdesc": "`20`",
-							"longdesc": "",
+							"longdesc": "The difference is the gap between the scores of the most and least loaded servers, as a percentage of the score of the most loaded one.\nThis must be a number between `10` and `100`.",
 							"scope": "global",
 							"shortdesc": "Percentage load difference between most and least busy server needed to trigger a migration",
 							"type": "integer"
@@ -7704,14 +7705,6 @@
 			"common": {
 				"keys": [
 					{
-						"block.type": {
-							"condition": "block-based volume",
-							"default": "same as `volume.block.type`",
-							"longdesc": "",
-							"shortdesc": "Type of the block volume"
-						}
-					},
-					{
 						"lvm.metadata_size": {
 							"default": "`0` (auto)",
 							"longdesc": "",
@@ -8572,6 +8565,15 @@
 						}
 					},
 					{
+						"block.type": {
+							"condition": "`lvmcluster` driver, VM or custom volume with content type `block`",
+							"default": "same as `volume.block.type` or `qcow2`",
+							"longdesc": "Possible values are `qcow2` and `raw`.\nThe type cannot be changed after the volume is created.",
+							"shortdesc": "Type of the block volume",
+							"type": "string"
+						}
+					},
+					{
 						"initial.gid": {
 							"condition": "custom volume with content type `filesystem`",
 							"default": "same as `volume.initial.gid` or `0`",
@@ -8600,7 +8602,7 @@
 					},
 					{
 						"lvm.stripes": {
-							"condition": "-",
+							"condition": "pool not using a thin pool (`lvm.use_thinpool=false` or `lvmcluster` driver)",
 							"default": "same as `volume.lvm.stripes`",
 							"longdesc": "",
 							"shortdesc": "Number of stripes to use for new volumes (or thin pool volume)",
@@ -8609,7 +8611,7 @@
 					},
 					{
 						"lvm.stripes.size": {
-							"condition": "-",
+							"condition": "pool not using a thin pool (`lvm.use_thinpool=false` or `lvmcluster` driver)",
 							"default": "same as `volume.lvm.stripes.size`",
 							"longdesc": "",
 							"shortdesc": "Size of stripes to use (at least 4096 bytes and multiple of 512 bytes)",
@@ -8618,9 +8620,9 @@
 					},
 					{
 						"lvmcluster.remove_snapshots": {
-							"condition": "-",
+							"condition": "`lvmcluster` driver",
 							"default": "same as `volume.lvmcluster.remove_snapshots` or `false`",
-							"longdesc": "",
+							"longdesc": "Only the most recent snapshot of a `qcow2` volume can be restored.\nWhen this option is enabled, restoring an older snapshot deletes all the snapshots taken after it.",
 							"shortdesc": "Remove snapshots as needed",
 							"type": "bool"
 						}
