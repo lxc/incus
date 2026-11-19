@@ -191,7 +191,7 @@ For more information about the `rebuild` command, see [`incus rebuild --help`](i
 To rebuild the instance with a different image, send a POST request to the instance's `rebuild` endpoint.
 For example:
 
-    incus query --request POST /1.0/instances/<instance_name>/rebuild --data '{"source": {"alias":"<image_alias>","server":"<server_URL>", protocol:"simplestreams"}}'
+    incus query --request POST /1.0/instances/<instance_name>/rebuild --data '{"source": {"alias":"<image_alias>","server":"<server_URL>","protocol":"simplestreams"}}'
 
 To rebuild the instance with an empty root disk, specify the source type as `none`:
 
