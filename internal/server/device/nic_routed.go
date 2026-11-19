@@ -1,6 +1,7 @@
 package device
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -26,6 +27,9 @@ var nicRoutedIPGateway = map[string]net.IP{
 	"ipv4": net.IPv4(169, 254, 0, 1),                                  // 169.254.0.1
 	"ipv6": {0xfe, 0x80, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0x01}, // fe80::1
 }
+
+// nicRoutedHostHwaddr is the host-side MAC, the same on all hosts so the guest's gateway neighbor entry survives live migrations.
+var nicRoutedHostHwaddr = net.HardwareAddr{0xee, 0xee, 0xee, 0xee, 0xee, 0xee}
 
 type nicRouted struct {
 	deviceCommon
@@ -363,6 +367,19 @@ func (d *nicRouted) validateConfig(instConf instance.ConfigReader, partialValida
 	rules["ipv6.host_tables"] = validate.Optional(validate.IsListOf(validate.IsInRange(0, 255)))
 	rules["gvrp"] = validate.Optional(validate.IsBool)
 	rules["vrf"] = validate.Optional(validate.IsAny)
+	// Also checks generated MAC addresses, as network.hwaddr_pattern can produce the host-side one.
+	rules["hwaddr"] = validate.Optional(validate.IsNetworkMAC, func(value string) error {
+		hwaddr, err := net.ParseMAC(value)
+		if err != nil {
+			return err
+		}
+
+		if bytes.Equal(hwaddr, nicRoutedHostHwaddr) {
+			return fmt.Errorf("MAC address %q is reserved for the host side of routed NICs", value)
+		}
+
+		return nil
+	})
 
 	err = d.config.Validate(rules)
 	if err != nil {
@@ -620,7 +637,7 @@ func (d *nicRouted) Start() (*deviceConfig.RunConfig, error) {
 			return nil, err
 		}
 
-		peerName, mtu, err = networkCreateVethPair(saveData["host_name"], d.config)
+		peerName, mtu, err = networkCreateVethPair(saveData["host_name"], nicRoutedHostHwaddr, d.config)
 	} else if d.inst.Type() == instancetype.VM {
 		err = d.generateAndPersistHostName(saveData, "tap")
 		if err != nil {
@@ -628,7 +645,7 @@ func (d *nicRouted) Start() (*deviceConfig.RunConfig, error) {
 		}
 
 		peerName = saveData["host_name"] // VMs use the host_name to link to the TAP FD.
-		mtu, err = networkCreateTap(saveData["host_name"], d.config)
+		mtu, err = networkCreateTap(saveData["host_name"], nicRoutedHostHwaddr, d.config)
 	}
 
 	if err != nil {

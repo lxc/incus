@@ -1061,7 +1061,7 @@ func (d *nicOVN) Start() (*deviceConfig.RunConfig, error) {
 				}
 
 				integrationBridgeNICName = saveData["host_name"]
-				peerName, mtu, err = networkCreateVethPair(saveData["host_name"], d.config)
+				peerName, mtu, err = networkCreateVethPair(saveData["host_name"], nil, d.config)
 				if err != nil {
 					return nil, err
 				}
@@ -1073,7 +1073,7 @@ func (d *nicOVN) Start() (*deviceConfig.RunConfig, error) {
 
 				integrationBridgeNICName = saveData["host_name"]
 				peerName = saveData["host_name"] // VMs use the host_name to link to the TAP FD.
-				mtu, err = networkCreateTap(saveData["host_name"], d.config)
+				mtu, err = networkCreateTap(saveData["host_name"], nil, d.config)
 				if err != nil {
 					return nil, err
 				}
