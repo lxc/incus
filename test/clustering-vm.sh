@@ -79,7 +79,7 @@ incus storage volume create "${POOL}" "${PREFIX}-shared" --type=block size=40GiB
 
 log "Launch ${MEMBERS} virtual machines"
 for i in $(seq "${MEMBERS}"); do
-    incus init "${IMAGE}" "$(member "${i}")" --vm -c security.nesting=true -c limits.cpu=2 -c limits.memory=4GiB -d root,size=20GiB
+    incus init "${IMAGE}" "$(member "${i}")" --vm -c security.nesting=true -c limits.cpu=2 -c limits.memory=4GiB -d root,size=30GiB
     incus config device add "$(member "${i}")" shared disk pool="${POOL}" source="${PREFIX}-shared"
     incus start "$(member "${i}")"
 done
@@ -271,19 +271,24 @@ lv_locked() {
     return 0
 }
 
+# wait_locked waits for a logical volume to be locked by another member than the given one.
+wait_locked() {
+    # The lock is only promoted once the previous member released the volume.
+    for _ in $(seq 30); do
+        if lv_locked "${1}" "${2}"; then
+            return 0
+        fi
+
+        sleep 2
+    done
+
+    lv_locked "${1}" "${2}"
+}
+
 # check_locks checks that the volumes of v2 are locked exclusively by the member running it.
 check_locks() {
     for lv in virtual-machines_v2.block virtual-machines_v2 custom_default_vol4.block; do
-        # The lock is only promoted once the previous member released the volume.
-        for _ in $(seq 30); do
-            if lv_locked "${1}" "${lv}"; then
-                break
-            fi
-
-            sleep 2
-        done
-
-        lv_locked "${1}" "${lv}"
+        wait_locked "${1}" "${lv}"
     done
 
     ! lv_locked "${1}" custom_default_vol1.block || false
@@ -334,12 +339,32 @@ incus storage volume delete "${REMOTE}:shared" vol4
 check_volumes
 
 log "Live migrate the local storage VM"
+incus storage volume create "${REMOTE}:shared" vol5 --type=block size=64MiB
+incus config device add "${REMOTE}:v1" vol5 disk pool=shared source=vol5 dependent=true
 incus move "${REMOTE}:v1" "${REMOTE}:v1" --target "$(member 2)"
 check_vm v1 "$(member 2)"
 check_following_volume "$(member 2)"
+wait_locked "$(member 1)" custom_default_vol5.block
+
+log "Live move the dependent disk of the local storage VM to local storage"
+incus move "${REMOTE}:v1" "${REMOTE}:v1" --target "$(member 1)" -d vol5,pool=local
+check_vm v1 "$(member 1)"
+check_following_volume "$(member 1)"
+[ "$(incus config device get "${REMOTE}:v1" vol5 pool)" = "local" ]
+incus storage volume list "${REMOTE}:local" --format csv --columns nL | grep -Fx "vol5,$(member 1)"
+
+log "Live move the local dependent disk of the local storage VM to shared storage"
+incus move "${REMOTE}:v1" "${REMOTE}:v1" --target "$(member 2)" -d vol5,pool=shared
+check_vm v1 "$(member 2)"
+check_following_volume "$(member 2)"
+[ "$(incus config device get "${REMOTE}:v1" vol5 pool)" = "shared" ]
+wait_locked "$(member 1)" custom_default_vol5.block
 incus move "${REMOTE}:v1" "${REMOTE}:v1" --target "$(member 1)"
 check_vm v1 "$(member 1)"
 check_following_volume "$(member 1)"
+wait_locked "$(member 2)" custom_default_vol5.block
+incus config device remove "${REMOTE}:v1" vol5
+incus storage volume delete "${REMOTE}:shared" vol5
 
 log "Move the stopped local storage VM"
 incus stop -f "${REMOTE}:v1"
@@ -509,17 +534,64 @@ incus exec "${REMOTE}:v2" -- sh -c "echo current > /root/marker && sync && echo 
 check_volumes
 
 log "Live move the shared storage VM to local storage"
+incus storage volume create "${REMOTE}:shared" vol4 --type=block size=64MiB
+incus config device add "${REMOTE}:v2" vol4 disk pool=shared source=vol4 dependent=true
 incus move "${REMOTE}:v2" "${REMOTE}:v2" -s local --target "$(member 2)"
 check_vm v2 "$(member 2)"
 check_volumes
 [ "$(incus config device get "${REMOTE}:v2" root pool)" = "local" ]
 check_snapshots v2 "renamed6"
+wait_locked "$(member 1)" custom_default_vol4.block
 
 log "Live move the VM back to shared storage"
 incus move "${REMOTE}:v2" "${REMOTE}:v2" -s shared --target "$(member 1)"
 check_vm v2 "$(member 1)"
 check_volumes
 [ "$(incus config device get "${REMOTE}:v2" root pool)" = "shared" ]
+check_locks "$(member 2)"
+
+log "Live move the dependent disk of the shared storage VM to local storage"
+incus move "${REMOTE}:v2" "${REMOTE}:v2" --target "$(member 2)" -d vol4,pool=local
+check_vm v2 "$(member 2)"
+check_volumes
+[ "$(incus config device get "${REMOTE}:v2" vol4 pool)" = "local" ]
+
+log "Live move the shared storage VM with a local dependent disk"
+incus move "${REMOTE}:v2" "${REMOTE}:v2" --target "$(member 1)"
+check_vm v2 "$(member 1)"
+incus storage volume list "${REMOTE}:local" --format csv --columns nL | grep -Fx "vol4,$(member 1)"
+
+log "Live move the local dependent disk of the shared storage VM to shared storage"
+incus move "${REMOTE}:v2" "${REMOTE}:v2" --target "$(member 2)" -d vol4,pool=shared
+check_vm v2 "$(member 2)"
+check_volumes
+[ "$(incus config device get "${REMOTE}:v2" vol4 pool)" = "shared" ]
+wait_locked "$(member 1)" custom_default_vol4.block
+incus move "${REMOTE}:v2" "${REMOTE}:v2" --target "$(member 1)" -d vol4,pool=local
+check_vm v2 "$(member 1)"
+incus storage volume list "${REMOTE}:local" --format csv --columns nL | grep -Fx "vol4,$(member 1)"
+
+log "Live move the shared storage VM and its dependent disk to local storage"
+incus storage volume create "${REMOTE}:shared" vol6 --type=block size=64MiB
+incus config device add "${REMOTE}:v2" vol6 disk pool=shared source=vol6 dependent=true
+incus move "${REMOTE}:v2" "${REMOTE}:v2" -s local --target "$(member 2)" -d vol6,pool=local
+check_vm v2 "$(member 2)"
+check_volumes
+[ "$(incus config device get "${REMOTE}:v2" root pool)" = "local" ]
+[ "$(incus config device get "${REMOTE}:v2" vol6 pool)" = "local" ]
+incus storage volume list "${REMOTE}:local" --format csv --columns nL | grep -Fx "vol4,$(member 2)"
+
+log "Live move the VM and its dependent disk back to shared storage"
+incus move "${REMOTE}:v2" "${REMOTE}:v2" -s shared --target "$(member 1)" -d vol6,pool=shared
+check_vm v2 "$(member 1)"
+check_volumes
+[ "$(incus config device get "${REMOTE}:v2" root pool)" = "shared" ]
+[ "$(incus config device get "${REMOTE}:v2" vol6 pool)" = "shared" ]
+wait_locked "$(member 2)" custom_default_vol6.block
+incus config device remove "${REMOTE}:v2" vol4
+incus config device remove "${REMOTE}:v2" vol6
+incus storage volume delete "${REMOTE}:local" vol4 --target "$(member 1)"
+incus storage volume delete "${REMOTE}:shared" vol6
 incus restart -f "${REMOTE}:v2"
 check_marker v2 current
 incus snapshot restore "${REMOTE}:v2" renamed6
