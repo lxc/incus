@@ -133,7 +133,20 @@ test_container_devices_nic_routed() {
         false
     fi
 
+    # Check the host side uses the fixed MAC, the same on all hosts.
+    grep -Fx "ee:ee:ee:ee:ee:ee" "/sys/class/net/${ctHost}/address"
+    incus exec "${ctName}" -- ping -c1 -W5 169.254.0.1
+    incus exec "${ctName}" -- ip neigh show 169.254.0.1 | grep -F "ee:ee:ee:ee:ee:ee"
+
     incus stop "${ctName}" --force
+
+    # Check the instance can't use the host-side MAC, also when generated.
+    ! incus config device set "${ctName}" eth0 hwaddr=ee:ee:ee:ee:ee:ee || false
+    incus config set network.hwaddr_pattern=ee:ee:ee:ee:ee:ee
+    incus init testimage "${ctName}mac"
+    incus config device add "${ctName}mac" eth0 nic nictype=routed parent="${ctName}" ipv4.address="192.0.2.2${ipRand}" 2>&1 | grep -F "reserved for the host side"
+    incus delete -f "${ctName}mac"
+    incus config unset network.hwaddr_pattern
 
     # Check neighbor proxy entries removed from parent interface.
     ! ip neigh show proxy dev "${ctName}" | grep "192.0.2.1${ipRand}" || false
