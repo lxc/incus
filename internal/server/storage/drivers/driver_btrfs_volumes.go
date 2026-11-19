@@ -272,8 +272,9 @@ func (d *btrfs) CreateVolumeFromBackup(vol Volume, srcBackup backup.Info, srcDat
 	}
 
 	type btrfsCopyOp struct {
-		src  string
-		dest string
+		src     string
+		volPath string
+		path    string
 	}
 
 	var copyOps []btrfsCopyOp
@@ -314,8 +315,9 @@ func (d *btrfs) CreateVolumeFromBackup(vol Volume, srcBackup backup.Info, srcDat
 			}
 
 			copyOps = append(copyOps, btrfsCopyOp{
-				src:  unpackedSubVolPath,
-				dest: subVolTargetPath,
+				src:     unpackedSubVolPath,
+				volPath: v.MountPath(),
+				path:    subVol.Path,
 			})
 		}
 
@@ -374,11 +376,17 @@ func (d *btrfs) CreateVolumeFromBackup(vol Volume, srcBackup backup.Info, srcDat
 			return nil, nil, err
 		}
 
+		// Earlier subvolumes are in place by now and may hold symlinks.
+		dest, err := d.subvolumePath(copyOp.volPath, copyOp.path)
+		if err != nil {
+			return nil, nil, err
+		}
+
 		// Clear the target for the subvol to use.
-		_ = os.Remove(copyOp.dest)
+		_ = os.Remove(dest)
 
 		// Move unpacked subvolume into its final location.
-		err = os.Rename(copyOp.src, copyOp.dest)
+		err = os.Rename(copyOp.src, dest)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -395,7 +403,11 @@ func (d *btrfs) CreateVolumeFromBackup(vol Volume, srcBackup backup.Info, srcDat
 			v, _ = vol.NewSnapshot(subVol.Snapshot)
 		}
 
-		path := filepath.Join(v.MountPath(), subVol.Path)
+		path, err := d.subvolumePath(v.MountPath(), subVol.Path)
+		if err != nil {
+			return nil, nil, err
+		}
+
 		d.logger.Debug("Setting subvolume readonly", logger.Ctx{"name": v.name, "path": path})
 		err = d.setSubvolumeReadonlyProperty(path, true)
 		if err != nil {
@@ -621,7 +633,8 @@ func (d *btrfs) createVolumeFromMigrationOptimized(vol Volume, conn io.ReadWrite
 
 	type btrfsCopyOp struct {
 		src          string
-		dest         string
+		volPath      string
+		path         string
 		receivedUUID string
 	}
 
@@ -672,7 +685,8 @@ func (d *btrfs) createVolumeFromMigrationOptimized(vol Volume, conn io.ReadWrite
 			// Record the copy operations we need to do after having received all subvolumes.
 			copyOps = append(copyOps, btrfsCopyOp{
 				src:          subVolRecvPath,
-				dest:         subVolTargetPath,
+				volPath:      v.MountPath(),
+				path:         subVol.Path,
 				receivedUUID: UUID,
 			})
 		}
@@ -737,10 +751,23 @@ func (d *btrfs) createVolumeFromMigrationOptimized(vol Volume, conn io.ReadWrite
 			return err
 		}
 
-		// Clear the target for the subvol to use.
-		_ = os.Remove(op.dest)
+		// Earlier subvolumes are in place by now and may hold symlinks.
+		dest, err := d.subvolumePath(op.volPath, op.path)
+		if err != nil {
+			return err
+		}
 
-		err = os.Rename(op.src, op.dest)
+		// Clear the target. os.Remove can't remove an existing same-named subvolume.
+		if d.isSubvolume(dest) {
+			err = d.deleteSubvolume(dest, true)
+			if err != nil {
+				return err
+			}
+		} else {
+			_ = os.Remove(dest)
+		}
+
+		err = os.Rename(op.src, dest)
 		if err != nil {
 			return err
 		}
@@ -751,7 +778,7 @@ func (d *btrfs) createVolumeFromMigrationOptimized(vol Volume, conn io.ReadWrite
 		// incremental streams (error: "cannot find parent subvolume").
 		// Setting the "Received UUID" field to the value of the received subvolume (before making
 		// it rw) solves this issue.
-		err = setReceivedUUID(op.dest, op.receivedUUID)
+		err = setReceivedUUID(dest, op.receivedUUID)
 		if err != nil {
 			return fmt.Errorf("Failed setting received UUID: %w", err)
 		}
@@ -768,7 +795,11 @@ func (d *btrfs) createVolumeFromMigrationOptimized(vol Volume, conn io.ReadWrite
 			v, _ = vol.NewSnapshot(subVol.Snapshot)
 		}
 
-		path := filepath.Join(v.MountPath(), subVol.Path)
+		path, err := d.subvolumePath(v.MountPath(), subVol.Path)
+		if err != nil {
+			return err
+		}
+
 		d.logger.Debug("Setting subvolume readonly", logger.Ctx{"name": v.name, "path": path})
 		err = d.setSubvolumeReadonlyProperty(path, true)
 		if err != nil {
