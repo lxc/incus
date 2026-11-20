@@ -5306,6 +5306,7 @@ Possible values are `allow` or `block`.
 :shortdesc: "Cluster groups that can be targeted"
 :type: "string"
 If specified, this option prevents targeting cluster groups other than the provided ones.
+When a single group is listed, instances created without a target are placed in that group.
 ```
 
 ```{config:option} restricted.cluster.target project-restricted
