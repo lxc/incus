@@ -981,6 +981,12 @@ jobs:
 
   clustering-vm-tests:
     name: Clustering VM
+    strategy:
+      fail-fast: false
+      matrix:
+        section:
+          - basic
+          - moves
     # Runs on ephemeral Debian VMs with nested virtualization (amd64 only).
     runs-on:
       - self-hosted
@@ -1043,9 +1049,9 @@ jobs:
         run: |
           make
 
-      - name: Run clustering VM tests
+      - name: "Run clustering VM tests (${{ matrix.section }})"
         run: |
-          sudo --preserve-env=PATH,GOPATH env INCUS_BIN_DIR="$(go env GOPATH)/bin" ./test/clustering-vm.sh
+          sudo --preserve-env=PATH,GOPATH env INCUS_BIN_DIR="$(go env GOPATH)/bin" ./test/clustering-vm.sh ${{ matrix.section }}
 
   security-tests:
     name: Security
