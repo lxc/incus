@@ -1697,7 +1697,7 @@ func instancesPost(d *Daemon, r *http.Request) response.Response {
 		}
 
 		if targetMemberInfo == nil {
-			return response.InternalError(errors.New("Couldn't find a cluster member for the instance"))
+			return response.SmartError(project.NoCandidateMemberError(targetProject))
 		}
 	}
 
