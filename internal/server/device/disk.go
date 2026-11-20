@@ -513,14 +513,16 @@ func (d *disk) validateConfig(instConf instance.ConfigReader, partialValidation 
 		// With containers, this option supports mounting file system disk devices, and paths and single files within them.
 		//
 		// With VMs, this option supports mounting file system disk devices and paths within them. Mounting single files is not supported.
+		//
+		// The path is required for file system disks (`/` identifies the root disk). It cannot be set for block or ISO disks attached to VMs.
 		// ---
 		//  type: string
-		//  required: yes
+		//  required: for file system disks
 		//  shortdesc: Path inside the instance where the disk will be mounted (only for file system disk devices)
 		"path": validate.IsAny,
 
 		// gendoc:generate(entity=devices, group=disk, key=io.cache)
-		// This controls what bus a disk device should be attached to.
+		// This controls the caching mode used for the disk device.
 		//
 		// For block devices (disks), this is one of:
 		// - `none` (default)
@@ -568,11 +570,18 @@ func (d *disk) validateConfig(instConf instance.ConfigReader, partialValidation 
 		//  type: bool
 		//  default: `true`
 		//  required: no
-		//  shortdesc: Only for VMs: Whether the disk is attached or ejected
+		//  shortdesc: Only for VMs: Whether the disk is attached or ejected (only for custom ISO volumes)
 		"attached": validate.Optional(validate.IsBool),
 
 		// gendoc:generate(entity=devices, group=disk, key=dependent)
+		// A dependent disk ties a custom storage volume to the instance.
+		// The volume is snapshotted, restored, copied, moved, exported and deleted together with the instance.
 		//
+		// A dependent volume cannot be attached to another instance or snapshotted on its own.
+		// It cannot use `security.shared` or any `snapshots.*` option, and a volume that already has snapshots cannot be made dependent.
+		//
+		// When the instance moves to another cluster member, dependent volumes on shared storage are taken over rather than transferred.
+		// Live migration is not supported with dependent file system volumes.
 		// ---
 		//  type: bool
 		//  default: `false`
@@ -583,7 +592,7 @@ func (d *disk) validateConfig(instConf instance.ConfigReader, partialValidation 
 		// gendoc:generate(entity=devices, group=disk, key=wwn)
 		//
 		// ---
-		//  type: bool
+		//  type: string
 		//  default: ``
 		//  required: no
 		//  shortdesc: Only for VMs: Set the disk World Wide Name (only supported on `virtio-scsi` bus)
