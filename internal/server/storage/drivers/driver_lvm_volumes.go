@@ -211,12 +211,17 @@ func (d *lvm) CreateVolumeFromMigration(vol Volume, conn io.ReadWriteCloser, vol
 			return err
 		}
 
+		reverter := revert.New()
+		defer reverter.Fail()
+
 		// The source keeps using the volume until the live migration completes.
 		if volTargetArgs.Live && d.exclusiveVolume(vol) {
 			err := d.activateVolumeShared(vol)
 			if err != nil {
 				return err
 			}
+
+			reverter.Add(func() { _, _ = d.deactivateVolume(vol) })
 		}
 
 		if vol.IsVMBlock() {
@@ -227,6 +232,7 @@ func (d *lvm) CreateVolumeFromMigration(vol Volume, conn io.ReadWriteCloser, vol
 			}
 		}
 
+		reverter.Success()
 		return nil
 	}
 
