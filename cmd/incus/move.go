@@ -65,11 +65,11 @@ incus move <old name> <new name> [--instance-only]
 	cli.AddBoolFlag(cmd.Flags(), &c.flagNoProfiles, "no-profiles", i18n.G("Unset all profiles on the target instance"))
 	cli.AddBoolFlag(cmd.Flags(), &c.flagInstanceOnly, "instance-only", i18n.G("Move the instance without its snapshots"))
 	cli.AddStringFlag(cmd.Flags(), &c.flagMode, "mode", moveDefaultMode, "", i18n.G("Transfer mode. One of pull, push or relay"))
-	cli.AddBoolFlag(cmd.Flags(), &c.flagRefresh, "refresh", i18n.G("Transfer the instance incrementally, reducing the downtime of a running instance"))
-	cli.AddBoolFlag(cmd.Flags(), &c.flagStateless, "stateless", i18n.G("Copy a stateful instance stateless"))
+	cli.AddBoolFlag(cmd.Flags(), &c.flagRefresh, "refresh", i18n.G("Transfer a running container incrementally to reduce its downtime (requires --stateless)"))
+	cli.AddBoolFlag(cmd.Flags(), &c.flagStateless, "stateless", i18n.G("Move the instance without its runtime state (no live migration)"))
 	cli.AddStringFlag(cmd.Flags(), &c.flagStorage, "storage|s", "", "", i18n.G("Storage pool name"))
 	cli.AddStringFlag(cmd.Flags(), &c.flagTarget, "target", "", "", i18n.G("Cluster member name"))
-	cli.AddStringFlag(cmd.Flags(), &c.flagTargetProject, "target-project", "", "", i18n.G("Copy to a project different from the source"))
+	cli.AddStringFlag(cmd.Flags(), &c.flagTargetProject, "target-project", "", "", i18n.G("Move to a project different from the source"))
 	cli.AddBoolFlag(cmd.Flags(), &c.flagAllowInconsistent, "allow-inconsistent", i18n.G("Ignore copy errors for volatile files"))
 
 	_ = cmd.RegisterFlagCompletionFunc("target-project", func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {

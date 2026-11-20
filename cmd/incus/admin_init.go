@@ -50,11 +50,11 @@ func (c *cmdAdminInit) command() *cobra.Command {
 	cmd.RunE = c.run
 	cli.AddBoolFlag(cmd.Flags(), &c.flagAuto, "auto", i18n.G("Automatic (non-interactive) mode"))
 	cli.AddBoolFlag(cmd.Flags(), &c.flagMinimal, "minimal", i18n.G("Minimal configuration (non-interactive)"))
-	cli.AddBoolFlag(cmd.Flags(), &c.flagPreseed, "preseed", i18n.G("Pre-seed mode, expects YAML config from stdin"))
+	cli.AddBoolFlag(cmd.Flags(), &c.flagPreseed, "preseed", i18n.G("Pre-seed mode, expects YAML config from the given file or from stdin"))
 	cli.AddBoolFlag(cmd.Flags(), &c.flagDump, "dump", i18n.G("Dump YAML config to stdout"))
 
 	cli.AddStringFlag(cmd.Flags(), &c.flagNetworkAddress, "network-address", "", "", i18n.G("Address to bind to (default: none)"))
-	cli.AddIntFlag(cmd.Flags(), &c.flagNetworkPort, "network-port", fmt.Sprintf(i18n.G("Port to bind to (default: %d)"), ports.HTTPSDefaultPort), -1)
+	cli.AddIntFlag(cmd.Flags(), &c.flagNetworkPort, "network-port", fmt.Sprintf(i18n.G("Port to bind to, requires --network-address (default: %d)"), ports.HTTPSDefaultPort), -1)
 	cli.AddStringFlag(cmd.Flags(), &c.flagStorageBackend, "storage-backend", "", "", i18n.G("Storage backend to use (btrfs, dir, lvm or zfs, default: dir)"))
 	cli.AddStringFlag(cmd.Flags(), &c.flagStorageDevice, "storage-create-device", "", "", i18n.G("Setup device based storage using DEVICE"))
 	cli.AddIntFlag(cmd.Flags(), &c.flagStorageLoopSize, "storage-create-loop", i18n.G("Setup loop based storage with SIZE in GiB"), -1)

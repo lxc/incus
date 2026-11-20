@@ -49,8 +49,8 @@ incus export u1 -
 	))
 
 	cmd.RunE = c.run
-	cli.AddBoolFlag(cmd.Flags(), &c.flagInstanceOnly, "instance-only", i18n.G("Whether or not to only backup the instance (without snapshots)"))
-	cli.AddBoolFlag(cmd.Flags(), &c.flagRootOnly, "root-only", i18n.G("Whether or not to only backup the instance (without dependent volumes)"))
+	cli.AddBoolFlag(cmd.Flags(), &c.flagInstanceOnly, "instance-only", i18n.G("Export the instance without its snapshots"))
+	cli.AddBoolFlag(cmd.Flags(), &c.flagRootOnly, "root-only", i18n.G("Export the instance without its dependent volumes"))
 	cli.AddBoolFlag(cmd.Flags(), &c.flagOptimizedStorage, "optimized-storage", i18n.G("Use storage driver optimized format (can only be restored on a similar pool)"))
 	cli.AddStringFlag(cmd.Flags(), &c.flagCompressionAlgorithm, "compression", "", "", i18n.G("Compression algorithm to use (none for uncompressed)"))
 	cli.AddBoolFlag(cmd.Flags(), &c.flagForce, "force|f", i18n.G("Force overwriting existing backup file"))
