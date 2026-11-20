@@ -320,6 +320,7 @@ func instancePost(d *Daemon, r *http.Request) response.Response {
 	// If clustered, consider a new location for the instance.
 	var targetMemberInfo *db.NodeInfo
 	var targetCandidates []db.NodeInfo
+	var targetProject *api.Project
 	if s.ServerClustered && (target != "" || req.Project != "") {
 		err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
 			var targetGroupName string
@@ -330,7 +331,7 @@ func instancePost(d *Daemon, r *http.Request) response.Response {
 				return err
 			}
 
-			targetProject, err := p.ToAPI(ctx, tx.Tx())
+			targetProject, err = p.ToAPI(ctx, tx.Tx())
 			if err != nil {
 				return err
 			}
@@ -484,7 +485,7 @@ func instancePost(d *Daemon, r *http.Request) response.Response {
 			}
 
 			if len(filteredCandidateMembers) == 0 {
-				return response.InternalError(errors.New("Couldn't find a cluster member for the instance"))
+				return response.SmartError(project.NoCandidateMemberError(targetProject))
 			}
 
 			targetMemberInfo = &filteredCandidateMembers[0]
