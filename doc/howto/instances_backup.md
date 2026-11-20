@@ -21,8 +21,9 @@ There are different ways of backing up your instances:
 
 ```{note}
 Custom storage volumes might be attached to an instance, but they are not part of the instance.
-Therefore, the content of a custom storage volume is not stored when you back up your instance.
-You must back up the data of your storage volume separately.
+Therefore, the content of a custom storage volume is not stored when you back up your instance, unless the volume is attached with `dependent=true`.
+Such a volume is included in the snapshots and export files of the instance.
+You must back up the data of all other storage volumes separately.
 See {ref}`howto-storage-backup-volume` for instructions.
 ```
 
@@ -99,6 +100,8 @@ You should also configure whether you want to take snapshots of instances that a
 ### Restore an instance snapshot
 
 You can restore an instance to any of its snapshots.
+However, if the instance has a disk device with `dependent=true`, only the most recent snapshot can be restored.
+The same applies to virtual machines on `lvmcluster` storage pools and to the storage drivers that cannot restore older snapshots (see {ref}`storage-drivers-features`), unless the `remove_snapshots` option of the driver (for example, `lvmcluster.remove_snapshots`) is set, in which case the newer snapshots are deleted.
 
 To do so, use the following command:
 
@@ -129,6 +132,10 @@ If you do not specify a file path, the export file is saved as `<instance_name>.
 `--instance-only`
 : By default, the export file contains all snapshots of the instance.
   Add this flag to export the instance without its snapshots.
+
+`--root-only`
+: By default, the export file contains all custom storage volumes that are attached to the instance with `dependent=true`.
+  Add this flag to export the instance without those volumes.
 
 ### Restore an instance from an export file
 

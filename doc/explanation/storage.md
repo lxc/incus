@@ -146,6 +146,7 @@ Storage volumes can be of the following types:
 `custom`
 : You can add one or more custom storage volumes to hold data that you want to store separately from your instances.
   Custom storage volumes can be shared between instances, and they are retained until you delete them.
+  The exception are volumes attached to an instance with `dependent=true`, which are deleted together with that instance.
 
   You can also use custom storage volumes to hold your backups or images.
 
