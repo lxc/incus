@@ -8,7 +8,6 @@ import (
 	"io"
 	"net/http"
 	"os"
-	"path/filepath"
 	"regexp"
 	"slices"
 	"sync/atomic"
@@ -62,6 +61,11 @@ func imageOperationLock(ctx context.Context, fingerprint string) (locking.Unlock
 	defer l.Debug("Lock acquired for image")
 
 	return locking.Lock(ctx, fmt.Sprintf("ImageOperation_%s", fingerprint))
+}
+
+// imageDownloadLock acquires a lock for downloading an image into a project and returns the unlock function.
+func imageDownloadLock(ctx context.Context, projectName string, fingerprint string) (locking.UnlockFunc, error) {
+	return locking.Lock(ctx, fmt.Sprintf("ImageDownload_%s_%s", projectName, fingerprint))
 }
 
 // imageDownloadIdleTimeout is how long a download may go without data before it's cancelled.
@@ -211,13 +215,21 @@ func imageDownload(ctx context.Context, r *http.Request, s *state.State, op *ope
 		}
 	}
 
+	// Only allow one download of this image in the project.
+	unlockDownload, err := imageDownloadLock(ctx, args.ProjectName, fp)
+	if err != nil {
+		return nil, false, err
+	}
+
+	defer unlockDownload()
+
 	// Ensure we are the only ones operating on this image.
 	unlock, err := imageOperationLock(ctx, fp)
 	if err != nil {
 		return nil, false, err
 	}
 
-	defer unlock()
+	defer func() { unlock() }()
 
 	// If auto-update is on and we're being given the image by
 	// alias, try to use a locally cached image matching the given
@@ -443,9 +455,18 @@ func imageDownload(ctx context.Context, r *http.Request, s *state.State, op *ope
 		return nil, false, errors.New("Invalid image fingerprint")
 	}
 
+	// The remote is chosen by the client, so don't hold up the image for other projects during the transfer.
+	unlock()
+	unlock = func() {}
+
 	// Download to a temporary name so an existing on-disk copy isn't overwritten.
-	destDir := internalUtil.VarPath("images")
-	destName := filepath.Join(destDir, fp+".download")
+	destFile, err := os.CreateTemp(internalUtil.VarPath("images"), fp+".*.download")
+	if err != nil {
+		return nil, false, err
+	}
+
+	destName := destFile.Name()
+	_ = destFile.Close()
 
 	failure := true
 	var storeRevert revert.Hook
@@ -483,7 +504,7 @@ func imageDownload(ctx context.Context, r *http.Request, s *state.State, op *ope
 		op.SetCanceler(canceler)
 	}
 
-	// The image lock is held for the whole transfer, give up on a remote that stops sending.
+	// Give up on a remote that stops sending.
 	var lastActivity atomic.Int64
 	lastActivity.Store(time.Now().Unix())
 	touch := func() { lastActivity.Store(time.Now().Unix()) }
@@ -753,6 +774,14 @@ func imageDownload(ctx context.Context, r *http.Request, s *state.State, op *ope
 	err = validate.IsSHA256(fp)
 	if err != nil || info.Fingerprint != fp {
 		return nil, false, errors.New("Invalid image fingerprint")
+	}
+
+	// The image is verified by now, get exclusive access to record it.
+	unlock, err = imageOperationLock(ctx, fp)
+	if err != nil {
+		unlock = func() {}
+
+		return nil, false, err
 	}
 
 	// Store the files, reusing an identical on-disk copy if present.
