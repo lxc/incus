@@ -1400,7 +1400,8 @@ func (d *lvm) RenameVolume(vol Volume, newVolName string, op *operations.Operati
 
 // SetVolumeAccessMode switches the lock of an active volume to the given access mode.
 func (d *lvm) SetVolumeAccessMode(vol Volume, mode VolumeAccessMode) error {
-	if !d.clustered || !d.exclusiveVolume(vol) {
+	// Custom block volumes get switched both ways when their dependent setting changes.
+	if !d.clustered || vol.IsSnapshot() || (vol.volType != VolumeTypeVM && !vol.IsCustomBlock()) {
 		return nil
 	}
 
