@@ -337,6 +337,29 @@ check_snapshots() {
     fi
 }
 
+# volume_snapshots prints the snapshot names of a custom volume on one line.
+volume_snapshots() {
+    incus storage volume snapshot list "${REMOTE}:${1}" "${2}" --format csv -c n | xargs
+}
+
+# write_volume_marker writes a marker on a custom block volume attached to v2, formatting it first if asked.
+write_volume_marker() {
+    # shellcheck disable=SC2016
+    incus exec "${REMOTE}:v2" -- sh -c 'for _ in $(seq 60); do [ -e "${0}" ] && exit 0; sleep 1; done; exit 1' "/dev/disk/by-id/scsi-0QEMU_QEMU_HARDDISK_incus_${1}"
+    if [ -n "${3:-}" ]; then
+        incus exec "${REMOTE}:v2" -- mkfs.ext4 -q "/dev/disk/by-id/scsi-0QEMU_QEMU_HARDDISK_incus_${1}"
+    fi
+
+    incus exec "${REMOTE}:v2" -- sh -c "mount /dev/disk/by-id/scsi-0QEMU_QEMU_HARDDISK_incus_${1} /mnt && echo ${2} > /mnt/marker && umount /mnt"
+}
+
+# check_volume_marker checks the marker on a custom block volume attached to v2.
+check_volume_marker() {
+    # shellcheck disable=SC2016
+    incus exec "${REMOTE}:v2" -- sh -c 'for _ in $(seq 60); do [ -e "${0}" ] && exit 0; sleep 1; done; exit 1' "/dev/disk/by-id/scsi-0QEMU_QEMU_HARDDISK_incus_${1}"
+    incus exec "${REMOTE}:v2" -- sh -c "mount /dev/disk/by-id/scsi-0QEMU_QEMU_HARDDISK_incus_${1} /mnt && cat /mnt/marker && umount /mnt" | grep -Fx "${2}"
+}
+
 incus exec "${REMOTE}:v2" -- sh -c "echo live > /dev/shm/marker"
 check_volumes
 
@@ -678,6 +701,83 @@ if section_enabled basic; then
     incus snapshot restore "${REMOTE}:v7" snap8 --diskonly
     check_marker v7 snap8
     incus delete -f "${REMOTE}:v6" "${REMOTE}:v7"
+
+    log "Export the running shared storage VM"
+    incus export "${REMOTE}:v2" "${TMP}/v2.tar.gz"
+
+    log "Import the backup to shared storage"
+    incus import "${REMOTE}:" "${TMP}/v2.tar.gz" v8 -s shared
+    incus config device remove "${REMOTE}:v8" vol1 vol2
+    check_snapshots v8 "snap7"
+    incus start "${REMOTE}:v8"
+    check_marker v8 refreshed
+    incus snapshot restore "${REMOTE}:v8" snap7 --diskonly
+    check_marker v8 snap7
+    incus delete -f "${REMOTE}:v8"
+    rm "${TMP}/v2.tar.gz"
+
+    log "Snapshot a custom block volume attached to the running shared storage VM"
+    incus storage volume create "${REMOTE}:shared" vol7 --type=block size=64MiB
+    incus storage volume attach "${REMOTE}:shared" vol7 v2
+    write_volume_marker vol7 s0 format
+    incus storage volume snapshot create "${REMOTE}:shared" vol7 s0
+    write_volume_marker vol7 current
+    incus move "${REMOTE}:v2" "${REMOTE}:v2" --target "$(member 2)"
+    check_vm v2 "$(member 2)"
+    check_volume_marker vol7 current
+
+    log "Restore the custom volume snapshot"
+    incus storage volume detach "${REMOTE}:shared" vol7 v2
+    incus storage volume snapshot restore "${REMOTE}:shared" vol7 s0
+    incus storage volume attach "${REMOTE}:shared" vol7 v2
+    check_volume_marker vol7 s0
+    write_volume_marker vol7 copied
+    incus storage volume detach "${REMOTE}:shared" vol7 v2
+
+    log "Copy the custom volume to local and shared storage"
+    incus storage volume copy "${REMOTE}:shared/vol7" "${REMOTE}:local/vol8" --destination-target "$(member "${MEMBERS}")"
+    incus storage volume copy "${REMOTE}:shared/vol7" "${REMOTE}:shared/vol9"
+    incus storage volume delete "${REMOTE}:shared" vol7
+
+    log "Move the local copy back to shared storage"
+    incus storage volume move "${REMOTE}:local/vol8" "${REMOTE}:shared/vol8" --target "$(member "${MEMBERS}")"
+    [ "$(volume_snapshots shared vol8)" = "s0" ]
+    [ "$(volume_snapshots shared vol9)" = "s0" ]
+    incus storage volume attach "${REMOTE}:shared" vol8 v2
+    incus storage volume attach "${REMOTE}:shared" vol9 v2
+    check_volume_marker vol8 copied
+    check_volume_marker vol9 copied
+
+    log "Live migrate the shared storage VM with the copied volumes"
+    incus move "${REMOTE}:v2" "${REMOTE}:v2" --target "$(member 1)"
+    check_vm v2 "$(member 1)"
+    check_volume_marker vol8 copied
+    check_volume_marker vol9 copied
+
+    log "Restore the snapshot of a copied custom volume"
+    incus storage volume detach "${REMOTE}:shared" vol9 v2
+    incus storage volume snapshot restore "${REMOTE}:shared" vol9 s0
+    incus storage volume attach "${REMOTE}:shared" vol9 v2
+    check_volume_marker vol9 s0
+    incus storage volume detach "${REMOTE}:shared" vol8 v2
+    incus storage volume detach "${REMOTE}:shared" vol9 v2
+    incus storage volume delete "${REMOTE}:shared" vol8
+    incus storage volume delete "${REMOTE}:shared" vol9
+
+    log "Restore a snapshot of the running VM with a dependent disk"
+    incus storage volume create "${REMOTE}:shared" vol10 --type=block size=64MiB
+    incus config device add "${REMOTE}:v2" vol10 disk pool=shared source=vol10 dependent=true
+    write_volume_marker vol10 dep format
+    incus snapshot create "${REMOTE}:v2" dep
+    write_volume_marker vol10 current
+    incus snapshot restore "${REMOTE}:v2" dep
+    incus wait "${REMOTE}:v2" agent --timeout=600 --interval=2
+    check_volume_marker vol10 dep
+    incus snapshot delete "${REMOTE}:v2" dep
+    incus config device remove "${REMOTE}:v2" vol10
+    incus storage volume delete "${REMOTE}:shared" vol10
+    incus exec "${REMOTE}:v2" -- sh -c "echo live > /dev/shm/marker"
+    check_volumes
 
     log "Heal the cluster after losing a member"
     incus config set "${REMOTE}:" cluster.offline_threshold=11 cluster.healing_threshold=15
