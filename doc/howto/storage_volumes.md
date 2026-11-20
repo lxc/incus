@@ -9,6 +9,7 @@ When you create an instance, Incus automatically creates a storage volume that i
 
 You can add custom storage volumes to your instances.
 Such custom storage volumes are independent of the instance, which means that they can be backed up separately and are retained until you delete them.
+The exception are volumes attached to an instance with `dependent=true`, which are deleted together with that instance.
 Custom storage volumes with content type `filesystem` can also be shared between different instances.
 
 See {ref}`storage-volumes` for detailed information.
