@@ -39,7 +39,7 @@ func newTemplateSet() (*pongo2.TemplateSet, error) {
 	return custom, nil
 }
 
-// boundedWriter fails once more than templateMaxOutput bytes have been written.
+// boundedWriter stops the rendering once more than templateMaxOutput bytes have been written.
 type boundedWriter struct {
 	w io.Writer
 	n int
@@ -48,7 +48,8 @@ type boundedWriter struct {
 func (b *boundedWriter) Write(p []byte) (int, error) {
 	b.n += len(p)
 	if b.n > templateMaxOutput {
-		return 0, errors.New("Template output is too large")
+		// The renderer ignores write errors, executeTemplate recovers this.
+		panic("Template output is too large")
 	}
 
 	return b.w.Write(p)
