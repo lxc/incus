@@ -68,17 +68,23 @@ func (s *Server) SetLocalLocation(location string) {
 
 // CloseListeners closes the listeners opened by a matching identity.
 func (s *Server) CloseListeners(match func(protocol string, username string) bool) {
-	s.lock.Lock()
-	defer s.lock.Unlock()
+	matched := []*Listener{}
 
+	s.lock.Lock()
 	for _, listener := range s.listeners {
 		listener.lock.Lock()
-		matched := listener.username != "" && match(listener.protocol, listener.username)
-		listener.lock.Unlock()
-
-		if matched {
-			listener.Close()
+		if listener.username != "" && match(listener.protocol, listener.username) {
+			matched = append(matched, listener)
 		}
+
+		listener.lock.Unlock()
+	}
+
+	s.lock.Unlock()
+
+	// Close outside of the lock, closing logs and log entries are broadcast as events.
+	for _, listener := range matched {
+		listener.Close()
 	}
 }
 
