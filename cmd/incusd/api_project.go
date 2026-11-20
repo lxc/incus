@@ -1792,6 +1792,7 @@ func projectValidateConfig(s *state.State, config map[string]string) error {
 
 		// gendoc:generate(entity=project, group=restricted, key=restricted.cluster.groups)
 		// If specified, this option prevents targeting cluster groups other than the provided ones.
+		// When a single group is listed, instances created without a target are placed in that group.
 		// ---
 		//  type: string
 		//  shortdesc: Cluster groups that can be targeted

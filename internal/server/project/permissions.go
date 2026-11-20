@@ -2191,6 +2191,14 @@ func CheckTarget(ctx context.Context, authorizer auth.Authorizer, r *http.Reques
 		targetMemberName = target
 	}
 
+	// A project restricted to a single cluster group targets it by default.
+	if target == "" {
+		clusterGroupsAllowed := GetRestrictedClusterGroups(p)
+		if len(clusterGroupsAllowed) == 1 {
+			targetGroupName = clusterGroupsAllowed[0]
+		}
+	}
+
 	// Check manual cluster member targeting restrictions.
 	err := CheckClusterTargetRestriction(authorizer, r, p, target)
 	if err != nil {
