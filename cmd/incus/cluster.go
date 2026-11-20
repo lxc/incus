@@ -1468,7 +1468,7 @@ func (c *cmdClusterEvacuate) command() *cobra.Command {
 
 The action flag allows overriding the default server-side action ("cluster.evacuate" instance configuration option)`))
 
-	cli.AddStringFlag(cmd.Flags(), &c.action.flagAction, "action", "", "", i18n.G(`Force a particular evacuation action`))
+	cli.AddStringFlag(cmd.Flags(), &c.action.flagAction, "action", "", "", i18n.G(`Force a particular evacuation action (migrate, live-migrate, refresh-migrate, stop, stateful-stop or force-stop)`))
 
 	cmd.ValidArgsFunction = func(_ *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		if len(args) == 0 {
@@ -1500,7 +1500,7 @@ func (c *cmdClusterRestore) command() *cobra.Command {
 The action flag allows overriding the default behavior of moving and starting back all instances.
 The only supported value at the moment is "skip" which brings the cluster member online without relocating any instances.`))
 
-	cli.AddStringFlag(cmd.Flags(), &c.action.flagAction, "action", "", "", i18n.G(`Force a particular restoration action`))
+	cli.AddStringFlag(cmd.Flags(), &c.action.flagAction, "action", "", "", i18n.G(`Force a particular restoration action (only "skip" is supported)`))
 
 	cmd.ValidArgsFunction = func(_ *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		if len(args) == 0 {
@@ -1516,7 +1516,7 @@ The only supported value at the moment is "skip" which brings the cluster member
 func (c *cmdClusterEvacuateAction) command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.RunE = c.run
-	cli.AddBoolFlag(cmd.Flags(), &c.flagForce, "force|f", i18n.G(`Force evacuation without user confirmation`))
+	cli.AddBoolFlag(cmd.Flags(), &c.flagForce, "force|f", i18n.G(`Skip the confirmation prompt`))
 
 	return cmd
 }
