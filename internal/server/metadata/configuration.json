@@ -5947,7 +5947,7 @@
 					},
 					{
 						"restricted.cluster.groups": {
-							"longdesc": "If specified, this option prevents targeting cluster groups other than the provided ones.",
+							"longdesc": "If specified, this option prevents targeting cluster groups other than the provided ones.\nWhen a single group is listed, instances created without a target are placed in that group.",
 							"shortdesc": "Cluster groups that can be targeted",
 							"type": "string"
 						}
