@@ -211,7 +211,7 @@ var InstanceConfigKeysAny = map[string]func(value string) error{
 	// ---
 	//  type: string
 	//  defaultdesc: `auto`
-	//  liveupdate: no
+	//  liveupdate: yes
 	//  shortdesc: What to do when evacuating the instance
 	"cluster.evacuate": validate.Optional(validate.IsOneOf("auto", "migrate", "live-migrate", "refresh-migrate", "stop", "stateful-stop", "force-stop")),
 
@@ -242,7 +242,7 @@ var InstanceConfigKeysAny = map[string]func(value string) error{
 	// See {ref}`instance-options-limits-cpu-container` for more information.
 	// ---
 	//  type: string
-	//  liveupdate: yes
+	//  liveupdate: yes (containers only)
 	//  shortdesc: Which NUMA nodes to place the instance CPUs on
 	"limits.cpu.nodes": validate.Optional(validate.Or(validate.IsValidCPUSet, validate.IsOneOf("0", "balanced"))),
 
@@ -253,7 +253,7 @@ var InstanceConfigKeysAny = map[string]func(value string) error{
 	// ---
 	//  type: integer
 	//  defaultdesc: `5` (medium)
-	//  liveupdate: yes
+	//  liveupdate: yes (containers only)
 	//  shortdesc: Priority of the instance's I/O requests
 	"limits.disk.priority": validate.Optional(validate.IsPriority),
 
@@ -325,7 +325,7 @@ var InstanceConfigKeysAny = map[string]func(value string) error{
 	// The specified entries are appended to the generated profile.
 	// ---
 	//  type: blob
-	//  liveupdate: yes
+	//  liveupdate: yes (containers only)
 	//  shortdesc: AppArmor profile entries
 	"raw.apparmor": validate.IsAny,
 
@@ -343,7 +343,7 @@ var InstanceConfigKeysAny = map[string]func(value string) error{
 	// ---
 	//  type: bool
 	//  defaultdesc: `true`
-	//  liveupdate: no
+	//  liveupdate: yes
 	//  shortdesc: Whether `/dev/incus` is present in the instance
 	"security.guestapi": validate.Optional(validate.IsBool),
 
@@ -1221,11 +1221,14 @@ var InstanceConfigKeysContainer = map[string]func(value string) error{
 // InstanceConfigKeysVM is a map of config key to validator. (keys applying to VM only).
 var InstanceConfigKeysVM = map[string]func(value string) error{
 	// gendoc:generate(entity=instance, group=boot, key=boot.pxe)
+	// This controls IPv4 and IPv6 PXE support in the UEFI firmware of the virtual machine.
 	//
+	// The option is read when the virtual machine starts and must be set on the instance itself, a value inherited from a profile is ignored.
 	// ---
 	//  type: bool
 	//  defaultdesc: no
-	//  liveupdate: yes
+	//  liveupdate: no
+	//  condition: virtual machine
 	//  shortdesc: Whether to enable PXE boot
 	"boot.pxe": validate.Optional(validate.IsBool),
 
@@ -1290,7 +1293,7 @@ var InstanceConfigKeysVM = map[string]func(value string) error{
 	// ---
 	//  type: string
 	//  defaultdesc: `true`
-	//  liveupdate: yes
+	//  liveupdate: no
 	//  condition: virtual machine
 	//  shortdesc: Control upper limit for hotplugged memory or disable memory hotplug.
 	"limits.memory.hotplug": validate.Optional(validate.Or(validate.IsBool, validate.IsSize)),
@@ -1366,7 +1369,7 @@ var InstanceConfigKeysVM = map[string]func(value string) error{
 	// ---
 	//  type: bool
 	//  defaultdesc: `true`
-	//  liveupdate: no
+	//  liveupdate: yes
 	//  condition: virtual machine
 	//  shortdesc: Whether the `incus-agent` is queried for state information and metrics
 	"security.agent.metrics": validate.Optional(validate.IsBool),
@@ -1874,7 +1877,7 @@ func ConfigKeyChecker(key string, instanceType api.InstanceType) (func(value str
 	// `SMBIOS Type 11` configuration keys.
 	// ---
 	//  type: string
-	//  liveupdate: yes
+	//  liveupdate: no
 	//  shortdesc: Free-form `SMBIOS Type 11` key/value
 	if strings.HasPrefix(key, "smbios11.") && instanceType == api.InstanceTypeAny || instanceType == api.InstanceTypeVM {
 		return validate.IsAny, nil
@@ -2015,7 +2018,7 @@ func ConfigKeyChecker(key string, instanceType api.InstanceType) (func(value str
 	// Systemd credential key/value pair passed as a read-only bind mount in containers and as `SMBIOS Type 11` data in virtual machines.
 	// ---
 	//  type: string
-	//  liveupdate: yes
+	//  liveupdate: yes (containers only)
 	//  shortdesc: Systemd credential key/value
 	if strings.HasPrefix(key, "systemd.credential.") {
 		return validate.IsAny, nil
@@ -2025,7 +2028,7 @@ func ConfigKeyChecker(key string, instanceType api.InstanceType) (func(value str
 	// Systemd credential key/value pair passed as a read-only bind mount in containers and as `SMBIOS Type 11` data in virtual machines. The value is Base64 encoded.
 	// ---
 	//  type: string
-	//  liveupdate: yes
+	//  liveupdate: yes (containers only)
 	//  shortdesc: Systemd credential key/value, where value is Base64 encoded
 	if strings.HasPrefix(key, "systemd.credential-binary.") {
 		return validate.IsBase64, nil
