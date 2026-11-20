@@ -3693,14 +3693,30 @@ test_clustering_groups() {
     incus project create foo -c features.images=false -c restricted=true -c restricted.cluster.groups=blah
     incus profile show default | incus profile edit default --project foo
 
-    # Check cannot create instance in restricted project that only allows blah group, when the only member that
-    # exists in the blah group also has scheduler.instance=group set (so it must be targeted via group or directly).
-    ! incus init testimage cluster:c1 --project foo || false
+    # Check that a restricted project allowing only the blah group targets it by default, reaching the member
+    # that has scheduler.instance=group set.
+    incus init testimage cluster:c1 --project foo
+    incus info cluster:c1 --project foo | grep -q "Location: node2"
+    [ "$(incus config get cluster:c1 volatile.cluster.group --project foo)" = "blah" ]
+    incus delete -f c1 --project foo
 
     # Check cannot create instance in restricted project when targeting a member that isn't in the restricted
     # project's allowed cluster groups list.
     ! incus init testimage cluster:c1 --project foo --target=node1 || false
     ! incus init testimage cluster:c1 --project foo --target=@foobar2 || false
+
+    # Check that a restricted project allowing several groups without any member accepting untargeted instances
+    # tells the user to target one of the groups.
+    incus cluster group create cluster:baz
+    incus cluster group assign cluster:node3 baz
+    incus project set foo restricted.cluster.groups=blah,baz
+    incus init testimage cluster:c1 --project foo 2>&1 | grep -F "target one of the project's cluster groups: blah, baz"
+    incus init testimage cluster:c1 --project foo --target=node3
+    incus info cluster:c1 --project foo | grep -q "Location: node3"
+    incus delete -f c1 --project foo
+    incus project set foo restricted.cluster.groups=blah
+    incus cluster group assign cluster:node3 default
+    incus cluster group delete cluster:baz
 
     # Check can create instance in restricted project when not targeting any specific member, but that it will only
     # be created on members within the project's allowed cluster groups list.
