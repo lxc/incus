@@ -67,15 +67,21 @@ func imageOperationLock(ctx context.Context, fingerprint string) (locking.Unlock
 // imageDownloadIdleTimeout is how long a download may go without data before it's cancelled.
 const imageDownloadIdleTimeout = time.Minute
 
-// activityFile records when a download last wrote to its file.
+// activityFile records when a download last wrote to its file and how much it received.
 type activityFile struct {
 	io.ReadWriteSeeker
-	touch func()
+	touch  func()
+	charge func(n int) error
 }
 
 // Write records the activity and writes to the file.
 func (f *activityFile) Write(p []byte) (int, error) {
 	f.touch()
+
+	err := f.charge(len(p))
+	if err != nil {
+		return 0, err
+	}
 
 	return f.ReadWriteSeeker.Write(p)
 }
@@ -482,6 +488,20 @@ func imageDownload(ctx context.Context, r *http.Request, s *state.State, op *ope
 	lastActivity.Store(time.Now().Unix())
 	touch := func() { lastActivity.Store(time.Now().Unix()) }
 
+	// The size is declared by the remote, so hold what is received to the budget.
+	var received atomic.Int64
+	charge := func(n int) error {
+		if protocol == "oci" || args.Budget < 0 {
+			return nil
+		}
+
+		if received.Add(int64(n)) > args.Budget {
+			return fmt.Errorf("Remote image exceeds allowed budget of %d", args.Budget)
+		}
+
+		return nil
+	}
+
 	watchdogDone := make(chan struct{})
 	defer close(watchdogDone)
 
@@ -550,8 +570,8 @@ func imageDownload(ctx context.Context, r *http.Request, s *state.State, op *ope
 		// Download the image
 		var resp *incus.ImageFileResponse
 		request := incus.ImageFileRequest{
-			MetaFile:        &activityFile{ReadWriteSeeker: dest, touch: touch},
-			RootfsFile:      &activityFile{ReadWriteSeeker: destRootfs, touch: touch},
+			MetaFile:        &activityFile{ReadWriteSeeker: dest, touch: touch, charge: charge},
+			RootfsFile:      &activityFile{ReadWriteSeeker: destRootfs, touch: touch, charge: charge},
 			ProgressHandler: progress,
 			MaxUnpackedSize: args.Budget,
 			Canceler:        canceler,
