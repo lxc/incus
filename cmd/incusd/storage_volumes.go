@@ -42,9 +42,11 @@ import (
 	"github.com/lxc/incus/v7/internal/version"
 	"github.com/lxc/incus/v7/shared/api"
 	"github.com/lxc/incus/v7/shared/archive"
+	"github.com/lxc/incus/v7/shared/ioprogress"
 	"github.com/lxc/incus/v7/shared/logger"
 	"github.com/lxc/incus/v7/shared/revert"
 	localtls "github.com/lxc/incus/v7/shared/tls"
+	"github.com/lxc/incus/v7/shared/units"
 	"github.com/lxc/incus/v7/shared/util"
 	"github.com/lxc/incus/v7/shared/validate"
 )
@@ -747,7 +749,7 @@ func filterVolumes(volumes []*db.StorageVolume, clauses *filter.ClauseSet, allPr
 //	Add a storage volume
 //
 //	Creates a new storage volume.
-//	Will return an empty sync response on simple volume creation but an operation on copy or migration.
+//	Will return an empty sync response on simple volume creation but an operation on copy, migration or backup import.
 //
 //	---
 //	consumes:
@@ -797,7 +799,7 @@ func filterVolumes(volumes []*db.StorageVolume, clauses *filter.ClauseSet, allPr
 //	Add a storage volume
 //
 //	Creates a new storage volume (type specific endpoint).
-//	Will return an empty sync response on simple volume creation but an operation on copy or migration.
+//	Will return an empty sync response on simple volume creation but an operation on copy, migration or backup import.
 //
 //	---
 //	consumes:
@@ -888,9 +890,11 @@ func storagePoolVolumesPost(d *Daemon, r *http.Request) response.Response {
 	}
 
 	// Quick checks.
-	err = validate.IsAPIName(req.Name, false)
-	if err != nil {
-		return response.BadRequest(fmt.Errorf("Invalid storage volume name: %w", err))
+	if req.Name != "" || req.Source.Type != "backup" {
+		err = validate.IsAPIName(req.Name, false)
+		if err != nil {
+			return response.BadRequest(fmt.Errorf("Invalid storage volume name: %w", err))
+		}
 	}
 
 	// Backward compatibility.
@@ -917,6 +921,13 @@ func storagePoolVolumesPost(d *Daemon, r *http.Request) response.Response {
 		return response.BadRequest(fmt.Errorf("Currently not allowed to create storage volumes of type %q", req.Type))
 	}
 
+	if req.Source.Type == "backup" {
+		err = validateBackupSource(req.Source.Backup)
+		if err != nil {
+			return response.BadRequest(err)
+		}
+	}
+
 	var poolID int64
 	var dbVolume *db.StorageVolume
 
@@ -927,9 +938,11 @@ func storagePoolVolumesPost(d *Daemon, r *http.Request) response.Response {
 		}
 
 		// Check if destination volume exists.
-		dbVolume, err = tx.GetStoragePoolVolume(ctx, poolID, projectName, db.StoragePoolVolumeTypeCustom, req.Name, true)
-		if err != nil && !response.IsNotFoundError(err) {
-			return err
+		if req.Name != "" {
+			dbVolume, err = tx.GetStoragePoolVolume(ctx, poolID, projectName, db.StoragePoolVolumeTypeCustom, req.Name, true)
+			if err != nil && !response.IsNotFoundError(err) {
+				return err
+			}
 		}
 
 		err = project.AllowVolumeCreation(tx, projectName, poolName, req)
@@ -1042,6 +1055,8 @@ func storagePoolVolumesPost(d *Daemon, r *http.Request) response.Response {
 		return doVolumeCreateOrCopy(s, r, request.ProjectParam(r), projectName, poolName, &req)
 	case "migration":
 		return doVolumeMigration(s, r, request.ProjectParam(r), projectName, poolName, &req)
+	case "backup":
+		return doVolumeCreateFromBackupSource(s, r, request.ProjectParam(r), projectName, poolName, &req)
 	default:
 		return response.BadRequest(fmt.Errorf("Unknown source type %q", req.Source.Type))
 	}
@@ -3130,4 +3145,169 @@ func restoreVolumeFromBackup(s *state.State, bInfo *backup.Info, backupFile *os.
 	}
 
 	return nil
+}
+
+func validateBackupSource(source *api.BackupSource) error {
+	if source == nil {
+		return errors.New("Missing backup source")
+	}
+
+	if source.Type != "url" {
+		return fmt.Errorf("Unsupported backup source type %q", source.Type)
+	}
+
+	u, err := url.Parse(source.URL)
+	if err != nil {
+		return fmt.Errorf("Invalid backup source URL: %w", err)
+	}
+
+	if (u.Scheme != "http" && u.Scheme != "https") || u.Host == "" {
+		return errors.New("Backup source URL must be an HTTP or HTTPS URL")
+	}
+
+	return nil
+}
+
+func doVolumeCreateFromBackupSource(s *state.State, r *http.Request, requestProjectName string, projectName string, poolName string, req *api.StorageVolumesPost) response.Response {
+	sourceURL := req.Source.Backup.URL
+	volName := req.Name
+
+	ctx, cancelDownload := context.WithCancel(s.ShutdownCtx)
+	onCancel := func(_ *operations.Operation) error {
+		cancelDownload()
+		return nil
+	}
+
+	run := func(op *operations.Operation) error {
+		defer cancelDownload()
+
+		backupFile, err := os.CreateTemp(internalUtil.VarPath("backups"), fmt.Sprintf("%s_", backup.WorkingDirPrefix))
+		if err != nil {
+			return err
+		}
+
+		defer func() {
+			_ = backupFile.Close()
+			_ = os.Remove(backupFile.Name())
+		}()
+
+		var budget int64
+		var projectConfig map[string]string
+		err = s.DB.Cluster.Transaction(ctx, func(ctx context.Context, tx *db.ClusterTx) error {
+			budget, err = project.GetSpaceBudget(tx, projectName)
+			if err != nil {
+				return err
+			}
+
+			dbProject, err := dbCluster.GetProject(ctx, tx.Tx(), projectName)
+			if err != nil {
+				return err
+			}
+
+			projectConfig, err = dbCluster.GetProjectConfig(ctx, tx.Tx(), dbProject.ID)
+
+			return err
+		})
+		if err != nil {
+			return err
+		}
+
+		httpClient, err := localUtil.HTTPClient("", s.Proxy)
+		if err != nil {
+			return err
+		}
+
+		// Redirects must stay within the project's allowed backup servers.
+		httpClient.CheckRedirect = func(req *http.Request, via []*http.Request) error {
+			if len(via) >= 10 {
+				return errors.New("Stopped after 10 redirects")
+			}
+
+			// Replicate the headers.
+			req.Header = via[len(via)-1].Header
+
+			return project.CheckBackupSourceURL(projectConfig, req.URL)
+		}
+
+		httpReq, err := http.NewRequestWithContext(ctx, http.MethodGet, sourceURL, nil)
+		if err != nil {
+			return err
+		}
+
+		httpReq.Header.Set("User-Agent", version.UserAgent)
+
+		resp, err := httpClient.Do(httpReq)
+		if err != nil {
+			return redactURLError(err)
+		}
+
+		defer logger.WarnOnError(resp.Body.Close, "Failed to close backup download")
+
+		if resp.StatusCode != http.StatusOK {
+			return fmt.Errorf("Unable to fetch %q: %s", redactURL(resp.Request.URL), resp.Status)
+		}
+
+		body := &ioprogress.ProgressReader{
+			ReadCloser: resp.Body,
+			Tracker: &ioprogress.ProgressTracker{
+				Length: resp.ContentLength,
+				Handler: func(percent int64, speed int64) {
+					_ = op.ExtendMetadata(map[string]any{"download_progress": fmt.Sprintf("%d%% (%s/s)", percent, units.GetByteSizeString(speed, 2))})
+				},
+			},
+		}
+
+		_, err = util.SafeCopy(internalIO.NewQuotaWriter(backupFile, budget), body)
+		if err != nil {
+			return redactURLError(err)
+		}
+
+		tarFile, err := convertSquashfsBackup(backupFile)
+		if err != nil {
+			return err
+		}
+
+		backupFile = tarFile
+
+		bInfo, err := parseVolumeBackupInfo(ctx, s, backupFile, projectName, poolName, volName)
+		if err != nil {
+			return err
+		}
+
+		return restoreVolumeFromBackup(s, bInfo, backupFile)
+	}
+
+	resources := map[string][]api.URL{}
+	if volName != "" {
+		resources["storage_volumes"] = []api.URL{*api.NewURL().Path(version.APIVersion, "storage-pools", poolName, "volumes", db.StoragePoolVolumeTypeNameCustom, volName)}
+	}
+
+	op, err := operations.OperationCreate(s, requestProjectName, operations.OperationClassTask, operationtype.CustomVolumeBackupRestore, resources, nil, run, onCancel, nil, r)
+	if err != nil {
+		cancelDownload()
+		return response.InternalError(err)
+	}
+
+	return operations.OperationResponse(op)
+}
+
+// redactURL drops the query string, which holds the credential of a signed URL.
+func redactURL(u *url.URL) string {
+	redacted := *u
+	redacted.User = nil
+	redacted.RawQuery = ""
+
+	return redacted.String()
+}
+
+func redactURLError(err error) error {
+	var urlErr *url.Error
+	if errors.As(err, &urlErr) {
+		u, parseErr := url.Parse(urlErr.URL)
+		if parseErr == nil {
+			urlErr.URL = redactURL(u)
+		}
+	}
+
+	return err
 }
