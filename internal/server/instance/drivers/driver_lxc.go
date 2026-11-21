@@ -8448,7 +8448,7 @@ func (d *lxc) ConsoleLog(opts liblxc.ConsoleLogOptions) (string, error) {
 
 	if opts.ClearLog {
 		d.state.Events.SendLifecycle(d.project.Name, lifecycle.InstanceConsoleReset.Event(d, nil))
-	} else if opts.ReadLog && opts.WriteToLogFile {
+	} else if opts.ReadLog {
 		d.state.Events.SendLifecycle(d.project.Name, lifecycle.InstanceConsoleRetrieved.Event(d, nil))
 	}
 
