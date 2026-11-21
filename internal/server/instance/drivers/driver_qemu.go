@@ -2477,8 +2477,36 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 
 	seCtx := d.localConfig["volatile.selinux.context"]
 
+	var biosSet, kernelSet bool
+	var kernelPath, initrdPath string
+	kernel, err := os.Open(filepath.Join(d.Path(), "kernel.img"))
+	if err == nil {
+		kernelSet = true
+		kernelPath = fmt.Sprintf("/proc/self/fd/%d", d.addFileDescriptor(&fdFiles, kernel))
+		initrd, err := os.Open(filepath.Join(d.Path(), "initrd.img"))
+		if err == nil {
+			initrdPath = fmt.Sprintf("/proc/self/fd/%d", d.addFileDescriptor(&fdFiles, initrd))
+		} else if !errors.Is(err, fs.ErrNotExist) {
+			return fmt.Errorf("Failed to open initrd image: %w", err)
+		}
+	} else if !errors.Is(err, fs.ErrNotExist) {
+		return fmt.Errorf("Failed to open kernel image: %w", err)
+	}
+
+	var qemuArgsOverrides []string
+	if d.expandedConfig["raw.qemu"] != "" {
+		qemuArgsOverrides, err := shellquote.Split(d.expandedConfig["raw.qemu"])
+		if err != nil {
+			op.Done(err)
+			return err
+		}
+
+		biosSet = slices.Contains(qemuArgsOverrides, "-bios")
+		kernelSet = kernelSet || slices.Contains(qemuArgsOverrides, "-kernel")
+	}
+
 	// Generate the QEMU configuration.
-	monHooks, err := d.generateQemuConfig(bs, mountInfo, qemuBus, vsockFD, devConfs, &fdFiles)
+	monHooks, err := d.generateQemuConfig(bs, mountInfo, qemuBus, vsockFD, devConfs, &fdFiles, biosSet, kernelSet)
 	if err != nil {
 		op.Done(err)
 		return err
@@ -2500,6 +2528,17 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 		"-readconfig", confFile,
 		"-pidfile", d.pidFilePath(),
 		"-D", d.LogFilePath(),
+	}
+
+	if kernelPath != "" {
+		qemuArgs = append(qemuArgs, "-kernel", kernelPath)
+		if initrdPath != "" {
+			qemuArgs = append(qemuArgs, "-initrd", initrdPath)
+		}
+
+		if d.expandedConfig["boot.args"] != "" {
+			qemuArgs = append(qemuArgs, "-append", d.expandedConfig["boot.args"])
+		}
 	}
 
 	// When a GPU is using virtio-gpu DRM native context, the guest needs a host-backed
@@ -2668,16 +2707,6 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 		}
 	}
 
-	if d.expandedConfig["raw.qemu"] != "" {
-		fields, err := shellquote.Split(d.expandedConfig["raw.qemu"])
-		if err != nil {
-			op.Done(err)
-			return err
-		}
-
-		qemuArgs = append(qemuArgs, fields...)
-	}
-
 	// Apply the RTC configuration.
 	// This needs to happen close to writing the config file or the time might drift in between.
 	adjustment := d.getStartupRTCAdjustment()
@@ -2699,7 +2728,7 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 		})
 	}
 
-	d.cmdArgs = qemuArgs
+	d.cmdArgs = append(qemuArgs, qemuArgsOverrides...)
 
 	// Precompile the QEMU scriptlet
 	src, ok := d.expandedConfig["raw.qemu.scriptlet"]
@@ -5109,7 +5138,7 @@ func (d *qemu) gpuNativeContextConfig(devConfs []*deviceConfig.RunConfig) (bool,
 }
 
 // generateQemuConfig generates the QEMU configuration.
-func (d *qemu) generateQemuConfig(bs *qemuBootState, mountInfo *storagePools.MountInfo, busName string, vsockFD int, devConfs []*deviceConfig.RunConfig, fdFiles *[]*os.File) ([]monitorHook, error) {
+func (d *qemu) generateQemuConfig(bs *qemuBootState, mountInfo *storagePools.MountInfo, busName string, vsockFD int, devConfs []*deviceConfig.RunConfig, fdFiles *[]*os.File, biosSet bool, kernelSet bool) ([]monitorHook, error) {
 	var monHooks []monitorHook
 
 	guestOS := d.GuestOS()
@@ -5128,17 +5157,8 @@ func (d *qemu) generateQemuConfig(bs *qemuBootState, mountInfo *storagePools.Mou
 		return nil, err
 	}
 
-	// Parse raw.qemu.
-	rawOptions := []string{}
-	if d.expandedConfig["raw.qemu"] != "" {
-		rawOptions, err = shellquote.Split(d.expandedConfig["raw.qemu"])
-		if err != nil {
-			return nil, err
-		}
-	}
-
 	// Allow disabling the UEFI firmware.
-	if slices.Contains(rawOptions, "-bios") || slices.Contains(rawOptions, "-kernel") {
+	if biosSet || kernelSet {
 		d.logger.Warn("Starting VM without default firmware (-bios or -kernel in raw.qemu)")
 	} else if d.architectureSupportsUEFI(d.architecture) {
 		// Determine expected firmware.
@@ -5466,7 +5486,7 @@ func (d *qemu) generateQemuConfig(bs *qemuBootState, mountInfo *storagePools.Mou
 
 	// Dynamic devices.
 	base := 0
-	if slices.Contains(rawOptions, "-kernel") {
+	if kernelSet {
 		base = 1
 	}
 
@@ -5655,7 +5675,7 @@ func (d *qemu) generateQemuConfig(bs *qemuBootState, mountInfo *storagePools.Mou
 	// process any user-specified overrides
 	confOverride, ok := d.expandedConfig["raw.qemu.conf"]
 	if ok {
-		d.conf, err = qemuRawCfgOverride(conf, confOverride)
+		d.conf, err = qemuRawCfgOverride(conf, confOverride, biosSet, kernelSet)
 		if err != nil {
 			return nil, err
 		}

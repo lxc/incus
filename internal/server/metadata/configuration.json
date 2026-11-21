@@ -2652,6 +2652,15 @@
 			"boot": {
 				"keys": [
 					{
+						"boot.args": {
+							"condition": "kernel image",
+							"liveupdate": "yes",
+							"longdesc": "",
+							"shortdesc": "Arguments to pass to the kernel",
+							"type": "bool"
+						}
+					},
+					{
 						"boot.autorestart": {
 							"liveupdate": "no",
 							"longdesc": "If set to `true` will attempt up to 10 restarts over a 1 minute period upon unexpected instance exit.",
