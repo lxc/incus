@@ -4057,7 +4057,7 @@ User keys can be used in search.
 :default: "`incus`"
 :shortdesc: "Domain to advertise to DHCP clients and use for DNS resolution"
 :type: "string"
-
+Set to `none` to not advertise a domain and resolve instance names without one.
 ```
 
 ```{config:option} dns.include_hosts network_bridge-common
@@ -4089,7 +4089,7 @@ User keys can be used in search.
 :default: "-"
 :shortdesc: "Full comma-separated domain search list, defaulting to `dns.domain` value"
 :type: "string"
-
+Set to `none` to not advertise a search list.
 ```
 
 ```{config:option} dns.zone.forward network_bridge-common
@@ -4643,7 +4643,7 @@ User keys can be used in search.
 :default: "`incus`"
 :shortdesc: "Domain to advertise to DHCP clients and use for DNS resolution"
 :type: "string"
-
+Set to `none` to not advertise a domain and register instance names without one.
 ```
 
 ```{config:option} dns.mode network_ovn-common
@@ -4664,7 +4664,7 @@ User keys can be used in search.
 ```{config:option} dns.search network_ovn-common
 :shortdesc: "Full comma-separated domain search list, defaulting to `dns.domain` value"
 :type: "string"
-
+Set to `none` to not advertise a search list.
 ```
 
 ```{config:option} dns.zone.forward network_ovn-common
