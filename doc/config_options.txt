@@ -4819,7 +4819,7 @@ Set to `none` to not advertise a search list.
 ```{config:option} parent network_ovn-common
 :shortdesc: "Parent OVN network whose logical router and uplink to share"
 :type: "string"
-
+The parent can be an OVN network of the same project or one shared from the default project through `restricted.networks.access`.
 ```
 
 ```{config:option} security.acls network_ovn-common
@@ -5490,7 +5490,8 @@ If this option is not set, all networks are accessible.
 
 In restricted projects with {config:option}`project-features:features.networks` enabled,
 the listed networks from the default project are shared into the project and their names
-can't be used for the project's own networks.
+can't be used for the project's own networks. A shared OVN network can be the `parent` of
+the project's own OVN networks.
 
 Note that this setting depends on the {config:option}`project-restricted:restricted.devices.nic` setting.
 ```
