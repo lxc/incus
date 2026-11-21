@@ -458,11 +458,31 @@ func (d *qemu) memoryTopology(bs *qemuBootState) (*qemuMemoryTopology, error) {
 	}
 
 	// Set hotplug limits.
-	// kvm64 has a limit of 39 bits for aarch64 and 40 bits on x86_64, so just limit everyone to 39 bits (512GB).
-	// Other types we don't know so just don't allow hotplug.
+	// QEMU gives named x86_64 CPU models 40 physical bits unless told otherwise, so limit those to 39 bits (512GB).
+	// Other architectures only support hotplug with CPU passthrough.
 
 	var maxMemoryBytes int64
 	cpuPhysBits := uint64(39)
+
+	// Parse the CPU type and its physical address options.
+	cpuType, cpuOptions, _ := strings.Cut(bs.CPUType, ",")
+	hostPhysBits := cpuType == "host"
+
+	for _, option := range strings.Split(cpuOptions, ",") {
+		key, value, _ := strings.Cut(option, "=")
+		if key == "phys-bits" {
+			physBits, err := strconv.ParseUint(value, 10, 64)
+			if err != nil {
+				return nil, fmt.Errorf("Invalid CPU option %q: %w", option, err)
+			}
+
+			cpuPhysBits = physBits
+		} else if key == "host-phys-bits" && util.IsTrue(value) {
+			hostPhysBits = true
+		}
+	}
+
+	hotplugCapable := hostPhysBits || cpuType == "kvm64" || d.architecture == osarch.ARCH_64BIT_INTEL_X86
 
 	limitsMemoryHotplug := d.expandedConfig["limits.memory.hotplug"]
 	memoryHotplugEnabled := !util.IsFalse(limitsMemoryHotplug)
@@ -476,8 +496,7 @@ func (d *qemu) memoryTopology(bs *qemuBootState) (*qemuMemoryTopology, error) {
 		}
 	}
 
-	cpuType, _, _ := strings.Cut(bs.CPUType, ",")
-	if (cpuType == "host" || cpuType == "kvm64") && memoryHotplugEnabled {
+	if hotplugCapable && memoryHotplugEnabled {
 		if !util.IsTrueOrEmpty(limitsMemoryHotplug) {
 			maxMemoryBytes, err = units.ParseByteSizeString(limitsMemoryHotplug)
 			if err != nil {
@@ -505,7 +524,7 @@ func (d *qemu) memoryTopology(bs *qemuBootState) (*qemuMemoryTopology, error) {
 			}
 
 			// If a physical address size was detected, either align it with the VM (CPU passthrough) or use it as an upper bound.
-			if lowestPhysBits > 0 && (cpuType == "host" || lowestPhysBits < cpuPhysBits) {
+			if lowestPhysBits > 0 && (hostPhysBits || lowestPhysBits < cpuPhysBits) {
 				cpuPhysBits = lowestPhysBits
 			}
 

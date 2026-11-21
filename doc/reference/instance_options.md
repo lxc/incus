@@ -100,6 +100,7 @@ There is a limit of 16 virtual slots for this, limiting the number of memory inc
 To avoid high resource usage and compatibility issues with guests, Incus limits memory hotplug to a maximum of 1TiB in clustered environments.
 On standalone hosts, the default limit matches the total memory amount of the host system.
 Some CPUs further reduce that amount based on how much memory they are able to address (physical / virtual bits).
+With a named CPU model, the `phys-bits` CPU option can be used to specify the number of physical address bits.
 
 Exceeding that limit require the instance be stopped, its `memory.limit` updated and then started back up.
 ```
