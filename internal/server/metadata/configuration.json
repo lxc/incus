@@ -4490,7 +4490,7 @@
 						"dns.domain": {
 							"condition": "-",
 							"default": "`incus`",
-							"longdesc": "",
+							"longdesc": "Set to `none` to not advertise a domain and resolve instance names without one.",
 							"shortdesc": "Domain to advertise to DHCP clients and use for DNS resolution",
 							"type": "string"
 						}
@@ -4526,7 +4526,7 @@
 						"dns.search": {
 							"condition": "-",
 							"default": "-",
-							"longdesc": "",
+							"longdesc": "Set to `none` to not advertise a search list.",
 							"shortdesc": "Full comma-separated domain search list, defaulting to `dns.domain` value",
 							"type": "string"
 						}
@@ -5169,7 +5169,7 @@
 					{
 						"dns.domain": {
 							"default": "`incus`",
-							"longdesc": "",
+							"longdesc": "Set to `none` to not advertise a domain and register instance names without one.",
 							"shortdesc": "Domain to advertise to DHCP clients and use for DNS resolution",
 							"type": "string"
 						}
@@ -5193,7 +5193,7 @@
 					},
 					{
 						"dns.search": {
-							"longdesc": "",
+							"longdesc": "Set to `none` to not advertise a search list.",
 							"shortdesc": "Full comma-separated domain search list, defaulting to `dns.domain` value",
 							"type": "string"
 						}
