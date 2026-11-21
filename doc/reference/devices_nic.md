@@ -342,6 +342,10 @@ Parent interface
      net.ipv6.conf.<parent>.proxy_ndp=1
      ```
 
+Network ACLs
+: {ref}`Network ACLs <network-acls>` can be applied with `security.acls`, which requires the `nftables` firewall driver.
+  See {ref}`network-acls-routed-limitations`.
+
 #### Device options
 
 NIC devices of type `routed` have the following device options:

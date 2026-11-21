@@ -9,6 +9,7 @@ import (
 )
 
 // BridgeUpdateACLs forces the update of all NIC devices who have the changed ACL applied.
+// It reloads the device, so it serves both bridged and routed NICs.
 func BridgeUpdateACLs(s *state.State, l logger.Logger, aclProjectName string, aclNetDevices map[string]NetworkACLUsage) error {
 	// Update of the bridge NICs affected by the ACL change
 	for _, aclNetDevice := range aclNetDevices {
