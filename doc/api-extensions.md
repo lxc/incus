@@ -3635,3 +3635,7 @@ Adds the `lvm.snapshots.chunk_size` volume configuration key (and its `volume.lv
 ## `nic_bridged_vlan_ingress`
 
 This adds a new `vlan.ingress` option to `bridged` NICs, to `physical` NICs and to `physical` networks whose parent is a bridge, used for private VLANs where the return traffic for the untagged VLAN comes in on a separate ingress VLAN.
+
+## `network_dns_domain_none`
+
+Adds support for the `none` value on the `dns.domain` and `dns.search` options of `bridge` and `ovn` networks, which stops the domain or search list from being advertised to the instances.

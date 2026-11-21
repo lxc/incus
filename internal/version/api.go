@@ -604,6 +604,7 @@ var APIExtensions = []string{
 	"network_allocations_project",
 	"storage_lvm_snapshot_chunk_size",
 	"nic_bridged_vlan_ingress",
+	"network_dns_domain_none",
 }
 
 // APIExtensionsCount returns the number of available API extensions.
