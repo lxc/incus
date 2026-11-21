@@ -5368,6 +5368,13 @@ To temporarily remove the restrictions, you can disable this option instead of c
 Possible values are `allow` or `block`.
 ```
 
+```{config:option} restricted.backups.servers project-restricted
+:shortdesc: "Servers that backups can be imported from"
+:type: "string"
+Specify a comma-delimited list of servers (`host` or `host:port`, as they appear in the URL) from which backups can be imported.
+If this option is not set, a restricted project can't import backups from a URL.
+```
+
 ```{config:option} restricted.cluster.groups project-restricted
 :shortdesc: "Cluster groups that can be targeted"
 :type: "string"

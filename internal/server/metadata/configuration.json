@@ -6020,6 +6020,13 @@
 						}
 					},
 					{
+						"restricted.backups.servers": {
+							"longdesc": "Specify a comma-delimited list of servers (`host` or `host:port`, as they appear in the URL) from which backups can be imported.\nIf this option is not set, a restricted project can't import backups from a URL.",
+							"shortdesc": "Servers that backups can be imported from",
+							"type": "string"
+						}
+					},
+					{
 						"restricted.cluster.groups": {
 							"longdesc": "If specified, this option prevents targeting cluster groups other than the provided ones.\nWhen a single group is listed, instances created without a target are placed in that group.",
 							"shortdesc": "Cluster groups that can be targeted",
