@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: LXD\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2026-11-15 08:13-0500\n"
+"POT-Creation-Date: 2026-11-21 07:04-0500\n"
 "PO-Revision-Date: 2026-08-29 22:37+0000\n"
 "Last-Translator: Hiroaki Nakamura <hnakamur@gmail.com>\n"
 "Language-Team: Japanese <https://hosted.weblate.org/projects/incus/cli/ja/>\n"
@@ -3296,7 +3296,7 @@ msgstr "クライアント %q との SSH ハンドシェイクに失敗しまし
 msgid "Failed accepting channel client %q: %v"
 msgstr "クライアント %q のチャンネルの受け入れに失敗しました: %v"
 
-#: cmd/incus/delete.go:92
+#: cmd/incus/delete.go:96
 #, fuzzy, c-format
 msgid "Failed checking instance %s exists: %w"
 msgstr "インスタンスの存在確認に失敗しました \"%s:%s\": %w"
@@ -3327,7 +3327,7 @@ msgstr "証明書追加トークンのトークン変換操作に失敗しまし
 msgid "Failed converting token operation to join token: %w"
 msgstr "join トークンのトークン変換操作に失敗しました: %w"
 
-#: cmd/incus/delete.go:142
+#: cmd/incus/delete.go:146
 #, fuzzy, c-format
 msgid "Failed deleting instance %s in project %q: %w"
 msgstr "インスタンス %q （プロジェクト %q 内）の削除に失敗しました: %w"
@@ -3680,19 +3680,13 @@ msgstr "クラスター情報の取得に失敗しました: %w"
 msgid "Failed to retrieve current cluster config: %w"
 msgstr "現在のクラスター設定の取得に失敗しました: %w"
 
-#: cmd/incus/admin_init_dump.go:18 cmd/incus/admin_init_dump.go:49
-#: cmd/incus/admin_init_dump.go:64 cmd/incus/admin_init_dump.go:79
-#: cmd/incus/admin_init_dump.go:93 cmd/incus/cluster.go:816
+#: cmd/incus/admin_init_dump.go:18 cmd/incus/admin_init_dump.go:26
+#: cmd/incus/admin_init_dump.go:47 cmd/incus/admin_init_dump.go:62
+#: cmd/incus/admin_init_dump.go:78 cmd/incus/admin_init_dump.go:92
+#: cmd/incus/cluster.go:816
 #, c-format
 msgid "Failed to retrieve current server configuration: %w"
 msgstr "現在のサーバー設定の取得に失敗しました: %w"
-
-#: cmd/incus/admin_init_dump.go:28
-#, c-format
-msgid ""
-"Failed to retrieve current server network configuration for project %q: %w"
-msgstr ""
-"プロジェクト %q の現在のサーバーのネットワーク設定の取得に失敗しました: %w"
 
 #: cmd/incus/admin_init_auto.go:131
 #, c-format
@@ -8218,7 +8212,7 @@ msgstr "不正なプロトコル: %s"
 msgid "Provided certificate path doesn't exist: %s"
 msgstr "クライアント %s の証明書追加トークン: %s"
 
-#: cmd/incus/remote_unix.go:53
+#: cmd/incus/remote_unix.go:55
 msgid "Proxy timeout (exits when no connections)"
 msgstr "プロキシータイムアウト (接続がない場合終了)"
 
@@ -8738,11 +8732,11 @@ msgstr "影響を受ける行: %d"
 msgid "Rule description"
 msgstr "説明"
 
-#: cmd/incus/remote_unix.go:46
+#: cmd/incus/remote_unix.go:48
 msgid "Run a local API proxy"
 msgstr "ローカルの API プロキシーを実行します"
 
-#: cmd/incus/remote_unix.go:47
+#: cmd/incus/remote_unix.go:49
 msgid "Run a local API proxy for the remote"
 msgstr "リモート接続用のローカルの API プロキシーを実行します"
 
@@ -9790,7 +9784,7 @@ msgstr "実行中の場合、インスタンスを停止します"
 msgid "Stopping instance failed!"
 msgstr "インスタンスの停止に失敗しました！"
 
-#: cmd/incus/delete.go:113
+#: cmd/incus/delete.go:117
 #, fuzzy, c-format
 msgid "Stopping the instance %s failed: %s"
 msgstr "インスタンスの停止に失敗しました: %s"
@@ -10124,7 +10118,7 @@ msgstr "クライアント証明書はすでに存在しています"
 msgid "The given signature is already present in this ESL"
 msgstr "クライアント証明書はすでに存在しています"
 
-#: cmd/incus/delete.go:97
+#: cmd/incus/delete.go:101
 #, fuzzy, c-format
 msgid "The instance %s is currently running, stop it first or pass --force"
 msgstr "インスタンスは実行中です。先に停止させるか、--force を指定してください"
@@ -12828,7 +12822,7 @@ msgstr "予期しない %s; 期待 %s"
 msgid "unexpected end of argument; did you forget a suffix?"
 msgstr "引数の予期しない終了; サフィックスを忘れましたか?"
 
-#: cmd/incus/remote_unix.go:41
+#: cmd/incus/remote_unix.go:43
 #, fuzzy
 msgid "unix socket file"
 msgstr "ソケットファイル"
@@ -12879,6 +12873,12 @@ msgstr "ゾーン"
 #, fuzzy, c-format
 msgid "“%s”"
 msgstr "「%s」"
+
+#, c-format
+#~ msgid ""
+#~ "Failed to retrieve current server network configuration for project %q: %w"
+#~ msgstr ""
+#~ "プロジェクト %q の現在のサーバーのネットワーク設定の取得に失敗しました: %w"
 
 #~ msgid "Manually trigger the generation of a client certificate"
 #~ msgstr "クライアント証明書の生成を手動でトリガーする"
