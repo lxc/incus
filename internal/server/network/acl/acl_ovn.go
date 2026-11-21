@@ -8,6 +8,7 @@ import (
 	"net"
 	"slices"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/lxc/incus/v7/internal/server/db"
@@ -81,6 +82,10 @@ func (p *DirectionalPortGroups) CreatePortGroups(l logger.Logger, client *ovn.NB
 			l.Debug("Creating empty referenced ACL OVN port group", logger.Ctx{"networkACL": aclName, "portGroup": portGroupName})
 
 			err := client.CreatePortGroup(context.TODO(), projectID, portGroupName, []ovn.OVNPortGroup{}, "")
+			if errors.Is(err, ovn.ErrExists) {
+				continue // Created concurrently by another instance start.
+			}
+
 			if err != nil {
 				return fmt.Errorf("Failed creating port group %q for referenced security ACL %q setup: %w", portGroupName, aclName, err)
 			}
@@ -210,6 +215,9 @@ func PortGroupActionPriority(action string, reversed bool) int {
 	return 0
 }
 
+// ovnEnsureACLsMu serializes the local ACL port group setup.
+var ovnEnsureACLsMu sync.Mutex
+
 // OVNEnsureACLs ensures that the requested aclNames exist as OVN port groups (creates & applies ACL rules if not),
 // If reapplyRules is true then the current ACL rules in the database are applied to the existing port groups
 // rather than just new ones. Any ACLs referenced in the requested ACLs rules are also created as empty OVN port
@@ -218,6 +226,10 @@ func PortGroupActionPriority(action string, reversed bool) int {
 // is checked for existence (it is created & applies network specific ACL rules if not).
 // Returns a revert fail function that can be used to undo this function if a subsequent step fails.
 func OVNEnsureACLs(s *state.State, l logger.Logger, client *ovn.NB, aclProjectName string, aclNameIDs map[string]int64, aclNets map[string]NetworkACLUsage, aclNames []string, reapplyRules bool) (revert.Hook, error) {
+	// Concurrent instance starts would otherwise race on creating the same port groups.
+	ovnEnsureACLsMu.Lock()
+	defer ovnEnsureACLsMu.Unlock()
+
 	reverter := revert.New()
 	defer reverter.Fail()
 
@@ -431,6 +443,10 @@ func OVNEnsureACLs(s *state.State, l logger.Logger, client *ovn.NB, aclProjectNa
 
 			// Create OVN network specific port group and link it to switch by adding the router port.
 			err = client.CreatePortGroup(context.TODO(), projectID, netPortGroupName, dPortGroups.PortGroups(), OVNIntSwitchName(aclNet.ID), OVNIntSwitchRouterPortName(aclNet.ID))
+			if errors.Is(err, ovn.ErrExists) {
+				continue // Created concurrently by another instance start.
+			}
+
 			if err != nil {
 				return nil, fmt.Errorf("Failed creating port group %q for security ACL %q and network %q setup: %w", netPortGroupName, aclStatus.name, aclNet.Name, err)
 			}
@@ -458,6 +474,10 @@ func OVNEnsureACLs(s *state.State, l logger.Logger, client *ovn.NB, aclProjectNa
 
 			// Create OVN network specific port group and link it to switch by adding the router port.
 			err := client.CreatePortGroup(context.TODO(), projectID, netPortGroupName, dPortGroups.PortGroups(), OVNIntSwitchName(aclNet.ID), OVNIntSwitchRouterPortName(aclNet.ID))
+			if errors.Is(err, ovn.ErrExists) {
+				continue // Created concurrently by another instance start.
+			}
+
 			if err != nil {
 				return nil, fmt.Errorf("Failed creating port group %q for security ACL %q and network %q setup: %w", netPortGroupName, aclStatus.name, aclNet.Name, err)
 			}
