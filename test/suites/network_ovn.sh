@@ -475,6 +475,14 @@ test_network_ovn_basic() {
     # Look for DHCP options mentioning our testdhcp domain name, there should be two.
     ovn-nbctl --format=csv --no-headings --data=bare --colum=_uuid,options find dhcp_options | grep -cF testdhcp | grep -xF 2
 
+    # Check "none" stops the domain and the search list from being advertised (other networks keep theirs).
+    ovnNetID=$(incus admin sql global "SELECT id FROM networks WHERE name='ovn-virtual-network' AND project_id=(SELECT id FROM projects WHERE name='testovn')" | grep -Po '\d+')
+    incus network set ovn-virtual-network dns.domain=none --project testovn
+    ovn-nbctl --format=csv --no-headings --data=bare --colum=_uuid,options find dhcp_options "external_ids:incus_switch=incus-net${ovnNetID}-ls-int" | grep -cF domain | grep -xF 0
+    incus network set ovn-virtual-network dns.domain=testdhcp dns.search=none --project testovn
+    ovn-nbctl --format=csv --no-headings --data=bare --colum=_uuid,options find dhcp_options "external_ids:incus_switch=incus-net${ovnNetID}-ls-int" | grep -cF domain_search | grep -xF 0
+    incus network unset ovn-virtual-network dns.search --project testovn
+
     # Only enable IPv6 DHCP.
     incus init "${instanceImage}" u1 --project testovn -s "${poolName}"
     incus network set ovn-virtual-network ipv4.dhcp=false ipv6.dhcp=true --project testovn

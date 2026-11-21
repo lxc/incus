@@ -52,6 +52,15 @@ test_network() {
     incus network create inct$$
     incus network set inct$$ dns.mode dynamic
     incus network set inct$$ dns.domain blah
+
+    # Check "none" stops dnsmasq from advertising a domain or a search list.
+    incus network set inct$$ dns.domain none
+    dnsmasq_pid="$(awk '/^pid/ {print $2}' "${INCUS_DIR}/networks/inct$$/dnsmasq.pid")"
+    ! tr '\0' '\n' < "/proc/${dnsmasq_pid}/cmdline" | grep -xF -- "-s" || false
+    incus network set inct$$ dns.domain blah dns.search none
+    dnsmasq_pid="$(awk '/^pid/ {print $2}' "${INCUS_DIR}/networks/inct$$/dnsmasq.pid")"
+    tr '\0' '\n' < "/proc/${dnsmasq_pid}/cmdline" | grep -xF -- "--dhcp-option-force=119"
+    incus network unset inct$$ dns.search
     incus network set inct$$ ipv4.routing false
     incus network set inct$$ ipv6.routing false
     incus network set inct$$ ipv6.dhcp.stateful true
