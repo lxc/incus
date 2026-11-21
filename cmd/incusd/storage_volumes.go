@@ -2944,53 +2944,97 @@ func createStoragePoolVolumeFromBackup(s *state.State, r *http.Request, requestP
 		return response.InternalError(err)
 	}
 
-	// Detect squashfs compression and convert to tarball.
-	_, err = backupFile.Seek(0, io.SeekStart)
+	tarFile, err := convertSquashfsBackup(backupFile)
 	if err != nil {
 		return response.InternalError(err)
+	}
+
+	backupFile = tarFile
+
+	bInfo, err := parseVolumeBackupInfo(r.Context(), s, backupFile, projectName, pool, volName)
+	if err != nil {
+		return response.SmartError(err)
+	}
+
+	// Copy reverter so far so we can use it inside run after this function has finished.
+	runReverter := reverter.Clone()
+
+	run := func(op *operations.Operation) error {
+		defer logger.WarnOnError(backupFile.Close, "Failed to close backup file")
+		defer runReverter.Fail()
+
+		err := restoreVolumeFromBackup(s, bInfo, backupFile)
+		if err != nil {
+			return err
+		}
+
+		runReverter.Success()
+		return nil
+	}
+
+	resources := map[string][]api.URL{}
+	resources["storage_volumes"] = []api.URL{*api.NewURL().Path(version.APIVersion, "storage-pools", bInfo.Pool, "volumes", string(bInfo.Type), bInfo.Name)}
+
+	op, err := operations.OperationCreate(s, requestProjectName, operations.OperationClassTask, operationtype.CustomVolumeBackupRestore, resources, nil, run, nil, nil, r)
+	if err != nil {
+		return response.InternalError(err)
+	}
+
+	reverter.Success()
+	return operations.OperationResponse(op)
+}
+
+// convertSquashfsBackup converts a squashfs backup to a tarball, removing the original.
+func convertSquashfsBackup(backupFile *os.File) (*os.File, error) {
+	_, err := backupFile.Seek(0, io.SeekStart)
+	if err != nil {
+		return nil, err
 	}
 
 	_, algo, decomArgs, err := archive.DetectCompressionFile(backupFile)
 	if err != nil {
-		return response.InternalError(err)
+		return nil, err
 	}
 
-	if algo == ".squashfs" {
-		// Pass the temporary file as program argument to the decompression command.
-		decomArgs := append(decomArgs, backupFile.Name())
-
-		// Create temporary file to store the decompressed tarball in.
-		tarFile, err := os.CreateTemp(internalUtil.VarPath("backups"), fmt.Sprintf("%s_decompress_", backup.WorkingDirPrefix))
-		if err != nil {
-			return response.InternalError(err)
-		}
-
-		defer logger.WarnOnError(func() error { return os.Remove(tarFile.Name()) }, "Failed to remove tarball file")
-
-		// Decompress to tarFile temporary file.
-		err = archive.ExtractWithFds(decomArgs[0], decomArgs[1:], nil, nil, tarFile)
-		if err != nil {
-			return response.InternalError(err)
-		}
-
-		// We don't need the original squashfs file anymore.
-		_ = backupFile.Close()
-		_ = os.Remove(backupFile.Name())
-
-		// Replace the backup file handle with the handle to the tar file.
-		backupFile = tarFile
+	if algo != ".squashfs" {
+		return backupFile, nil
 	}
 
-	// Parse the backup information.
-	_, err = backupFile.Seek(0, io.SeekStart)
+	// Pass the temporary file as program argument to the decompression command.
+	decomArgs = append(decomArgs, backupFile.Name())
+
+	// Create temporary file to store the decompressed tarball in.
+	tarFile, err := os.CreateTemp(internalUtil.VarPath("backups"), fmt.Sprintf("%s_decompress_", backup.WorkingDirPrefix))
 	if err != nil {
-		return response.InternalError(err)
+		return nil, err
+	}
+
+	// Decompress to tarFile temporary file.
+	err = archive.ExtractWithFds(decomArgs[0], decomArgs[1:], nil, nil, tarFile)
+	if err != nil {
+		_ = tarFile.Close()
+		_ = os.Remove(tarFile.Name())
+		return nil, err
+	}
+
+	// We don't need the original squashfs file anymore.
+	_ = backupFile.Close()
+	_ = os.Remove(backupFile.Name())
+
+	return tarFile, nil
+}
+
+func parseVolumeBackupInfo(ctx context.Context, s *state.State, backupFile *os.File, projectName string, pool string, volName string) (*backup.Info, error) {
+	// Parse the backup information.
+	_, err := backupFile.Seek(0, io.SeekStart)
+	if err != nil {
+		return nil, err
 	}
 
 	logger.Debug("Reading backup file info")
 	bInfo, err := backup.GetInfo(backupFile, s.OS, backupFile.Name())
 	if err != nil {
-		return response.BadRequest(err)
+		return nil, api.StatusErrorf(http.StatusBadRequest, "%s", err.Error())
 	}
 
 	bInfo.Project = projectName
@@ -3008,13 +3052,13 @@ func createStoragePoolVolumeFromBackup(s *state.State, r *http.Request, requestP
 	// Validate the volume and snapshot names to avoid path traversal when used as path segments.
 	err = validate.IsAPIName(bInfo.Name, false)
 	if err != nil {
-		return response.BadRequest(fmt.Errorf("Invalid volume name: %w", err))
+		return nil, api.StatusErrorf(http.StatusBadRequest, "Invalid volume name: %s", err.Error())
 	}
 
 	for _, snapName := range bInfo.Snapshots {
 		err = validate.IsAPIName(snapName, false)
 		if err != nil {
-			return response.BadRequest(fmt.Errorf("Invalid snapshot name: %w", err))
+			return nil, api.StatusErrorf(http.StatusBadRequest, "Invalid snapshot name: %s", err.Error())
 		}
 	}
 
@@ -3028,7 +3072,7 @@ func createStoragePoolVolumeFromBackup(s *state.State, r *http.Request, requestP
 		"snapshots": bInfo.Snapshots,
 	})
 
-	err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
+	err = s.DB.Cluster.Transaction(ctx, func(ctx context.Context, tx *db.ClusterTx) error {
 		// Check storage pool exists.
 		_, _, _, err = tx.GetStoragePoolInAnyState(ctx, bInfo.Pool)
 
@@ -3039,67 +3083,51 @@ func createStoragePoolVolumeFromBackup(s *state.State, r *http.Request, requestP
 		// the backup.yaml) or the pool has been specified directly from the user restoring
 		// the backup then we cannot proceed so return an error.
 		if *bInfo.OptimizedStorage || pool != "" {
-			return response.InternalError(fmt.Errorf("Storage pool not found: %w", err))
+			return nil, fmt.Errorf("Storage pool not found: %w", err)
 		}
 
 		var profile *api.Profile
 
-		err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
+		err = s.DB.Cluster.Transaction(ctx, func(ctx context.Context, tx *db.ClusterTx) error {
 			// Otherwise try and restore to the project's default profile pool.
 			_, profile, err = tx.GetProfile(ctx, bInfo.Project, "default")
 
 			return err
 		})
 		if err != nil {
-			return response.InternalError(fmt.Errorf("Failed to get default profile: %w", err))
+			return nil, fmt.Errorf("Failed to get default profile: %w", err)
 		}
 
 		_, v, err := internalInstance.GetRootDiskDevice(profile.Devices)
 		if err != nil {
-			return response.InternalError(fmt.Errorf("Failed to get root disk device: %w", err))
+			return nil, fmt.Errorf("Failed to get root disk device: %w", err)
 		}
 
 		// Use the default-profile's root pool.
 		bInfo.Pool = v["pool"]
 	} else if err != nil {
-		return response.InternalError(err)
+		return nil, err
 	}
 
-	// Copy reverter so far so we can use it inside run after this function has finished.
-	runReverter := reverter.Clone()
+	return bInfo, nil
+}
 
-	run := func(op *operations.Operation) error {
-		defer logger.WarnOnError(backupFile.Close, "Failed to close backup file")
-		defer runReverter.Fail()
-
-		pool, err := storagePools.LoadByName(s, bInfo.Pool)
-		if err != nil {
-			return err
-		}
-
-		// Check if the backup is optimized that the source pool driver matches the target pool driver.
-		if *bInfo.OptimizedStorage && pool.Driver().Info().Name != bInfo.Backend {
-			return fmt.Errorf("Optimized backup storage driver %q differs from the target storage pool driver %q", bInfo.Backend, pool.Driver().Info().Name)
-		}
-
-		// Dump tarball to storage.
-		err = pool.CreateCustomVolumeFromBackup(*bInfo, backupFile, backup.DefaultBackupPrefix, nil)
-		if err != nil {
-			return fmt.Errorf("Create custom volume from backup: %w", err)
-		}
-
-		runReverter.Success()
-		return nil
-	}
-
-	resources := map[string][]api.URL{}
-	resources["storage_volumes"] = []api.URL{*api.NewURL().Path(version.APIVersion, "storage-pools", bInfo.Pool, "volumes", string(bInfo.Type), bInfo.Name)}
-
-	op, err := operations.OperationCreate(s, requestProjectName, operations.OperationClassTask, operationtype.CustomVolumeBackupRestore, resources, nil, run, nil, nil, r)
+func restoreVolumeFromBackup(s *state.State, bInfo *backup.Info, backupFile *os.File) error {
+	pool, err := storagePools.LoadByName(s, bInfo.Pool)
 	if err != nil {
-		return response.InternalError(err)
+		return err
 	}
 
-	reverter.Success()
-	return operations.OperationResponse(op)
+	// Check if the backup is optimized that the source pool driver matches the target pool driver.
+	if *bInfo.OptimizedStorage && pool.Driver().Info().Name != bInfo.Backend {
+		return fmt.Errorf("Optimized backup storage driver %q differs from the target storage pool driver %q", bInfo.Backend, pool.Driver().Info().Name)
+	}
+
+	// Dump tarball to storage.
+	err = pool.CreateCustomVolumeFromBackup(*bInfo, backupFile, backup.DefaultBackupPrefix, nil)
+	if err != nil {
+		return fmt.Errorf("Create custom volume from backup: %w", err)
+	}
+
+	return nil
 }
