@@ -745,6 +745,14 @@ func (d *nicOVN) checkAddressConflict() error {
 			return nil
 		}
 
+		// Our own instance may be mid-update, so check its pending devices rather than the database record.
+		if sameLogicalInstance {
+			nicConfig = d.inst.ExpandedDevices()[nicName]
+			if !network.DeviceUsesNetwork(d.network.Name(), d.network.Type(), nicConfig) {
+				return nil
+			}
+		}
+
 		// Check there isn't another instance with the same DNS name connected to managed network.
 		sameLogicalInstanceNestedNIC := sameLogicalInstance && (d.config["nested"] != "" || nicConfig["nested"] != "")
 		if d.network != nil && !sameLogicalInstanceNestedNIC && nicCheckDNSNameConflict(d.inst.Name(), inst.Name) {
