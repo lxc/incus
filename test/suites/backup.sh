@@ -840,6 +840,38 @@ test_backup_volume_export_with_project() {
         incus storage volume delete "${custom_vol_pool}" testvol2 --project "$project-b"
     fi
 
+    # Test import from a URL.
+    port="$(local_tcp_port)"
+    python3 -m http.server --bind 127.0.0.1 --directory "${INCUS_DIR}" "${port}" > /dev/null 2>&1 &
+    http_pid=$!
+    while ! curl -s -o /dev/null "http://127.0.0.1:${port}/"; do
+        sleep 0.1
+    done
+
+    incus storage volume import-url "${custom_vol_pool}" "http://127.0.0.1:${port}/testvol.tar.gz" testvol3
+    incus storage volume get "${custom_vol_pool}" testvol3 user.foo | grep -Fx "post-test-snap1"
+    incus storage volume get "${custom_vol_pool}" testvol3/test-snap0 user.foo | grep -Fx "test-snap0"
+    incus storage volume delete "${custom_vol_pool}" testvol3
+    ! incus storage volume import-url "${custom_vol_pool}" "http://127.0.0.1:${port}/missing.tar.gz" testvol3 || false
+
+    if [ "${project}" != "default" ]; then
+        # Downloads are bounded by the project's disk budget.
+        incus project set "$project-b" limits.disk=10B
+        incus storage volume import-url "${custom_vol_pool}" "http://127.0.0.1:${port}/testvol.tar.gz" testvol3 --project "$project-b" 2>&1 | grep -F "exceeding quota"
+        incus project unset "$project-b" limits.disk
+
+        # Restricted projects only import from their allowed servers.
+        incus project set "$project-b" restricted=true
+        incus storage volume import-url "${custom_vol_pool}" "http://127.0.0.1:${port}/testvol.tar.gz" testvol3 --project "$project-b" 2>&1 | grep -F "isn't allowed in this project"
+        incus project set "$project-b" restricted.backups.servers="127.0.0.1:${port}"
+        incus storage volume import-url "${custom_vol_pool}" "http://127.0.0.1:${port}/testvol.tar.gz" testvol3 --project "$project-b"
+        incus storage volume delete "${custom_vol_pool}" testvol3 --project "$project-b"
+        incus project unset "$project-b" restricted.backups.servers
+        incus project unset "$project-b" restricted
+    fi
+
+    kill "${http_pid}"
+
     # Test optimized import.
     if [ "$incus_backend" = "btrfs" ] || [ "$incus_backend" = "zfs" ]; then
         incus storage volume detach "${custom_vol_pool}" testvol c1
