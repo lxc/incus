@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: LXD\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2026-11-20 18:33-0500\n"
+"POT-Creation-Date: 2026-11-22 10:45-0500\n"
 "PO-Revision-Date: 2026-08-29 22:37+0000\n"
 "Last-Translator: Hiroaki Nakamura <hnakamur@gmail.com>\n"
 "Language-Team: Japanese <https://hosted.weblate.org/projects/incus/cli/ja/>\n"
@@ -3305,7 +3305,7 @@ msgstr "クライアント %q との SSH ハンドシェイクに失敗しまし
 msgid "Failed accepting channel client %q: %v"
 msgstr "クライアント %q のチャンネルの受け入れに失敗しました: %v"
 
-#: cmd/incus/delete.go:92
+#: cmd/incus/delete.go:96
 #, fuzzy, c-format
 msgid "Failed checking instance %s exists: %w"
 msgstr "インスタンスの存在確認に失敗しました \"%s:%s\": %w"
@@ -3336,7 +3336,7 @@ msgstr "証明書追加トークンのトークン変換操作に失敗しまし
 msgid "Failed converting token operation to join token: %w"
 msgstr "join トークンのトークン変換操作に失敗しました: %w"
 
-#: cmd/incus/delete.go:142
+#: cmd/incus/delete.go:146
 #, fuzzy, c-format
 msgid "Failed deleting instance %s in project %q: %w"
 msgstr "インスタンス %q （プロジェクト %q 内）の削除に失敗しました: %w"
@@ -9809,7 +9809,7 @@ msgstr "実行中の場合、インスタンスを停止します"
 msgid "Stopping instance failed!"
 msgstr "インスタンスの停止に失敗しました！"
 
-#: cmd/incus/delete.go:113
+#: cmd/incus/delete.go:117
 #, fuzzy, c-format
 msgid "Stopping the instance %s failed: %s"
 msgstr "インスタンスの停止に失敗しました: %s"
@@ -10143,7 +10143,7 @@ msgstr "クライアント証明書はすでに存在しています"
 msgid "The given signature is already present in this ESL"
 msgstr "クライアント証明書はすでに存在しています"
 
-#: cmd/incus/delete.go:97
+#: cmd/incus/delete.go:101
 #, fuzzy, c-format
 msgid "The instance %s is currently running, stop it first or pass --force"
 msgstr "インスタンスは実行中です。先に停止させるか、--force を指定してください"

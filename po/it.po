@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lxd\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2026-11-20 18:33-0500\n"
+"POT-Creation-Date: 2026-11-22 10:45-0500\n"
 "PO-Revision-Date: 2026-08-29 22:37+0000\n"
 "Last-Translator: Alberto Donato <ack@users.noreply.hosted.weblate.org>\n"
 "Language-Team: Italian <https://hosted.weblate.org/projects/incus/cli/it/>\n"
@@ -3208,7 +3208,7 @@ msgstr ""
 msgid "Failed accepting channel client %q: %v"
 msgstr ""
 
-#: cmd/incus/delete.go:92
+#: cmd/incus/delete.go:96
 #, fuzzy, c-format
 msgid "Failed checking instance %s exists: %w"
 msgstr "Il nome del container è: %s"
@@ -3239,7 +3239,7 @@ msgstr ""
 msgid "Failed converting token operation to join token: %w"
 msgstr "Il nome del container è: %s"
 
-#: cmd/incus/delete.go:142
+#: cmd/incus/delete.go:146
 #, fuzzy, c-format
 msgid "Failed deleting instance %s in project %q: %w"
 msgstr "Accetta certificato"
@@ -8708,7 +8708,7 @@ msgstr ""
 msgid "Stopping instance failed!"
 msgstr ""
 
-#: cmd/incus/delete.go:113
+#: cmd/incus/delete.go:117
 #, fuzzy, c-format
 msgid "Stopping the instance %s failed: %s"
 msgstr "errore di processamento degli alias %s\n"
@@ -9011,7 +9011,7 @@ msgstr "Certificato del client salvato dal server: "
 msgid "The given signature is already present in this ESL"
 msgstr "Certificato del client salvato dal server: "
 
-#: cmd/incus/delete.go:97
+#: cmd/incus/delete.go:101
 #, c-format
 msgid "The instance %s is currently running, stop it first or pass --force"
 msgstr ""

@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lxd\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2026-11-20 18:33-0500\n"
+"POT-Creation-Date: 2026-11-22 10:45-0500\n"
 "PO-Revision-Date: 2026-08-29 22:38+0000\n"
 "Last-Translator: meipeter <meipeter114514@outlook.com>\n"
 "Language-Team: Chinese (Simplified Han script) <https://hosted.weblate.org/"
@@ -3256,7 +3256,7 @@ msgstr "与客户端 %q 的 SSH 握手失败：%v"
 msgid "Failed accepting channel client %q: %v"
 msgstr "接受通道客户端 %q 失败：%v"
 
-#: cmd/incus/delete.go:92
+#: cmd/incus/delete.go:96
 #, fuzzy, c-format
 msgid "Failed checking instance %s exists: %w"
 msgstr "检查实例是否存在“%s:%s”失败：%w"
@@ -3287,7 +3287,7 @@ msgstr "将令牌操作转换为证书添加令牌失败：%w"
 msgid "Failed converting token operation to join token: %w"
 msgstr "将令牌操作转换为加入令牌失败：%w"
 
-#: cmd/incus/delete.go:142
+#: cmd/incus/delete.go:146
 #, fuzzy, c-format
 msgid "Failed deleting instance %s in project %q: %w"
 msgstr "在项目 %q 中删除实例 %q 失败：%w"
@@ -8982,7 +8982,7 @@ msgstr ""
 msgid "Stopping instance failed!"
 msgstr ""
 
-#: cmd/incus/delete.go:113
+#: cmd/incus/delete.go:117
 #, fuzzy, c-format
 msgid "Stopping the instance %s failed: %s"
 msgstr "正在复制储存卷：%s"
@@ -9284,7 +9284,7 @@ msgstr "客户端证书已存在"
 msgid "The given signature is already present in this ESL"
 msgstr "客户端证书已存在"
 
-#: cmd/incus/delete.go:97
+#: cmd/incus/delete.go:101
 #, c-format
 msgid "The instance %s is currently running, stop it first or pass --force"
 msgstr ""

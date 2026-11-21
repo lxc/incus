@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: incus\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2026-11-20 18:33-0500\n"
+"POT-Creation-Date: 2026-11-22 10:45-0500\n"
 "PO-Revision-Date: 2026-08-29 22:40+0000\n"
 "Last-Translator: Anonymous <noreply@weblate.org>\n"
 "Language-Team: Tamil <https://hosted.weblate.org/projects/incus/cli/ta/>\n"
@@ -2844,7 +2844,7 @@ msgstr ""
 msgid "Failed accepting channel client %q: %v"
 msgstr ""
 
-#: cmd/incus/delete.go:92
+#: cmd/incus/delete.go:96
 #, c-format
 msgid "Failed checking instance %s exists: %w"
 msgstr ""
@@ -2875,7 +2875,7 @@ msgstr ""
 msgid "Failed converting token operation to join token: %w"
 msgstr ""
 
-#: cmd/incus/delete.go:142
+#: cmd/incus/delete.go:146
 #, c-format
 msgid "Failed deleting instance %s in project %q: %w"
 msgstr ""
@@ -8170,7 +8170,7 @@ msgstr ""
 msgid "Stopping instance failed!"
 msgstr ""
 
-#: cmd/incus/delete.go:113
+#: cmd/incus/delete.go:117
 #, c-format
 msgid "Stopping the instance %s failed: %s"
 msgstr ""
@@ -8464,7 +8464,7 @@ msgstr ""
 msgid "The given signature is already present in this ESL"
 msgstr ""
 
-#: cmd/incus/delete.go:97
+#: cmd/incus/delete.go:101
 #, c-format
 msgid "The instance %s is currently running, stop it first or pass --force"
 msgstr ""

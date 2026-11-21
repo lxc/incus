@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: incus\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2026-11-20 18:33-0500\n"
+"POT-Creation-Date: 2026-11-22 10:45-0500\n"
 "PO-Revision-Date: 2026-08-29 22:40+0000\n"
 "Last-Translator: Anonymous <noreply@weblate.org>\n"
 "Language-Team: Swedish <https://hosted.weblate.org/projects/incus/cli/sv/>\n"
@@ -3313,7 +3313,7 @@ msgstr "Misslyckad SSH-handskakning med klient %q: %v"
 msgid "Failed accepting channel client %q: %v"
 msgstr "Misslyckades med att acceptera kanalklient %q: %v"
 
-#: cmd/incus/delete.go:92
+#: cmd/incus/delete.go:96
 #, c-format
 msgid "Failed checking instance %s exists: %w"
 msgstr "Misslyckades med att kontrollera att instansen %s finns: %w"
@@ -3344,7 +3344,7 @@ msgstr "Konvertering av token till certifikat misslyckades: %w"
 msgid "Failed converting token operation to join token: %w"
 msgstr "Konvertering av token-operation till join-token misslyckades: %w"
 
-#: cmd/incus/delete.go:142
+#: cmd/incus/delete.go:146
 #, c-format
 msgid "Failed deleting instance %s in project %q: %w"
 msgstr "Misslyckades att ta bort instans %s i projekt %q: %w"
@@ -9602,7 +9602,7 @@ msgstr "Stoppa instansen om den för närvarande körs"
 msgid "Stopping instance failed!"
 msgstr "Instansstopp misslyckades!"
 
-#: cmd/incus/delete.go:113
+#: cmd/incus/delete.go:117
 #, c-format
 msgid "Stopping the instance %s failed: %s"
 msgstr "Stopp av instans %s misslyckades: %s"
@@ -9929,7 +9929,7 @@ msgstr "Ett klientcertifikat finns redan"
 msgid "The given signature is already present in this ESL"
 msgstr "Ett klientcertifikat finns redan"
 
-#: cmd/incus/delete.go:97
+#: cmd/incus/delete.go:101
 #, c-format
 msgid "The instance %s is currently running, stop it first or pass --force"
 msgstr "Instansen %s körs för närvarande, stoppa den först eller ange --force"
