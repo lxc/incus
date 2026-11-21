@@ -1477,7 +1477,8 @@ func AllowProjectUpdate(tx *db.ClusterTx, projectName string, config map[string]
 	// Restrictions only apply to restricted projects, so only check them there.
 	if util.IsTrue(config["restricted"]) {
 		for _, key := range changed {
-			if !strings.HasPrefix(key, "restricted.") {
+			// Turning restrictions on checks the existing content too.
+			if !strings.HasPrefix(key, "restricted.") && key != "restricted" {
 				continue
 			}
 
