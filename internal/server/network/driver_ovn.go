@@ -116,6 +116,9 @@ type ovn struct {
 	// ID of the parent network owning our logical router (0 if we own it).
 	parentID int64
 
+	// Project of the parent network, which may be shared from the default project.
+	parentProject string
+
 	// Uplink network of the parent, as a child has none of its own.
 	parentUplink string
 
@@ -156,13 +159,19 @@ func (n *ovn) init(s *state.State, id int64, projectName string, netInfo *api.Ne
 
 	// Skip a self-referencing parent, validation rejects it and loading it would recurse forever.
 	if s != nil && n.config["parent"] != "" && n.config["parent"] != n.name {
-		parentNet, err := LoadByName(s, projectName, n.config["parent"])
+		parentProject, err := n.parentProjectName(n.config["parent"])
+		if err != nil {
+			return err
+		}
+
+		parentNet, err := LoadByName(s, parentProject, n.config["parent"])
 		if err != nil && !api.StatusErrorCheck(err, http.StatusNotFound) {
 			return fmt.Errorf("Failed loading parent network %q: %w", n.config["parent"], err)
 		}
 
 		if err == nil && parentNet.Type() == "ovn" {
 			n.parentID = parentNet.ID()
+			n.parentProject = parentProject
 			n.parentUplink = parentNet.Config()["network"]
 			n.bgpNextHopConfig = parentNet.Config()
 		}
@@ -528,7 +537,7 @@ func (n *ovn) Validate(config map[string]string, clientType request.ClientType) 
 		"bgp.communities": validate.Optional(validate.IsListOf(validate.IsBGPCommunity)),
 
 		// gendoc:generate(entity=network_ovn, group=common, key=parent)
-		//
+		// The parent can be an OVN network of the same project or one shared from the default project through `restricted.networks.access`.
 		// ---
 		//  type: string
 		//  shortdesc: Parent OVN network whose logical router and uplink to share
@@ -1007,19 +1016,24 @@ func (n *ovn) Validate(config map[string]string, clientType request.ClientType) 
 	projectRestrictedSubnets := []*net.IPNet{}
 
 	uplinkNetworkName := config["network"]
+	sharedParent := false
 	if config["parent"] != "" {
-		parentNet, err := LoadByName(n.state, n.project, config["parent"])
+		parentNet, err := n.loadParent(config["parent"])
 		if err != nil {
-			return fmt.Errorf("Failed loading parent network %q: %w", config["parent"], err)
+			return err
 		}
 
 		uplinkNetworkName = parentNet.Config()["network"]
+		sharedParent = parentNet.Project() != n.project
 	}
 
 	if uplinkNetworkName != "none" && clientType != request.ClientTypeNotifier {
-		uplinkNetworkName, err = n.validateUplinkNetwork(p, uplinkNetworkName)
-		if err != nil {
-			return err
+		// The uplink of a parent shared from another project was allowed when that parent was created.
+		if !sharedParent {
+			uplinkNetworkName, err = n.validateUplinkNetwork(p, uplinkNetworkName)
+			if err != nil {
+				return err
+			}
 		}
 
 		err = n.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
@@ -1203,7 +1217,7 @@ func (n *ovn) Validate(config map[string]string, clientType request.ClientType) 
 				}
 
 				// The same goes for the NICs on the other networks sharing our logical router.
-				if externalSubnetUser.usageType == subnetUsageInstance && externalSubnetUser.networkProject == n.project && slices.Contains(relatedNames, externalSubnetUser.networkName) {
+				if externalSubnetUser.usageType == subnetUsageInstance && slices.Contains(relatedNames, ovnRelatedNetwork{project: externalSubnetUser.networkProject, name: externalSubnetUser.networkName}) {
 					continue
 				}
 
@@ -1503,13 +1517,43 @@ func (n *ovn) UplinkName() string {
 	return n.config["network"]
 }
 
+// parentProjectName returns the project holding the named parent network, which may be shared from the default project.
+func (n *ovn) parentProjectName(parentName string) (string, error) {
+	parentProject, _, err := project.NetworkProjectForName(n.state.DB.Cluster, n.project, parentName)
+	if err != nil {
+		return "", fmt.Errorf("Failed resolving the project of parent network %q: %w", parentName, err)
+	}
+
+	return parentProject, nil
+}
+
+// loadParent loads the named parent network from the project it is shared from.
+func (n *ovn) loadParent(parentName string) (*ovn, error) {
+	parentProject, err := n.parentProjectName(parentName)
+	if err != nil {
+		return nil, err
+	}
+
+	parentNet, err := LoadByName(n.state, parentProject, parentName)
+	if err != nil {
+		return nil, fmt.Errorf("Failed loading parent network %q: %w", parentName, err)
+	}
+
+	ovnParent, ok := parentNet.(*ovn)
+	if !ok {
+		return nil, fmt.Errorf("Parent network %q isn't an OVN network", parentName)
+	}
+
+	return ovnParent, nil
+}
+
 // parentNetwork returns the network owning our logical router, or nil if we own it.
 func (n *ovn) parentNetwork() (*ovn, error) {
 	if n.parentID == 0 {
 		return nil, nil
 	}
 
-	parentNet, err := LoadByName(n.state, n.project, n.config["parent"])
+	parentNet, err := LoadByName(n.state, n.parentProject, n.config["parent"])
 	if err != nil {
 		return nil, fmt.Errorf("Failed loading parent network %q: %w", n.config["parent"], err)
 	}
@@ -1526,21 +1570,19 @@ func (n *ovn) parentNetwork() (*ovn, error) {
 func (n *ovn) refreshParent(config map[string]string) error {
 	if config["parent"] == "" {
 		n.parentID = 0
+		n.parentProject = ""
 		n.parentUplink = ""
 		n.bgpNextHopConfig = nil
 		return nil
 	}
 
-	parentNet, err := LoadByName(n.state, n.project, config["parent"])
+	parentNet, err := n.loadParent(config["parent"])
 	if err != nil {
-		return fmt.Errorf("Failed loading parent network %q: %w", config["parent"], err)
-	}
-
-	if parentNet.Type() != "ovn" {
-		return fmt.Errorf("Parent network %q isn't an OVN network", config["parent"])
+		return err
 	}
 
 	n.parentID = parentNet.ID()
+	n.parentProject = parentNet.Project()
 	n.parentUplink = parentNet.Config()["network"]
 	n.bgpNextHopConfig = parentNet.Config()
 
@@ -1610,39 +1652,34 @@ func (n *ovn) childNetworks() ([]*ovn, error) {
 		return nil, nil
 	}
 
-	var childNames []string
+	var projectChildren map[string]map[int64]api.Network
 
 	err := n.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
-		networks, err := tx.GetCreatedNetworksByProject(ctx, n.project)
-		if err != nil {
-			return err
-		}
+		var err error
 
-		for _, network := range networks {
-			if network.Type == "ovn" && network.Config["parent"] == n.name {
-				childNames = append(childNames, network.Name)
-			}
-		}
+		projectChildren, err = project.NetworkChildren(ctx, tx, n.project, n.name)
 
-		return nil
+		return err
 	})
 	if err != nil {
 		return nil, fmt.Errorf("Failed loading child networks: %w", err)
 	}
 
-	children := make([]*ovn, 0, len(childNames))
-	for _, childName := range childNames {
-		childNet, err := LoadByName(n.state, n.project, childName)
-		if err != nil {
-			return nil, fmt.Errorf("Failed loading child network %q: %w", childName, err)
-		}
+	children := []*ovn{}
+	for childProject, childNetworks := range projectChildren {
+		for _, childNetwork := range childNetworks {
+			childNet, err := LoadByName(n.state, childProject, childNetwork.Name)
+			if err != nil {
+				return nil, fmt.Errorf("Failed loading child network %q: %w", childNetwork.Name, err)
+			}
 
-		ovnChild, ok := childNet.(*ovn)
-		if !ok {
-			return nil, fmt.Errorf("Child network %q isn't an OVN network", childName)
-		}
+			ovnChild, ok := childNet.(*ovn)
+			if !ok {
+				return nil, fmt.Errorf("Child network %q isn't an OVN network", childNetwork.Name)
+			}
 
-		children = append(children, ovnChild)
+			children = append(children, ovnChild)
+		}
 	}
 
 	return children, nil
@@ -3003,13 +3040,9 @@ func (n *ovn) validateParentNetwork(config map[string]string) error {
 		return errors.New(`Option "tunnel" can't be used on a network with a parent`)
 	}
 
-	parentNet, err := LoadByName(n.state, n.project, config["parent"])
+	parentNet, err := n.loadParent(config["parent"])
 	if err != nil {
-		return fmt.Errorf("Failed loading parent network %q: %w", config["parent"], err)
-	}
-
-	if parentNet.Type() != "ovn" {
-		return fmt.Errorf("Parent network %q isn't an OVN network", config["parent"])
+		return err
 	}
 
 	parentConfig := parentNet.Config()
@@ -3051,77 +3084,97 @@ func (n *ovn) validateParentNetwork(config map[string]string) error {
 	return nil
 }
 
-// relatedNetworkNames returns the names of the networks sharing the logical router described by the config, including our own.
-func (n *ovn) relatedNetworkNames(config map[string]string) ([]string, error) {
-	ownerName := config["parent"]
-	if ownerName == "" {
-		ownerName = n.name
+// ovnRelatedNetwork identifies a network sharing a logical router.
+type ovnRelatedNetwork struct {
+	project string
+	name    string
+}
+
+// relatedNetworkRecords returns the networks sharing the logical router of the named parent, or ours without one.
+// Our own network is left out.
+func (n *ovn) relatedNetworkRecords(parentName string) ([]ovnRelatedNetwork, []api.Network, error) {
+	ownerProject := n.project
+	ownerName := n.name
+	if parentName != "" {
+		var err error
+
+		ownerName = parentName
+		ownerProject, err = n.parentProjectName(parentName)
+		if err != nil {
+			return nil, nil, err
+		}
 	}
 
-	names := []string{n.name}
+	var related []ovnRelatedNetwork
+	var records []api.Network
 
 	err := n.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
-		networks, err := tx.GetCreatedNetworksByProject(ctx, n.project)
+		if parentName != "" {
+			_, owner, _, err := tx.GetNetworkInAnyState(ctx, ownerProject, ownerName)
+			if err != nil {
+				return err
+			}
+
+			related = append(related, ovnRelatedNetwork{project: ownerProject, name: ownerName})
+			records = append(records, *owner)
+		}
+
+		projectChildren, err := project.NetworkChildren(ctx, tx, ownerProject, ownerName)
 		if err != nil {
 			return err
 		}
 
-		for _, network := range networks {
-			if network.Type != "ovn" || network.Name == n.name {
-				continue
-			}
+		for childProject, childNetworks := range projectChildren {
+			for _, childNetwork := range childNetworks {
+				if childProject == n.project && childNetwork.Name == n.name {
+					continue
+				}
 
-			if network.Name == ownerName || network.Config["parent"] == ownerName {
-				names = append(names, network.Name)
+				related = append(related, ovnRelatedNetwork{project: childProject, name: childNetwork.Name})
+				records = append(records, childNetwork)
 			}
 		}
 
 		return nil
 	})
 	if err != nil {
-		return nil, fmt.Errorf("Failed loading the networks sharing the logical router: %w", err)
+		return nil, nil, fmt.Errorf("Failed loading the networks sharing the logical router: %w", err)
 	}
 
-	return names, nil
+	return related, records, nil
+}
+
+// relatedNetworkNames returns the networks sharing the logical router described by the config, including our own.
+func (n *ovn) relatedNetworkNames(config map[string]string) ([]ovnRelatedNetwork, error) {
+	related, _, err := n.relatedNetworkRecords(config["parent"])
+	if err != nil {
+		return nil, err
+	}
+
+	return append(related, ovnRelatedNetwork{project: n.project, name: n.name}), nil
 }
 
 // relatedNetworkSubnets returns the internal subnets of the other networks on the parent's logical router.
 func (n *ovn) relatedNetworkSubnets(parentName string) ([]*net.IPNet, error) {
-	var subnets []*net.IPNet
-
-	err := n.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
-		networks, err := tx.GetCreatedNetworksByProject(ctx, n.project)
-		if err != nil {
-			return err
-		}
-
-		for _, network := range networks {
-			if network.Type != "ovn" || network.Name == n.name {
-				continue
-			}
-
-			if network.Name != parentName && network.Config["parent"] != parentName {
-				continue
-			}
-
-			for _, key := range []string{"ipv4.address", "ipv6.address"} {
-				if validate.IsOneOf("none", "auto", "")(network.Config[key]) == nil {
-					continue
-				}
-
-				_, subnet, err := net.ParseCIDR(network.Config[key])
-				if err != nil {
-					continue
-				}
-
-				subnets = append(subnets, subnet)
-			}
-		}
-
-		return nil
-	})
+	_, records, err := n.relatedNetworkRecords(parentName)
 	if err != nil {
-		return nil, fmt.Errorf("Failed loading the networks sharing the logical router: %w", err)
+		return nil, err
+	}
+
+	var subnets []*net.IPNet
+	for _, network := range records {
+		for _, key := range []string{"ipv4.address", "ipv6.address"} {
+			if validate.IsOneOf("none", "auto", "")(network.Config[key]) == nil {
+				continue
+			}
+
+			_, subnet, err := net.ParseCIDR(network.Config[key])
+			if err != nil {
+				continue
+			}
+
+			subnets = append(subnets, subnet)
+		}
 	}
 
 	return subnets, nil
@@ -5835,7 +5888,7 @@ func (n *ovn) InstanceDevicePortValidateExternalRoutes(deviceInstance instance.I
 		// Check the external port route doesn't fall within any existing OVN network external subnets.
 		for _, externalSubnetUser := range externalSubnetsInUse {
 			// Skip the SNAT addresses of the networks sharing our logical router (as they can be used for NICs in those networks).
-			if externalSubnetUser.usageType == subnetUsageNetworkSNAT && externalSubnetUser.networkProject == n.project && slices.Contains(relatedNames, externalSubnetUser.networkName) {
+			if externalSubnetUser.usageType == subnetUsageNetworkSNAT && slices.Contains(relatedNames, ovnRelatedNetwork{project: externalSubnetUser.networkProject, name: externalSubnetUser.networkName}) {
 				continue
 			}
 

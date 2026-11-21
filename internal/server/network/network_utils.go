@@ -186,8 +186,8 @@ func UsedBy(s *state.State, networkProjectName string, networkID int64, networkN
 		}
 	}
 
-	// Only networks in the default project can be used as uplinks and failovers, and only OVN networks can be parents. Cheapest to do.
-	if networkProjectName == api.ProjectDefaultName || networkType == "ovn" {
+	// Only networks in the default project can be used as uplinks and failovers. Cheapest to do.
+	if networkProjectName == api.ProjectDefaultName {
 		// Get all managed networks across all projects.
 		var projectNetworks map[string]map[int64]api.Network
 
@@ -208,17 +208,33 @@ func UsedBy(s *state.State, networkProjectName string, networkID int64, networkN
 				// The network's config references the network we are searching for. Either by
 				// directly referencing our network or by referencing our interface as its parent
 				// or failover.
-				uplinkUsed := networkProjectName == api.ProjectDefaultName && (network.Config["network"] == networkName || network.Config["parent"] == networkName || network.Config["failover"] == networkName)
-
-				// OVN child networks reference their parent within the same project.
-				parentUsed := networkType == "ovn" && network.Type == "ovn" && projectName == networkProjectName && network.Config["parent"] == networkName
-
-				if uplinkUsed || parentUsed {
+				if network.Config["network"] == networkName || network.Config["parent"] == networkName || network.Config["failover"] == networkName {
 					usedBy = append(usedBy, api.NewURL().Path(version.APIVersion, "networks", network.Name).Project(projectName).String())
 
 					if firstOnly {
 						return usedBy, nil
 					}
+				}
+			}
+		}
+	} else if networkType == "ovn" {
+		// OVN networks outside the default project can be the parent of networks in other projects too.
+		var projectChildren map[string]map[int64]api.Network
+
+		err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+			projectChildren, err = project.NetworkChildren(ctx, tx, networkProjectName, networkName)
+			return err
+		})
+		if err != nil {
+			return nil, fmt.Errorf("Failed to load child networks: %w", err)
+		}
+
+		for projectName, networks := range projectChildren {
+			for _, network := range networks {
+				usedBy = append(usedBy, api.NewURL().Path(version.APIVersion, "networks", network.Name).Project(projectName).String())
+
+				if firstOnly {
+					return usedBy, nil
 				}
 			}
 		}
