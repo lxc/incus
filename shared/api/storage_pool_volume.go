@@ -205,7 +205,7 @@ type StorageVolumeSource struct {
 	// Example: foo
 	Name string `json:"name" yaml:"name"`
 
-	// Source type (copy or migration)
+	// Source type (copy, migration or backup)
 	// Example: copy
 	Type string `json:"type" yaml:"type"`
 
@@ -266,6 +266,11 @@ type StorageVolumeSource struct {
 	//
 	// API extension: cluster_internal_custom_volume_copy
 	Location string `json:"location" yaml:"location"`
+
+	// Remote backup to import (for backup)
+	//
+	// API extension: storage_volume_backup_import
+	Backup *BackupSource `json:"backup,omitempty" yaml:"backup,omitempty"`
 }
 
 // Writable converts a full StorageVolume struct into a StorageVolumePut struct (filters read-only fields).
