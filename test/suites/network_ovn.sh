@@ -773,6 +773,16 @@ test_network_ovn_basic() {
 
     incus network delete ovn-virtual-child
 
+    # A network shared into a restricted project can be the parent of that project's own networks.
+    incus project create ovn-shared -c features.networks=true -c restricted=true -c restricted.networks.access=ovn-virtual-network
+    incus network create ovn-shared-child --project ovn-shared --type=ovn parent=ovn-virtual-network ipv4.address=10.10.203.1/24 ipv4.nat=true ipv6.address=none
+    incus network show ovn-virtual-network | grep -F "/1.0/networks/ovn-shared-child?project=ovn-shared"
+    ! incus network create ovn-shared-child2 --project ovn-shared --type=ovn parent=ovn-virtual-network ipv4.address=10.10.203.1/24 ipv6.address=none || false # Overlaps the sibling.
+    ! incus project unset ovn-shared restricted.networks.access || false # The parent must stay shared.
+    ! incus project set ovn-shared restricted=false || false
+    incus network delete ovn-shared-child --project ovn-shared
+    incus project delete ovn-shared
+
     # Remove external SNAT address and check normal SNAT operation returns connectivity.
     incus network unset ovn-virtual-network ipv4.nat.address
     incus network unset ovn-virtual-network ipv6.nat.address
