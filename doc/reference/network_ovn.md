@@ -54,7 +54,7 @@ When the external interface is added to the list with the extended format, the s
 (network-ovn-child)=
 ## Child networks
 
-An OVN network can be created with a `parent` pointing at another OVN network in the same project.
+An OVN network can be created with a `parent` pointing at another OVN network in the same project, or at an OVN network of the default project that is shared into the project through {config:option}`project-restricted:restricted.networks.access`.
 Instead of creating a logical router of its own, the child attaches its own logical switch and subnet to the logical router of its parent:
 
     incus network create net1 --type=ovn network=UPLINK ipv4.address=192.0.2.1/24
