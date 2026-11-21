@@ -530,7 +530,7 @@ func (n *bridge) Validate(config map[string]string, clientType request.ClientTyp
 		"dns.nameservers": validate.Optional(validate.IsListOf(validate.IsNetworkAddress)),
 
 		// gendoc:generate(entity=network_bridge, group=common, key=dns.domain)
-		//
+		// Set to `none` to not advertise a domain and resolve instance names without one.
 		// ---
 		//  type: string
 		//  condition: -
@@ -557,7 +557,7 @@ func (n *bridge) Validate(config map[string]string, clientType request.ClientTyp
 		"dns.mode": validate.Optional(validate.IsOneOf("dynamic", "managed", "none")),
 
 		// gendoc:generate(entity=network_bridge, group=common, key=dns.search)
-		//
+		// Set to `none` to not advertise a search list.
 		// ---
 		//  type: string
 		//  condition: -
@@ -1516,7 +1516,10 @@ func (n *bridge) setup(oldConfig map[string]string) error {
 			}
 
 			dnsSearch := n.config["dns.search"]
-			if dnsSearch != "" {
+			if dnsSearch == "none" {
+				// An empty value stops dnsmasq from sending the option.
+				dnsmasqCmd = append(dnsmasqCmd, "--dhcp-option-force=119")
+			} else if dnsSearch != "" {
 				dnsmasqCmd = append(dnsmasqCmd, fmt.Sprintf("--dhcp-option-force=119,%s", strings.Trim(dnsSearch, " ")))
 			}
 
@@ -1717,6 +1720,14 @@ func (n *bridge) setup(oldConfig map[string]string) error {
 			}
 		} else {
 			dnsmasqCmd = append(dnsmasqCmd, fmt.Sprintf("--dhcp-option-force=option6:dns-server,[%s]", ipAddress.String()))
+		}
+
+		dnsSearch := n.config["dns.search"]
+		if dnsSearch == "none" {
+			// An empty value stops dnsmasq from sending the option.
+			dnsmasqCmd = append(dnsmasqCmd, "--dhcp-option-force=option6:domain-search")
+		} else if dnsSearch != "" {
+			dnsmasqCmd = append(dnsmasqCmd, fmt.Sprintf("--dhcp-option-force=option6:domain-search,%s", strings.ReplaceAll(dnsSearch, " ", "")))
 		}
 
 		// Disable receiving router advertisements from guests.
@@ -1970,7 +1981,7 @@ func (n *bridge) setup(oldConfig map[string]string) error {
 			dnsDomain = "incus"
 		}
 
-		if n.config["dns.mode"] != "none" {
+		if n.config["dns.mode"] != "none" && dnsDomain != "none" {
 			dnsmasqCmd = append(dnsmasqCmd, "-s", dnsDomain)
 			dnsmasqCmd = append(dnsmasqCmd, "--interface-name", fmt.Sprintf("_gateway.%s,%s", dnsDomain, n.name))
 			dnsmasqCmd = append(dnsmasqCmd, "-S", fmt.Sprintf("/%s/", dnsDomain))

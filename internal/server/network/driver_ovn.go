@@ -744,7 +744,7 @@ func (n *ovn) Validate(config map[string]string, clientType request.ClientType) 
 		"dns.nameservers": validate.Optional(validate.IsListOf(validate.IsNetworkAddress)),
 
 		// gendoc:generate(entity=network_ovn, group=common, key=dns.domain)
-		//
+		// Set to `none` to not advertise a domain and register instance names without one.
 		// ---
 		//  type: string
 		//  default: `incus`
@@ -761,7 +761,7 @@ func (n *ovn) Validate(config map[string]string, clientType request.ClientType) 
 		"dns.mode": validate.Optional(validate.IsOneOf("managed", "none")),
 
 		// gendoc:generate(entity=network_ovn, group=common, key=dns.search)
-		//
+		// Set to `none` to not advertise a search list.
 		// ---
 		//  type: string
 		//  shortdesc: Full comma-separated domain search list, defaulting to `dns.domain` value
@@ -1777,8 +1777,12 @@ func (n *ovn) parseRouterIntPortIPv6Net() (net.IP, *net.IPNet, error) {
 	return nil, nil, nil
 }
 
-// getDomainName returns OVN DHCP domain name.
+// getDomainName returns OVN DHCP domain name, empty when none is advertised.
 func (n *ovn) getDomainName() string {
+	if n.config["dns.domain"] == "none" {
+		return ""
+	}
+
 	if n.config["dns.domain"] != "" {
 		return n.config["dns.domain"]
 	}
@@ -1806,13 +1810,22 @@ func (n *ovn) getGatewayIpv4() (net.IP, error) {
 	return routerIntPortIPv4, nil
 }
 
-// getDNSSearchList returns OVN DHCP DNS search list. If no search list set returns getDomainName() as list.
+// getDNSSearchList returns OVN DHCP DNS search list, defaulting to the domain name when one is advertised.
 func (n *ovn) getDNSSearchList() []string {
+	if n.config["dns.search"] == "none" {
+		return nil
+	}
+
 	if n.config["dns.search"] != "" {
 		return util.SplitNTrimSpace(n.config["dns.search"], ",", -1, false)
 	}
 
-	return []string{n.getDomainName()}
+	domainName := n.getDomainName()
+	if domainName == "" {
+		return nil
+	}
+
+	return []string{domainName}
 }
 
 // getExtSwitchName returns OVN  logical external switch name.
@@ -6211,7 +6224,11 @@ func (n *ovn) InstanceDevicePortStart(opts *OVNInstanceNICSetupOpts, securityACL
 	}
 
 	if n.config["dns.mode"] == "managed" || n.config["dns.mode"] == "" {
-		dnsName := fmt.Sprintf("%s.%s", opts.DNSName, n.getDomainName())
+		dnsName := opts.DNSName
+		if n.getDomainName() != "" {
+			dnsName = fmt.Sprintf("%s.%s", opts.DNSName, n.getDomainName())
+		}
+
 		dnsUUID, err := n.ovnnb.UpdateLogicalSwitchPortDNS(context.TODO(), n.getIntSwitchName(), instancePortName, dnsName, dnsIPs)
 		if err != nil {
 			return "", nil, fmt.Errorf("Failed setting DNS for %q: %w", dnsName, err)
