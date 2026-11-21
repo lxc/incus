@@ -1816,6 +1816,14 @@ func projectValidateConfig(s *state.State, config map[string]string) error {
 		//  shortdesc: Whether to prevent creating instance or volume backups
 		"restricted.backups": isEitherAllowOrBlock,
 
+		// gendoc:generate(entity=project, group=restricted, key=restricted.backups.servers)
+		// Specify a comma-delimited list of servers (`host` or `host:port`, as they appear in the URL) from which backups can be imported.
+		// If this option is not set, a restricted project can't import backups from a URL.
+		// ---
+		//  type: string
+		//  shortdesc: Servers that backups can be imported from
+		"restricted.backups.servers": validate.Optional(validate.IsListOf(validate.IsAny)),
+
 		// gendoc:generate(entity=project, group=restricted, key=restricted.cluster.groups)
 		// If specified, this option prevents targeting cluster groups other than the provided ones.
 		// When a single group is listed, instances created without a target are placed in that group.

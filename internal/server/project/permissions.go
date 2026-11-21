@@ -450,9 +450,28 @@ func AllowVolumeCreation(tx *db.ClusterTx, projectName string, poolName string, 
 		return nil
 	}
 
-	// Restricted projects aren't allowed to use pull migration.
-	if util.IsTrue(info.Project.Config["restricted"]) && req.Source.Type == "migration" && req.Source.Mode == "pull" {
-		return errors.New("Restricted projects aren't allowed to use pull mode migration")
+	// Restricted projects aren't allowed to use pull migration or backup servers outside their allow list.
+	if util.IsTrue(info.Project.Config["restricted"]) {
+		if req.Source.Type == "migration" && req.Source.Mode == "pull" {
+			return errors.New("Restricted projects aren't allowed to use pull mode migration")
+		}
+
+		if req.Source.Type == "backup" {
+			u, err := url.Parse(req.Source.Backup.URL)
+			if err != nil {
+				return err
+			}
+
+			err = CheckBackupSourceURL(info.Project.Config, u)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	// The size of an imported backup is only known once downloaded, where the project's disk budget applies.
+	if req.Source.Type == "backup" {
+		return nil
 	}
 
 	err = checkRestrictedVolumeConfig(tx, info, poolName, req.Config, nil)
@@ -470,6 +489,21 @@ func AllowVolumeCreation(tx *db.ClusterTx, projectName string, poolName string, 
 	err = checkRestrictionsAndAggregateLimits(tx, info)
 	if err != nil {
 		return fmt.Errorf("Failed checking if volume creation allowed: %w", err)
+	}
+
+	return nil
+}
+
+// CheckBackupSourceURL returns an error if a restricted project isn't allowed to import a backup from u.
+func CheckBackupSourceURL(projectConfig map[string]string, u *url.URL) error {
+	if !util.IsTrue(projectConfig["restricted"]) {
+		return nil
+	}
+
+	servers := util.SplitNTrimSpace(projectConfig["restricted.backups.servers"], ",", -1, true)
+	allowed := slices.ContainsFunc(servers, func(server string) bool { return strings.EqualFold(server, u.Host) })
+	if !allowed {
+		return api.StatusErrorf(http.StatusForbidden, "Backup server %q isn't allowed in this project", u.Host)
 	}
 
 	return nil
@@ -1164,6 +1198,7 @@ var allAggregateLimits = []string{
 // allRestrictions lists all available 'restrict.*' config keys along with their default setting.
 var allRestrictions = map[string]string{
 	"restricted.backups":                   "block",
+	"restricted.backups.servers":           "",
 	"restricted.cluster.groups":            "",
 	"restricted.cluster.target":            "block",
 	"restricted.containers.nesting":        "block",
