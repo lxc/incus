@@ -839,6 +839,14 @@ func (d *nicBridged) checkAddressConflict() error {
 			return nil
 		}
 
+		// Our own instance may be mid-update, so check its pending devices rather than the database record.
+		if sameLogicalInstance {
+			nicConfig = d.inst.ExpandedDevices()[nicName]
+			if !network.DeviceUsesNetwork(networkName, "bridge", nicConfig) {
+				return nil
+			}
+		}
+
 		// Skip NICs connected to other VLANs (not perfect though as one NIC could
 		// explicitly specify the default untagged VLAN and these would be connected to
 		// same L2 even though the values are different, and there is a different default
