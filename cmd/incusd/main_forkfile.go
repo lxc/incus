@@ -260,10 +260,7 @@ func (c *cmdForkfile) run(_ *cobra.Command, args []string) error {
 			mu.Unlock()
 
 			// Spawn the server.
-			server, err := sftp.NewServer(conn, sftp.WithAllocator(), sftp.WithMaxTxPacket(128*1024))
-			if err != nil {
-				return
-			}
+			server := sftp.NewRequestServer(conn, forkfileSFTPHandlers(), sftp.WithRSAllocator(), sftp.WithRSMaxTxPacket(128*1024))
 
 			_ = server.Serve()
 
