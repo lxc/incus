@@ -117,6 +117,10 @@ Unless specified through a prefix, all volume operations affect "custom" (user c
 	storageVolumeImportCmd := cmdStorageVolumeImport{global: c.global, storage: c.storage, storageVolume: c}
 	cmd.AddCommand(storageVolumeImportCmd.command())
 
+	// Import URL
+	storageVolumeImportURLCmd := cmdStorageVolumeImportURL{global: c.global, storage: c.storage, storageVolume: c}
+	cmd.AddCommand(storageVolumeImportURLCmd.command())
+
 	// Info
 	storageVolumeInfoCmd := cmdStorageVolumeInfo{global: c.global, storage: c.storage, storageVolume: c}
 	cmd.AddCommand(storageVolumeInfoCmd.command())
@@ -1260,6 +1264,85 @@ func (c *cmdStorageVolumeGet) run(cmd *cobra.Command, args []string) error {
 		}
 	}
 
+	return nil
+}
+
+// Import URL.
+type cmdStorageVolumeImportURL struct {
+	global        *cmdGlobal
+	storage       *cmdStorage
+	storageVolume *cmdStorageVolume
+}
+
+var cmdStorageVolumeImportURLUsage = u.Usage{u.Pool.Remote(), u.URL, u.NewName(u.Volume).Optional()}
+
+func (c *cmdStorageVolumeImportURL) command() *cobra.Command {
+	cmd := &cobra.Command{}
+	cmd.Use = cli.U("import-url", cmdStorageVolumeImportURLUsage...)
+	cmd.Short = i18n.G("Import custom storage volumes from a URL")
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Import custom storage volumes from a URL.
+
+The server downloads the backup directly, no data goes through the client.`))
+	cmd.Example = cli.FormatSection("", i18n.G(`incus storage volume import-url default https://example.com/backup0.tar.gz myvol
+    Create a new custom volume by having the server download backup0.tar.gz`))
+	cli.AddStringFlag(cmd.Flags(), &c.storage.flagTarget, "target", "", "", i18n.G("Cluster member name"))
+	cmd.RunE = c.run
+
+	cmd.ValidArgsFunction = func(_ *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+		if len(args) == 0 {
+			return c.global.cmpStoragePools(toComplete)
+		}
+
+		return nil, cobra.ShellCompDirectiveNoFileComp
+	}
+
+	return cmd
+}
+
+func (c *cmdStorageVolumeImportURL) run(cmd *cobra.Command, args []string) error {
+	parsed, err := c.global.Parse(cmdStorageVolumeImportURLUsage, cmd, args)
+	if err != nil {
+		return err
+	}
+
+	d := parsed[0].RemoteServer
+	poolName := parsed[0].RemoteObject.String
+	sourceURL := parsed[1].String
+	volName := parsed[2].String
+
+	// Use the provided target.
+	if c.storage.flagTarget != "" {
+		d = d.UseTarget(c.storage.flagTarget)
+	}
+
+	progress := cli.ProgressRenderer{
+		Format: i18n.G("Importing custom volume: %s"),
+		Quiet:  c.global.flagQuiet,
+	}
+
+	createArgs := incus.StorageVolumeBackupArgs{
+		Name:   volName,
+		Source: &api.BackupSource{Type: "url", URL: sourceURL},
+	}
+
+	op, err := d.CreateStoragePoolVolumeFromBackup(poolName, createArgs)
+	if err != nil {
+		return err
+	}
+
+	_, err = op.AddHandler(progress.UpdateOp)
+	if err != nil {
+		progress.Done("")
+		return err
+	}
+
+	err = cli.CancelableWait(op, &progress)
+	if err != nil {
+		progress.Done("")
+		return err
+	}
+
+	progress.Done("")
 	return nil
 }
 
