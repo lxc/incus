@@ -50,6 +50,20 @@ test_container_devices_nic_bridged() {
     # Because this would effectively cause 2 NICs with the same instance name to be connected to the same network.
     ! incus config device add "${ctName}" eth1 nic network=${brName} || false
 
+    # Check that moving the profile NIC to another network while adding a NIC on the old one works in one update.
+    incus network create "${brName}b"
+    incus config show "${ctName}" | sed "s/^devices: {}$/devices:\\n  eth0:\\n    name: eth0\\n    network: ${brName}b\\n    type: nic\\n  eth1:\\n    name: eth1\\n    network: ${brName}\\n    type: nic/" | incus config edit "${ctName}"
+    [ "$(incus config device get "${ctName}" eth0 network)" = "${brName}b" ]
+    incus config device remove "${ctName}" eth1
+    incus config device remove "${ctName}" eth0
+    incus network delete "${brName}b"
+
+    # Check that renaming the profile NIC works in one update (mask the profile device and add it under a new name).
+    incus config show "${ctName}" | sed "s/^devices: {}$/devices:\\n  eth0:\\n    type: none\\n  eth1:\\n    name: eth0\\n    network: ${brName}\\n    type: nic/" | incus config edit "${ctName}"
+    [ "$(incus config device get "${ctName}" eth1 name)" = "eth0" ]
+    incus config device remove "${ctName}" eth1
+    incus config device remove "${ctName}" eth0
+
     # Test device name validation (use vlan=1 to avoid trigger instance DNS name conflict detection).
     incus config device add "${ctName}" loop4 nic network=${brName} vlan=1
     incus config device remove "${ctName}" loop4
@@ -763,6 +777,13 @@ test_container_devices_nic_bridged() {
     incus restart foo
     incus exec foo ip link set eth0 up
     [ "$(incus file pull foo/sys/class/net/eth0/operstate -)" = "down" ]
+    incus delete -f foo
+
+    # Check that renaming the profile NIC works in one update on a running instance.
+    incus launch testimage foo -p "${ctName}"
+    incus config show foo | sed "s/^devices: {}$/devices:\\n  eth0:\\n    type: none\\n  eth1:\\n    name: eth0\\n    network: ${brName}\\n    type: nic/" | incus config edit foo
+    [ "$(incus config device get foo eth1 name)" = "eth0" ]
+    incus exec foo -- ip link show eth0
     incus delete -f foo
 
     # Check we haven't left any NICS lying around.
