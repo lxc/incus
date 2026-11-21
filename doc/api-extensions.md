@@ -3666,3 +3666,10 @@ When a `kernel.uki` or a `kernel.img` file is present at the root of the configu
 With `kernel.uki`, the UKI is booted by the UEFI firmware, so it must be signed with a key trusted by the firmware unless `security.secureboot` is disabled.
 With `kernel.img`, UEFI is disabled. An `initrd.img` file next to it is used as the `initrd` and the content of a `kernel.cmdline` file as the kernel command line.
 For both, the new `boot.kernel.cmdline` configuration key overrides the kernel command line.
+## `storage_volume_backup_import`
+
+Adds a `backup` source type to `POST /1.0/storage-pools/{poolName}/volumes/custom`, which has the server download a custom volume backup and import it.
+The backup source is described by `source.backup`, with `type` set to `url` and the HTTP or HTTPS URL to fetch in `url`.
+This is exposed as `incus storage volume import-url`.
+
+This also adds the `restricted.backups.servers` project option, the list of servers a restricted project may import backups from.
