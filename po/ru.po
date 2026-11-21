@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lxd\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2026-11-15 08:13-0500\n"
+"POT-Creation-Date: 2026-11-21 07:04-0500\n"
 "PO-Revision-Date: 2026-08-29 22:38+0000\n"
 "Last-Translator: Anonymous <noreply@weblate.org>\n"
 "Language-Team: Russian <https://hosted.weblate.org/projects/incus/cli/ru/>\n"
@@ -3334,7 +3334,7 @@ msgstr "Не удалось установить SSH-соединение с к�
 msgid "Failed accepting channel client %q: %v"
 msgstr "Не удалось принять канал связи клиента %q: %v"
 
-#: cmd/incus/delete.go:92
+#: cmd/incus/delete.go:96
 #, c-format
 msgid "Failed checking instance %s exists: %w"
 msgstr "Ошибка проверки существования экземпляра %s : %w"
@@ -3367,7 +3367,7 @@ msgstr ""
 msgid "Failed converting token operation to join token: %w"
 msgstr "Неудачная операция преобразования токена в токен подключения: %w"
 
-#: cmd/incus/delete.go:142
+#: cmd/incus/delete.go:146
 #, c-format
 msgid "Failed deleting instance %s in project %q: %w"
 msgstr "Не удалось удалить экземпляр %s из проекта %q: %w"
@@ -3722,19 +3722,13 @@ msgstr "Не удалось получить информацию о класт�
 msgid "Failed to retrieve current cluster config: %w"
 msgstr "Не удалось получить текущую конфигурацию кластера: %w"
 
-#: cmd/incus/admin_init_dump.go:18 cmd/incus/admin_init_dump.go:49
-#: cmd/incus/admin_init_dump.go:64 cmd/incus/admin_init_dump.go:79
-#: cmd/incus/admin_init_dump.go:93 cmd/incus/cluster.go:816
+#: cmd/incus/admin_init_dump.go:18 cmd/incus/admin_init_dump.go:26
+#: cmd/incus/admin_init_dump.go:47 cmd/incus/admin_init_dump.go:62
+#: cmd/incus/admin_init_dump.go:78 cmd/incus/admin_init_dump.go:92
+#: cmd/incus/cluster.go:816
 #, c-format
 msgid "Failed to retrieve current server configuration: %w"
 msgstr "Не удалось получить текущую конфигурацию сервера: %w"
-
-#: cmd/incus/admin_init_dump.go:28
-#, c-format
-msgid ""
-"Failed to retrieve current server network configuration for project %q: %w"
-msgstr ""
-"Не удалось получить текущую конфигурацию серверной сети для проекта %q: %w"
 
 #: cmd/incus/admin_init_auto.go:131
 #, c-format
@@ -8137,7 +8131,7 @@ msgstr "Протокол: %s"
 msgid "Provided certificate path doesn't exist: %s"
 msgstr "Указанный путь к сертификату не существует: %s"
 
-#: cmd/incus/remote_unix.go:53
+#: cmd/incus/remote_unix.go:55
 msgid "Proxy timeout (exits when no connections)"
 msgstr "Таймаут прокси (выходит, когда нет соединений)"
 
@@ -8647,11 +8641,11 @@ msgstr "Затронутые строки: %d"
 msgid "Rule description"
 msgstr "Описание правила"
 
-#: cmd/incus/remote_unix.go:46
+#: cmd/incus/remote_unix.go:48
 msgid "Run a local API proxy"
 msgstr "Запуск локального прокси сервера API"
 
-#: cmd/incus/remote_unix.go:47
+#: cmd/incus/remote_unix.go:49
 msgid "Run a local API proxy for the remote"
 msgstr "Запустить локальный API-прокси для удаленного соединения"
 
@@ -9683,7 +9677,7 @@ msgstr "Остановите экземпляр, если он работает"
 msgid "Stopping instance failed!"
 msgstr "Не удалось остановить экземпляр!"
 
-#: cmd/incus/delete.go:113
+#: cmd/incus/delete.go:117
 #, c-format
 msgid "Stopping the instance %s failed: %s"
 msgstr "Остановка экземпляра %s не удалась: %s"
@@ -10010,7 +10004,7 @@ msgstr "Сертификат клиента хранится на сервере
 msgid "The given signature is already present in this ESL"
 msgstr "Сертификат клиента хранится на сервере"
 
-#: cmd/incus/delete.go:97
+#: cmd/incus/delete.go:101
 #, c-format
 msgid "The instance %s is currently running, stop it first or pass --force"
 msgstr ""
@@ -12689,7 +12683,7 @@ msgstr "неожиданный %s; ожидалось %s"
 msgid "unexpected end of argument; did you forget a suffix?"
 msgstr "Неожиданный конец аргумента; вы забыли суффикс?"
 
-#: cmd/incus/remote_unix.go:41
+#: cmd/incus/remote_unix.go:43
 msgid "unix socket file"
 msgstr "файл Unix сокета"
 
@@ -12735,6 +12729,12 @@ msgstr "DNS зона"
 #, c-format
 msgid "“%s”"
 msgstr "“%s”"
+
+#, c-format
+#~ msgid ""
+#~ "Failed to retrieve current server network configuration for project %q: %w"
+#~ msgstr ""
+#~ "Не удалось получить текущую конфигурацию серверной сети для проекта %q: %w"
 
 #~ msgid "Manually trigger the generation of a client certificate"
 #~ msgstr "Запустить генерацию клиентского сертификата вручную"

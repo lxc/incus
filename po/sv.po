@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: incus\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2026-11-15 08:13-0500\n"
+"POT-Creation-Date: 2026-11-21 07:04-0500\n"
 "PO-Revision-Date: 2026-08-29 22:40+0000\n"
 "Last-Translator: Anonymous <noreply@weblate.org>\n"
 "Language-Team: Swedish <https://hosted.weblate.org/projects/incus/cli/sv/>\n"
@@ -3303,7 +3303,7 @@ msgstr "Misslyckad SSH-handskakning med klient %q: %v"
 msgid "Failed accepting channel client %q: %v"
 msgstr "Misslyckades med att acceptera kanalklient %q: %v"
 
-#: cmd/incus/delete.go:92
+#: cmd/incus/delete.go:96
 #, c-format
 msgid "Failed checking instance %s exists: %w"
 msgstr "Misslyckades med att kontrollera att instansen %s finns: %w"
@@ -3334,7 +3334,7 @@ msgstr "Konvertering av token till certifikat misslyckades: %w"
 msgid "Failed converting token operation to join token: %w"
 msgstr "Konvertering av token-operation till join-token misslyckades: %w"
 
-#: cmd/incus/delete.go:142
+#: cmd/incus/delete.go:146
 #, c-format
 msgid "Failed deleting instance %s in project %q: %w"
 msgstr "Misslyckades att ta bort instans %s i projekt %q: %w"
@@ -3689,20 +3689,13 @@ msgstr "Det gick inte att hämta klusterinformation: %w"
 msgid "Failed to retrieve current cluster config: %w"
 msgstr "Det gick inte att hämta aktuell klusterkonfiguration: %w"
 
-#: cmd/incus/admin_init_dump.go:18 cmd/incus/admin_init_dump.go:49
-#: cmd/incus/admin_init_dump.go:64 cmd/incus/admin_init_dump.go:79
-#: cmd/incus/admin_init_dump.go:93 cmd/incus/cluster.go:816
+#: cmd/incus/admin_init_dump.go:18 cmd/incus/admin_init_dump.go:26
+#: cmd/incus/admin_init_dump.go:47 cmd/incus/admin_init_dump.go:62
+#: cmd/incus/admin_init_dump.go:78 cmd/incus/admin_init_dump.go:92
+#: cmd/incus/cluster.go:816
 #, c-format
 msgid "Failed to retrieve current server configuration: %w"
 msgstr "Det gick inte att hämta aktuell serverkonfiguration: %w"
-
-#: cmd/incus/admin_init_dump.go:28
-#, c-format
-msgid ""
-"Failed to retrieve current server network configuration for project %q: %w"
-msgstr ""
-"Det gick inte att hämta aktuell servernätverkskonfiguration för projekt %q: "
-"%w"
 
 #: cmd/incus/admin_init_auto.go:131
 #, c-format
@@ -8058,7 +8051,7 @@ msgstr "Protokoll: %s"
 msgid "Provided certificate path doesn't exist: %s"
 msgstr "Angiven certifikatväg finns inte: %s"
 
-#: cmd/incus/remote_unix.go:53
+#: cmd/incus/remote_unix.go:55
 msgid "Proxy timeout (exits when no connections)"
 msgstr "Proxy-timeout (avslutas när inga anslutningar finns)"
 
@@ -8562,11 +8555,11 @@ msgstr "Berörda rader: %d"
 msgid "Rule description"
 msgstr "Regelbeskrivning"
 
-#: cmd/incus/remote_unix.go:46
+#: cmd/incus/remote_unix.go:48
 msgid "Run a local API proxy"
 msgstr "Kör en lokal API-proxy"
 
-#: cmd/incus/remote_unix.go:47
+#: cmd/incus/remote_unix.go:49
 msgid "Run a local API proxy for the remote"
 msgstr "Kör en lokal API-proxy för fjärrkontrollen"
 
@@ -9582,7 +9575,7 @@ msgstr "Stoppa instansen om den för närvarande körs"
 msgid "Stopping instance failed!"
 msgstr "Instansstopp misslyckades!"
 
-#: cmd/incus/delete.go:113
+#: cmd/incus/delete.go:117
 #, c-format
 msgid "Stopping the instance %s failed: %s"
 msgstr "Stopp av instans %s misslyckades: %s"
@@ -9909,7 +9902,7 @@ msgstr "Ett klientcertifikat finns redan"
 msgid "The given signature is already present in this ESL"
 msgstr "Ett klientcertifikat finns redan"
 
-#: cmd/incus/delete.go:97
+#: cmd/incus/delete.go:101
 #, c-format
 msgid "The instance %s is currently running, stop it first or pass --force"
 msgstr "Instansen %s körs för närvarande, stoppa den först eller ange --force"
@@ -12552,7 +12545,7 @@ msgstr "oväntade %s; förväntade %s"
 msgid "unexpected end of argument; did you forget a suffix?"
 msgstr "oväntat slut på argumentet; glömde du ett suffix?"
 
-#: cmd/incus/remote_unix.go:41
+#: cmd/incus/remote_unix.go:43
 msgid "unix socket file"
 msgstr "unix socket-fil"
 
@@ -12598,6 +12591,13 @@ msgstr "zon"
 #, c-format
 msgid "“%s”"
 msgstr "“%s”"
+
+#, c-format
+#~ msgid ""
+#~ "Failed to retrieve current server network configuration for project %q: %w"
+#~ msgstr ""
+#~ "Det gick inte att hämta aktuell servernätverkskonfiguration för projekt "
+#~ "%q: %w"
 
 #~ msgid "Manually trigger the generation of a client certificate"
 #~ msgstr "Manuell aktivering av generering av ett klientcertifikat"

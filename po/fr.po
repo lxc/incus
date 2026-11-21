@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: LXD\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2026-11-15 08:13-0500\n"
+"POT-Creation-Date: 2026-11-21 07:04-0500\n"
 "PO-Revision-Date: 2026-10-29 23:05+0000\n"
 "Last-Translator: Benjamin Somers <bensmrs@users.noreply.hosted.weblate.org>\n"
 "Language-Team: French <https://hosted.weblate.org/projects/incus/cli/fr/>\n"
@@ -3333,7 +3333,7 @@ msgstr "Échec de l'authentification SSH avec le client %q : %v"
 msgid "Failed accepting channel client %q: %v"
 msgstr "Échec de l'acceptation du canal client %q : %v"
 
-#: cmd/incus/delete.go:92
+#: cmd/incus/delete.go:96
 #, c-format
 msgid "Failed checking instance %s exists: %w"
 msgstr "Échec de la vérification de l'existence de l'instance \"%s\" : %w"
@@ -3367,7 +3367,7 @@ msgid "Failed converting token operation to join token: %w"
 msgstr ""
 "Échec de la conversion de l'opération de jeton en jeton de connexion : %w"
 
-#: cmd/incus/delete.go:142
+#: cmd/incus/delete.go:146
 #, c-format
 msgid "Failed deleting instance %s in project %q: %w"
 msgstr "Échec de la suppression de l'instance %s dans le projet %q : %w"
@@ -3728,20 +3728,13 @@ msgstr "Échec de la récupération des informations sur le cluster : %w"
 msgid "Failed to retrieve current cluster config: %w"
 msgstr "Échec de la récupération de la configuration actuelle du cluster : %w"
 
-#: cmd/incus/admin_init_dump.go:18 cmd/incus/admin_init_dump.go:49
-#: cmd/incus/admin_init_dump.go:64 cmd/incus/admin_init_dump.go:79
-#: cmd/incus/admin_init_dump.go:93 cmd/incus/cluster.go:816
+#: cmd/incus/admin_init_dump.go:18 cmd/incus/admin_init_dump.go:26
+#: cmd/incus/admin_init_dump.go:47 cmd/incus/admin_init_dump.go:62
+#: cmd/incus/admin_init_dump.go:78 cmd/incus/admin_init_dump.go:92
+#: cmd/incus/cluster.go:816
 #, c-format
 msgid "Failed to retrieve current server configuration: %w"
 msgstr "Échec de la récupération de la configuration actuelle du serveur : %w"
-
-#: cmd/incus/admin_init_dump.go:28
-#, c-format
-msgid ""
-"Failed to retrieve current server network configuration for project %q: %w"
-msgstr ""
-"Échec de la récupération de la configuration réseau du serveur actuel pour "
-"le projet %q : %w"
 
 #: cmd/incus/admin_init_auto.go:131
 #, c-format
@@ -8035,7 +8028,7 @@ msgstr "Protocole : %s"
 msgid "Provided certificate path doesn't exist: %s"
 msgstr "Le chemin du certificat fourni n’existe pas : %s"
 
-#: cmd/incus/remote_unix.go:53
+#: cmd/incus/remote_unix.go:55
 msgid "Proxy timeout (exits when no connections)"
 msgstr "Délai d’expiration du proxy (arrêt si aucune connexion)"
 
@@ -8529,11 +8522,11 @@ msgstr "Lignes modifiées : %d"
 msgid "Rule description"
 msgstr "Description de la règle"
 
-#: cmd/incus/remote_unix.go:46
+#: cmd/incus/remote_unix.go:48
 msgid "Run a local API proxy"
 msgstr ""
 
-#: cmd/incus/remote_unix.go:47
+#: cmd/incus/remote_unix.go:49
 msgid "Run a local API proxy for the remote"
 msgstr ""
 
@@ -9488,7 +9481,7 @@ msgstr "Arrêter l’instance si elle est en cours d’exécution"
 msgid "Stopping instance failed!"
 msgstr "L'arrêt de l'instance a échoué !"
 
-#: cmd/incus/delete.go:113
+#: cmd/incus/delete.go:117
 #, c-format
 msgid "Stopping the instance %s failed: %s"
 msgstr "L'arrêt de l'instance %s a échoué : %s"
@@ -9795,7 +9788,7 @@ msgstr "Un certificat client est déjà présent"
 msgid "The given signature is already present in this ESL"
 msgstr "Un certificat client est déjà présent"
 
-#: cmd/incus/delete.go:97
+#: cmd/incus/delete.go:101
 #, c-format
 msgid "The instance %s is currently running, stop it first or pass --force"
 msgstr ""
@@ -12127,7 +12120,7 @@ msgstr "%s inattendu ; attendu : %s"
 msgid "unexpected end of argument; did you forget a suffix?"
 msgstr "fin d’argument inattendue ; avez-vous oublié un suffixe ?"
 
-#: cmd/incus/remote_unix.go:41
+#: cmd/incus/remote_unix.go:43
 msgid "unix socket file"
 msgstr "socket UNIX"
 
@@ -12173,6 +12166,13 @@ msgstr "zone"
 #, c-format
 msgid "“%s”"
 msgstr "« %s »"
+
+#, c-format
+#~ msgid ""
+#~ "Failed to retrieve current server network configuration for project %q: %w"
+#~ msgstr ""
+#~ "Échec de la récupération de la configuration réseau du serveur actuel "
+#~ "pour le projet %q : %w"
 
 #~ msgid "Manually trigger the generation of a client certificate"
 #~ msgstr "Déclencher manuellement la génération d’un certificat client"
