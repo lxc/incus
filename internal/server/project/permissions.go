@@ -2102,6 +2102,16 @@ func GetRestrictedClusterGroups(p *api.Project) []string {
 	return util.SplitNTrimSpace(p.Config["restricted.cluster.groups"], ",", -1, true)
 }
 
+// NoCandidateMemberError returns the error for an instance that couldn't be placed on any cluster member.
+func NoCandidateMemberError(p *api.Project) error {
+	clusterGroupsAllowed := GetRestrictedClusterGroups(p)
+	if len(clusterGroupsAllowed) > 1 {
+		return api.StatusErrorf(http.StatusBadRequest, "Couldn't find a cluster member for the instance, target one of the project's cluster groups: %s", strings.Join(clusterGroupsAllowed, ", "))
+	}
+
+	return api.StatusErrorf(http.StatusInternalServerError, "Couldn't find a cluster member for the instance")
+}
+
 // AllowClusterMember returns nil if the given project is allowed to use the cluster member.
 func AllowClusterMember(p *api.Project, member *db.NodeInfo) error {
 	clusterGroupsAllowed := GetRestrictedClusterGroups(p)
@@ -2189,6 +2199,14 @@ func CheckTarget(ctx context.Context, authorizer auth.Authorizer, r *http.Reques
 		targetGroupName = after
 	} else {
 		targetMemberName = target
+	}
+
+	// A project restricted to a single cluster group targets it by default.
+	if target == "" {
+		clusterGroupsAllowed := GetRestrictedClusterGroups(p)
+		if len(clusterGroupsAllowed) == 1 {
+			targetGroupName = clusterGroupsAllowed[0]
+		}
 	}
 
 	// Check manual cluster member targeting restrictions.
