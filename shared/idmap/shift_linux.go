@@ -261,16 +261,21 @@ static void *posix_entry_next(void *value)
 static pid_t do_clone(int (*fn)(void *), void *arg, int flags)
 {
 	void *stack;
+	pid_t pid;
 
 	stack = malloc(__STACK_SIZE);
 	if (!stack)
 		return -ENOMEM;
 
 #ifdef __ia64__
-	return __clone2(fn, stack, __STACK_SIZE, flags | SIGCHLD, arg, NULL);
+	pid = __clone2(fn, stack, __STACK_SIZE, flags | SIGCHLD, arg, NULL);
 #else
-	return clone(fn, stack + __STACK_SIZE, flags | SIGCHLD, arg, NULL);
+	pid = clone(fn, stack + __STACK_SIZE, flags | SIGCHLD, arg, NULL);
 #endif
+
+	// The child runs on its own copy of the address space.
+	free(stack);
+	return pid;
 }
 
 static int get_userns_fd_cb(void *data)
