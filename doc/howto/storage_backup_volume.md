@@ -154,3 +154,9 @@ To do so, use the following command:
 If you do not specify a volume name, the original name of the exported storage volume is used for the new volume.
 If a volume with that name already (or still) exists in the specified storage pool, the command returns an error.
 In that case, either delete the existing volume before importing the backup or specify a different volume name for the import.
+
+To have the Incus server download the export file itself from an HTTP or HTTPS URL (for example, a pre-signed URL to an object storage bucket), use the following command:
+
+    incus storage volume import-url <pool_name> <url> [<volume_name>]
+
+In a restricted project, the server hosting the backup must be listed in the {config:option}`project-restricted:restricted.backups.servers` project configuration option.
