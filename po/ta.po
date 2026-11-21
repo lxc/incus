@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: incus\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2026-11-15 08:13-0500\n"
+"POT-Creation-Date: 2026-11-20 18:33-0500\n"
 "PO-Revision-Date: 2026-08-29 22:40+0000\n"
 "Last-Translator: Anonymous <noreply@weblate.org>\n"
 "Language-Team: Tamil <https://hosted.weblate.org/projects/incus/cli/ta/>\n"
@@ -1426,10 +1426,9 @@ msgstr ""
 #: cmd/incus/storage_bucket.go:988 cmd/incus/storage_bucket.go:1078
 #: cmd/incus/storage_bucket.go:1127 cmd/incus/storage_bucket.go:1249
 #: cmd/incus/storage_bucket.go:1309 cmd/incus/storage_bucket.go:1490
-#: cmd/incus/storage_volume.go:396 cmd/incus/storage_volume.go:607
-#: cmd/incus/storage_volume.go:702 cmd/incus/storage_volume.go:962
-#: cmd/incus/storage_volume.go:1174 cmd/incus/storage_volume.go:1292
-#: cmd/incus/storage_volume.go:1740 cmd/incus/storage_volume.go:1808
+#: cmd/incus/storage_volume.go:607 cmd/incus/storage_volume.go:702
+#: cmd/incus/storage_volume.go:962 cmd/incus/storage_volume.go:1174
+#: cmd/incus/storage_volume.go:1292 cmd/incus/storage_volume.go:1808
 #: cmd/incus/storage_volume.go:1892 cmd/incus/storage_volume.go:1976
 #: cmd/incus/storage_volume.go:2126 cmd/incus/storage_volume.go:2216
 #: cmd/incus/storage_volume.go:2272 cmd/incus/storage_volume.go:2480
@@ -1578,7 +1577,7 @@ msgstr ""
 msgid "Control: %s (%s)"
 msgstr ""
 
-#: cmd/incus/copy.go:66 cmd/incus/move.go:69
+#: cmd/incus/copy.go:66
 msgid "Copy a stateful instance stateless"
 msgstr ""
 
@@ -1638,8 +1637,8 @@ msgstr ""
 msgid "Copy the volume without its snapshots"
 msgstr ""
 
-#: cmd/incus/copy.go:69 cmd/incus/image.go:184 cmd/incus/move.go:72
-#: cmd/incus/profile.go:275 cmd/incus/storage_volume.go:399
+#: cmd/incus/copy.go:69 cmd/incus/image.go:184 cmd/incus/profile.go:275
+#: cmd/incus/storage_volume.go:399
 msgid "Copy to a project different from the source"
 msgstr ""
 
@@ -2785,6 +2784,14 @@ msgid ""
 "\t\tThis can be useful for debugging or analysis purposes."
 msgstr ""
 
+#: cmd/incus/export.go:53
+msgid "Export the instance without its dependent volumes"
+msgstr ""
+
+#: cmd/incus/export.go:52
+msgid "Export the instance without its snapshots"
+msgstr ""
+
 #: cmd/incus/storage_volume.go:2269
 msgid ""
 "Export the volume without its snapshots (ignored for ISO storage volumes)"
@@ -3221,17 +3228,12 @@ msgstr ""
 msgid "Failed to retrieve current cluster config: %w"
 msgstr ""
 
-#: cmd/incus/admin_init_dump.go:18 cmd/incus/admin_init_dump.go:49
-#: cmd/incus/admin_init_dump.go:64 cmd/incus/admin_init_dump.go:79
-#: cmd/incus/admin_init_dump.go:93 cmd/incus/cluster.go:816
+#: cmd/incus/admin_init_dump.go:18 cmd/incus/admin_init_dump.go:26
+#: cmd/incus/admin_init_dump.go:47 cmd/incus/admin_init_dump.go:62
+#: cmd/incus/admin_init_dump.go:78 cmd/incus/admin_init_dump.go:92
+#: cmd/incus/cluster.go:816
 #, c-format
 msgid "Failed to retrieve current server configuration: %w"
-msgstr ""
-
-#: cmd/incus/admin_init_dump.go:28
-#, c-format
-msgid ""
-"Failed to retrieve current server network configuration for project %q: %w"
 msgstr ""
 
 #: cmd/incus/admin_init_auto.go:131
@@ -3318,11 +3320,13 @@ msgid "Follow command-line symbolic links in source path"
 msgstr ""
 
 #: cmd/incus/cluster.go:1471
-msgid "Force a particular evacuation action"
+msgid ""
+"Force a particular evacuation action (migrate, live-migrate, refresh-"
+"migrate, stop, stateful-stop or force-stop)"
 msgstr ""
 
 #: cmd/incus/cluster.go:1503
-msgid "Force a particular restoration action"
+msgid "Force a particular restoration action (only \"skip\" is supported)"
 msgstr ""
 
 #: cmd/incus/file.go:111 cmd/incus/storage_volume_file.go:107
@@ -3335,10 +3339,6 @@ msgstr ""
 
 #: cmd/incus/file.go:272 cmd/incus/storage_volume_file.go:267
 msgid "Force deleting files, directories, and subdirectories"
-msgstr ""
-
-#: cmd/incus/cluster.go:1519
-msgid "Force evacuation without user confirmation"
 msgstr ""
 
 #: cmd/incus/low_level.go:1531
@@ -4098,13 +4098,15 @@ msgstr ""
 msgid "Instance published with fingerprint: %s"
 msgstr ""
 
+#: cmd/incus/create.go:69
+msgid ""
+"Instance size, as a cloud instance type or resource limits (e.g. t2.micro or "
+"c2-m4)"
+msgstr ""
+
 #: cmd/incus/snapshot.go:210
 #, c-format
 msgid "Instance snapshot name is: %s"
-msgstr ""
-
-#: cmd/incus/create.go:69
-msgid "Instance type"
 msgstr ""
 
 #: cmd/incus/low_level.go:829
@@ -5831,11 +5833,15 @@ msgid ""
 "versions.\n"
 msgstr ""
 
+#: cmd/incus/move.go:69
+msgid "Move the instance without its runtime state (no live migration)"
+msgstr ""
+
 #: cmd/incus/move.go:66
 msgid "Move the instance without its snapshots"
 msgstr ""
 
-#: cmd/incus/storage_volume.go:1742
+#: cmd/incus/move.go:72 cmd/incus/storage_volume.go:1742
 msgid "Move to a project different from the source"
 msgstr ""
 
@@ -6557,7 +6563,7 @@ msgstr ""
 
 #: cmd/incus/admin_init.go:57
 #, c-format
-msgid "Port to bind to (default: %d)"
+msgid "Port to bind to, requires --network-address (default: %d)"
 msgstr ""
 
 #: cmd/incus/info.go:233
@@ -6575,7 +6581,7 @@ msgid "Pre-copying instance: %s"
 msgstr ""
 
 #: cmd/incus/admin_init.go:53
-msgid "Pre-seed mode, expects YAML config from stdin"
+msgid "Pre-seed mode, expects YAML config from the given file or from stdin"
 msgstr ""
 
 #: cmd/incus/file.go:437 cmd/incus/file.go:667
@@ -6765,7 +6771,7 @@ msgstr ""
 msgid "Provided certificate path doesn't exist: %s"
 msgstr ""
 
-#: cmd/incus/remote_unix.go:53
+#: cmd/incus/remote_unix.go:55
 msgid "Proxy timeout (exits when no connections)"
 msgstr ""
 
@@ -7240,11 +7246,11 @@ msgstr ""
 msgid "Rule description"
 msgstr ""
 
-#: cmd/incus/remote_unix.go:46
+#: cmd/incus/remote_unix.go:48
 msgid "Run a local API proxy"
 msgstr ""
 
-#: cmd/incus/remote_unix.go:47
+#: cmd/incus/remote_unix.go:49
 msgid "Run a local API proxy for the remote"
 msgstr ""
 
@@ -8058,6 +8064,10 @@ msgstr ""
 msgid "Skip duplicate signatures"
 msgstr ""
 
+#: cmd/incus/cluster.go:1519
+msgid "Skip the confirmation prompt"
+msgstr ""
+
 #: cmd/incus/list.go:472 cmd/incus/list.go:492
 #, c-format
 msgid "Skipping remote %q: %v"
@@ -8092,6 +8102,10 @@ msgstr ""
 
 #: cmd/incus/top.go:440
 msgid "Sorting Method:"
+msgstr ""
+
+#: cmd/incus/storage_volume.go:396 cmd/incus/storage_volume.go:1740
+msgid "Source cluster member name"
 msgstr ""
 
 #: cmd/incus/admin_recover.go:119
@@ -8706,7 +8720,9 @@ msgid "Threads:"
 msgstr ""
 
 #: cmd/incus/action.go:173
-msgid "Time to wait for the instance to shutdown cleanly"
+msgid ""
+"Time in seconds to wait for the instance to shutdown cleanly (-1 for the "
+"server default of 600, 0 for a forced stop)"
 msgstr ""
 
 #: cmd/incus/image.go:984
@@ -8754,6 +8770,12 @@ msgstr ""
 msgid "Transceiver type: %s"
 msgstr ""
 
+#: cmd/incus/move.go:68
+msgid ""
+"Transfer a running container incrementally to reduce its downtime (requires "
+"--stateless)"
+msgstr ""
+
 #: cmd/incus/storage_volume.go:1739
 msgid "Transfer mode, one of pull (default), push or relay"
 msgstr ""
@@ -8761,12 +8783,6 @@ msgstr ""
 #: cmd/incus/copy.go:64 cmd/incus/image.go:183 cmd/incus/move.go:67
 #: cmd/incus/storage_volume.go:395
 msgid "Transfer mode. One of pull, push or relay"
-msgstr ""
-
-#: cmd/incus/move.go:68
-msgid ""
-"Transfer the instance incrementally, reducing the downtime of a running "
-"instance"
 msgstr ""
 
 #: cmd/incus/image.go:780
@@ -9447,14 +9463,6 @@ msgstr ""
 
 #: cmd/incus/admin_init_interactive.go:341
 msgid "Where should this storage pool store its data?"
-msgstr ""
-
-#: cmd/incus/export.go:53
-msgid "Whether or not to only backup the instance (without dependent volumes)"
-msgstr ""
-
-#: cmd/incus/export.go:52
-msgid "Whether or not to only backup the instance (without snapshots)"
 msgstr ""
 
 #: cmd/incus/snapshot.go:539
@@ -10624,7 +10632,7 @@ msgstr ""
 msgid "unexpected end of argument; did you forget a suffix?"
 msgstr ""
 
-#: cmd/incus/remote_unix.go:41
+#: cmd/incus/remote_unix.go:43
 msgid "unix socket file"
 msgstr ""
 

@@ -130,7 +130,7 @@ It's also worth noting that we'll be using LVM Thin as the LINSTOR storage backe
 
           incus launch images:debian/12 c1 --storage remote
           incus storage volume create remote fsvol
-          incus storage volume attach remote fsvol c1 /mnt
+          incus storage volume attach remote fsvol c1 fsvol /mnt
 
           incus launch images:debian/12 v1 --storage remote --vm -c migration.stateful=true
           incus storage volume create remote vol --type block size=42GiB

@@ -66,7 +66,7 @@ incus launch images:debian/12 v2 --vm -d root,size=50GiB -d root,io.bus=nvme
 	cli.AddStringArrayFlag(cmd.Flags(), &c.flagEnvironmentFile, "environment-file", i18n.G("Include environment variables from file (may be passed multiple times)"))
 	cli.AddStringFlag(cmd.Flags(), &c.flagNetwork, "network|n", "", "", i18n.G("Network name"))
 	cli.AddStringFlag(cmd.Flags(), &c.flagStorage, "storage|s", "", "", i18n.G("Storage pool name"))
-	cli.AddStringFlag(cmd.Flags(), &c.flagType, "type|t", "", "", i18n.G("Instance type"))
+	cli.AddStringFlag(cmd.Flags(), &c.flagType, "type|t", "", "", i18n.G("Instance size, as a cloud instance type or resource limits (e.g. t2.micro or c2-m4)"))
 	cli.AddStringFlag(cmd.Flags(), &c.flagTarget, "target", "", "", i18n.G("Cluster member name"))
 	cli.AddBoolFlag(cmd.Flags(), &c.flagNoProfiles, "no-profiles", i18n.G("Create the instance with no profiles applied"))
 	cli.AddBoolFlag(cmd.Flags(), &c.flagEmpty, "empty", i18n.G("Create an empty instance"))

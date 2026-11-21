@@ -758,7 +758,8 @@ var ConfigSchema = config.Schema{
 	"cluster.max_standby": {Type: config.Int64, Default: "2", Validator: maxStandByValidator},
 
 	// gendoc:generate(entity=server, group=cluster, key=cluster.rebalance.batch)
-	//
+	// Only virtual machines that can be live-migrated are moved.
+	// A re-balancing run stops once this number of instances has been moved.
 	// ---
 	//  type: integer
 	//  scope: global
@@ -767,7 +768,8 @@ var ConfigSchema = config.Schema{
 	"cluster.rebalance.batch": {Type: config.Int64, Default: "1"},
 
 	// gendoc:generate(entity=server, group=cluster, key=cluster.rebalance.cooldown)
-	//
+	// An instance moved by a re-balancing run is not considered again until this amount of time has passed.
+	// The value is a sequence of space-separated `<integer><unit>` fields, with the unit being one of `S`, `M`, `H`, `d`, `w`, `m` or `y`.
 	// ---
 	//  type: string
 	//  scope: global
@@ -776,7 +778,8 @@ var ConfigSchema = config.Schema{
 	"cluster.rebalance.cooldown": {Type: config.String, Default: "6H", Validator: validate.Optional(expiryValidator)},
 
 	// gendoc:generate(entity=server, group=cluster, key=cluster.rebalance.interval)
-	//
+	// On every run, the cluster leader scores each online cluster member by averaging its memory usage and its 1-minute load average relative to its CPU count, both as percentages.
+	// Members are compared per CPU architecture, and virtual machines are live-migrated from the most loaded member to less loaded ones.
 	// ---
 	//  type: integer
 	//  scope: global
@@ -785,7 +788,8 @@ var ConfigSchema = config.Schema{
 	"cluster.rebalance.interval": {Type: config.Int64, Default: "0"},
 
 	// gendoc:generate(entity=server, group=cluster, key=cluster.rebalance.threshold)
-	//
+	// The difference is the gap between the scores of the most and least loaded servers, as a percentage of the score of the most loaded one.
+	// This must be a number between `10` and `100`.
 	// ---
 	//  type: integer
 	//  scope: global

@@ -71,3 +71,7 @@ To move an instance storage volume to another storage pool, make sure the instan
 Then use the following command to move the instance to a different pool:
 
     incus move <instance_name> --storage <target_pool_name>
+
+In a cluster, a running virtual machine can also be moved to another storage pool, but only as part of a {ref}`live migration <live-migration-vms>` to another cluster member:
+
+    incus move <instance_name> --target <target_member_name> --storage <target_pool_name>

@@ -94,14 +94,15 @@ See {ref}`instance-options-limits-kernel` for more information.
 Incus supports both increasing and decreasing the memory allocation of virtual machines.
 
 Increasing the memory is done through memory hot plug, effectively adding virtual memory sticks to the VM.
-There is a limit of 16 virtual slots for this, limiting the number of memory increases that can be done without rebooting the VM.
+There is a limit of 8 virtual slots for this, limiting the number of memory increases that can be done without rebooting the VM.
 
 ```{note}
 To avoid high resource usage and compatibility issues with guests, Incus limits memory hotplug to a maximum of 1TiB in clustered environments.
+For virtual machines with `migration.stateful` enabled, that limit is 256GiB when the automatic {ref}`CPU baseline <cluster-cpu>` is used, and memory hotplug is disabled when the cluster group sets a CPU baseline other than `host`.
 On standalone hosts, the default limit matches the total memory amount of the host system.
 Some CPUs further reduce that amount based on how much memory they are able to address (physical / virtual bits).
 
-Exceeding that limit require the instance be stopped, its `memory.limit` updated and then started back up.
+Exceeding that limit require the instance be stopped, its `limits.memory` updated and then started back up.
 ```
 
 Decreasing memory is not done through hot remove as that has a high risk of causing guest issues.
@@ -388,7 +389,7 @@ Those devices cannot be overridden through the configuration or the
 command line, but instead additional configuration keys are available to
 run QMP commands directly.
 
-Fixed commands can be provided through the `raw.qemu.early`, `raw.qemu.pre-start` and `raw.qemu.post-start` configuration keys.
+Fixed commands can be provided through the `raw.qemu.qmp.early`, `raw.qemu.qmp.pre-start` and `raw.qemu.qmp.post-start` configuration keys.
 Those take a JSON encoded list of QMP commands to run.
 
 The hooks correspond to:
