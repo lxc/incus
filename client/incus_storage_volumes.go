@@ -1252,8 +1252,36 @@ func (r *ProtocolIncus) CreateStoragePoolVolumeFromISO(pool string, args Storage
 	return &op, nil
 }
 
-// CreateStoragePoolVolumeFromBackup creates a custom volume from a backup file.
+// CreateStoragePoolVolumeFromBackup creates a custom volume from a backup file or a remote backup.
 func (r *ProtocolIncus) CreateStoragePoolVolumeFromBackup(pool string, args StorageVolumeBackupArgs) (Operation, error) {
+	if args.Source != nil {
+		if args.BackupFile != nil {
+			return nil, errors.New("Cannot specify both BackupFile and Source")
+		}
+
+		err := r.CheckExtension("storage_volume_backup_import")
+		if err != nil {
+			return nil, err
+		}
+
+		req := api.StorageVolumesPost{
+			Name: args.Name,
+			Type: "custom",
+			Source: api.StorageVolumeSource{
+				Type:   "backup",
+				Backup: args.Source,
+			},
+		}
+
+		path := fmt.Sprintf("/storage-pools/%s/volumes/custom", url.PathEscape(pool))
+		op, _, err := r.queryOperation("POST", path, req, "")
+		if err != nil {
+			return nil, err
+		}
+
+		return op, nil
+	}
+
 	if !r.HasExtension("custom_volume_backup") {
 		return nil, errors.New(`The server is missing the required "custom_volume_backup" API extension`)
 	}
