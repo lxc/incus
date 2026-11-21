@@ -676,7 +676,9 @@ func regenerateFilesystemBTRFSUUID(devPath string) error {
 		return err
 	}
 
-	_, err = subprocess.RunCommand("btrfstune", "-f", "-u", devPath)
+	// `-m` only changes the metadata UUID, which is much faster than `-u`, which rewrites all metadata blocks.
+	// The resulting filesystem needs kernel 5.0+ to be mounted.
+	_, err = subprocess.RunCommand("btrfstune", "-f", "-m", devPath)
 	if err != nil {
 		return err
 	}
