@@ -41,14 +41,15 @@ const maxOutput = 64 * 1024
 
 // boundedBuffer keeps the beginning of a stream and drops the rest.
 type boundedBuffer struct {
-	bytes.Buffer
+	// Not embedded, io.Copy would fill the buffer directly.
+	buf bytes.Buffer
 }
 
 // Write keeps up to maxOutput bytes.
 func (b *boundedBuffer) Write(p []byte) (int, error) {
-	remaining := maxOutput - b.Len()
+	remaining := maxOutput - b.buf.Len()
 	if remaining > 0 {
-		b.Buffer.Write(p[:min(len(p), remaining)])
+		b.buf.Write(p[:min(len(p), remaining)])
 	}
 
 	return len(p), nil
@@ -60,7 +61,7 @@ func readOutput(r io.Reader) ([]byte, error) {
 
 	_, err := io.Copy(&b, r)
 
-	return b.Bytes(), err
+	return b.buf.Bytes(), err
 }
 
 // rsync is a wrapper for the rsync command which will respect RunWrapper.
@@ -92,10 +93,10 @@ func rsync(args ...string) (string, error) {
 	// Run the command.
 	err := cmd.Run()
 	if err != nil {
-		return stdout.String(), subprocess.NewRunError("rsync", args, err, &stdout.Buffer, &stderr.Buffer)
+		return stdout.buf.String(), subprocess.NewRunError("rsync", args, err, &stdout.buf, &stderr.buf)
 	}
 
-	return stdout.String(), nil
+	return stdout.buf.String(), nil
 }
 
 // LocalCopy copies a directory using rsync (with the --devices option).
