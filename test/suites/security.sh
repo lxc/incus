@@ -103,11 +103,8 @@ test_security() {
         # shellcheck disable=2030
         INCUS_DIR="${INCUS_STORAGE_DIR}"
 
-        # Enforce that only unprivileged containers can be created
-        incus project set default restricted=true
-
-        # Needed for the default profile in the test suite
-        incus project set default restricted.devices.nic=allow
+        # Enforce that only unprivileged containers can be created, allowing the test suite's unmanaged NIC.
+        incus project set default restricted=true restricted.devices.nic=allow
 
         # Import image into default storage pool.
         ensure_import_testimage
