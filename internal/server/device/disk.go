@@ -1556,6 +1556,7 @@ func (d *disk) startVM() (*deviceConfig.RunConfig, error) {
 
 				mount.Opts = append(mount.Opts, d.detectVMPoolMountOpts()...)
 				mount.BackingPath = append(mount.BackingPath, mountInfo.BackingPath...)
+				mount.Qcow2 = mountInfo.Qcow2
 			}
 
 			if util.IsTrue(d.config["readonly"]) {

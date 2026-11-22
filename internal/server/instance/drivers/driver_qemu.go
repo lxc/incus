@@ -5033,12 +5033,7 @@ func (d *qemu) addDriveConfig(qemuDev map[string]any, bootIndexes map[string]int
 				_ = m.RemoveFDFromFDSet(nodeName)
 			})
 
-			isQcow2, err := d.isQCOW2(srcDevPath)
-			if err != nil {
-				return fmt.Errorf("Failed checking disk format: %w", err)
-			}
-
-			if isQcow2 {
+			if driveConf.Qcow2 {
 				blockDev = map[string]any{
 					"driver":    "qcow2",
 					"discard":   "unmap", // Forward as an unmap request. This is the same as `discard=on` in the qemu config file.
@@ -11159,15 +11154,6 @@ func (d *qemu) ExportQcow2Block(blockIndex int) (func(), string, error) {
 		_ = monitor.NBDServerStop()
 		_ = migrationSock.Close()
 	}, exportDiskPath, nil
-}
-
-func (d *qemu) isQCOW2(devPath string) (bool, error) {
-	imgInfo, err := storageDrivers.Qcow2Info(devPath)
-	if err != nil {
-		return false, err
-	}
-
-	return imgInfo.Format == storageDrivers.BlockVolumeTypeQcow2, nil
 }
 
 func (d *qemu) qcow2BlockDev(m *qmp.Monitor, nodeName string, aioMode string, directCache bool, noFlushCache bool, permissions int, readonly bool, backingPaths []string, iter int) (string, error) {

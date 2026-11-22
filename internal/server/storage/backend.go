@@ -3122,6 +3122,7 @@ func (b *backend) MountInstance(inst instance.Instance, op *operations.Operation
 	mountInfo := &MountInfo{
 		DiskPath:    diskPath,
 		BackingPath: backingPaths,
+		Qcow2:       drivers.IsQcow2Block(vol),
 	}
 
 	reverter.Success() // From here on it is up to caller to call UnmountInstance() when done.
@@ -3769,6 +3770,7 @@ func (b *backend) MountInstanceSnapshot(inst instance.Instance, op *operations.O
 
 	mountInfo := &MountInfo{
 		DiskPath: diskPath,
+		Qcow2:    drivers.IsQcow2Block(vol),
 	}
 
 	return mountInfo, nil
@@ -6304,7 +6306,7 @@ func (b *backend) MountCustomVolume(projectName, volName string, op *operations.
 	vol := b.GetVolume(drivers.VolumeTypeCustom, drivers.ContentType(volume.ContentType), volStorageName, volume.Config)
 
 	// Perform the mount.
-	mountInfo := &MountInfo{}
+	mountInfo := &MountInfo{Qcow2: drivers.IsQcow2Block(vol)}
 	err = b.driver.MountVolume(vol, op)
 	if err != nil {
 		return nil, err
