@@ -421,11 +421,16 @@ func (d *zfs) CreateVolumeFromBackup(vol Volume, srcBackup backup.Info, srcData 
 			if hdr.Name == srcFile {
 				// Extract the backup.
 				if v.ContentType() == ContentTypeBlock || d.isBlockBacked(v) {
-					err = subprocess.RunCommandWithFds(context.TODO(), tr, nil, "zfs", "receive", "-F", target)
+					err = subprocess.RunCommandWithFds(context.TODO(), tr, nil, "zfs", "receive", "-F", "-u", target)
 				} else {
-					err = subprocess.RunCommandWithFds(context.TODO(), tr, nil, "zfs", "receive", "-x", "mountpoint", "-F", target)
+					err = subprocess.RunCommandWithFds(context.TODO(), tr, nil, "zfs", "receive", "-x", "mountpoint", "-F", "-u", target)
 				}
 
+				if err != nil {
+					return err
+				}
+
+				err = d.checkReceivedDataset(v)
 				if err != nil {
 					return err
 				}
