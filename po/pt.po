@@ -8,11 +8,11 @@ msgstr ""
 "Project-Id-Version: incus\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
 "POT-Creation-Date: 2026-11-20 18:33-0500\n"
-"PO-Revision-Date: 2026-11-16 19:26+0000\n"
+"PO-Revision-Date: 2026-11-22 14:25+0000\n"
 "Last-Translator: Américo Monteiro <a-"
 "monteiro@users.noreply.hosted.weblate.org>\n"
-"Language-Team: Portuguese <https://hosted.weblate.org/projects/incus/cli/pt/"
-">\n"
+"Language-Team: Portuguese <https://hosted.weblate.org/projects/incus/cli/pt/>"
+"\n"
 "Language: pt\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -3267,16 +3267,12 @@ msgstr ""
 "\t\tIsso pode ser útil para fins de depuração ou análise."
 
 #: cmd/incus/export.go:53
-#, fuzzy
 msgid "Export the instance without its dependent volumes"
-msgstr ""
-"Se é ou não para apenas fazer salvaguarda da instância (sem os volumes "
-"dependentes)"
+msgstr "Exporta a instância sem os seus volumes dependentes"
 
 #: cmd/incus/export.go:52
-#, fuzzy
 msgid "Export the instance without its snapshots"
-msgstr "Copia a instância sem seus instantâneos"
+msgstr "Exporta a instância sem os seus instantâneos"
 
 #: cmd/incus/storage_volume.go:2269
 msgid ""
@@ -3817,11 +3813,12 @@ msgid ""
 "Force a particular evacuation action (migrate, live-migrate, refresh-"
 "migrate, stop, stateful-stop or force-stop)"
 msgstr ""
+"Força uma ação de evacuação particular (migrate, live-migrate, refresh-"
+"migrate, stop, stateful-stop ou force-stop)"
 
 #: cmd/incus/cluster.go:1503
-#, fuzzy
 msgid "Force a particular restoration action (only \"skip\" is supported)"
-msgstr "Força uma ação de restauração particular"
+msgstr "Força uma ação de restauração particular (apenas \"skip\" é suportado)"
 
 #: cmd/incus/file.go:111 cmd/incus/storage_volume_file.go:107
 msgid "Force creating files or directories"
@@ -4671,6 +4668,8 @@ msgid ""
 "Instance size, as a cloud instance type or resource limits (e.g. t2.micro or "
 "c2-m4)"
 msgstr ""
+"Tamanho de instância, como um tipo de instância de nuvem ou limite de "
+"recurso (ex. t2.micro ou c2-m4)"
 
 #: cmd/incus/snapshot.go:210
 #, c-format
@@ -7191,9 +7190,9 @@ msgstr ""
 "versões de servidor.\n"
 
 #: cmd/incus/move.go:69
-#, fuzzy
 msgid "Move the instance without its runtime state (no live migration)"
-msgstr "Move a instância sem seus instantâneos"
+msgstr ""
+"Move a instância sem o seu estado de tempo de execução (migração não ao vivo)"
 
 #: cmd/incus/move.go:66
 msgid "Move the instance without its snapshots"
@@ -7939,9 +7938,9 @@ msgid "Port to bind to"
 msgstr "Porto a onde unir"
 
 #: cmd/incus/admin_init.go:57
-#, fuzzy, c-format
+#, c-format
 msgid "Port to bind to, requires --network-address (default: %d)"
-msgstr "Porto a onde unir (predefinição: %d)"
+msgstr "Porto a onde unir. requer --network-address (predefinição: %d)"
 
 #: cmd/incus/info.go:233
 #, c-format
@@ -7958,9 +7957,10 @@ msgid "Pre-copying instance: %s"
 msgstr "A pré-copiar instância: %s"
 
 #: cmd/incus/admin_init.go:53
-#, fuzzy
 msgid "Pre-seed mode, expects YAML config from the given file or from stdin"
-msgstr "Modo pre-seed, espera configuração YAML a partir do stdin"
+msgstr ""
+"Modo pre-seed, espera configuração YAML a partir do ficheiro fornecido ou do "
+"stdin"
 
 #: cmd/incus/file.go:437 cmd/incus/file.go:667
 #: cmd/incus/storage_volume_file.go:517 cmd/incus/storage_volume_file.go:714
@@ -9579,9 +9579,8 @@ msgid "Skip duplicate signatures"
 msgstr "Saltar assinaturas duplicadas"
 
 #: cmd/incus/cluster.go:1519
-#, fuzzy
 msgid "Skip the confirmation prompt"
-msgstr "Requer confirmação do utilizador"
+msgstr "Salta o aviso de confirmação"
 
 #: cmd/incus/list.go:472 cmd/incus/list.go:492
 #, c-format
@@ -9621,9 +9620,8 @@ msgid "Sorting Method:"
 msgstr "Método de Ordenar:"
 
 #: cmd/incus/storage_volume.go:396 cmd/incus/storage_volume.go:1740
-#, fuzzy
 msgid "Source cluster member name"
-msgstr "Nome de membro do agrupamento"
+msgstr "Nome de membro do agrupamento fonte"
 
 #: cmd/incus/admin_recover.go:119
 msgid ""
@@ -10302,6 +10300,8 @@ msgid ""
 "Time in seconds to wait for the instance to shutdown cleanly (-1 for the "
 "server default of 600, 0 for a forced stop)"
 msgstr ""
+"Tempo em segundos para esperar que a instância encerre de maneira limpa (-1 "
+"para a predefinição do servidor de 600, 0 para paragem forçada)"
 
 #: cmd/incus/image.go:984
 msgid "Timestamps:"
@@ -10351,13 +10351,12 @@ msgid "Transceiver type: %s"
 msgstr "Tipo de transceptor: %s"
 
 #: cmd/incus/move.go:68
-#, fuzzy
 msgid ""
 "Transfer a running container incrementally to reduce its downtime (requires "
 "--stateless)"
 msgstr ""
-"Transferir a instância incrementalmente, reduzindo o tempo inativo de uma "
-"instância em execução"
+"Transferir um contentor em execução incrementalmente para reduzir o seu "
+"tempo de inatividade (requer --stateless)"
 
 #: cmd/incus/storage_volume.go:1739
 msgid "Transfer mode, one of pull (default), push or relay"
