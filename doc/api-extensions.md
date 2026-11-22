@@ -3627,3 +3627,7 @@ This adds a new image property, `volume.size_hint`, which sets the size of the c
 ## `network_allocations_project`
 
 Adds the `project` field to the network allocations API response, holding the project of the network.
+
+## `storage_lvm_snapshot_chunk_size`
+
+Adds the `lvm.snapshots.chunk_size` volume configuration key (and its `volume.lvm.snapshots.chunk_size` pool default) to set the copy-on-write chunk size of snapshots on LVM pools that don't use a thin pool.
