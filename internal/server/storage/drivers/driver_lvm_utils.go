@@ -679,6 +679,16 @@ func (d *lvm) createLogicalVolumeSnapshot(vgName string, srcVol Volume, snapVol 
 	// filling up the CoW snapshot volume and causing it to become invalid.
 	if !makeThinLv {
 		args = append(args, "-l", "100%ORIGIN")
+
+		chunkSize := srcVol.ExpandedConfig("lvm.snapshots.chunk_size")
+		if chunkSize != "" {
+			chunkSizeBytes, err := units.ParseByteSizeString(chunkSize)
+			if err != nil {
+				return "", fmt.Errorf("Invalid snapshot chunk size %q: %w", chunkSize, err)
+			}
+
+			args = append(args, "--chunksize", fmt.Sprintf("%dk", chunkSizeBytes/1024))
+		}
 	}
 
 	if readonly {
@@ -1205,6 +1215,20 @@ func (d *lvm) snapshotNeedsCoWGrow(snapLVPath string) (bool, error) {
 	}
 
 	return lvSize <= originSize, nil
+}
+
+// validateLVMSnapshotChunkSize checks the value against lvcreate's snapshot chunk size rule: a power of two from 4KiB to 512KiB.
+func validateLVMSnapshotChunkSize(value string) error {
+	sizeBytes, err := units.ParseByteSizeString(value)
+	if err != nil {
+		return err
+	}
+
+	if sizeBytes < 4096 || sizeBytes > 524288 || sizeBytes&(sizeBytes-1) != 0 {
+		return errors.New("Must be a power of two between 4KiB and 512KiB (binary units, e.g. 64KiB)")
+	}
+
+	return nil
 }
 
 // parseLogicalVolumeSnapshot parses a raw logical volume name (from lvs command) and checks whether it is a
