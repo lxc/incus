@@ -25,6 +25,7 @@ type MountEntryItem struct {
 	DevPath      string      // Describes the block special device or remote filesystem to be mounted.
 	DataFilePath string      // Describes the block special device to be used as a data file for qcow2.
 	BackingPath  []string    // Describes the block special device to be mounted as backing drive for qcow2.
+	Qcow2        bool        // Whether the disk is qcow2 formatted, from the volume config rather than its content.
 	TargetPath   string      // Describes the mount point (target) for the filesystem.
 	FSType       string      // Describes the type of the filesystem.
 	Opts         []string    // Describes the mount options associated with the filesystem.

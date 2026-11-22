@@ -6173,17 +6173,18 @@ func rawImageOpts(rawPath string, prefix string) (string, error) {
 }
 
 // rawImageInfo returns the image information of a raw volume, local or RBD.
+// The raw format is forced, as the content of the volume is tenant controlled.
 func rawImageInfo(rawPath string) (*storageDrivers.ImageInfo, error) {
 	if !isRBDPath(rawPath) {
-		return storageDrivers.Qcow2Info(rawPath)
+		return storageDrivers.RawInfo(rawPath)
 	}
 
-	imageOpts, err := rawImageOpts(rawPath, "")
+	imageOpts, err := rawImageOpts(rawPath, "file.")
 	if err != nil {
 		return nil, err
 	}
 
-	imgJSON, err := subprocess.RunCommand("qemu-img", "info", "-U", "--output=json", "--image-opts", imageOpts)
+	imgJSON, err := subprocess.RunCommand("qemu-img", "info", "-U", "--output=json", "--image-opts", fmt.Sprintf("driver=raw,%s", imageOpts))
 	if err != nil {
 		return nil, err
 	}
@@ -6247,24 +6248,20 @@ func (d *qemu) removeImageMetadata(devName string) error {
 	return nil
 }
 
-// ensureMetadataImage creates the metadata file if needed.
-func (d *qemu) ensureMetadataImage(rawPath string, devName string) (string, string, error) {
+// ensureMetadataImage creates the metadata file if needed. The qcow2 argument must come from the
+// volume config, never from the disk's own content, which the tenant controls.
+func (d *qemu) ensureMetadataImage(rawPath string, devName string, qcow2 bool) (string, string, error) {
 	if rawPath == "" {
 		return "", "", errors.New("Raw disk path is empty")
 	}
 
-	imgInfo, err := rawImageInfo(rawPath)
-	if err != nil {
-		return "", "", err
-	}
-
-	if imgInfo.Format == storageDrivers.BlockVolumeTypeQcow2 {
+	if qcow2 {
 		// Image is qcow2 already, don't touch anything
 		return rawPath, "", nil
 	}
 
 	qcow2Dir := d.localImageMetadataDir()
-	err = os.MkdirAll(qcow2Dir, 0o700)
+	err := os.MkdirAll(qcow2Dir, 0o700)
 	if err != nil {
 		return "", "", fmt.Errorf("Failed creating metadata image directory: %w", err)
 	}
@@ -6411,7 +6408,7 @@ func (d *qemu) addRootDriveConfig(qemuDev map[string]any, mountInfo *storagePool
 		return nil, errors.New("No root disk path available from mount")
 	}
 
-	devPath, dataFilePath, err := d.ensureMetadataImage(mountInfo.DiskPath, rootDriveConf.DevName)
+	devPath, dataFilePath, err := d.ensureMetadataImage(mountInfo.DiskPath, rootDriveConf.DevName, mountInfo.Qcow2)
 	if err != nil {
 		return nil, err
 	}
@@ -6431,6 +6428,7 @@ func (d *qemu) addRootDriveConfig(qemuDev map[string]any, mountInfo *storagePool
 		Opts:         rootDriveConf.Opts,
 		TargetPath:   rootDriveConf.TargetPath,
 		Limits:       rootDriveConf.Limits,
+		Qcow2:        mountInfo.Qcow2 || dataFilePath != "",
 	}
 
 	if d.storagePool.Driver().Info().Remote {
@@ -6657,7 +6655,7 @@ func (d *qemu) addDriveConfig(qemuDev map[string]any, bootIndexes map[string]int
 
 	// Dependent disks on RBD get a metadata image like the root disk so they can hold persistent bitmaps.
 	if isRBDImage && d.isDependentDisk(driveConf.DevName) && driveConf.FSType != "iso9660" && !slices.Contains(driveConf.Opts, "ro") {
-		qcow2Path, dataFilePath, err := d.ensureMetadataImage(driveConf.DevPath, driveConf.DevName)
+		qcow2Path, dataFilePath, err := d.ensureMetadataImage(driveConf.DevPath, driveConf.DevName, driveConf.Qcow2)
 		if err != nil {
 			return nil, err
 		}
@@ -6671,6 +6669,7 @@ func (d *qemu) addDriveConfig(qemuDev map[string]any, bootIndexes map[string]int
 		if dataFilePath != "" {
 			driveConf.DevPath = qcow2Path
 			driveConf.DataFilePath = dataFilePath
+			driveConf.Qcow2 = true
 			isRBDImage = false
 		}
 	}
@@ -6718,7 +6717,7 @@ func (d *qemu) addDriveConfig(qemuDev map[string]any, bootIndexes map[string]int
 
 			// Dependent disks get a metadata image like the root disk so they can hold persistent bitmaps.
 			if d.isDependentDisk(driveConf.DevName) && driveConf.FSType != "iso9660" && !slices.Contains(driveConf.Opts, "ro") {
-				qcow2Path, dataFilePath, err := d.ensureMetadataImage(srcDevPath, driveConf.DevName)
+				qcow2Path, dataFilePath, err := d.ensureMetadataImage(srcDevPath, driveConf.DevName, driveConf.Qcow2)
 				if err != nil {
 					return nil, err
 				}
@@ -6732,6 +6731,7 @@ func (d *qemu) addDriveConfig(qemuDev map[string]any, bootIndexes map[string]int
 				if dataFilePath != "" {
 					driveConf.DevPath = qcow2Path
 					driveConf.DataFilePath = dataFilePath
+					driveConf.Qcow2 = true
 					srcDevPath = qcow2Path
 				}
 			}
@@ -6952,12 +6952,7 @@ func (d *qemu) addDriveConfig(qemuDev map[string]any, bootIndexes map[string]int
 				_ = m.RemoveFDFromFDSet(nodeName)
 			})
 
-			isQcow2, err := d.isQCOW2(srcDevPath)
-			if err != nil {
-				return fmt.Errorf("Failed checking disk format: %w", err)
-			}
-
-			if isQcow2 {
+			if driveConf.Qcow2 {
 				srcDevPathInfo, err := os.Stat(srcDevPath)
 				if err != nil {
 					return fmt.Errorf("Invalid source path %q: %w", srcDevPath, err)
@@ -14686,15 +14681,6 @@ func (d *qemu) ExportQcow2Block(diskName string, blockIndex int) (func(), string
 		_ = migrationSock.Close()
 		_ = runDir.Close()
 	}, exportDiskPath, nil
-}
-
-func (d *qemu) isQCOW2(devPath string) (bool, error) {
-	imgInfo, err := storageDrivers.Qcow2Info(devPath)
-	if err != nil {
-		return false, err
-	}
-
-	return imgInfo.Format == storageDrivers.BlockVolumeTypeQcow2, nil
 }
 
 // qcow2L2CacheSize returns the qcow2 L2 cache size keeping a qcow2 file fully mapped, capped to a share of the memory limit.

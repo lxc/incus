@@ -207,6 +207,24 @@ func Qcow2IsStandalone(path string) (bool, error) {
 	return true, nil
 }
 
+// RawInfo returns information about a volume read as raw. The format is forced, so that a
+// tenant-crafted header in the volume's own content can't make qemu-img follow a host path.
+func RawInfo(path string) (*ImageInfo, error) {
+	imgJSON, err := subprocess.RunCommand("qemu-img", "info", "-U", "--output=json", "-f", "raw", path)
+	if err != nil {
+		return nil, err
+	}
+
+	imgInfo := ImageInfo{}
+
+	err = json.Unmarshal([]byte(imgJSON), &imgInfo)
+	if err != nil {
+		return nil, fmt.Errorf("Failed unmarshalling image info %q: %w (%q)", path, err, imgJSON)
+	}
+
+	return &imgInfo, nil
+}
+
 // qcow2Format returns the format to pass to qemu-img, qcow2 only when the header carries its magic.
 // Trusting qemu-img's detection would let it follow a path named by a header written into the volume.
 func qcow2Format(path string) (string, error) {
