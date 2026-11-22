@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: incus\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2026-11-22 10:45-0500\n"
+"POT-Creation-Date: 2026-11-22 15:21-0500\n"
 "PO-Revision-Date: 2026-08-29 22:40+0000\n"
 "Last-Translator: Anonymous <noreply@weblate.org>\n"
 "Language-Team: Swedish <https://hosted.weblate.org/projects/incus/cli/sv/>\n"
@@ -7583,7 +7583,7 @@ msgstr "Inga lagringsbackends tillgängliga"
 msgid "No unknown storage pools or volumes found. Nothing to do."
 msgstr "Inga okända lagringspooler eller volymer hittades. Inget att göra."
 
-#: cmd/incus/webui_unix.go:51
+#: cmd/incus/webui.go:72
 #, fuzzy, c-format
 msgid "No web UI found at %q"
 msgstr "Inget värde hittades i %q"
@@ -7666,7 +7666,7 @@ msgstr ""
 msgid "Only remove signatures owned by the given owner"
 msgstr ""
 
-#: cmd/incus/webui.go:23 cmd/incus/webui.go:24
+#: cmd/incus/webui.go:34 cmd/incus/webui.go:35
 msgid "Open the web interface"
 msgstr "Öppna webbgränssnittet"
 
@@ -7786,7 +7786,7 @@ msgstr "Lösenordet avvisat för %q"
 msgid "Path %s doesn't exist"
 msgstr "Sökvägen %s finns inte"
 
-#: cmd/incus/webui.go:26
+#: cmd/incus/webui.go:37
 msgid "Path to a local web UI directory"
 msgstr ""
 
@@ -8068,7 +8068,7 @@ msgstr "Protokoll: %s"
 msgid "Provided certificate path doesn't exist: %s"
 msgstr "Angiven certifikatväg finns inte: %s"
 
-#: cmd/incus/remote_unix.go:55
+#: cmd/incus/remote_unix.go:45
 msgid "Proxy timeout (exits when no connections)"
 msgstr "Proxy-timeout (avslutas när inga anslutningar finns)"
 
@@ -8572,11 +8572,11 @@ msgstr "Berörda rader: %d"
 msgid "Rule description"
 msgstr "Regelbeskrivning"
 
-#: cmd/incus/remote_unix.go:48
+#: cmd/incus/remote_unix.go:38
 msgid "Run a local API proxy"
 msgstr "Kör en lokal API-proxy"
 
-#: cmd/incus/remote_unix.go:49
+#: cmd/incus/remote_unix.go:39
 msgid "Run a local API proxy for the remote"
 msgstr "Kör en lokal API-proxy för fjärrkontrollen"
 
@@ -10100,7 +10100,7 @@ msgid ""
 "The requested storage pool \"%s\" already exists. Please choose another name."
 msgstr "Den begärda lagringspoolen \"%s\" finns redan. Välj ett annat namn."
 
-#: cmd/incus/webui_unix.go:69
+#: cmd/incus/webui.go:90
 msgid "The server doesn't have a web UI installed"
 msgstr "Servern har inte något webbgränssnitt installerat"
 
@@ -10173,10 +10173,6 @@ msgid ""
 msgstr ""
 "Det här kommandot stöds inte på kluster, använd \"incus cluster update-"
 "certificate\" istället"
-
-#: cmd/incus/webui_windows.go:14
-msgid "This command isn't supported on Windows"
-msgstr "Det här kommandot stöds inte i Windows"
 
 #: cmd/incus/usage/parse.go:121
 msgid ""
@@ -10974,7 +10970,7 @@ msgstr ""
 "de\n"
 "annars skulle ha."
 
-#: cmd/incus/webui_unix.go:119
+#: cmd/incus/webui.go:140
 #, c-format
 msgid "Web server running at: %s"
 msgstr "Webbserver körs på: %s"
@@ -12565,7 +12561,7 @@ msgstr "oväntade %s; förväntade %s"
 msgid "unexpected end of argument; did you forget a suffix?"
 msgstr "oväntat slut på argumentet; glömde du ett suffix?"
 
-#: cmd/incus/remote_unix.go:43
+#: cmd/incus/remote_unix.go:33
 msgid "unix socket file"
 msgstr "unix socket-fil"
 
@@ -12611,6 +12607,9 @@ msgstr "zon"
 #, c-format
 msgid "“%s”"
 msgstr "“%s”"
+
+#~ msgid "This command isn't supported on Windows"
+#~ msgstr "Det här kommandot stöds inte i Windows"
 
 #, c-format
 #~ msgid ""

@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lxd\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2026-11-22 10:45-0500\n"
+"POT-Creation-Date: 2026-11-22 15:21-0500\n"
 "PO-Revision-Date: 2026-08-29 22:36+0000\n"
 "Last-Translator: Kazantsev Mikhail <kazan417@mail.ru>\n"
 "Language-Team: Spanish <https://hosted.weblate.org/projects/incus/cli/es/>\n"
@@ -6779,7 +6779,7 @@ msgstr ""
 msgid "No unknown storage pools or volumes found. Nothing to do."
 msgstr ""
 
-#: cmd/incus/webui_unix.go:51
+#: cmd/incus/webui.go:72
 #, c-format
 msgid "No web UI found at %q"
 msgstr ""
@@ -6858,7 +6858,7 @@ msgstr ""
 msgid "Only remove signatures owned by the given owner"
 msgstr ""
 
-#: cmd/incus/webui.go:23 cmd/incus/webui.go:24
+#: cmd/incus/webui.go:34 cmd/incus/webui.go:35
 #, fuzzy
 msgid "Open the web interface"
 msgstr "Aliases:"
@@ -6978,7 +6978,7 @@ msgstr "Contraseña admin para %s:"
 msgid "Path %s doesn't exist"
 msgstr "El dispostivo ya existe: %s"
 
-#: cmd/incus/webui.go:26
+#: cmd/incus/webui.go:37
 msgid "Path to a local web UI directory"
 msgstr ""
 
@@ -7262,7 +7262,7 @@ msgstr "Auto actualización: %s"
 msgid "Provided certificate path doesn't exist: %s"
 msgstr "Nombre del Miembro del Cluster"
 
-#: cmd/incus/remote_unix.go:55
+#: cmd/incus/remote_unix.go:45
 msgid "Proxy timeout (exits when no connections)"
 msgstr ""
 
@@ -7765,11 +7765,11 @@ msgstr ""
 msgid "Rule description"
 msgstr "Descripción"
 
-#: cmd/incus/remote_unix.go:48
+#: cmd/incus/remote_unix.go:38
 msgid "Run a local API proxy"
 msgstr ""
 
-#: cmd/incus/remote_unix.go:49
+#: cmd/incus/remote_unix.go:39
 msgid "Run a local API proxy for the remote"
 msgstr ""
 
@@ -9203,7 +9203,7 @@ msgid ""
 "The requested storage pool \"%s\" already exists. Please choose another name."
 msgstr ""
 
-#: cmd/incus/webui_unix.go:69
+#: cmd/incus/webui.go:90
 msgid "The server doesn't have a web UI installed"
 msgstr ""
 
@@ -9264,10 +9264,6 @@ msgstr ""
 msgid ""
 "This command is not supported on clusters, use \"incus cluster update-"
 "certificate\" instead"
-msgstr ""
-
-#: cmd/incus/webui_windows.go:14
-msgid "This command isn't supported on Windows"
 msgstr ""
 
 #: cmd/incus/usage/parse.go:121
@@ -10049,7 +10045,7 @@ msgid ""
 "they otherwise would."
 msgstr ""
 
-#: cmd/incus/webui_unix.go:119
+#: cmd/incus/webui.go:140
 #, c-format
 msgid "Web server running at: %s"
 msgstr ""
@@ -11266,7 +11262,7 @@ msgstr ""
 msgid "unexpected end of argument; did you forget a suffix?"
 msgstr ""
 
-#: cmd/incus/remote_unix.go:43
+#: cmd/incus/remote_unix.go:33
 msgid "unix socket file"
 msgstr ""
 

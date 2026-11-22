@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: LXD\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2026-11-22 10:45-0500\n"
+"POT-Creation-Date: 2026-11-22 15:21-0500\n"
 "PO-Revision-Date: 2026-10-29 23:05+0000\n"
 "Last-Translator: Benjamin Somers <bensmrs@users.noreply.hosted.weblate.org>\n"
 "Language-Team: French <https://hosted.weblate.org/projects/incus/cli/fr/>\n"
@@ -7554,7 +7554,7 @@ msgstr "Aucun backend de stockage n’est disponible"
 msgid "No unknown storage pools or volumes found. Nothing to do."
 msgstr ""
 
-#: cmd/incus/webui_unix.go:51
+#: cmd/incus/webui.go:72
 #, fuzzy, c-format
 msgid "No web UI found at %q"
 msgstr "Ce champ doit être de la forme <clef>=<valeur> : %q"
@@ -7638,7 +7638,7 @@ msgstr "Retirer uniquement les signatures du type donné"
 msgid "Only remove signatures owned by the given owner"
 msgstr "Retirer uniquement les signatures du propriétaire donné"
 
-#: cmd/incus/webui.go:23 cmd/incus/webui.go:24
+#: cmd/incus/webui.go:34 cmd/incus/webui.go:35
 msgid "Open the web interface"
 msgstr "Ouvrir l’interface web"
 
@@ -7758,7 +7758,7 @@ msgstr "Mot de passe rejeté pour %q"
 msgid "Path %s doesn't exist"
 msgstr "Le chemin %s n’existe pas"
 
-#: cmd/incus/webui.go:26
+#: cmd/incus/webui.go:37
 #, fuzzy
 msgid "Path to a local web UI directory"
 msgstr "Chemin vers un dossier de configuration serveur alternatif"
@@ -8044,7 +8044,7 @@ msgstr "Protocole : %s"
 msgid "Provided certificate path doesn't exist: %s"
 msgstr "Le chemin du certificat fourni n’existe pas : %s"
 
-#: cmd/incus/remote_unix.go:55
+#: cmd/incus/remote_unix.go:45
 msgid "Proxy timeout (exits when no connections)"
 msgstr "Délai d’expiration du proxy (arrêt si aucune connexion)"
 
@@ -8538,11 +8538,11 @@ msgstr "Lignes modifiées : %d"
 msgid "Rule description"
 msgstr "Description de la règle"
 
-#: cmd/incus/remote_unix.go:48
+#: cmd/incus/remote_unix.go:38
 msgid "Run a local API proxy"
 msgstr ""
 
-#: cmd/incus/remote_unix.go:49
+#: cmd/incus/remote_unix.go:39
 msgid "Run a local API proxy for the remote"
 msgstr ""
 
@@ -9993,7 +9993,7 @@ msgstr ""
 "Le pool de stockage demandé \"%s\" existe déjà. Veuillez choisir un autre "
 "nom."
 
-#: cmd/incus/webui_unix.go:69
+#: cmd/incus/webui.go:90
 msgid "The server doesn't have a web UI installed"
 msgstr "Le serveur n’a aucune interface web installée"
 
@@ -10062,10 +10062,6 @@ msgid ""
 "This command is not supported on clusters, use \"incus cluster update-"
 "certificate\" instead"
 msgstr ""
-
-#: cmd/incus/webui_windows.go:14
-msgid "This command isn't supported on Windows"
-msgstr "Cette commande n’est pas prise en charge sur Windows"
 
 #: cmd/incus/usage/parse.go:121
 msgid ""
@@ -10842,7 +10838,7 @@ msgid ""
 "they otherwise would."
 msgstr ""
 
-#: cmd/incus/webui_unix.go:119
+#: cmd/incus/webui.go:140
 #, c-format
 msgid "Web server running at: %s"
 msgstr "Le serveur web est disponible sur : %s"
@@ -12137,7 +12133,7 @@ msgstr "%s inattendu ; attendu : %s"
 msgid "unexpected end of argument; did you forget a suffix?"
 msgstr "fin d’argument inattendue ; avez-vous oublié un suffixe ?"
 
-#: cmd/incus/remote_unix.go:43
+#: cmd/incus/remote_unix.go:33
 msgid "unix socket file"
 msgstr "socket UNIX"
 
@@ -12183,6 +12179,9 @@ msgstr "zone"
 #, c-format
 msgid "“%s”"
 msgstr "« %s »"
+
+#~ msgid "This command isn't supported on Windows"
+#~ msgstr "Cette commande n’est pas prise en charge sur Windows"
 
 #, c-format
 #~ msgid ""
