@@ -1,6 +1,6 @@
 test_storage_driver_cephfs() {
     # shellcheck disable=2039,3043
-    local incus_backend
+    local incus_backend usage
 
     incus_backend=$(storage_backend "$INCUS_DIR")
     if [ "$incus_backend" != "ceph" ] || [ -z "${INCUS_CEPH_CEPHFS:-}" ]; then
@@ -37,6 +37,23 @@ test_storage_driver_cephfs() {
         incus storage volume copy "${fs}"/vol2 "${fs}"/vol1
         incus storage volume delete "${fs}" vol1
         incus storage volume delete "${fs}" vol2
+
+        # Usage reports written data
+        incus storage volume create "${fs}" vol1 size=100MiB
+        [ "$(incus query "/1.0/storage-pools/${fs}/volumes/custom/vol1/state" | jq '.usage.used // 0')" = "0" ]
+        dd if=/dev/zero of="${INCUS_DIR}/storage-pools/${fs}/custom/default_vol1/data" bs=1M count=10 conv=fsync
+
+        # CephFS usage report is async
+        usage=0
+        for _ in $(seq 1 30); do
+            usage=$(incus query "/1.0/storage-pools/${fs}/volumes/custom/vol1/state" | jq '.usage.used // 0')
+            [ "${usage}" -ge 10485760 ] && break
+            sleep 1
+        done
+
+        [ "${usage}" -ge 10485760 ]
+        [ "${usage}" -lt 104857600 ]
+        incus storage volume delete "${fs}" vol1
 
         # Snapshots
         incus storage volume create "${fs}" vol1
