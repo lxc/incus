@@ -630,7 +630,7 @@ func (d *btrfs) CreateVolumeFromMigration(vol Volume, conn io.ReadWriteCloser, v
 				volTargetArgs.Snapshots = append(volTargetArgs.Snapshots, &migration.Snapshot{Name: &migrationSnap.Snapshot})
 			}
 
-			syncSubvolumes = append(syncSubvolumes, BTRFSSubVolume{Path: migrationSnap.Path, Snapshot: migrationSnap.Snapshot, UUID: migrationSnap.UUID})
+			syncSubvolumes = append(syncSubvolumes, migrationSnap)
 		}
 
 		migrationHeader = BTRFSMetaDataHeader{Subvolumes: syncSubvolumes}
