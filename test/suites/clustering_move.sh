@@ -320,6 +320,17 @@ EOF
         [ "$(INCUS_DIR="${INCUS_ONE_DIR}" incus query /1.0/instances/c4/snapshots | jq 'length')" = "1" ]
         INCUS_DIR="${INCUS_ONE_DIR}" incus query /1.0/instances/c4/snapshots | jq -re '.[0] | endswith("/snap0")'
 
+        # The snapshot, now a received one, keeps following the instance on later moves.
+        INCUS_DIR="${INCUS_ONE_DIR}" incus exec c4 -- sh -c "echo to-node2-again > /root/marker"
+        INCUS_DIR="${INCUS_ONE_DIR}" incus move c4 --target node2 --stateless --refresh
+        INCUS_DIR="${INCUS_ONE_DIR}" incus info c4 | grep -q "Location: node2"
+        INCUS_DIR="${INCUS_ONE_DIR}" incus exec c4 -- cat /root/marker | grep -Fx "to-node2-again"
+        INCUS_DIR="${INCUS_ONE_DIR}" incus exec c4 -- sh -c "echo to-node1-again > /root/marker"
+        INCUS_DIR="${INCUS_ONE_DIR}" incus move c4 --target node1 --stateless --refresh
+        INCUS_DIR="${INCUS_ONE_DIR}" incus info c4 | grep -q "Location: node1"
+        INCUS_DIR="${INCUS_ONE_DIR}" incus exec c4 -- cat /root/marker | grep -Fx "to-node1-again"
+        [ "$(INCUS_DIR="${INCUS_ONE_DIR}" incus query /1.0/instances/c4/snapshots | jq 'length')" = "1" ]
+
         # A stopped container falls back to a regular migration.
         INCUS_DIR="${INCUS_ONE_DIR}" incus exec c4 -- sh -c "echo stopped-move > /root/marker"
         INCUS_DIR="${INCUS_ONE_DIR}" incus stop -f c4
