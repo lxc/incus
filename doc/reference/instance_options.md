@@ -101,6 +101,7 @@ To avoid high resource usage and compatibility issues with guests, Incus limits 
 For virtual machines with `migration.stateful` enabled, that limit is 256GiB when the automatic {ref}`CPU baseline <cluster-cpu>` is used, and memory hotplug is disabled when the cluster group sets a CPU baseline other than `host`.
 On standalone hosts, the default limit matches the total memory amount of the host system.
 Some CPUs further reduce that amount based on how much memory they are able to address (physical / virtual bits).
+With a named CPU model, the `phys-bits` CPU option can be used to specify the number of physical address bits.
 
 Exceeding that limit require the instance be stopped, its `limits.memory` updated and then started back up.
 ```
