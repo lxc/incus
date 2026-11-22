@@ -419,11 +419,16 @@ func (d *zfs) CreateVolumeFromBackup(vol Volume, srcBackup backup.Info, srcData 
 			if hdr.Name == srcFile {
 				// Extract the backup.
 				if v.ContentType() == ContentTypeBlock || d.isBlockBacked(v) {
-					err = subprocess.RunCommandWithFds(context.TODO(), tr, nil, "zfs", "receive", "-F", target)
+					err = subprocess.RunCommandWithFds(context.TODO(), tr, nil, "zfs", "receive", "-F", "-u", target)
 				} else {
-					err = subprocess.RunCommandWithFds(context.TODO(), tr, nil, "zfs", "receive", "-x", "mountpoint", "-F", target)
+					err = subprocess.RunCommandWithFds(context.TODO(), tr, nil, "zfs", "receive", "-x", "mountpoint", "-F", "-u", target)
 				}
 
+				if err != nil {
+					return err
+				}
+
+				err = d.checkReceivedDataset(v)
 				if err != nil {
 					return err
 				}
@@ -575,9 +580,9 @@ func (d *zfs) CreateVolumeFromBackup(vol Volume, srcBackup backup.Info, srcData 
 func (d *zfs) receiveFromZfsSender(vol Volume, sender *exec.Cmd) error {
 	var receiver *exec.Cmd
 	if vol.ContentType() == ContentTypeBlock || d.isBlockBacked(vol) {
-		receiver = exec.Command("zfs", "receive", d.dataset(vol, false))
+		receiver = exec.Command("zfs", "receive", "-u", d.dataset(vol, false))
 	} else {
-		receiver = exec.Command("zfs", "receive", "-x", "mountpoint", d.dataset(vol, false))
+		receiver = exec.Command("zfs", "receive", "-x", "mountpoint", "-u", d.dataset(vol, false))
 	}
 
 	// Configure the pipes.
@@ -633,7 +638,7 @@ func (d *zfs) receiveFromZfsSender(vol Volume, sender *exec.Cmd) error {
 		return err
 	}
 
-	return nil
+	return d.checkReceivedDataset(vol)
 }
 
 func (d *zfs) useSnapshotSendChain(srcVol Volume) (bool, error) {
