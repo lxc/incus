@@ -3700,6 +3700,14 @@ test_clustering_groups() {
     [ "$(incus config get cluster:c1 volatile.cluster.group --project foo)" = "blah" ]
     incus delete -f c1 --project foo
 
+    # Check that the allowed groups only apply while the project is restricted.
+    incus project set foo restricted=false
+    incus init testimage cluster:c1 --project foo
+    incus info cluster:c1 --project foo | grep -q "Location: node1"
+    [ "$(incus config get cluster:c1 volatile.cluster.group --project foo)" = "" ]
+    incus delete -f c1 --project foo
+    incus project set foo restricted=true
+
     # Check cannot create instance in restricted project when targeting a member that isn't in the restricted
     # project's allowed cluster groups list.
     ! incus init testimage cluster:c1 --project foo --target=node1 || false
