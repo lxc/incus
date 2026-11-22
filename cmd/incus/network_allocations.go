@@ -180,10 +180,11 @@ func (c *cmdNetworkListAllocations) run(cmd *cobra.Command, args []string) error
 	}
 
 	external := netip.Prefix{}
-	if c.lister.hasAnyColumn("cC") {
-		// Do a second pass to set sub-allocations.
+	if c.lister.hasAnyColumn("scC") {
+		// Do a second pass to set subnets and sub-allocations.
 	out:
-		for _, allocation := range allocations {
+		for i := range allocations {
+			allocation := &allocations[i]
 			network, ok := networks[networkKey{project: allocation.Project, name: allocation.Network}]
 			if !ok {
 				return fmt.Errorf(i18n.G("Allocation %q from unknown network %q"), allocation.Address, allocation.Network)
@@ -202,9 +203,12 @@ func (c *cmdNetworkListAllocations) run(cmd *cobra.Command, args []string) error
 			for subnet, subnetAllocation := range network {
 				if subnet.Contains(allocationIP) && subnet.Bits() <= prefix.Bits() {
 					subnetAllocation.allocations = append(subnetAllocation.allocations, allocationIP)
+					allocation.subnet = subnet.Masked().String()
 					continue out
 				}
 			}
+
+			allocation.subnet = "(external)"
 
 			// When --summary is specified, if no matching subnet was found, put the
 			// allocation under the zero prefix.
