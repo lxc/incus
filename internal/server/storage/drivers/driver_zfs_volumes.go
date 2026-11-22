@@ -2071,6 +2071,10 @@ func (d *zfs) GetVolumeUsage(vol Volume) (int64, error) {
 // SetVolumeQuota sets the quota/reservation on the volume.
 // Does nothing if supplied with an empty/zero size for block volumes.
 func (d *zfs) SetVolumeQuota(vol Volume, size string, allowUnsafeResize bool, op *operations.Operation) error {
+	dataset := d.dataset(vol, false)
+	quotaKey, otherQuotaKey := "quota", "refquota"
+	reservationKey, otherReservationKey := "reservation", "refreservation"
+
 	// Convert to bytes.
 	sizeBytes, err := units.ParseByteSizeString(size)
 	if err != nil {
@@ -2091,7 +2095,7 @@ func (d *zfs) SetVolumeQuota(vol Volume, size string, allowUnsafeResize bool, op
 			return err
 		}
 
-		oldSizeBytesStr, err := d.getDatasetProperty(d.dataset(vol, false), "volsize")
+		oldSizeBytesStr, err := d.getDatasetProperty(dataset, "volsize")
 		if err != nil {
 			return err
 		}
@@ -2150,13 +2154,13 @@ func (d *zfs) SetVolumeQuota(vol Volume, size string, allowUnsafeResize bool, op
 				l.Debug("ZFS volume filesystem shrunk")
 
 				// Shrink the block device.
-				err = d.setDatasetProperties(d.dataset(vol, false), fmt.Sprintf("volsize=%d", sizeBytes))
+				err = d.setDatasetProperties(dataset, fmt.Sprintf("volsize=%d", sizeBytes))
 				if err != nil {
 					return err
 				}
 			} else if sizeBytes > oldVolSizeBytes {
 				// Grow block device first.
-				err = d.setDatasetProperties(d.dataset(vol, false), fmt.Sprintf("volsize=%d", sizeBytes))
+				err = d.setDatasetProperties(dataset, fmt.Sprintf("volsize=%d", sizeBytes))
 				if err != nil {
 					return err
 				}
@@ -2185,7 +2189,7 @@ func (d *zfs) SetVolumeQuota(vol Volume, size string, allowUnsafeResize bool, op
 				}
 			}
 
-			err = d.setDatasetProperties(d.dataset(vol, false), fmt.Sprintf("volsize=%d", sizeBytes))
+			err = d.setDatasetProperties(dataset, fmt.Sprintf("volsize=%d", sizeBytes))
 			if err != nil {
 				return err
 			}
@@ -2210,39 +2214,79 @@ func (d *zfs) SetVolumeQuota(vol Volume, size string, allowUnsafeResize bool, op
 		return nil
 	}
 
-	// Clear the existing quota.
-	for _, property := range []string{"quota", "refquota", "reservation", "refreservation"} {
-		err = d.setDatasetProperties(d.dataset(vol, false), fmt.Sprintf("%s=none", property))
-		if err != nil {
-			return err
-		}
-	}
-
-	value := fmt.Sprintf("%d", sizeBytes)
-	if sizeBytes == 0 {
-		return nil
-	}
-
-	// Apply the new quota.
-	quotaKey := "quota"
-	reservationKey := "reservation"
-	if util.IsTrue(vol.ExpandedConfig("zfs.use_refquota")) {
-		quotaKey = "refquota"
-		reservationKey = "refreservation"
-	}
-
-	err = d.setDatasetProperties(d.dataset(vol, false), fmt.Sprintf("%s=%s", quotaKey, value))
+	// Save initial quotas
+	oldProperties, err := d.getDatasetProperties(dataset, quotaKey, otherQuotaKey, reservationKey, otherReservationKey)
 	if err != nil {
 		return err
 	}
 
-	if util.IsTrue(vol.ExpandedConfig("zfs.reserve_space")) {
-		err = d.setDatasetProperties(d.dataset(vol, false), fmt.Sprintf("%s=%s", reservationKey, value))
+	// Only the active limits are set, the others are cleared.
+	if util.IsTrue(vol.ExpandedConfig("zfs.use_refquota")) {
+		quotaKey, otherQuotaKey = otherQuotaKey, quotaKey
+		reservationKey, otherReservationKey = otherReservationKey, reservationKey
+	}
+
+	oldLimits := make(map[string]int64, len(oldProperties))
+	for key, value := range oldProperties {
+		oldLimits[key], err = strconv.ParseInt(value, 10, 64)
 		if err != nil {
 			return err
 		}
 	}
 
+	newLimits := map[string]int64{}
+	if sizeBytes > 0 {
+		newLimits[quotaKey] = sizeBytes
+		if util.IsTrue(vol.ExpandedConfig("zfs.reserve_space")) {
+			newLimits[reservationKey] = sizeBytes
+		}
+	}
+
+	// A quota below reservation and a reservation exceeding quota are refused by ZFS
+	order := []string{quotaKey, otherQuotaKey}
+	for _, key := range []string{reservationKey, otherReservationKey} {
+		if newLimits[key] < oldLimits[key] {
+			order = slices.Insert(order, 0, key)
+		} else {
+			order = append(order, key)
+		}
+	}
+
+	setLimit := func(key string, limitSize int64) error {
+		value := "none" // ZFS only accepts none.
+		if limitSize > 0 {
+			value = fmt.Sprintf("%d", limitSize)
+		}
+
+		return d.setDatasetProperties(dataset, fmt.Sprintf("%s=%s", key, value))
+	}
+
+	// Initialize a revert to revert to previous quota in case of failure
+	reverter := revert.New()
+	defer reverter.Fail()
+
+	revertFailed := false
+
+	for _, key := range order {
+		if newLimits[key] == oldLimits[key] {
+			continue
+		}
+
+		err = setLimit(key, newLimits[key])
+		if err != nil {
+			return err
+		}
+
+		reverter.Add(func() {
+			if revertFailed {
+				return
+			}
+
+			revertFailed = setLimit(key, oldLimits[key]) != nil
+		})
+	}
+
+	reverter.Success()
 	return nil
 }
 
