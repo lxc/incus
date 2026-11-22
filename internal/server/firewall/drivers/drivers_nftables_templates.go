@@ -199,6 +199,17 @@ table {{.family}} {{.namespace}} {
 }
 `))
 
+// nftablesInstanceSrcMACFilter drops frames whose source MAC isn't the instance's. It hooks the
+// device's own ingress, which runs before the bridge records where a frame came from, so a
+// spoofed source can't be learned on this port.
+var nftablesInstanceSrcMACFilter = template.Must(template.New("nftablesInstanceSrcMACFilter").Parse(`
+chain srcmac{{.chainSeparator}}{{.deviceLabel}} {
+	type filter hook ingress device "{{.hostName}}" priority -100; policy accept;
+
+	ether saddr != {{.hwAddr}} drop
+}
+`))
+
 // nftablesInstanceBridgeFilter defines the rules needed for MAC, IPv4 and IPv6 bridge security filtering.
 // To prevent instances from using IPs that are different from their assigned IPs we use ARP and NDP filtering
 // to prevent neighbor advertisements that are not allowed. However in order for DHCPv4 & DHCPv6 to work back to
