@@ -553,6 +553,31 @@ test_storage() {
             incus storage volume attach "incustest-$(basename "${INCUS_DIR}")-non-thinpool-pool15" c12pool15 c12pool15 testDevice /opt
             ! incus storage volume attach "incustest-$(basename "${INCUS_DIR}")-non-thinpool-pool15" c12pool15 c12pool15 testDevice2 /opt || false
             incus storage volume detach "incustest-$(basename "${INCUS_DIR}")-non-thinpool-pool15" c12pool15 c12pool15 testDevice
+
+            # Check the copy-on-write chunk size of snapshots on a pool without a thin pool.
+            ! incus storage set "incustest-$(basename "${INCUS_DIR}")-pool14" volume.lvm.snapshots.chunk_size=64KiB || false
+            ! incus storage volume set "incustest-$(basename "${INCUS_DIR}")-pool14" c10pool14 lvm.snapshots.chunk_size=64KiB || false
+            pool15="incustest-$(basename "${INCUS_DIR}")-non-thinpool-pool15"
+            ! incus storage set "${pool15}" volume.lvm.snapshots.chunk_size=2KiB || false
+            ! incus storage set "${pool15}" volume.lvm.snapshots.chunk_size=48KiB || false
+            ! incus storage set "${pool15}" volume.lvm.snapshots.chunk_size=1MiB || false
+            ! incus storage set "${pool15}" volume.lvm.snapshots.chunk_size=64kB || false
+            for size in 4KiB 8KiB 16KiB 32KiB 64KiB 128KiB 256KiB 512KiB; do
+                incus storage set "${pool15}" volume.lvm.snapshots.chunk_size="${size}"
+            done
+            incus storage unset "${pool15}" volume.lvm.snapshots.chunk_size
+            incus storage volume create "${pool15}" chunkvol
+            incus storage volume snapshot create "${pool15}" chunkvol snap0
+            [ "$(lvs --noheadings --nosuffix --units k -o chunk_size "${pool15}/custom_default_chunkvol-snap0" | tr -d ' ')" = "4.00" ]
+            incus storage set "${pool15}" volume.lvm.snapshots.chunk_size=64KiB
+            incus storage volume snapshot create "${pool15}" chunkvol snap1
+            [ "$(lvs --noheadings --nosuffix --units k -o chunk_size "${pool15}/custom_default_chunkvol-snap1" | tr -d ' ')" = "64.00" ]
+            incus storage volume set "${pool15}" chunkvol lvm.snapshots.chunk_size=128KiB
+            incus storage volume snapshot create "${pool15}" chunkvol snap2
+            [ "$(lvs --noheadings --nosuffix --units k -o chunk_size "${pool15}/custom_default_chunkvol-snap2" | tr -d ' ')" = "128.00" ]
+            incus storage volume snapshot restore "${pool15}" chunkvol snap1
+            incus storage volume delete "${pool15}" chunkvol
+            incus storage unset "${pool15}" volume.lvm.snapshots.chunk_size
         fi
 
         if [ "$incus_backend" = "zfs" ]; then
