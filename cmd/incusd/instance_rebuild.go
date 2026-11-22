@@ -97,6 +97,10 @@ func instanceRebuildPost(d *Daemon, r *http.Request) response.Response {
 	err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
 		dbProject, err := dbCluster.GetProject(ctx, tx.Tx(), targetProjectName)
 		if err != nil {
+			if api.StatusErrorCheck(err) {
+				return err
+			}
+
 			return fmt.Errorf("Failed loading project: %w", err)
 		}
 
@@ -107,6 +111,10 @@ func instanceRebuildPost(d *Daemon, r *http.Request) response.Response {
 
 		dbInst, err := dbCluster.GetInstance(ctx, tx.Tx(), targetProject.Name, name)
 		if err != nil {
+			if api.StatusErrorCheck(err) {
+				return err
+			}
+
 			return fmt.Errorf("Failed loading instance: %w", err)
 		}
 

@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lxd\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2026-11-20 18:33-0500\n"
+"POT-Creation-Date: 2026-11-22 10:45-0500\n"
 "PO-Revision-Date: 2026-08-29 22:38+0000\n"
 "Last-Translator: Anonymous <noreply@weblate.org>\n"
 "Language-Team: Russian <https://hosted.weblate.org/projects/incus/cli/ru/>\n"
@@ -3344,7 +3344,7 @@ msgstr "Не удалось установить SSH-соединение с к�
 msgid "Failed accepting channel client %q: %v"
 msgstr "Не удалось принять канал связи клиента %q: %v"
 
-#: cmd/incus/delete.go:92
+#: cmd/incus/delete.go:96
 #, c-format
 msgid "Failed checking instance %s exists: %w"
 msgstr "Ошибка проверки существования экземпляра %s : %w"
@@ -3377,7 +3377,7 @@ msgstr ""
 msgid "Failed converting token operation to join token: %w"
 msgstr "Неудачная операция преобразования токена в токен подключения: %w"
 
-#: cmd/incus/delete.go:142
+#: cmd/incus/delete.go:146
 #, c-format
 msgid "Failed deleting instance %s in project %q: %w"
 msgstr "Не удалось удалить экземпляр %s из проекта %q: %w"
@@ -9704,7 +9704,7 @@ msgstr "Остановите экземпляр, если он работает"
 msgid "Stopping instance failed!"
 msgstr "Не удалось остановить экземпляр!"
 
-#: cmd/incus/delete.go:113
+#: cmd/incus/delete.go:117
 #, c-format
 msgid "Stopping the instance %s failed: %s"
 msgstr "Остановка экземпляра %s не удалась: %s"
@@ -10031,7 +10031,7 @@ msgstr "Сертификат клиента хранится на сервере
 msgid "The given signature is already present in this ESL"
 msgstr "Сертификат клиента хранится на сервере"
 
-#: cmd/incus/delete.go:97
+#: cmd/incus/delete.go:101
 #, c-format
 msgid "The instance %s is currently running, stop it first or pass --force"
 msgstr ""

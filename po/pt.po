@@ -7,12 +7,12 @@ msgid ""
 msgstr ""
 "Project-Id-Version: incus\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2026-11-20 18:33-0500\n"
+"POT-Creation-Date: 2026-11-22 10:45-0500\n"
 "PO-Revision-Date: 2026-11-22 14:25+0000\n"
 "Last-Translator: Américo Monteiro <a-"
 "monteiro@users.noreply.hosted.weblate.org>\n"
-"Language-Team: Portuguese <https://hosted.weblate.org/projects/incus/cli/pt/>"
-"\n"
+"Language-Team: Portuguese <https://hosted.weblate.org/projects/incus/cli/pt/"
+">\n"
 "Language: pt\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -3328,7 +3328,7 @@ msgstr "Falhado aperto de mão SSH com cliente %q: %v"
 msgid "Failed accepting channel client %q: %v"
 msgstr "Falha ao aceitar cliente de canal %q: %v"
 
-#: cmd/incus/delete.go:92
+#: cmd/incus/delete.go:96
 #, c-format
 msgid "Failed checking instance %s exists: %w"
 msgstr "Falha ao verificar se instância %s existe: %w"
@@ -3362,7 +3362,7 @@ msgid "Failed converting token operation to join token: %w"
 msgstr ""
 "Falhou ao converter testemunho de operação para testemunho de junção: %w"
 
-#: cmd/incus/delete.go:142
+#: cmd/incus/delete.go:146
 #, c-format
 msgid "Failed deleting instance %s in project %q: %w"
 msgstr "Falhou ao apagar instância %s no projeto %q: %w"
@@ -9687,7 +9687,7 @@ msgstr "Pára a instância se estiver atualmente em execução"
 msgid "Stopping instance failed!"
 msgstr "Falhou a paragem da instância!"
 
-#: cmd/incus/delete.go:113
+#: cmd/incus/delete.go:117
 #, c-format
 msgid "Stopping the instance %s failed: %s"
 msgstr "Falhou a paragem da instância %s: %s"
@@ -10014,7 +10014,7 @@ msgstr "O certificado fornecido já está presente neste ESL"
 msgid "The given signature is already present in this ESL"
 msgstr "A assinatura fornecida já está presente neste ESL"
 
-#: cmd/incus/delete.go:97
+#: cmd/incus/delete.go:101
 #, c-format
 msgid "The instance %s is currently running, stop it first or pass --force"
 msgstr ""
