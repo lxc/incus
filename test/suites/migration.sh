@@ -403,13 +403,31 @@ migration() {
         # The pre-copy snapshots were removed from the target.
         [ "$(incus_remote query l2:/1.0/instances/c1/snapshots | jq 'length')" = "0" ]
 
-        # A stopped container falls back to a regular move.
-        incus_remote stop -f l2:c1
+        # A snapshot keeps following the instance across repeated moves.
+        incus_remote snapshot create l2:c1 snap0
+        INC_LOCAL='' incus_remote exec l2:c1 -- sh -c "echo to-l1 > /root/marker"
         incus_remote move l2:c1 l1:c1 --stateless --refresh
-        incus_remote info l1:c1 | grep -q "Status: STOPPED"
-        [ "$(incus_remote query l1:/1.0/instances/c1/snapshots | jq 'length')" = "0" ]
+        INC_LOCAL='' incus_remote exec l1:c1 -- cat /root/marker | grep -Fx "to-l1"
+        INC_LOCAL='' incus_remote exec l1:c1 -- sh -c "echo to-l2 > /root/marker"
+        incus_remote move l1:c1 l2:c1 --stateless --refresh
+        INC_LOCAL='' incus_remote exec l2:c1 -- cat /root/marker | grep -Fx "to-l2"
+        INC_LOCAL='' incus_remote exec l2:c1 -- sh -c "echo back-to-l1 > /root/marker"
+        incus_remote move l2:c1 l1:c1 --stateless --refresh
+        INC_LOCAL='' incus_remote exec l1:c1 -- cat /root/marker | grep -Fx "back-to-l1"
+        [ "$(incus_remote query l1:/1.0/instances/c1/snapshots | jq 'length')" = "1" ]
 
-        incus_remote rm -f l1:c1
+        # The received snapshot stays read-only.
+        if [ "${incus_backend}" = "btrfs" ]; then
+            btrfs property get "${INCUS_DIR}/storage-pools/${pool}/containers-snapshots/c1/snap0" ro | grep -Fx "ro=true"
+        fi
+
+        # A stopped container falls back to a regular move.
+        incus_remote stop -f l1:c1
+        incus_remote move l1:c1 l2:c1 --stateless --refresh
+        incus_remote info l2:c1 | grep -q "Status: STOPPED"
+        [ "$(incus_remote query l2:/1.0/instances/c1/snapshots | jq 'length')" = "1" ]
+
+        incus_remote rm -f l2:c1
     fi
 
     remote_pool1="incustest-$(basename "${INCUS_DIR}")"
