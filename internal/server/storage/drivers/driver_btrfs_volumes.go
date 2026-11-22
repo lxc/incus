@@ -599,25 +599,25 @@ func (d *btrfs) CreateVolumeFromMigration(vol Volume, conn io.ReadWriteCloser, v
 		// Reset list of snapshots which are to be received.
 		volTargetArgs.Snapshots = []*migration.Snapshot{}
 
-		// Map of local subvolumes with their received UUID.
+		originUUIDs, err := d.getSubVolumeOriginUUIDs(vol.pool)
+		if err != nil {
+			return err
+		}
+
+		// Map of local snapshots with the UUID identifying them in a send stream.
 		localSubvolumes := make(map[string]string)
 
 		for _, snap := range snapshots {
 			snapVol, _ := vol.NewSnapshot(snap)
 
-			receivedUUID, err := d.getSubVolumeReceivedUUID(snapVol)
-			if err != nil {
-				return err
-			}
-
-			localSubvolumes[snap] = receivedUUID
+			localSubvolumes[snap] = originUUIDs[snapVol.MountPath()]
 		}
 
-		// Figure out which snapshots need to be copied by comparing the UUIDs and received UUIDs from the migration header.
+		// Figure out which snapshots need to be copied by comparing the UUIDs from the migration header.
 		for _, migrationSnap := range migrationHeader.Subvolumes {
-			receivedUUID, ok := localSubvolumes[migrationSnap.Snapshot]
-			// Skip this snapshot as it exists on both the source and target, and has the same GUID.
-			if ok && receivedUUID == migrationSnap.UUID {
+			originUUID, ok := localSubvolumes[migrationSnap.Snapshot]
+			// Skip this snapshot as it exists on both the source and target with the same origin.
+			if ok && originUUID == migrationSnap.UUID {
 				continue
 			}
 
