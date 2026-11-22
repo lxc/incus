@@ -485,6 +485,45 @@ func (d Nftables) InstanceSetupBridgeFilter(projectName string, instanceName str
 		return fmt.Errorf("Failed adding bridge filter rules for instance device %q (%s): %w", deviceLabel, tplFields["family"], err)
 	}
 
+	// The bridge hooks run after the frame has been recorded against this port, so the source MAC
+	// also has to be filtered at the device's ingress.
+	if tplFields["macFiltering"] != nil {
+		err = d.instanceSetupSrcMACFilter(deviceLabel, hostName, hwAddr)
+		if err != nil {
+			return err
+		}
+	} else {
+		err = d.removeChains([]string{"netdev"}, deviceLabel, "srcmac")
+		if err != nil {
+			return fmt.Errorf("Failed clearing source MAC filter for instance device %q: %w", deviceLabel, err)
+		}
+	}
+
+	return nil
+}
+
+// instanceSetupSrcMACFilter installs the device ingress chain dropping spoofed source MACs.
+func (d Nftables) instanceSetupSrcMACFilter(deviceLabel string, hostName string, hwAddr string) error {
+	tplFields := map[string]any{
+		"namespace":      nftablesNamespace,
+		"chainSeparator": nftablesChainSeparator,
+		"family":         "netdev",
+		"deviceLabel":    deviceLabel,
+		"hostName":       hostName,
+		"hwAddr":         hwAddr,
+	}
+
+	// Drop any existing chain first, as the hook can't be redefined in place.
+	err := d.removeChains([]string{"netdev"}, deviceLabel, "srcmac")
+	if err != nil {
+		return err
+	}
+
+	err = d.applyNftConfig(nftablesInstanceSrcMACFilter, tplFields)
+	if err != nil {
+		return fmt.Errorf("Failed adding source MAC filter for instance device %q: %w", deviceLabel, err)
+	}
+
 	return nil
 }
 
@@ -496,6 +535,11 @@ func (d Nftables) InstanceClearBridgeFilter(projectName string, instanceName str
 	err := d.removeChains([]string{"bridge"}, deviceLabel, "in", "fwd", "out")
 	if err != nil {
 		return fmt.Errorf("Failed clearing bridge filter rules for instance device %q: %w", deviceLabel, err)
+	}
+
+	err = d.removeChains([]string{"netdev"}, deviceLabel, "srcmac")
+	if err != nil {
+		return fmt.Errorf("Failed clearing source MAC filter for instance device %q: %w", deviceLabel, err)
 	}
 
 	return nil
