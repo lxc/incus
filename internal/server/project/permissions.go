@@ -1474,8 +1474,13 @@ func AllowProjectUpdate(tx *db.ClusterTx, projectName string, config map[string]
 	// instances.
 	aggregateKeys := []string{}
 
-	for _, key := range changed {
-		if strings.HasPrefix(key, "restricted.") {
+	// Restrictions only apply to restricted projects, so only check them there.
+	if util.IsTrue(config["restricted"]) {
+		for _, key := range changed {
+			if !strings.HasPrefix(key, "restricted.") {
+				continue
+			}
+
 			project := api.Project{
 				Name: projectName,
 				ProjectPut: api.ProjectPut{
@@ -1488,9 +1493,11 @@ func AllowProjectUpdate(tx *db.ClusterTx, projectName string, config map[string]
 				return fmt.Errorf("Conflict detected when changing %q in project %q: %w", key, projectName, err)
 			}
 
-			continue
+			break
 		}
+	}
 
+	for _, key := range changed {
 		switch key {
 		case "limits.instances":
 			err := validateTotalInstanceCountLimit(info.Instances, config[key], projectName)
@@ -2097,8 +2104,12 @@ func AllowSnapshotCreation(p *api.Project) error {
 	return nil
 }
 
-// GetRestrictedClusterGroups returns a slice of restricted cluster groups for the given project.
+// GetRestrictedClusterGroups returns the cluster groups a restricted project is limited to.
 func GetRestrictedClusterGroups(p *api.Project) []string {
+	if util.IsFalseOrEmpty(p.Config["restricted"]) {
+		return nil
+	}
+
 	return util.SplitNTrimSpace(p.Config["restricted.cluster.groups"], ",", -1, true)
 }
 
@@ -2115,8 +2126,7 @@ func NoCandidateMemberError(p *api.Project) error {
 // AllowClusterMember returns nil if the given project is allowed to use the cluster member.
 func AllowClusterMember(p *api.Project, member *db.NodeInfo) error {
 	clusterGroupsAllowed := GetRestrictedClusterGroups(p)
-
-	if util.IsTrue(p.Config["restricted"]) && len(clusterGroupsAllowed) > 0 {
+	if len(clusterGroupsAllowed) > 0 {
 		for _, memberGroupName := range member.Groups {
 			if slices.Contains(clusterGroupsAllowed, memberGroupName) {
 				return nil
@@ -2132,12 +2142,6 @@ func AllowClusterMember(p *api.Project, member *db.NodeInfo) error {
 // AllowClusterGroup returns nil if the given project is allowed to use the cluster groupName.
 func AllowClusterGroup(p *api.Project, groupName string) error {
 	clusterGroupsAllowed := GetRestrictedClusterGroups(p)
-
-	// Skip the check if the project is not restricted
-	if util.IsFalseOrEmpty(p.Config["restricted"]) {
-		return nil
-	}
-
 	if len(clusterGroupsAllowed) > 0 && !slices.Contains(clusterGroupsAllowed, groupName) {
 		return fmt.Errorf("Project isn't allowed to use this cluster group: %q", groupName)
 	}
