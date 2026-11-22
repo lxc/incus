@@ -8,6 +8,17 @@ test_basic_usage() {
     # shellcheck disable=2153
     ensure_has_localhost_remote "${INCUS_ADDR}"
 
+    # Test the client with a read-only home directory
+    ro_home=$(mktemp -d -p "${TEST_DIR}" XXX)
+    mount --bind "${ro_home}" "${ro_home}"
+    mount -o remount,bind,ro "${ro_home}" "${ro_home}"
+    (
+        unset INCUS_CONF XDG_CONFIG_HOME XDG_CACHE_HOME
+        HOME="${ro_home}" incus_remote list
+    )
+    umount "${ro_home}"
+    rmdir "${ro_home}"
+
     # Test image export
     sum="$(incus image info testimage | awk '/^Fingerprint/ {print $2}')"
     incus image export testimage "${INCUS_DIR}/"
