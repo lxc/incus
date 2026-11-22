@@ -1025,8 +1025,9 @@ func (d *disk) validateEnvironmentSourcePath() error {
 				return fmt.Errorf("Disk source path %q not allowed by project for disk %q", d.config["source"], d.name)
 			}
 
-			if util.IsTrue(d.config["shift"]) {
-				return errors.New(`The "shift" property cannot be used with a restricted source path`)
+			// Prevent id-mapping on a writable mount, as this would give root access to the host.
+			if util.IsTrue(d.config["shift"]) && !util.IsTrue(d.config["readonly"]) {
+				return errors.New(`The "shift" property cannot be used with a restricted source path unless "readonly" is true`)
 			}
 
 			d.restrictedParentSourcePath = restrictedParentSourcePath
