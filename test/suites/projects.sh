@@ -1044,6 +1044,12 @@ test_projects_restrictions() {
     # because there's an instance with security.nesting=true.
     ! incus project set p1 restricted.containers.nesting=block || false
 
+    # Restrictions are only checked while the project is restricted.
+    incus project set p1 restricted=false
+    incus project set p1 restricted.containers.nesting=block
+    incus project set p1 restricted.containers.nesting=allow
+    incus project set p1 restricted=true
+
     incus delete c1
 
     # Setting restricted.containers.lowlevel to 'allow' makes it possible to set
