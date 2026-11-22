@@ -512,7 +512,7 @@ func (d *lvm) commonVolumeRules() map[string]func(value string) error {
 		//
 		// ---
 		//  type: string
-		//  condition: -
+		//  condition: pool not using a thin pool (`lvm.use_thinpool=false` or `lvmcluster` driver)
 		//  default: same as `volume.lvm.stripes`
 		//  shortdesc: Number of stripes to use for new volumes (or thin pool volume)
 		"lvm.stripes": validate.Optional(validate.IsUint32),
@@ -521,27 +521,29 @@ func (d *lvm) commonVolumeRules() map[string]func(value string) error {
 		//
 		// ---
 		//  type: string
-		//  condition: -
+		//  condition: pool not using a thin pool (`lvm.use_thinpool=false` or `lvmcluster` driver)
 		//  default: same as `volume.lvm.stripes.size`
 		//  shortdesc: Size of stripes to use (at least 4096 bytes and multiple of 512 bytes)
 		"lvm.stripes.size": validate.Optional(validate.IsSize),
 	}
 
 	if d.clustered {
-		// gendoc:generate(entity=storage_lvm, group=common, key=block.type)
-		//
+		// gendoc:generate(entity=storage_volume_lvm, group=common, key=block.type)
+		// Possible values are `qcow2` and `raw`.
+		// The type cannot be changed after the volume is created.
 		// ---
-		//  type:string
-		//  condition: block-based volume
-		//  default: same as `volume.block.type`
+		//  type: string
+		//  condition: `lvmcluster` driver, VM or custom volume with content type `block`
+		//  default: same as `volume.block.type` or `qcow2`
 		//  shortdesc: Type of the block volume
 		rules["block.type"] = validate.Optional(validate.IsOneOf(BlockVolumeTypeRaw, BlockVolumeTypeQcow2))
 
 		// gendoc:generate(entity=storage_volume_lvm, group=common, key=lvmcluster.remove_snapshots)
-		//
+		// Only the most recent snapshot of a `qcow2` volume can be restored.
+		// When this option is enabled, restoring an older snapshot deletes all the snapshots taken after it.
 		// ---
 		//  type: bool
-		//  condition: -
+		//  condition: `lvmcluster` driver
 		//  default: same as `volume.lvmcluster.remove_snapshots` or `false`
 		//  shortdesc: Remove snapshots as needed
 		rules["lvmcluster.remove_snapshots"] = validate.Optional(validate.IsBool)

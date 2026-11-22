@@ -38,7 +38,7 @@ Maximum number of transfer operations to go through before stopping the instance
 :type: string
 :liveupdate: "no"
 
-Controls what to do when evacuating the instance (`auto`, `migrate`, `live-migrate`, or `stop`)
+Controls what to do when evacuating the instance (`auto`, `migrate`, `live-migrate`, `refresh-migrate`, `stop`, `stateful-stop`, or `force-stop`)
 ```
 
 These need the `instance` scope to be specified as second argument.

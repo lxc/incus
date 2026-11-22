@@ -78,7 +78,7 @@ If you can't or don't want to bring the server back online, you can [delete it f
 
 You can tweak the amount of seconds after which a non-responding member is considered offline by setting the {config:option}`server-cluster:cluster.offline_threshold` configuration.
 The default value is 20 seconds.
-The minimum value is 10 seconds.
+The value must be greater than 10 seconds.
 
 To automatically {ref}`evacuate <cluster-evacuate>` instances from an offline member, set the {config:option}`server-cluster:cluster.healing_threshold` configuration to a non-zero value.
 
@@ -232,8 +232,8 @@ The following functions are available to the scriptlet (in addition to those pro
 - `get_cluster_member_resources(member_name)`: Get information about resources on the cluster member. Returns an object with the resource information in the form of [`api.Resources`](https://pkg.go.dev/github.com/lxc/incus/shared/api#Resources). `member_name` is the name of the cluster member to get the resource information for.
 - `get_cluster_member_state(member_name)`: Get the cluster member's state. Returns an object with the cluster member's state in the form of [`api.ClusterMemberState`](https://pkg.go.dev/github.com/lxc/incus/shared/api#ClusterMemberState). `member_name` is the name of the cluster member to get the state for.
 - `get_instance_resources()`: Get information about the resources the instance will require. Returns an object with the resource information in the form of [`scriptlet.InstanceResources`](https://pkg.go.dev/github.com/lxc/incus/shared/api/scriptlet/#InstanceResources).
-- `get_instances(location, project)`: Get a list of instances based on project and/or location filters. Returns the list of instances in the form of [`[]api.Instance`](https://pkg.go.dev/github.com/lxc/incus/shared/api#Instance).
-- `get_instances_count(location, project, pending)`: Get a count of the instances based on project and/or location filters. The count may include instances currently being created for which no database record exists yet..
+- `get_instances(project, location)`: Get a list of instances based on project and/or location filters. Returns the list of instances in the form of [`[]api.Instance`](https://pkg.go.dev/github.com/lxc/incus/shared/api#Instance).
+- `get_instances_count(project, location, pending)`: Get a count of the instances based on project and/or location filters. The count may include instances currently being created for which no database record exists yet..
 - `get_cluster_members(group)`: Get a list of cluster members based on the cluster group. Returns the list of cluster members in the form of [`[]api.ClusterMember`](https://pkg.go.dev/github.com/lxc/incus/shared/api#ClusterMember).
 - `get_project(name)`: Get a project object based on the project name. Returns a project object in the form of [`api.Project`](https://pkg.go.dev/github.com/lxc/incus/shared/api#Project).
 

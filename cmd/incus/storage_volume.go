@@ -393,7 +393,7 @@ func (c *cmdStorageVolumeCopy) command() *cobra.Command {
 	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Copy custom storage volumes`))
 
 	cli.AddStringFlag(cmd.Flags(), &c.flagMode, "mode", "pull", "", i18n.G("Transfer mode. One of pull, push or relay"))
-	cli.AddStringFlag(cmd.Flags(), &c.storage.flagTarget, "target", "", "", i18n.G("Cluster member name"))
+	cli.AddStringFlag(cmd.Flags(), &c.storage.flagTarget, "target", "", "", i18n.G("Source cluster member name"))
 	cli.AddStringFlag(cmd.Flags(), &c.storageVolume.flagDestinationTarget, "destination-target", "", "", i18n.G("Destination cluster member name"))
 	cli.AddBoolFlag(cmd.Flags(), &c.flagVolumeOnly, "volume-only", i18n.G("Copy the volume without its snapshots"))
 	cli.AddStringFlag(cmd.Flags(), &c.flagTargetProject, "target-project", "", "", i18n.G("Copy to a project different from the source"))
@@ -1737,7 +1737,7 @@ func (c *cmdStorageVolumeMove) command() *cobra.Command {
 	))
 
 	cli.AddStringFlag(cmd.Flags(), &c.storageVolumeCopy.flagMode, "mode", "pull", "", i18n.G("Transfer mode, one of pull (default), push or relay"))
-	cli.AddStringFlag(cmd.Flags(), &c.storage.flagTarget, "target", "", "", i18n.G("Cluster member name"))
+	cli.AddStringFlag(cmd.Flags(), &c.storage.flagTarget, "target", "", "", i18n.G("Source cluster member name"))
 	cli.AddStringFlag(cmd.Flags(), &c.storageVolume.flagDestinationTarget, "destination-target", "", "", i18n.G("Destination cluster member name"))
 	cli.AddStringFlag(cmd.Flags(), &c.storageVolumeCopy.flagTargetProject, "target-project", "", "", i18n.G("Move to a project different from the source"))
 	cmd.RunE = c.run
