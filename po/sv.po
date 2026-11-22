@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: incus\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2026-11-09 17:04-0500\n"
+"POT-Creation-Date: 2026-11-22 13:14-0500\n"
 "PO-Revision-Date: 2026-04-21 03:01+0000\n"
 "Last-Translator: Anonymous <noreply@weblate.org>\n"
 "Language-Team: Swedish <https://hosted.weblate.org/projects/incus/cli/sv/>\n"
@@ -1740,10 +1740,9 @@ msgstr "Klustermedlem %s borttagen från grupp %s"
 #: cmd/incus/storage_bucket.go:988 cmd/incus/storage_bucket.go:1078
 #: cmd/incus/storage_bucket.go:1127 cmd/incus/storage_bucket.go:1249
 #: cmd/incus/storage_bucket.go:1309 cmd/incus/storage_bucket.go:1490
-#: cmd/incus/storage_volume.go:396 cmd/incus/storage_volume.go:607
-#: cmd/incus/storage_volume.go:702 cmd/incus/storage_volume.go:962
-#: cmd/incus/storage_volume.go:1174 cmd/incus/storage_volume.go:1292
-#: cmd/incus/storage_volume.go:1740 cmd/incus/storage_volume.go:1808
+#: cmd/incus/storage_volume.go:607 cmd/incus/storage_volume.go:702
+#: cmd/incus/storage_volume.go:962 cmd/incus/storage_volume.go:1174
+#: cmd/incus/storage_volume.go:1292 cmd/incus/storage_volume.go:1808
 #: cmd/incus/storage_volume.go:1892 cmd/incus/storage_volume.go:1976
 #: cmd/incus/storage_volume.go:2126 cmd/incus/storage_volume.go:2216
 #: cmd/incus/storage_volume.go:2272 cmd/incus/storage_volume.go:2480
@@ -1906,7 +1905,7 @@ msgstr "Innehållstyp: %s"
 msgid "Control: %s (%s)"
 msgstr "Kontroll: %s (%s)"
 
-#: cmd/incus/copy.go:66 cmd/incus/move.go:69
+#: cmd/incus/copy.go:66
 msgid "Copy a stateful instance stateless"
 msgstr "Kopiera en tillståndsberoende instans tillståndsfri"
 
@@ -1983,8 +1982,8 @@ msgstr "Kopiera instansen utan dess ögonblicksbilder"
 msgid "Copy the volume without its snapshots"
 msgstr "Kopiera volymen utan dess ögonblicksbilder"
 
-#: cmd/incus/copy.go:69 cmd/incus/image.go:184 cmd/incus/move.go:72
-#: cmd/incus/profile.go:275 cmd/incus/storage_volume.go:399
+#: cmd/incus/copy.go:69 cmd/incus/image.go:184 cmd/incus/profile.go:275
+#: cmd/incus/storage_volume.go:399
 msgid "Copy to a project different from the source"
 msgstr "Kopiera till ett annat projekt än källan"
 
@@ -2573,7 +2572,7 @@ msgstr "Fick inte namnet på den nya instansen från servern"
 msgid "Directory import is not available on this platform"
 msgstr "Katalogimport är inte tillgängligt på denna plattform"
 
-#: cmd/incus/exec.go:71
+#: cmd/incus/exec.go:72
 msgid "Directory to run the command in (default /root)"
 msgstr "Katalog där kommandot ska köras (standard /root)"
 
@@ -2581,11 +2580,11 @@ msgstr "Katalog där kommandot ska köras (standard /root)"
 msgid "Disable authentication when using SSH SFTP listener"
 msgstr "Inaktivera autentisering vid användning av SSH SFTP-lyssnare"
 
-#: cmd/incus/exec.go:67
+#: cmd/incus/exec.go:68
 msgid "Disable pseudo-terminal allocation"
 msgstr "Inaktivera tilldelning av pseudoterminal"
 
-#: cmd/incus/exec.go:68
+#: cmd/incus/exec.go:69
 msgid "Disable stdin (reads from /dev/null)"
 msgstr "Inaktivera stdin (läser från /dev/null)"
 
@@ -2959,7 +2958,7 @@ msgstr "Ange ny fördröjning i sekunder:"
 msgid "Entry TTL"
 msgstr "Inmatning TTL"
 
-#: cmd/incus/exec.go:64
+#: cmd/incus/exec.go:65
 #, fuzzy
 msgid ""
 "Environment variable to set (e.g. HOME=/home/foo) (may be passed multiple "
@@ -3135,11 +3134,11 @@ msgstr ""
 "användarna i form av en\n"
 "  uppsättning databasfrågor för att åtgärda vissa datainkonsekvenser."
 
-#: cmd/incus/exec.go:44
+#: cmd/incus/exec.go:45
 msgid "Execute commands in instances"
 msgstr "Utför kommandon i instanser"
 
-#: cmd/incus/exec.go:45
+#: cmd/incus/exec.go:46
 msgid ""
 "Execute commands in instances\n"
 "\n"
@@ -3246,6 +3245,16 @@ msgstr ""
 "Exportera det aktuella minnesläget för en virtuell maskin som körs till en "
 "dumpfil.\n"
 "\t\tDetta kan vara användbart för felsökning eller analys."
+
+#: cmd/incus/export.go:53
+#, fuzzy
+msgid "Export the instance without its dependent volumes"
+msgstr "Om endast instansen ska säkerhetskopieras (utan snapshots)"
+
+#: cmd/incus/export.go:52
+#, fuzzy
+msgid "Export the instance without its snapshots"
+msgstr "Kopiera instansen utan dess ögonblicksbilder"
 
 #: cmd/incus/storage_volume.go:2269
 msgid ""
@@ -3636,6 +3645,11 @@ msgstr "Det gick inte att läsa från filen: %w"
 msgid "Failed to read from stdin: %w"
 msgstr "Läsning från stdin misslyckades: %w"
 
+#: cmd/incus/exec.go:237
+#, fuzzy, c-format
+msgid "Failed to receive the command output: %w"
+msgstr "Det gick inte att rendera konfigurationen: %w"
+
 #: cmd/incus/copy.go:391
 #, c-format
 msgid "Failed to refresh target instance '%s': %v"
@@ -3682,20 +3696,13 @@ msgstr "Det gick inte att hämta klusterinformation: %w"
 msgid "Failed to retrieve current cluster config: %w"
 msgstr "Det gick inte att hämta aktuell klusterkonfiguration: %w"
 
-#: cmd/incus/admin_init_dump.go:18 cmd/incus/admin_init_dump.go:49
-#: cmd/incus/admin_init_dump.go:64 cmd/incus/admin_init_dump.go:79
-#: cmd/incus/admin_init_dump.go:93 cmd/incus/cluster.go:816
+#: cmd/incus/admin_init_dump.go:18 cmd/incus/admin_init_dump.go:26
+#: cmd/incus/admin_init_dump.go:47 cmd/incus/admin_init_dump.go:62
+#: cmd/incus/admin_init_dump.go:78 cmd/incus/admin_init_dump.go:92
+#: cmd/incus/cluster.go:816
 #, c-format
 msgid "Failed to retrieve current server configuration: %w"
 msgstr "Det gick inte att hämta aktuell serverkonfiguration: %w"
-
-#: cmd/incus/admin_init_dump.go:28
-#, c-format
-msgid ""
-"Failed to retrieve current server network configuration for project %q: %w"
-msgstr ""
-"Det gick inte att hämta aktuell servernätverkskonfiguration för projekt %q: "
-"%w"
 
 #: cmd/incus/admin_init_auto.go:131
 #, c-format
@@ -3781,11 +3788,14 @@ msgid "Follow command-line symbolic links in source path"
 msgstr ""
 
 #: cmd/incus/cluster.go:1471
-msgid "Force a particular evacuation action"
-msgstr "Tvinga fram en viss evakueringsåtgärd"
+msgid ""
+"Force a particular evacuation action (migrate, live-migrate, refresh-"
+"migrate, stop, stateful-stop or force-stop)"
+msgstr ""
 
 #: cmd/incus/cluster.go:1503
-msgid "Force a particular restoration action"
+#, fuzzy
+msgid "Force a particular restoration action (only \"skip\" is supported)"
 msgstr "Tvinga en viss återställningsåtgärd"
 
 #: cmd/incus/file.go:111 cmd/incus/storage_volume_file.go:107
@@ -3800,10 +3810,6 @@ msgstr "Tvinga bort projektet och allt det innehåller."
 msgid "Force deleting files, directories, and subdirectories"
 msgstr "Tvinga borttagning av filer, kataloger och underkataloger"
 
-#: cmd/incus/cluster.go:1519
-msgid "Force evacuation without user confirmation"
-msgstr "Tvinga evakuering utan användarens bekräftelse"
-
 #: cmd/incus/low_level.go:1531
 msgid "Force overwriting existing ESL"
 msgstr ""
@@ -3817,7 +3823,7 @@ msgstr ""
 msgid "Force overwriting existing backup file"
 msgstr ""
 
-#: cmd/incus/exec.go:66
+#: cmd/incus/exec.go:67
 msgid "Force pseudo-terminal allocation"
 msgstr "Tvinga pseudo-terminaltilldelning"
 
@@ -4279,7 +4285,7 @@ msgstr ""
 msgid "Granularity of the dirty bitmap in bytes"
 msgstr ""
 
-#: cmd/incus/exec.go:70
+#: cmd/incus/exec.go:71
 msgid "Group ID to run the command as (default 0)"
 msgstr "Grupp-ID för att köra kommandot som (standard 0)"
 
@@ -4634,14 +4640,16 @@ msgstr "Instansvägen kan inte användas i SSH SFTP-lyssnaräge"
 msgid "Instance published with fingerprint: %s"
 msgstr "Instans publicerad med fingeravtryck: %s"
 
+#: cmd/incus/create.go:69
+msgid ""
+"Instance size, as a cloud instance type or resource limits (e.g. t2.micro or "
+"c2-m4)"
+msgstr ""
+
 #: cmd/incus/snapshot.go:210
 #, fuzzy, c-format
 msgid "Instance snapshot name is: %s"
 msgstr "Instansnamn är: %s"
-
-#: cmd/incus/create.go:69
-msgid "Instance type"
-msgstr "Instans typ"
 
 #: cmd/incus/low_level.go:829
 #, fuzzy, c-format
@@ -4713,7 +4721,7 @@ msgstr "Ogiltig konfigurationsnyckel '%s' i '%s'"
 msgid "Invalid config key column format (too many fields): '%s'"
 msgstr "Ogiltigt format för konfigurationsnyckelkolumn (för många fält): '%s'"
 
-#: cmd/incus/default.go:85
+#: cmd/incus/default.go:87
 #, fuzzy, c-format
 msgid "Invalid default %q"
 msgstr "Ogiltigt format %q"
@@ -4794,12 +4802,12 @@ msgstr "Ogiltig volym %s"
 msgid "Invalid type %q"
 msgstr "Ogiltig typ %q"
 
-#: cmd/incus/default.go:123
+#: cmd/incus/default.go:125
 #, fuzzy, c-format
 msgid "Invalid value %q for console_type"
 msgstr "Ogiltig peer-typ"
 
-#: cmd/incus/default.go:110
+#: cmd/incus/default.go:112
 #, fuzzy, c-format
 msgid "Invalid value %q for list_format"
 msgstr "Ogiltig volym %s"
@@ -7095,11 +7103,16 @@ msgstr ""
 "Överföringsläget pull är standard eftersom det är kompatibelt med alla "
 "serverversioner.\n"
 
+#: cmd/incus/move.go:69
+#, fuzzy
+msgid "Move the instance without its runtime state (no live migration)"
+msgstr "Flytta instansen utan dess ögonblicksbilder"
+
 #: cmd/incus/move.go:66
 msgid "Move the instance without its snapshots"
 msgstr "Flytta instansen utan dess ögonblicksbilder"
 
-#: cmd/incus/storage_volume.go:1742
+#: cmd/incus/move.go:72 cmd/incus/storage_volume.go:1742
 msgid "Move to a project different from the source"
 msgstr "Flytta till ett annat projekt än källan"
 
@@ -7575,6 +7588,11 @@ msgstr "Inga lagringsbackends tillgängliga"
 msgid "No unknown storage pools or volumes found. Nothing to do."
 msgstr "Inga okända lagringspooler eller volymer hittades. Inget att göra."
 
+#: cmd/incus/webui_unix.go:51
+#, fuzzy, c-format
+msgid "No web UI found at %q"
+msgstr "Inget värde hittades i %q"
+
 #: cmd/incus/info.go:546
 #, c-format
 msgid "Node %d:\n"
@@ -7654,7 +7672,7 @@ msgstr ""
 msgid "Only remove signatures owned by the given owner"
 msgstr ""
 
-#: cmd/incus/webui.go:21 cmd/incus/webui.go:22
+#: cmd/incus/webui.go:23 cmd/incus/webui.go:24
 msgid "Open the web interface"
 msgstr "Öppna webbgränssnittet"
 
@@ -7675,7 +7693,7 @@ msgstr "Optimerad lagring"
 msgid "Override the source project"
 msgstr "Åsidosätt källprojektet"
 
-#: cmd/incus/exec.go:65
+#: cmd/incus/exec.go:66
 msgid "Override the terminal mode (auto, interactive or non-interactive)"
 msgstr ""
 "Åsidosätt terminalläget (automatiskt, interaktivt eller icke-interaktivt)"
@@ -7774,6 +7792,10 @@ msgstr "Lösenordet avvisat för %q"
 msgid "Path %s doesn't exist"
 msgstr "Sökvägen %s finns inte"
 
+#: cmd/incus/webui.go:26
+msgid "Path to a local web UI directory"
+msgstr ""
+
 #: cmd/incus/admin_init_interactive.go:438
 msgid "Path to the existing block device:"
 msgstr "Sökväg till befintlig blockenhet:"
@@ -7835,8 +7857,8 @@ msgid "Port to bind to"
 msgstr "Port att ansluta till"
 
 #: cmd/incus/admin_init.go:57
-#, c-format
-msgid "Port to bind to (default: %d)"
+#, fuzzy, c-format
+msgid "Port to bind to, requires --network-address (default: %d)"
 msgstr "Port att ansluta till (standard: %d)"
 
 #: cmd/incus/info.go:233
@@ -7854,7 +7876,8 @@ msgid "Pre-copying instance: %s"
 msgstr "Uppdateringsinstans: %s"
 
 #: cmd/incus/admin_init.go:53
-msgid "Pre-seed mode, expects YAML config from stdin"
+#, fuzzy
+msgid "Pre-seed mode, expects YAML config from the given file or from stdin"
 msgstr "Pre-seed-läge, förväntar sig YAML-konfiguration från stdin"
 
 #: cmd/incus/file.go:437 cmd/incus/file.go:667
@@ -8050,7 +8073,7 @@ msgstr "Protokoll: %s"
 msgid "Provided certificate path doesn't exist: %s"
 msgstr "Angiven certifikatväg finns inte: %s"
 
-#: cmd/incus/remote_unix.go:52
+#: cmd/incus/remote_unix.go:55
 msgid "Proxy timeout (exits when no connections)"
 msgstr "Proxy-timeout (avslutas när inga anslutningar finns)"
 
@@ -8550,11 +8573,11 @@ msgstr "Berörda rader: %d"
 msgid "Rule description"
 msgstr "Regelbeskrivning"
 
-#: cmd/incus/remote_unix.go:45
+#: cmd/incus/remote_unix.go:48
 msgid "Run a local API proxy"
 msgstr "Kör en lokal API-proxy"
 
-#: cmd/incus/remote_unix.go:46
+#: cmd/incus/remote_unix.go:49
 msgid "Run a local API proxy for the remote"
 msgstr "Kör en lokal API-proxy för fjärrkontrollen"
 
@@ -9217,7 +9240,7 @@ msgstr "Visa alla felsökningsmeddelanden"
 msgid "Show all information messages"
 msgstr "Visa alla informationsmeddelanden"
 
-#: cmd/incus/default.go:165 cmd/incus/default.go:166
+#: cmd/incus/default.go:173 cmd/incus/default.go:174
 #, fuzzy
 msgid "Show client defaults"
 msgstr "Visa standardfjärrkontrollen"
@@ -9471,6 +9494,11 @@ msgstr "Storlek: %s"
 msgid "Skip duplicate signatures"
 msgstr ""
 
+#: cmd/incus/cluster.go:1519
+#, fuzzy
+msgid "Skip the confirmation prompt"
+msgstr "Kräv bekräftelse från användaren"
+
 #: cmd/incus/list.go:472 cmd/incus/list.go:492
 #, c-format
 msgid "Skipping remote %q: %v"
@@ -9506,6 +9534,11 @@ msgstr "Vissa fall misslyckades med %s"
 #: cmd/incus/top.go:440
 msgid "Sorting Method:"
 msgstr "Sorteringsmetod:"
+
+#: cmd/incus/storage_volume.go:396 cmd/incus/storage_volume.go:1740
+#, fuzzy
+msgid "Source cluster member name"
+msgstr "Klustermedlemsnamn"
 
 #: cmd/incus/admin_recover.go:119
 msgid ""
@@ -10070,7 +10103,7 @@ msgid ""
 "The requested storage pool \"%s\" already exists. Please choose another name."
 msgstr "Den begärda lagringspoolen \"%s\" finns redan. Välj ett annat namn."
 
-#: cmd/incus/webui_unix.go:61
+#: cmd/incus/webui_unix.go:69
 msgid "The server doesn't have a web UI installed"
 msgstr "Servern har inte något webbgränssnitt installerat"
 
@@ -10170,8 +10203,10 @@ msgid "Threads:"
 msgstr "Trådar:"
 
 #: cmd/incus/action.go:173
-msgid "Time to wait for the instance to shutdown cleanly"
-msgstr "Vänta tills instansen stängs av på ett korrekt sätt"
+msgid ""
+"Time in seconds to wait for the instance to shutdown cleanly (-1 for the "
+"server default of 600, 0 for a forced stop)"
+msgstr ""
 
 #: cmd/incus/image.go:984
 msgid "Timestamps:"
@@ -10222,6 +10257,12 @@ msgstr "Totalt: %v"
 msgid "Transceiver type: %s"
 msgstr "Transceivertyp: %s"
 
+#: cmd/incus/move.go:68
+msgid ""
+"Transfer a running container incrementally to reduce its downtime (requires "
+"--stateless)"
+msgstr ""
+
 #: cmd/incus/storage_volume.go:1739
 msgid "Transfer mode, one of pull (default), push or relay"
 msgstr "Överföringsläge, ett av pull (standard), push eller relay"
@@ -10230,12 +10271,6 @@ msgstr "Överföringsläge, ett av pull (standard), push eller relay"
 #: cmd/incus/storage_volume.go:395
 msgid "Transfer mode. One of pull, push or relay"
 msgstr "Överföringsläge. Drag, tryck eller relä"
-
-#: cmd/incus/move.go:68
-msgid ""
-"Transfer the instance incrementally, reducing the downtime of a running "
-"instance"
-msgstr ""
 
 #: cmd/incus/image.go:780
 #, c-format
@@ -10501,7 +10536,7 @@ msgstr "Inaktivera konfigurationsnycklar för en klustermedlem"
 msgid "Unset all profiles on the target instance"
 msgstr "Inaktivera alla profiler på målinstansen"
 
-#: cmd/incus/default.go:202 cmd/incus/default.go:203
+#: cmd/incus/default.go:210 cmd/incus/default.go:211
 msgid "Unset client defaults"
 msgstr ""
 
@@ -10785,7 +10820,7 @@ msgstr "Använd med help eller --help för att visa underkommandon"
 msgid "Used: %v"
 msgstr "Använd: %v"
 
-#: cmd/incus/exec.go:69
+#: cmd/incus/exec.go:70
 msgid "User ID to run the command as (default 0)"
 msgstr "Användar-ID för att köra kommandot som (standard 0)"
 
@@ -10952,7 +10987,7 @@ msgstr ""
 "de\n"
 "annars skulle ha."
 
-#: cmd/incus/webui_unix.go:109
+#: cmd/incus/webui_unix.go:119
 #, c-format
 msgid "Web server running at: %s"
 msgstr "Webbserver körs på: %s"
@@ -10981,15 +11016,6 @@ msgstr "Vad ska den nya bron heta?"
 #: cmd/incus/admin_init_interactive.go:341
 msgid "Where should this storage pool store its data?"
 msgstr "Var ska denna lagringspool lagra sina data?"
-
-#: cmd/incus/export.go:53
-#, fuzzy
-msgid "Whether or not to only backup the instance (without dependent volumes)"
-msgstr "Om endast instansen ska säkerhetskopieras (utan snapshots)"
-
-#: cmd/incus/export.go:52
-msgid "Whether or not to only backup the instance (without snapshots)"
-msgstr "Om endast instansen ska säkerhetskopieras (utan snapshots)"
 
 #: cmd/incus/snapshot.go:539
 msgid "Whether or not to restore the instance's disk only"
@@ -11101,11 +11127,11 @@ msgstr "JA"
 msgid "You are currently missing the following:"
 msgstr "Du saknar för närvarande följande:"
 
-#: cmd/incus/exec.go:112
+#: cmd/incus/exec.go:113
 msgid "You can't pass -t and -T at the same time"
 msgstr "Du kan inte använda -t och -T samtidigt"
 
-#: cmd/incus/exec.go:116
+#: cmd/incus/exec.go:117
 msgid "You can't pass -t or -T at the same time as --mode"
 msgstr "Du kan inte ange -t eller -T samtidigt som --mode"
 
@@ -11446,7 +11472,7 @@ msgstr ""
 "   För att hämta /etc/hosts från den anpassade volymen och skriva dess "
 "utdata till standard ut."
 
-#: cmd/incus/exec.go:57
+#: cmd/incus/exec.go:58
 msgid ""
 "incus exec c1 bash\n"
 "\tRun the \"bash\" command in instance \"c1\"\n"
@@ -12394,7 +12420,7 @@ msgstr "Nätverksnamn"
 msgid "no"
 msgstr "nej"
 
-#: cmd/incus/default.go:146
+#: cmd/incus/default.go:148
 msgid "no_color must be boolean"
 msgstr ""
 
@@ -12554,7 +12580,7 @@ msgstr ""
 msgid "unexpected end of argument; did you forget a suffix?"
 msgstr ""
 
-#: cmd/incus/remote_unix.go:40
+#: cmd/incus/remote_unix.go:43
 #, fuzzy
 msgid "unix socket file"
 msgstr "socket-fil"
@@ -12603,6 +12629,28 @@ msgstr ""
 #, c-format
 msgid "“%s”"
 msgstr ""
+
+#, c-format
+#~ msgid ""
+#~ "Failed to retrieve current server network configuration for project %q: %w"
+#~ msgstr ""
+#~ "Det gick inte att hämta aktuell servernätverkskonfiguration för projekt "
+#~ "%q: %w"
+
+#~ msgid "Force a particular evacuation action"
+#~ msgstr "Tvinga fram en viss evakueringsåtgärd"
+
+#~ msgid "Force evacuation without user confirmation"
+#~ msgstr "Tvinga evakuering utan användarens bekräftelse"
+
+#~ msgid "Instance type"
+#~ msgstr "Instans typ"
+
+#~ msgid "Time to wait for the instance to shutdown cleanly"
+#~ msgstr "Vänta tills instansen stängs av på ett korrekt sätt"
+
+#~ msgid "Whether or not to only backup the instance (without snapshots)"
+#~ msgstr "Om endast instansen ska säkerhetskopieras (utan snapshots)"
 
 #~ msgid ""
 #~ "incus import backup0.tar.gz\n"
@@ -12889,10 +12937,6 @@ msgstr ""
 
 #~ msgid "No storage pool for target volume specified"
 #~ msgstr "Ingen lagringspool för målvolym angiven"
-
-#, c-format
-#~ msgid "No value found in %q"
-#~ msgstr "Inget värde hittades i %q"
 
 #~ msgid "Only \"custom\" volumes can be attached to instances"
 #~ msgstr "Endast \"anpassade\" volymer kan kopplas till instanser"

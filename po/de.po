@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: LXD\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2026-11-09 17:04-0500\n"
+"POT-Creation-Date: 2026-11-22 13:14-0500\n"
 "PO-Revision-Date: 2026-04-21 03:04+0000\n"
 "Last-Translator: Dklfajsjfi49wefklsf32 "
 "<nlincus@users.noreply.hosted.weblate.org>\n"
@@ -1783,10 +1783,9 @@ msgstr "Gerät %s wurde von %s entfernt\n"
 #: cmd/incus/storage_bucket.go:988 cmd/incus/storage_bucket.go:1078
 #: cmd/incus/storage_bucket.go:1127 cmd/incus/storage_bucket.go:1249
 #: cmd/incus/storage_bucket.go:1309 cmd/incus/storage_bucket.go:1490
-#: cmd/incus/storage_volume.go:396 cmd/incus/storage_volume.go:607
-#: cmd/incus/storage_volume.go:702 cmd/incus/storage_volume.go:962
-#: cmd/incus/storage_volume.go:1174 cmd/incus/storage_volume.go:1292
-#: cmd/incus/storage_volume.go:1740 cmd/incus/storage_volume.go:1808
+#: cmd/incus/storage_volume.go:607 cmd/incus/storage_volume.go:702
+#: cmd/incus/storage_volume.go:962 cmd/incus/storage_volume.go:1174
+#: cmd/incus/storage_volume.go:1292 cmd/incus/storage_volume.go:1808
 #: cmd/incus/storage_volume.go:1892 cmd/incus/storage_volume.go:1976
 #: cmd/incus/storage_volume.go:2126 cmd/incus/storage_volume.go:2216
 #: cmd/incus/storage_volume.go:2272 cmd/incus/storage_volume.go:2480
@@ -1948,7 +1947,7 @@ msgstr "Erstellt: %s"
 msgid "Control: %s (%s)"
 msgstr ""
 
-#: cmd/incus/copy.go:66 cmd/incus/move.go:69
+#: cmd/incus/copy.go:66
 msgid "Copy a stateful instance stateless"
 msgstr ""
 
@@ -2012,8 +2011,8 @@ msgstr "Herunterfahren des Containers erzwingen."
 msgid "Copy the volume without its snapshots"
 msgstr "Herunterfahren des Containers erzwingen."
 
-#: cmd/incus/copy.go:69 cmd/incus/image.go:184 cmd/incus/move.go:72
-#: cmd/incus/profile.go:275 cmd/incus/storage_volume.go:399
+#: cmd/incus/copy.go:69 cmd/incus/image.go:184 cmd/incus/profile.go:275
+#: cmd/incus/storage_volume.go:399
 msgid "Copy to a project different from the source"
 msgstr ""
 
@@ -2664,7 +2663,7 @@ msgstr ""
 msgid "Directory import is not available on this platform"
 msgstr ""
 
-#: cmd/incus/exec.go:71
+#: cmd/incus/exec.go:72
 msgid "Directory to run the command in (default /root)"
 msgstr ""
 
@@ -2672,11 +2671,11 @@ msgstr ""
 msgid "Disable authentication when using SSH SFTP listener"
 msgstr ""
 
-#: cmd/incus/exec.go:67
+#: cmd/incus/exec.go:68
 msgid "Disable pseudo-terminal allocation"
 msgstr ""
 
-#: cmd/incus/exec.go:68
+#: cmd/incus/exec.go:69
 msgid "Disable stdin (reads from /dev/null)"
 msgstr ""
 
@@ -3040,7 +3039,7 @@ msgstr "Legen Sie eine Verzögerungszeit angegeben in Sekunden fest:"
 msgid "Entry TTL"
 msgstr "Eingangs TTL"
 
-#: cmd/incus/exec.go:64
+#: cmd/incus/exec.go:65
 #, fuzzy
 msgid ""
 "Environment variable to set (e.g. HOME=/home/foo) (may be passed multiple "
@@ -3219,11 +3218,11 @@ msgstr ""
 "nicht anders angegeben) \n"
 " und funktioniert sowohl lokal als auch im Cluster Modus."
 
-#: cmd/incus/exec.go:44
+#: cmd/incus/exec.go:45
 msgid "Execute commands in instances"
 msgstr "Befehle in einer Instanz ausführen"
 
-#: cmd/incus/exec.go:45
+#: cmd/incus/exec.go:46
 #, fuzzy
 msgid ""
 "Execute commands in instances\n"
@@ -3340,6 +3339,16 @@ msgid ""
 "file.\n"
 "\t\tThis can be useful for debugging or analysis purposes."
 msgstr ""
+
+#: cmd/incus/export.go:53
+#, fuzzy
+msgid "Export the instance without its dependent volumes"
+msgstr "Zustand des laufenden Containers sichern oder nicht"
+
+#: cmd/incus/export.go:52
+#, fuzzy
+msgid "Export the instance without its snapshots"
+msgstr "Herunterfahren des Containers erzwingen."
 
 #: cmd/incus/storage_volume.go:2269
 #, fuzzy
@@ -3729,6 +3738,11 @@ msgstr "Akzeptiere Zertifikat"
 msgid "Failed to read from stdin: %w"
 msgstr "Akzeptiere Zertifikat"
 
+#: cmd/incus/exec.go:237
+#, fuzzy, c-format
+msgid "Failed to receive the command output: %w"
+msgstr "Akzeptiere Zertifikat"
+
 #: cmd/incus/copy.go:391
 #, fuzzy, c-format
 msgid "Failed to refresh target instance '%s': %v"
@@ -3775,17 +3789,12 @@ msgstr "Akzeptiere Zertifikat"
 msgid "Failed to retrieve current cluster config: %w"
 msgstr "Akzeptiere Zertifikat"
 
-#: cmd/incus/admin_init_dump.go:18 cmd/incus/admin_init_dump.go:49
-#: cmd/incus/admin_init_dump.go:64 cmd/incus/admin_init_dump.go:79
-#: cmd/incus/admin_init_dump.go:93 cmd/incus/cluster.go:816
+#: cmd/incus/admin_init_dump.go:18 cmd/incus/admin_init_dump.go:26
+#: cmd/incus/admin_init_dump.go:47 cmd/incus/admin_init_dump.go:62
+#: cmd/incus/admin_init_dump.go:78 cmd/incus/admin_init_dump.go:92
+#: cmd/incus/cluster.go:816
 #, fuzzy, c-format
 msgid "Failed to retrieve current server configuration: %w"
-msgstr "Akzeptiere Zertifikat"
-
-#: cmd/incus/admin_init_dump.go:28
-#, fuzzy, c-format
-msgid ""
-"Failed to retrieve current server network configuration for project %q: %w"
 msgstr "Akzeptiere Zertifikat"
 
 #: cmd/incus/admin_init_auto.go:131
@@ -3872,11 +3881,13 @@ msgid "Follow command-line symbolic links in source path"
 msgstr ""
 
 #: cmd/incus/cluster.go:1471
-msgid "Force a particular evacuation action"
+msgid ""
+"Force a particular evacuation action (migrate, live-migrate, refresh-"
+"migrate, stop, stateful-stop or force-stop)"
 msgstr ""
 
 #: cmd/incus/cluster.go:1503
-msgid "Force a particular restoration action"
+msgid "Force a particular restoration action (only \"skip\" is supported)"
 msgstr ""
 
 #: cmd/incus/file.go:111 cmd/incus/storage_volume_file.go:107
@@ -3889,10 +3900,6 @@ msgstr ""
 
 #: cmd/incus/file.go:272 cmd/incus/storage_volume_file.go:267
 msgid "Force deleting files, directories, and subdirectories"
-msgstr ""
-
-#: cmd/incus/cluster.go:1519
-msgid "Force evacuation without user confirmation"
 msgstr ""
 
 #: cmd/incus/low_level.go:1531
@@ -3908,7 +3915,7 @@ msgstr ""
 msgid "Force overwriting existing backup file"
 msgstr ""
 
-#: cmd/incus/exec.go:66
+#: cmd/incus/exec.go:67
 msgid "Force pseudo-terminal allocation"
 msgstr ""
 
@@ -4345,7 +4352,7 @@ msgstr ""
 msgid "Granularity of the dirty bitmap in bytes"
 msgstr ""
 
-#: cmd/incus/exec.go:70
+#: cmd/incus/exec.go:71
 msgid "Group ID to run the command as (default 0)"
 msgstr ""
 
@@ -4702,14 +4709,16 @@ msgstr ""
 msgid "Instance published with fingerprint: %s"
 msgstr "Abbild mit Fingerabdruck %s importiert\n"
 
+#: cmd/incus/create.go:69
+msgid ""
+"Instance size, as a cloud instance type or resource limits (e.g. t2.micro or "
+"c2-m4)"
+msgstr ""
+
 #: cmd/incus/snapshot.go:210
 #, fuzzy, c-format
 msgid "Instance snapshot name is: %s"
 msgstr "'/' ist kein gültiges Zeichen im Namen eines Sicherungspunktes\n"
-
-#: cmd/incus/create.go:69
-msgid "Instance type"
-msgstr ""
 
 #: cmd/incus/low_level.go:829
 #, fuzzy, c-format
@@ -4783,7 +4792,7 @@ msgstr ""
 msgid "Invalid config key column format (too many fields): '%s'"
 msgstr ""
 
-#: cmd/incus/default.go:85
+#: cmd/incus/default.go:87
 #, fuzzy, c-format
 msgid "Invalid default %q"
 msgstr "Ungültiges Ziel %s"
@@ -4864,12 +4873,12 @@ msgstr "Ungültige Quelle %s"
 msgid "Invalid type %q"
 msgstr "Ungültiges Ziel %s"
 
-#: cmd/incus/default.go:123
+#: cmd/incus/default.go:125
 #, fuzzy, c-format
 msgid "Invalid value %q for console_type"
 msgstr "Ungültiges Ziel %s"
 
-#: cmd/incus/default.go:110
+#: cmd/incus/default.go:112
 #, fuzzy, c-format
 msgid "Invalid value %q for list_format"
 msgstr "Ungültige Quelle %s"
@@ -6527,12 +6536,17 @@ msgid ""
 "versions.\n"
 msgstr ""
 
+#: cmd/incus/move.go:69
+#, fuzzy
+msgid "Move the instance without its runtime state (no live migration)"
+msgstr "Herunterfahren des Containers erzwingen."
+
 #: cmd/incus/move.go:66
 #, fuzzy
 msgid "Move the instance without its snapshots"
 msgstr "Herunterfahren des Containers erzwingen."
 
-#: cmd/incus/storage_volume.go:1742
+#: cmd/incus/move.go:72 cmd/incus/storage_volume.go:1742
 msgid "Move to a project different from the source"
 msgstr ""
 
@@ -7012,6 +7026,11 @@ msgstr ""
 msgid "No unknown storage pools or volumes found. Nothing to do."
 msgstr ""
 
+#: cmd/incus/webui_unix.go:51
+#, fuzzy, c-format
+msgid "No web UI found at %q"
+msgstr "kein Wert in %q gefunden\n"
+
 #: cmd/incus/info.go:546
 #, c-format
 msgid "Node %d:\n"
@@ -7086,7 +7105,7 @@ msgstr ""
 msgid "Only remove signatures owned by the given owner"
 msgstr ""
 
-#: cmd/incus/webui.go:21 cmd/incus/webui.go:22
+#: cmd/incus/webui.go:23 cmd/incus/webui.go:24
 #, fuzzy
 msgid "Open the web interface"
 msgstr "Anhalten des Containers fehlgeschlagen!"
@@ -7109,7 +7128,7 @@ msgstr ""
 msgid "Override the source project"
 msgstr ""
 
-#: cmd/incus/exec.go:65
+#: cmd/incus/exec.go:66
 msgid "Override the terminal mode (auto, interactive or non-interactive)"
 msgstr ""
 
@@ -7209,6 +7228,11 @@ msgstr "Administrator Passwort für %s: "
 msgid "Path %s doesn't exist"
 msgstr "entfernte Instanz %s existiert nicht"
 
+#: cmd/incus/webui.go:26
+#, fuzzy
+msgid "Path to a local web UI directory"
+msgstr "Alternatives config Verzeichnis."
+
 #: cmd/incus/admin_init_interactive.go:438
 msgid "Path to the existing block device:"
 msgstr ""
@@ -7276,7 +7300,7 @@ msgstr ""
 
 #: cmd/incus/admin_init.go:57
 #, c-format
-msgid "Port to bind to (default: %d)"
+msgid "Port to bind to, requires --network-address (default: %d)"
 msgstr ""
 
 #: cmd/incus/info.go:233
@@ -7294,7 +7318,7 @@ msgid "Pre-copying instance: %s"
 msgstr "Herunterfahren des Containers erzwingen."
 
 #: cmd/incus/admin_init.go:53
-msgid "Pre-seed mode, expects YAML config from stdin"
+msgid "Pre-seed mode, expects YAML config from the given file or from stdin"
 msgstr ""
 
 #: cmd/incus/file.go:437 cmd/incus/file.go:667
@@ -7493,7 +7517,7 @@ msgstr "Ungültiges Ziel %s"
 msgid "Provided certificate path doesn't exist: %s"
 msgstr "der Name des Ursprung Containers muss angegeben werden"
 
-#: cmd/incus/remote_unix.go:52
+#: cmd/incus/remote_unix.go:55
 msgid "Proxy timeout (exits when no connections)"
 msgstr ""
 
@@ -8012,11 +8036,11 @@ msgstr ""
 msgid "Rule description"
 msgstr "Fingerabdruck: %s\n"
 
-#: cmd/incus/remote_unix.go:45
+#: cmd/incus/remote_unix.go:48
 msgid "Run a local API proxy"
 msgstr ""
 
-#: cmd/incus/remote_unix.go:46
+#: cmd/incus/remote_unix.go:49
 msgid "Run a local API proxy for the remote"
 msgstr ""
 
@@ -8639,7 +8663,7 @@ msgstr ""
 msgid "Show all information messages"
 msgstr ""
 
-#: cmd/incus/default.go:165 cmd/incus/default.go:166
+#: cmd/incus/default.go:173 cmd/incus/default.go:174
 msgid "Show client defaults"
 msgstr ""
 
@@ -8908,6 +8932,10 @@ msgstr "Erstellt: %s"
 msgid "Skip duplicate signatures"
 msgstr ""
 
+#: cmd/incus/cluster.go:1519
+msgid "Skip the confirmation prompt"
+msgstr ""
+
 #: cmd/incus/list.go:472 cmd/incus/list.go:492
 #, c-format
 msgid "Skipping remote %q: %v"
@@ -8944,6 +8972,11 @@ msgstr "Anhalten des Containers fehlgeschlagen!"
 #: cmd/incus/top.go:440
 msgid "Sorting Method:"
 msgstr ""
+
+#: cmd/incus/storage_volume.go:396 cmd/incus/storage_volume.go:1740
+#, fuzzy
+msgid "Source cluster member name"
+msgstr "Cluster-Mitgliedsname"
 
 #: cmd/incus/admin_recover.go:119
 msgid ""
@@ -9490,7 +9523,7 @@ msgid ""
 "The requested storage pool \"%s\" already exists. Please choose another name."
 msgstr ""
 
-#: cmd/incus/webui_unix.go:61
+#: cmd/incus/webui_unix.go:69
 msgid "The server doesn't have a web UI installed"
 msgstr ""
 
@@ -9581,9 +9614,10 @@ msgid "Threads:"
 msgstr ""
 
 #: cmd/incus/action.go:173
-#, fuzzy
-msgid "Time to wait for the instance to shutdown cleanly"
-msgstr "Wartezeit bevor der Container gestoppt wird."
+msgid ""
+"Time in seconds to wait for the instance to shutdown cleanly (-1 for the "
+"server default of 600, 0 for a forced stop)"
+msgstr ""
 
 #: cmd/incus/image.go:984
 #, fuzzy
@@ -9631,6 +9665,12 @@ msgstr ""
 msgid "Transceiver type: %s"
 msgstr "unbekannter entfernter Instanz Name: %q"
 
+#: cmd/incus/move.go:68
+msgid ""
+"Transfer a running container incrementally to reduce its downtime (requires "
+"--stateless)"
+msgstr ""
+
 #: cmd/incus/storage_volume.go:1739
 msgid "Transfer mode, one of pull (default), push or relay"
 msgstr ""
@@ -9638,12 +9678,6 @@ msgstr ""
 #: cmd/incus/copy.go:64 cmd/incus/image.go:183 cmd/incus/move.go:67
 #: cmd/incus/storage_volume.go:395
 msgid "Transfer mode. One of pull, push or relay"
-msgstr ""
-
-#: cmd/incus/move.go:68
-msgid ""
-"Transfer the instance incrementally, reducing the downtime of a running "
-"instance"
 msgstr ""
 
 #: cmd/incus/image.go:780
@@ -9913,7 +9947,7 @@ msgstr "Alternatives config Verzeichnis."
 msgid "Unset all profiles on the target instance"
 msgstr "nicht alle Profile der Quelle sind am Ziel vorhanden."
 
-#: cmd/incus/default.go:202 cmd/incus/default.go:203
+#: cmd/incus/default.go:210 cmd/incus/default.go:211
 msgid "Unset client defaults"
 msgstr ""
 
@@ -10205,7 +10239,7 @@ msgstr ""
 msgid "Used: %v"
 msgstr ""
 
-#: cmd/incus/exec.go:69
+#: cmd/incus/exec.go:70
 msgid "User ID to run the command as (default 0)"
 msgstr ""
 
@@ -10351,7 +10385,7 @@ msgid ""
 "they otherwise would."
 msgstr ""
 
-#: cmd/incus/webui_unix.go:109
+#: cmd/incus/webui_unix.go:119
 #, c-format
 msgid "Web server running at: %s"
 msgstr ""
@@ -10380,16 +10414,6 @@ msgstr ""
 #, fuzzy
 msgid "Where should this storage pool store its data?"
 msgstr "entfernte Instanz %s existiert bereits"
-
-#: cmd/incus/export.go:53
-#, fuzzy
-msgid "Whether or not to only backup the instance (without dependent volumes)"
-msgstr "Zustand des laufenden Containers sichern oder nicht"
-
-#: cmd/incus/export.go:52
-#, fuzzy
-msgid "Whether or not to only backup the instance (without snapshots)"
-msgstr "Zustand des laufenden Containers sichern oder nicht"
 
 #: cmd/incus/snapshot.go:539
 #, fuzzy
@@ -10500,11 +10524,11 @@ msgstr ""
 msgid "You are currently missing the following:"
 msgstr ""
 
-#: cmd/incus/exec.go:112
+#: cmd/incus/exec.go:113
 msgid "You can't pass -t and -T at the same time"
 msgstr ""
 
-#: cmd/incus/exec.go:116
+#: cmd/incus/exec.go:117
 #, fuzzy
 msgid "You can't pass -t or -T at the same time as --mode"
 msgstr "kann nicht zum selben Container Namen kopieren"
@@ -10813,7 +10837,7 @@ msgid ""
 "standard output."
 msgstr ""
 
-#: cmd/incus/exec.go:57
+#: cmd/incus/exec.go:58
 msgid ""
 "incus exec c1 bash\n"
 "\tRun the \"bash\" command in instance \"c1\"\n"
@@ -11628,7 +11652,7 @@ msgstr "Name"
 msgid "no"
 msgstr "nein"
 
-#: cmd/incus/default.go:146
+#: cmd/incus/default.go:148
 msgid "no_color must be boolean"
 msgstr ""
 
@@ -11788,7 +11812,7 @@ msgstr ""
 msgid "unexpected end of argument; did you forget a suffix?"
 msgstr ""
 
-#: cmd/incus/remote_unix.go:40
+#: cmd/incus/remote_unix.go:43
 msgid "unix socket file"
 msgstr ""
 
@@ -11835,6 +11859,19 @@ msgstr ""
 #, c-format
 msgid "“%s”"
 msgstr ""
+
+#, fuzzy, c-format
+#~ msgid ""
+#~ "Failed to retrieve current server network configuration for project %q: %w"
+#~ msgstr "Akzeptiere Zertifikat"
+
+#, fuzzy
+#~ msgid "Time to wait for the instance to shutdown cleanly"
+#~ msgstr "Wartezeit bevor der Container gestoppt wird."
+
+#, fuzzy
+#~ msgid "Whether or not to only backup the instance (without snapshots)"
+#~ msgstr "Zustand des laufenden Containers sichern oder nicht"
 
 #~ msgid ""
 #~ "incus query -X DELETE --wait /1.0/instances/c1\n"
@@ -12044,10 +12081,6 @@ msgstr ""
 #, fuzzy
 #~ msgid "Must supply instance name for: "
 #~ msgstr "der Name des Ursprung Containers muss angegeben werden"
-
-#, fuzzy, c-format
-#~ msgid "No value found in %q"
-#~ msgstr "kein Wert in %q gefunden\n"
 
 #, fuzzy
 #~ msgid "You must specify a source instance name"
@@ -14711,7 +14744,3 @@ msgstr ""
 #, fuzzy
 #~ msgid "Admin password for %s:"
 #~ msgstr "Administrator Passwort für %s: "
-
-#, fuzzy
-#~ msgid "Path to an alternate server directory"
-#~ msgstr "Alternatives config Verzeichnis."
