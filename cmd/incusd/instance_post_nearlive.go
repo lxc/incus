@@ -377,9 +377,6 @@ func runNearLiveCopyRound(ctx context.Context, s *state.State, inst instance.Ins
 // to carry the changes written since the last snapshot. Once the final transfer lands, the source
 // is deleted and the copy is renamed to the real name and started.
 func migrateInstanceNearLive(ctx context.Context, s *state.State, inst instance.Instance, target incus.InstanceServer, targetInstInfo *api.Instance, sourceMemberInfo *db.NodeInfo, deviceOverrides api.DevicesMap, op *operations.Operation, progressHandler func(newOp api.Operation)) error {
-	reverter := revert.New()
-	defer reverter.Fail()
-
 	instName := inst.Name()
 	projectName := inst.Project().Name
 
@@ -399,6 +396,10 @@ func migrateInstanceNearLive(ctx context.Context, s *state.State, inst instance.
 	}
 
 	defer target.Disconnect()
+
+	// Set up after the event listener so the revert hooks can still wait on operations.
+	reverter := revert.New()
+	defer reverter.Fail()
 
 	targetName, err := instance.MoveTemporaryName(inst)
 	if err != nil {
