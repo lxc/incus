@@ -532,6 +532,7 @@ func (d *btrfs) getSubVolumeReceivedUUID(vol Volume) (string, error) {
 // Note: This is used by both migration and backup subsystems so do not modify without considering both!
 type BTRFSMetaDataHeader struct {
 	Subvolumes []BTRFSSubVolume `json:"subvolumes" yaml:"subvolumes"` // Sub volumes inside the volume (including the top level ones).
+	Held       []string         `json:"held" yaml:"held,omitempty"`   // Snapshots a refresh target already holds, reported back to the source.
 }
 
 // validate ensures every subvolume path stays within the volume once joined to its mount path.

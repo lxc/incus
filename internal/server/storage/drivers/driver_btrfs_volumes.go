@@ -613,11 +613,18 @@ func (d *btrfs) CreateVolumeFromMigration(vol Volume, conn io.ReadWriteCloser, v
 			localSubvolumes[snap] = originUUIDs[snapVol.MountPath()]
 		}
 
+		// Snapshots the source can use as parents of incremental streams.
+		heldSnapshots := []string{}
+
 		// Figure out which snapshots need to be copied by comparing the UUIDs from the migration header.
 		for _, migrationSnap := range migrationHeader.Subvolumes {
 			originUUID, ok := localSubvolumes[migrationSnap.Snapshot]
 			// Skip this snapshot as it exists on both the source and target with the same origin.
 			if ok && originUUID == migrationSnap.UUID {
+				if migrationSnap.Path == "/" {
+					heldSnapshots = append(heldSnapshots, migrationSnap.Snapshot)
+				}
+
 				continue
 			}
 
@@ -633,7 +640,7 @@ func (d *btrfs) CreateVolumeFromMigration(vol Volume, conn io.ReadWriteCloser, v
 			syncSubvolumes = append(syncSubvolumes, migrationSnap)
 		}
 
-		migrationHeader = BTRFSMetaDataHeader{Subvolumes: syncSubvolumes}
+		migrationHeader = BTRFSMetaDataHeader{Subvolumes: syncSubvolumes, Held: heldSnapshots}
 
 		headerJSON, err := json.Marshal(migrationHeader)
 		if err != nil {
@@ -1575,6 +1582,9 @@ func (d *btrfs) MigrateVolume(vol Volume, conn io.ReadWriteCloser, volSrcArgs *l
 		d.logger.Debug("Sent migration meta data header", logger.Ctx{"name": vol.name})
 	}
 
+	// Snapshots the target holds, nil when it doesn't report them.
+	var heldSnapshots []string
+
 	if volSrcArgs.Refresh && slices.Contains(volSrcArgs.MigrationType.Features, migration.BTRFSFeatureSubvolumeUUIDs) {
 		migrationHeader = &BTRFSMetaDataHeader{}
 
@@ -1603,12 +1613,14 @@ func (d *btrfs) MigrateVolume(vol Volume, conn io.ReadWriteCloser, volSrcArgs *l
 				volSrcArgs.Snapshots = append(volSrcArgs.Snapshots, snap.Snapshot)
 			}
 		}
+
+		heldSnapshots = migrationHeader.Held
 	}
 
-	return d.migrateVolumeOptimized(vol, conn, volSrcArgs, migrationHeader.Subvolumes, op)
+	return d.migrateVolumeOptimized(vol, conn, volSrcArgs, migrationHeader.Subvolumes, heldSnapshots, op)
 }
 
-func (d *btrfs) migrateVolumeOptimized(vol Volume, conn io.ReadWriteCloser, volSrcArgs *localMigration.VolumeSourceArgs, subvolumes []BTRFSSubVolume, op *operations.Operation) error {
+func (d *btrfs) migrateVolumeOptimized(vol Volume, conn io.ReadWriteCloser, volSrcArgs *localMigration.VolumeSourceArgs, subvolumes []BTRFSSubVolume, heldSnapshots []string, op *operations.Operation) error {
 	// sendVolume sends a volume and its subvolumes (if negotiated subvolumes feature) to recipient.
 	sendVolume := func(v Volume, sourcePrefix string, parentPrefix string) error {
 		snapName := "" // Default to empty (sending main volume) from migrationHeader.Subvolumes.
@@ -1693,24 +1705,37 @@ func (d *btrfs) migrateVolumeOptimized(vol Volume, conn io.ReadWriteCloser, volS
 	lastVolPath := "" // Used as parent for differential transfers.
 
 	if !vol.IsSnapshot() && !volSrcArgs.VolumeOnly {
-		snapshots, err := vol.Snapshots(op)
+		// Snapshots in creation order, as parents must come from earlier in the chain.
+		snapshots, err := d.volumeSnapshotsSorted(vol, op)
 		if err != nil {
 			return err
 		}
 
-		if volSrcArgs.Refresh {
-			for i, snap := range snapshots {
-				if i == 0 {
+		// Older targets don't report what they hold, so assume any snapshot not being sent is held.
+		if volSrcArgs.Refresh && heldSnapshots == nil {
+			for _, snapName := range snapshots {
+				if !slices.Contains(volSrcArgs.Snapshots, snapName) {
+					heldSnapshots = append(heldSnapshots, snapName)
+				}
+			}
+		}
+
+		// Only a snapshot the target holds can be the parent of an incremental stream.
+		parentPath := func(from int) string {
+			for i := from; i >= 0; i-- {
+				if !slices.Contains(heldSnapshots, snapshots[i]) {
 					continue
 				}
 
-				_, snapName, _ := api.GetParentAndSnapshotName(snap.name)
-
-				if len(volSrcArgs.Snapshots) > 0 && snapName == volSrcArgs.Snapshots[0] {
-					lastVolPath = snapshots[i-1].MountPath()
-					break
-				}
+				snapVol, _ := vol.NewSnapshot(snapshots[i])
+				return snapVol.MountPath()
 			}
+
+			return ""
+		}
+
+		if volSrcArgs.Refresh && len(volSrcArgs.Snapshots) > 0 {
+			lastVolPath = parentPath(slices.Index(snapshots, volSrcArgs.Snapshots[0]) - 1)
 		}
 
 		for _, snapName := range volSrcArgs.Snapshots {
@@ -1723,25 +1748,12 @@ func (d *btrfs) migrateVolumeOptimized(vol Volume, conn io.ReadWriteCloser, volS
 			lastVolPath = snapVol.MountPath()
 		}
 
-		// Only a snapshot the target still holds, not one being re-sent, can be the main volume's btrfs parent.
+		// The main volume can only build on a snapshot known to match the target's copy.
 		if volSrcArgs.Refresh {
 			lastVolPath = ""
 
 			if slices.Contains(volSrcArgs.MigrationType.Features, migration.BTRFSFeatureSubvolumeUUIDs) {
-				resent := make(map[string]struct{}, len(volSrcArgs.Snapshots))
-				for _, snapName := range volSrcArgs.Snapshots {
-					resent[snapName] = struct{}{}
-				}
-
-				for i := len(snapshots) - 1; i >= 0; i-- {
-					_, snapName, _ := api.GetParentAndSnapshotName(snapshots[i].name)
-
-					_, ok := resent[snapName]
-					if !ok {
-						lastVolPath = snapshots[i].MountPath()
-						break
-					}
-				}
+				lastVolPath = parentPath(len(snapshots) - 1)
 			}
 		}
 	}
