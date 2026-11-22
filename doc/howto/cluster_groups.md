@@ -57,6 +57,9 @@ A project can be configured to only have access to servers that are part of spec
 
 This is done by setting both `restricted=true` and `restricted.cluster.groups` to a comma separated list of group names.
 
+When a single group is listed, instances created without a `--target` are placed on a member of that group, as if the group had been targeted.
+When several groups are listed, the instance is placed on any member of those groups that accepts instances without a target, and the creation fails if there is none.
+
 ```{note}
 If the cluster group is renamed, the project restrictions will need to be updated for the new group name.
 ```
