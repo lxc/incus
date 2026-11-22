@@ -400,7 +400,7 @@ func (d *cephfs) GetVolumeUsage(vol Volume) (int64, error) {
 		return -1, ErrNotSupported
 	}
 
-	out, err := subprocess.RunCommand("getfattr", "-n", "ceph.quota.max_bytes", "--only-values", GetVolumeMountPath(d.name, vol.volType, vol.name))
+	out, err := subprocess.RunCommand("getfattr", "-n", "ceph.dir.rbytes", "--only-values", GetVolumeMountPath(d.name, vol.volType, vol.name))
 	if err != nil {
 		return -1, err
 	}
