@@ -7653,6 +7653,14 @@ The type cannot be changed after the volume is created.
 
 ```
 
+```{config:option} lvm.snapshots.chunk_size storage_volume_lvm-common
+:condition: "pool without a thin pool"
+:default: "same as `volume.lvm.snapshots.chunk_size` or LVM's default (4KiB)"
+:shortdesc: "Copy-on-write chunk size of new snapshots (power of two between 4KiB and 512KiB)"
+:type: "string"
+
+```
+
 ```{config:option} lvm.stripes storage_volume_lvm-common
 :condition: "pool not using a thin pool (`lvm.use_thinpool=false` or `lvmcluster` driver)"
 :default: "same as `volume.lvm.stripes`"
