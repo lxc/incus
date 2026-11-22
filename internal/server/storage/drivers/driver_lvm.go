@@ -791,6 +791,8 @@ func (d *lvm) Validate(config map[string]string) error {
 		if config["lvm.thinpool_metadata_size"] != "" {
 			return errors.New("The key lvm.use_thinpool cannot be set to false when lvm.thinpool_metadata_size is set")
 		}
+	} else if !d.clustered && config["volume.lvm.snapshots.chunk_size"] != "" {
+		return errors.New("The key volume.lvm.snapshots.chunk_size cannot be set when using a thin pool")
 	}
 
 	return nil

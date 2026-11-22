@@ -409,9 +409,9 @@ func (d *lvm) HasVolume(vol Volume) (bool, error) {
 func (d *lvm) FillVolumeConfig(vol Volume) error {
 	// Copy volume.* configuration options from pool.
 	// Exclude "block.filesystem", "block.mount_options", and "block.create_options" as they depend on volume type (handled below).
-	// Exclude "lvm.stripes", "lvm.stripes.size" as they only work on non-thin storage pools (handled below).
+	// Exclude "lvm.stripes", "lvm.stripes.size" and "lvm.snapshots.chunk_size" as they only work on non-thin storage pools (handled below).
 	// Exclude "block.type" as it only applies to block volumes (handled below).
-	err := d.fillVolumeConfig(&vol, "block.filesystem", "block.mount_options", "block.create_options", "lvm.stripes", "lvm.stripes.size", "block.type")
+	err := d.fillVolumeConfig(&vol, "block.filesystem", "block.mount_options", "block.create_options", "lvm.stripes", "lvm.stripes.size", "lvm.snapshots.chunk_size", "block.type")
 	if err != nil {
 		return err
 	}
@@ -473,6 +473,10 @@ func (d *lvm) FillVolumeConfig(vol Volume) error {
 		if vol.config["lvm.stripes.size"] == "" && d.config["volume.lvm.stripes.size"] != "" {
 			vol.config["lvm.stripes.size"] = d.config["volume.lvm.stripes.size"]
 		}
+
+		if vol.config["lvm.snapshots.chunk_size"] == "" && d.config["volume.lvm.snapshots.chunk_size"] != "" {
+			vol.config["lvm.snapshots.chunk_size"] = d.config["volume.lvm.snapshots.chunk_size"]
+		}
 	}
 
 	return nil
@@ -525,6 +529,15 @@ func (d *lvm) commonVolumeRules() map[string]func(value string) error {
 		//  default: same as `volume.lvm.stripes.size`
 		//  shortdesc: Size of stripes to use (at least 4096 bytes and multiple of 512 bytes)
 		"lvm.stripes.size": validate.Optional(validate.IsSize),
+
+		// gendoc:generate(entity=storage_volume_lvm, group=common, key=lvm.snapshots.chunk_size)
+		//
+		// ---
+		//  type: string
+		//  condition: pool without a thin pool
+		//  default: same as `volume.lvm.snapshots.chunk_size` or LVM's default (4KiB)
+		//  shortdesc: Copy-on-write chunk size of new snapshots (power of two between 4KiB and 512KiB)
+		"lvm.snapshots.chunk_size": validate.Optional(validateLVMSnapshotChunkSize),
 	}
 
 	if d.clustered {
@@ -680,6 +693,10 @@ func (d *lvm) ValidateVolume(vol Volume, removeUnknownKeys bool) error {
 
 	if d.usesThinpool() && vol.config["lvm.stripes.size"] != "" {
 		return errors.New("lvm.stripes.size cannot be used with thin pool volumes")
+	}
+
+	if d.usesThinpool() && vol.config["lvm.snapshots.chunk_size"] != "" {
+		return errors.New("lvm.snapshots.chunk_size cannot be used with thin pool volumes")
 	}
 
 	if vol.config["block.type"] == BlockVolumeTypeQcow2 && util.IsTrue(vol.config["security.shared"]) {
