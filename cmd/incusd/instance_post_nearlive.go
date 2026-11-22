@@ -23,6 +23,7 @@ import (
 	"github.com/lxc/incus/v7/shared/api"
 	"github.com/lxc/incus/v7/shared/logger"
 	"github.com/lxc/incus/v7/shared/revert"
+	"github.com/lxc/incus/v7/shared/util"
 )
 
 // dependentDiskTransfer moves the volumes of an instance's dependent disks on local storage,
@@ -370,6 +371,34 @@ func runNearLiveCopyRound(ctx context.Context, s *state.State, inst instance.Ins
 	return nil
 }
 
+// deleteInstanceCopy removes an instance copy from the target member, lifting any deletion protection it inherited.
+func deleteInstanceCopy(target incus.InstanceServer, name string) error {
+	copyInst, _, err := target.GetInstance(name)
+	if err != nil {
+		return err
+	}
+
+	if util.IsTrue(copyInst.ExpandedConfig["security.protection.delete"]) {
+		copyInst.Config["security.protection.delete"] = "false"
+
+		op, err := target.UpdateInstance(name, copyInst.Writable(), "")
+		if err == nil {
+			err = op.Wait()
+		}
+
+		if err != nil {
+			return fmt.Errorf("Failed lifting deletion protection: %w", err)
+		}
+	}
+
+	op, err := target.DeleteInstance(name)
+	if err != nil {
+		return err
+	}
+
+	return op.Wait()
+}
+
 // migrateInstanceNearLive moves a running container to another cluster member with minimal downtime.
 //
 // The container is copied to the target member under a temporary name while it keeps running, then
@@ -478,11 +507,7 @@ func migrateInstanceNearLive(ctx context.Context, s *state.State, inst instance.
 		// From now on a failure leaves a full copy behind on the target member.
 		if round == 1 {
 			reverter.Add(func() {
-				op, err := target.DeleteInstance(targetName)
-				if err == nil {
-					err = op.Wait()
-				}
-
+				err := deleteInstanceCopy(target, targetName)
 				if err != nil {
 					l.Warn("Failed removing partial copy after failed near-live migration", logger.Ctx{"err": err})
 					return
