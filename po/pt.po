@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: incus\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2026-11-22 10:45-0500\n"
+"POT-Creation-Date: 2026-11-22 15:21-0500\n"
 "PO-Revision-Date: 2026-11-22 14:25+0000\n"
 "Last-Translator: Américo Monteiro <a-"
 "monteiro@users.noreply.hosted.weblate.org>\n"
@@ -7672,7 +7672,7 @@ msgstr ""
 "Nenhuns pools ou volumes de armazenamento desconhecidos encontrados. Nada "
 "para fazer."
 
-#: cmd/incus/webui_unix.go:51
+#: cmd/incus/webui.go:72
 #, c-format
 msgid "No web UI found at %q"
 msgstr "Nenhum UI de web encontrado em %q"
@@ -7754,7 +7754,7 @@ msgstr "Apenas remove assinaturas do tipo fornecido"
 msgid "Only remove signatures owned by the given owner"
 msgstr "Apenas remove assinaturas que são propriedade do dono fornecido"
 
-#: cmd/incus/webui.go:23 cmd/incus/webui.go:24
+#: cmd/incus/webui.go:34 cmd/incus/webui.go:35
 msgid "Open the web interface"
 msgstr "Abrir a interface web"
 
@@ -7873,7 +7873,7 @@ msgstr "Palavra passe rejeitada para %q"
 msgid "Path %s doesn't exist"
 msgstr "Caminho %s não existe"
 
-#: cmd/incus/webui.go:26
+#: cmd/incus/webui.go:37
 msgid "Path to a local web UI directory"
 msgstr "Caminho para diretório UI de web local"
 
@@ -8152,7 +8152,7 @@ msgstr "Protocolo: %s"
 msgid "Provided certificate path doesn't exist: %s"
 msgstr "O caminho do certificado fornecido não existe: %s"
 
-#: cmd/incus/remote_unix.go:55
+#: cmd/incus/remote_unix.go:45
 msgid "Proxy timeout (exits when no connections)"
 msgstr "Tempo limite do Proxy (termina quando não há ligações)"
 
@@ -8653,11 +8653,11 @@ msgstr "Linhas afetadas: %d"
 msgid "Rule description"
 msgstr "Descrição de regra"
 
-#: cmd/incus/remote_unix.go:48
+#: cmd/incus/remote_unix.go:38
 msgid "Run a local API proxy"
 msgstr "Corre o proxy API local"
 
-#: cmd/incus/remote_unix.go:49
+#: cmd/incus/remote_unix.go:39
 msgid "Run a local API proxy for the remote"
 msgstr "Corre o proxy API local para o remoto"
 
@@ -10194,7 +10194,7 @@ msgstr ""
 "O pool de armazenamento solicitado \"%s\" já existe. Por favor, escolha "
 "outro nome."
 
-#: cmd/incus/webui_unix.go:69
+#: cmd/incus/webui.go:90
 msgid "The server doesn't have a web UI installed"
 msgstr "O servidor não tem uma Interface de Utilizador web instalada"
 
@@ -10266,10 +10266,6 @@ msgid ""
 msgstr ""
 "Este comando não é suportado em agrupamentos, use \"incus cluster update-"
 "certificate\" em vez disto"
-
-#: cmd/incus/webui_windows.go:14
-msgid "This command isn't supported on Windows"
-msgstr "Este comando não é suportado no Windows"
 
 #: cmd/incus/usage/parse.go:121
 msgid ""
@@ -11087,7 +11083,7 @@ msgstr ""
 "em teoria atacar o seu contentor pai e ganhar mais privilégios do que caso\n"
 "contrário poderiam."
 
-#: cmd/incus/webui_unix.go:119
+#: cmd/incus/webui.go:140
 #, c-format
 msgid "Web server running at: %s"
 msgstr "Servidor Web a correr em: %s"
@@ -12707,7 +12703,7 @@ msgstr "%s inesperado; esperado %s"
 msgid "unexpected end of argument; did you forget a suffix?"
 msgstr "fim de argumento inesperado; você esqueceu um sufixo?"
 
-#: cmd/incus/remote_unix.go:43
+#: cmd/incus/remote_unix.go:33
 msgid "unix socket file"
 msgstr "ficheiro socket unix"
 
@@ -12753,6 +12749,9 @@ msgstr "zona"
 #, c-format
 msgid "“%s”"
 msgstr "“%s”"
+
+#~ msgid "This command isn't supported on Windows"
+#~ msgstr "Este comando não é suportado no Windows"
 
 #, c-format
 #~ msgid ""

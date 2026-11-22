@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lxd\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2026-11-22 10:45-0500\n"
+"POT-Creation-Date: 2026-11-22 15:21-0500\n"
 "PO-Revision-Date: 2026-08-29 22:38+0000\n"
 "Last-Translator: Anonymous <noreply@weblate.org>\n"
 "Language-Team: Russian <https://hosted.weblate.org/projects/incus/cli/ru/>\n"
@@ -7656,7 +7656,7 @@ msgid "No unknown storage pools or volumes found. Nothing to do."
 msgstr ""
 "Неизвестных пулов хранения или томов не найдено. Ничего не нужно делать."
 
-#: cmd/incus/webui_unix.go:51
+#: cmd/incus/webui.go:72
 #, c-format
 msgid "No web UI found at %q"
 msgstr ""
@@ -7742,7 +7742,7 @@ msgstr ""
 msgid "Only remove signatures owned by the given owner"
 msgstr ""
 
-#: cmd/incus/webui.go:23 cmd/incus/webui.go:24
+#: cmd/incus/webui.go:34 cmd/incus/webui.go:35
 msgid "Open the web interface"
 msgstr "Открыть в веб-интерфейсе"
 
@@ -7863,7 +7863,7 @@ msgstr "Пароль отклонен для %q"
 msgid "Path %s doesn't exist"
 msgstr "Путь %s не существует"
 
-#: cmd/incus/webui.go:26
+#: cmd/incus/webui.go:37
 msgid "Path to a local web UI directory"
 msgstr ""
 
@@ -8148,7 +8148,7 @@ msgstr "Протокол: %s"
 msgid "Provided certificate path doesn't exist: %s"
 msgstr "Указанный путь к сертификату не существует: %s"
 
-#: cmd/incus/remote_unix.go:55
+#: cmd/incus/remote_unix.go:45
 msgid "Proxy timeout (exits when no connections)"
 msgstr "Таймаут прокси (выходит, когда нет соединений)"
 
@@ -8658,11 +8658,11 @@ msgstr "Затронутые строки: %d"
 msgid "Rule description"
 msgstr "Описание правила"
 
-#: cmd/incus/remote_unix.go:48
+#: cmd/incus/remote_unix.go:38
 msgid "Run a local API proxy"
 msgstr "Запуск локального прокси сервера API"
 
-#: cmd/incus/remote_unix.go:49
+#: cmd/incus/remote_unix.go:39
 msgid "Run a local API proxy for the remote"
 msgstr "Запустить локальный API-прокси для удаленного соединения"
 
@@ -10208,7 +10208,7 @@ msgstr ""
 "Запрошенный пул хранения «%s» уже существует. Пожалуйста, выберите другое "
 "название."
 
-#: cmd/incus/webui_unix.go:69
+#: cmd/incus/webui.go:90
 msgid "The server doesn't have a web UI installed"
 msgstr "На сервере не установлен веб интерфейс"
 
@@ -10279,10 +10279,6 @@ msgid ""
 msgstr ""
 "Эта команда не поддерживается на кластерах, вместо этого используйте \"incus "
 "cluster update-certificate\""
-
-#: cmd/incus/webui_windows.go:14
-msgid "This command isn't supported on Windows"
-msgstr "Эта команда не поддерживается на Windows"
 
 #: cmd/incus/usage/parse.go:121
 msgid ""
@@ -11090,7 +11086,7 @@ msgstr ""
 "привилегий, чем\n"
 "в обычном случае."
 
-#: cmd/incus/webui_unix.go:119
+#: cmd/incus/webui.go:140
 #, c-format
 msgid "Web server running at: %s"
 msgstr "Веб-сервер работает по адресу: %s"
@@ -12703,7 +12699,7 @@ msgstr "неожиданный %s; ожидалось %s"
 msgid "unexpected end of argument; did you forget a suffix?"
 msgstr "Неожиданный конец аргумента; вы забыли суффикс?"
 
-#: cmd/incus/remote_unix.go:43
+#: cmd/incus/remote_unix.go:33
 msgid "unix socket file"
 msgstr "файл Unix сокета"
 
@@ -12749,6 +12745,9 @@ msgstr "DNS зона"
 #, c-format
 msgid "“%s”"
 msgstr "“%s”"
+
+#~ msgid "This command isn't supported on Windows"
+#~ msgstr "Эта команда не поддерживается на Windows"
 
 #, c-format
 #~ msgid ""
