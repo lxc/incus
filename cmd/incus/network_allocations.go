@@ -43,13 +43,14 @@ func (c *cmdNetworkListAllocations) command() *cobra.Command {
 		'a': {i18n.G("ADDRESS"), i18n.G("Address/subnet"), c.addressColumnData},
 		'c': {i18n.G("ALLOCATED"), i18n.G("Allocated addresses (individual)"), c.allocationsColumnData},
 		'C': {i18n.G("ALLOCATED"), i18n.G("Allocated addresses (ranges)"), c.allocationRangesColumnData},
+		'e': {i18n.G("PROJECT"), i18n.G("Project of the network"), c.projectColumnData},
 		'm': {i18n.G("MAC ADDRESS"), i18n.G("MAC address"), c.macAddressColumnData},
 		'n': {i18n.G("NAT"), i18n.G("Whether the network performs NAT"), c.natColumnData},
 		'N': {i18n.G("NETWORK"), i18n.G("Network"), c.networkColumnData},
 		's': {i18n.G("SUBNET"), i18n.G("Subnet"), c.subnetColumnData},
 		't': {i18n.G("TYPE"), i18n.G("Type"), c.typeColumnData},
 		'u': {i18n.G("USED BY"), i18n.G("Reference"), c.usedByColumnData},
-	})
+	}, projectToggle)
 
 	// Column adjustments need to be performed pre-parsing.
 	c.lister.preCheck(func() error {
@@ -80,6 +81,10 @@ func (c *cmdNetworkListAllocations) usedByColumnData(alloc networkListAllocation
 
 func (c *cmdNetworkListAllocations) addressColumnData(alloc networkListAllocationsRowData) string {
 	return alloc.Address
+}
+
+func (c *cmdNetworkListAllocations) projectColumnData(alloc networkListAllocationsRowData) string {
+	return alloc.Project
 }
 
 func (c *cmdNetworkListAllocations) networkColumnData(alloc networkListAllocationsRowData) string {
@@ -127,6 +132,11 @@ func (c *cmdNetworkListAllocations) run(cmd *cobra.Command, args []string) error
 		return errors.New(i18n.G("Can't specify --project with --all-projects"))
 	}
 
+	err = c.lister.toggle(projectToggle, c.flagAllProjects)
+	if err != nil {
+		return err
+	}
+
 	var addresses []api.NetworkAllocations
 	if c.flagAllProjects {
 		addresses, err = d.GetNetworkAllocationsAllProjects()
@@ -140,7 +150,13 @@ func (c *cmdNetworkListAllocations) run(cmd *cobra.Command, args []string) error
 		}
 	}
 
-	networks := map[string]map[netip.Prefix]*networkListAllocationsRowData{}
+	// Networks in different projects can share a name.
+	type networkKey struct {
+		project string
+		name    string
+	}
+
+	networks := map[networkKey]map[netip.Prefix]*networkListAllocationsRowData{}
 	var allocations []networkListAllocationsRowData
 	for _, allocation := range addresses {
 		row := networkListAllocationsRowData{NetworkAllocations: allocation}
@@ -151,11 +167,12 @@ func (c *cmdNetworkListAllocations) run(cmd *cobra.Command, args []string) error
 			}
 
 			row.subnet = prefix.Masked().String()
-			network, ok := networks[allocation.Network]
+			key := networkKey{project: allocation.Project, name: allocation.Network}
+			network, ok := networks[key]
 			if ok {
 				network[prefix] = &row
 			} else {
-				networks[allocation.Network] = map[netip.Prefix]*networkListAllocationsRowData{prefix: &row}
+				networks[key] = map[netip.Prefix]*networkListAllocationsRowData{prefix: &row}
 			}
 		} else {
 			allocations = append(allocations, row)
@@ -167,7 +184,7 @@ func (c *cmdNetworkListAllocations) run(cmd *cobra.Command, args []string) error
 		// Do a second pass to set sub-allocations.
 	out:
 		for _, allocation := range allocations {
-			network, ok := networks[allocation.Network]
+			network, ok := networks[networkKey{project: allocation.Project, name: allocation.Network}]
 			if !ok {
 				return fmt.Errorf(i18n.G("Allocation %q from unknown network %q"), allocation.Address, allocation.Network)
 			}
@@ -197,7 +214,7 @@ func (c *cmdNetworkListAllocations) run(cmd *cobra.Command, args []string) error
 					ext.allocations = append(ext.allocations, allocationIP)
 				} else {
 					network[external] = &networkListAllocationsRowData{
-						NetworkAllocations: api.NetworkAllocations{Network: allocation.Network},
+						NetworkAllocations: api.NetworkAllocations{Network: allocation.Network, Project: allocation.Project},
 						subnet:             "(external)",
 						allocations:        []netip.Addr{allocationIP},
 					}
