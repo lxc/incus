@@ -451,42 +451,53 @@ func (d *btrfs) getSubvolumesMetaData(vol Volume) ([]BTRFSSubVolume, error) {
 		})
 	}
 
-	stdout := strings.Builder{}
-
-	poolMountPath := GetPoolMountPath(vol.pool)
-
 	if !d.state.OS.RunningInUserNS {
-		// List all subvolumes in the given filesystem with their UUIDs and received UUIDs.
-		err = subprocess.RunCommandWithFds(context.TODO(), nil, &stdout, "btrfs", "subvolume", "list", "-u", "-R", poolMountPath)
+		originUUIDs, err := d.getSubVolumeOriginUUIDs(vol.pool)
 		if err != nil {
 			return nil, err
 		}
 
-		uuidMap := make(map[string]string)
-		receivedUUIDMap := make(map[string]string)
-
-		scanner := bufio.NewScanner(strings.NewReader(stdout.String()))
-
-		for scanner.Scan() {
-			fields := strings.Fields(scanner.Text())
-
-			if len(fields) != 13 {
-				continue
-			}
-
-			uuidMap[filepath.Join(poolMountPath, fields[12])] = fields[10]
-
-			if fields[8] != "-" {
-				receivedUUIDMap[filepath.Join(poolMountPath, fields[12])] = fields[8]
-			}
-		}
-
 		for i, subVol := range subVols {
-			subVols[i].UUID = uuidMap[filepath.Join(vol.MountPath(), subVol.Path)]
+			subVols[i].UUID = originUUIDs[filepath.Join(vol.MountPath(), subVol.Path)]
 		}
 	}
 
 	return subVols, nil
+}
+
+// getSubVolumeOriginUUIDs returns the UUID identifying each subvolume of the pool in a send stream, keyed by path.
+// That is the received UUID of a received subvolume and the subvolume's own UUID otherwise.
+func (d *btrfs) getSubVolumeOriginUUIDs(poolName string) (map[string]string, error) {
+	stdout := strings.Builder{}
+
+	poolMountPath := GetPoolMountPath(poolName)
+
+	// List all subvolumes in the given filesystem with their UUIDs and received UUIDs.
+	err := subprocess.RunCommandWithFds(context.TODO(), nil, &stdout, "btrfs", "subvolume", "list", "-u", "-R", poolMountPath)
+	if err != nil {
+		return nil, err
+	}
+
+	originUUIDs := make(map[string]string)
+
+	scanner := bufio.NewScanner(strings.NewReader(stdout.String()))
+
+	for scanner.Scan() {
+		fields := strings.Fields(scanner.Text())
+
+		if len(fields) != 13 {
+			continue
+		}
+
+		originUUID := fields[10]
+		if fields[8] != "-" {
+			originUUID = fields[8]
+		}
+
+		originUUIDs[filepath.Join(poolMountPath, fields[12])] = originUUID
+	}
+
+	return originUUIDs, nil
 }
 
 func (d *btrfs) getSubVolumeReceivedUUID(vol Volume) (string, error) {
