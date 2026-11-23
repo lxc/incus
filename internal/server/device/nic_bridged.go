@@ -390,6 +390,15 @@ func (d *nicBridged) validateConfig(instConf instance.ConfigReader, partialValid
 		//  shortdesc: The VLAN ID to use for non-tagged traffic (can be none to remove port from default VLAN)
 		"vlan",
 
+		// gendoc:generate(entity=devices, group=nic_bridged, key=vlan.ingress)
+		// Used for private VLANs where the instance sends on the secondary VLAN (`vlan`) and gets its return traffic on the ingress VLAN.
+		// Only supported on native Linux bridges.
+		// ---
+		//  type: integer
+		//  managed: no
+		//  shortdesc: The ingress VLAN ID to also receive non-tagged traffic from (requires `vlan` and `security.mac_filtering`)
+		"vlan.ingress",
+
 		// gendoc:generate(entity=devices, group=nic_bridged, key=io.bus)
 		//
 		// ---
@@ -510,6 +519,8 @@ func (d *nicBridged) validateConfig(instConf instance.ConfigReader, partialValid
 			if slices.Contains(networkVLANList, 0) {
 				return errors.New("VLAN tagged ID 0 is not allowed for native Linux bridges")
 			}
+		} else if d.config["vlan.ingress"] != "" {
+			return errors.New("Ingress VLAN is only supported on native Linux bridges")
 		}
 
 		return nil
@@ -643,6 +654,46 @@ func (d *nicBridged) validateConfig(instConf instance.ConfigReader, partialValid
 		}
 
 		return validate.IsNetworkVLAN(value)
+	}
+
+	// Add bridge specific vlan.ingress validation.
+	rules["vlan.ingress"] = func(value string) error {
+		if value == "" {
+			return nil
+		}
+
+		err := validate.IsNetworkVLAN(value)
+		if err != nil {
+			return err
+		}
+
+		if value == "0" {
+			return errors.New("Ingress VLAN ID 0 is not allowed")
+		}
+
+		if util.IsNoneOrEmpty(d.config["vlan"]) {
+			return errors.New("Ingress VLAN requires an untagged VLAN ID")
+		}
+
+		if value == d.config["vlan"] {
+			return fmt.Errorf("Ingress VLAN ID %q cannot be the same as untagged VLAN ID", value)
+		}
+
+		// Invalid tagged lists are reported by the vlan.tagged validation.
+		networkVLANList, err := networkVLANListExpand(util.SplitNTrimSpace(d.config["vlan.tagged"], ",", -1, true))
+		if err == nil {
+			vlanID, _ := strconv.Atoi(value)
+			if slices.Contains(networkVLANList, vlanID) {
+				return fmt.Errorf("Ingress VLAN ID %q cannot also be a tagged VLAN ID", value)
+			}
+		}
+
+		// The ingress VLAN relies on a static forwarding entry for the NIC's MAC address.
+		if !util.IsTrue(d.config["security.mac_filtering"]) {
+			return errors.New("Ingress VLAN requires security.mac_filtering")
+		}
+
+		return nil
 	}
 
 	// Add bridge specific vlan.tagged validation.
@@ -2048,6 +2099,25 @@ func (d *nicBridged) setupNativeBridgePortVLANs(hostName string) error {
 		}
 	}
 
+	// Deliver the ingress VLAN untagged to the port.
+	if d.config["vlan.ingress"] != "" {
+		err := link.BridgeVLANAdd(d.config["vlan.ingress"], false, true, false)
+		if err != nil {
+			return err
+		}
+
+		hwaddr, err := net.ParseMAC(d.config["hwaddr"])
+		if err != nil {
+			return fmt.Errorf("Failed parsing MAC address %q: %w", d.config["hwaddr"], err)
+		}
+
+		// The MAC is only learned on the untagged VLAN, a static entry avoids flooding the ingress VLAN.
+		err = link.BridgeFDBAdd(hwaddr, d.config["vlan.ingress"])
+		if err != nil {
+			return fmt.Errorf("Failed adding ingress VLAN forwarding entry: %w", err)
+		}
+	}
+
 	// Add any tagged VLAN memberships.
 	if d.config["vlan.tagged"] != "" {
 		networkVLANList, err := networkVLANListExpand(util.SplitNTrimSpace(d.config["vlan.tagged"], ",", -1, true))
@@ -2073,6 +2143,10 @@ func (d *nicBridged) setupNativeBridgePortVLANs(hostName string) error {
 
 // setupOVSBridgePortVLANs configures the bridge port with the specified VLAN settings on the openvswitch bridge.
 func (d *nicBridged) setupOVSBridgePortVLANs(hostName string) error {
+	if d.config["vlan.ingress"] != "" {
+		return errors.New("Ingress VLAN is only supported on native Linux bridges")
+	}
+
 	vswitch, err := d.state.OVS()
 	if err != nil {
 		return fmt.Errorf("Failed to connect to OVS: %w", err)
