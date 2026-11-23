@@ -263,6 +263,16 @@ test_storage_volume_filemanip() {
     volfile_check_push_deref_dir -rL /tmp/qux/ "${pool}" baz barqux
 
 
+    # Test storage volume file list.
+    incus storage volume file create --type=directory "${pool}" vol1/tmp/list
+    incus storage volume file create "${pool}" vol1/tmp/list/file
+    incus storage volume file create --type=directory "${pool}" vol1/tmp/list/dir
+    incus storage volume file create --type=symlink "${pool}" vol1/tmp/list/link file
+    [ "$(incus storage volume file list "${pool}" vol1/tmp/list --format csv -c nt)" = "$(printf 'dir,directory\nfile,file\nlink,symlink')" ]
+    [ "$(incus storage volume file ls "${pool}" vol1/tmp/list/link --format csv -c nt)" = "link,symlink" ]
+    [ "$(incus storage volume file list "${pool}" vol1/tmp/list --format json | jq -r '.[1].mode')" = "0644" ]
+    ! incus storage volume file list "${pool}" vol1/tmp/missing || false
+
     # Test SFTP functionality.
 
     ! incus storage volume file mount "${pool}" doesnotexist || false
