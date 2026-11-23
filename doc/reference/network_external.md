@@ -16,4 +16,5 @@ Incus supports the following external network types:
 /reference/network_macvlan
 /reference/network_sriov
 /reference/network_physical
+/reference/network_routed
 ```

@@ -238,12 +238,13 @@ func (c *ClusterTx) GetInstancesByMemberAddress(ctx context.Context, offlineThre
 	return memberAddressInstances, nil
 }
 
-// GetNICConflictCandidateIDs returns the IDs of instances on the given member that may conflict with a NIC
-// using the supplied instance name, MAC address or static addresses, either directly or through a profile.
+// GetNICConflictCandidateIDs returns the IDs of instances on the given member (or on all members if empty) that may
+// conflict with a NIC using the supplied instance name, MAC address or static addresses, either directly, through a
+// profile or as assigned address.
 // The supplied values must be lower case.
 func (c *ClusterTx) GetNICConflictCandidateIDs(ctx context.Context, member string, name string, hwaddr string, addresses []string) ([]int, error) {
 	conditions := []string{}
-	args := []any{member}
+	args := []any{}
 
 	if name != "" {
 		conditions = append(conditions, "lower(instances.name) = lower(?)")
@@ -253,6 +254,13 @@ func (c *ClusterTx) GetNICConflictCandidateIDs(ctx context.Context, member strin
 	if hwaddr != "" {
 		conditions = append(conditions, "EXISTS (SELECT 1 FROM instances_config WHERE instances_config.instance_id = instances.id AND instances_config.key LIKE 'volatile.%.hwaddr' AND lower(instances_config.value) = ?)")
 		args = append(args, hwaddr)
+	}
+
+	if len(addresses) > 0 {
+		conditions = append(conditions, fmt.Sprintf("EXISTS (SELECT 1 FROM instances_config WHERE instances_config.instance_id = instances.id AND (instances_config.key LIKE 'volatile.%%.ipv4.address' OR instances_config.key LIKE 'volatile.%%.ipv6.address') AND lower(instances_config.value) IN %s)", query.Params(len(addresses))))
+		for _, address := range addresses {
+			args = append(args, address)
+		}
 	}
 
 	deviceCondition := func(table string) (string, []any) {
@@ -291,7 +299,11 @@ func (c *ClusterTx) GetNICConflictCandidateIDs(ctx context.Context, member strin
 		return nil, nil
 	}
 
-	stmt := "SELECT instances.id FROM instances JOIN nodes ON nodes.id = instances.node_id WHERE nodes.name = ? AND (" + strings.Join(conditions, " OR ") + ")"
+	stmt := "SELECT instances.id FROM instances JOIN nodes ON nodes.id = instances.node_id WHERE (" + strings.Join(conditions, " OR ") + ")"
+	if member != "" {
+		stmt += " AND nodes.name = ?"
+		args = append(args, member)
+	}
 
 	return query.SelectIntegers(ctx, c.tx, stmt, args...)
 }

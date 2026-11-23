@@ -292,6 +292,114 @@ test_container_devices_nic_routed() {
     incus exec "${ctName}" ip link set eth0 up
     [ "$(incus file pull "${ctName}/sys/class/net/eth0/operstate" -)" = "down" ]
 
+    # Test address assignment from a managed routed network.
+    incus network create "${ctName}r" --type=routed ipv4.subnets=198.51.100.0/30 ipv6.subnets=2001:db8:5::/64
+    incus init testimage "${ctName}a"
+    incus config device add "${ctName}a" eth0 nic network="${ctName}r" name=eth0
+    incus copy "${ctName}a" "${ctName}b"
+    incus copy "${ctName}a" "${ctName}c"
+    incus start "${ctName}a"
+    [ "$(incus config get "${ctName}a" volatile.eth0.ipv4.address)" = "198.51.100.1" ]
+    [ "$(incus config get "${ctName}a" volatile.eth0.ipv6.address)" = "2001:db8:5::1" ]
+    incus exec "${ctName}a" -- ip -4 addr show eth0 | grep -F "198.51.100.1/32"
+    wait_for_dad "${ctName}a" eth0
+    ping -c2 -W5 198.51.100.1
+    ping6 -c2 -W5 2001:db8:5::1
+
+    # Test the next free address is used and running out of addresses.
+    incus start "${ctName}b"
+    [ "$(incus config get "${ctName}b" volatile.eth0.ipv4.address)" = "198.51.100.2" ]
+    [ "$(incus config get "${ctName}b" volatile.eth0.ipv6.address)" = "2001:db8:5::2" ]
+    ! incus start "${ctName}c" || false
+
+    # Test the address is kept on restart and released with the instance.
+    incus restart -f "${ctName}a"
+    [ "$(incus config get "${ctName}a" volatile.eth0.ipv4.address)" = "198.51.100.1" ]
+    [ "$(incus config get "${ctName}a" volatile.eth0.ipv6.address)" = "2001:db8:5::1" ]
+    incus delete -f "${ctName}a"
+    incus start "${ctName}c"
+    [ "$(incus config get "${ctName}c" volatile.eth0.ipv4.address)" = "198.51.100.1" ]
+    [ "$(incus config get "${ctName}c" volatile.eth0.ipv6.address)" = "2001:db8:5::1" ]
+
+    # Test copies get new addresses.
+    incus stop -f "${ctName}c"
+    incus copy "${ctName}c" "${ctName}d"
+    [ -z "$(incus config get "${ctName}d" volatile.eth0.ipv4.address)" ]
+    incus delete "${ctName}d"
+
+    # Test a configured address replaces the assigned one.
+    incus stop -f "${ctName}b"
+    incus config device set "${ctName}b" eth0 ipv6.address=2001:db8:5::99
+    incus start "${ctName}b"
+    [ -z "$(incus config get "${ctName}b" volatile.eth0.ipv6.address)" ]
+    [ "$(incus config get "${ctName}b" volatile.eth0.ipv4.address)" = "198.51.100.2" ]
+    incus exec "${ctName}b" -- ip -6 addr show eth0 | grep -F "2001:db8:5::99/128"
+
+    # Test a new address is assigned when the subnets no longer contain the assigned one.
+    incus network set "${ctName}r" ipv4.subnets=203.0.113.0/30
+    incus start "${ctName}c"
+    [ "$(incus config get "${ctName}c" volatile.eth0.ipv4.address)" = "203.0.113.1" ]
+    [ "$(incus config get "${ctName}c" volatile.eth0.ipv6.address)" = "2001:db8:5::1" ]
+    incus exec "${ctName}c" -- ip -4 addr show eth0 | grep -F "203.0.113.1/32"
+
+    # Test addresses can't be used twice and the network's routing keys can't be overridden.
+    incus init testimage "${ctName}e"
+    incus config device add "${ctName}e" eth0 nic network="${ctName}r" name=eth0 ipv4.address=203.0.113.1
+    ! incus start "${ctName}e" || false
+    ! incus config device set "${ctName}e" eth0 ipv4.routes=192.0.2.0/24 || false
+    ! incus config device set "${ctName}e" eth0 ipv4.host_address=192.0.2.1 || false
+    ! incus config device set "${ctName}e" eth0 ipv4.address=203.0.113.1,203.0.113.2 || false
+
+    # Test an assigned address is replaced when another NIC configured it since.
+    incus restart -f "${ctName}c"
+    [ "$(incus config get "${ctName}c" volatile.eth0.ipv4.address)" = "203.0.113.2" ]
+    [ "$(incus config get "${ctName}c" volatile.eth0.ipv6.address)" = "2001:db8:5::1" ]
+    incus start "${ctName}e"
+
+    # Test addresses of unmanaged routed NICs aren't assigned.
+    incus network set "${ctName}r" ipv4.subnets=203.0.113.0/24
+    incus init testimage "${ctName}f"
+    incus config device add "${ctName}f" eth0 nic nictype=routed name=eth0 ipv4.address=203.0.113.3
+    incus init testimage "${ctName}g"
+    incus config device add "${ctName}g" eth0 nic network="${ctName}r" name=eth0
+    incus start "${ctName}g"
+    [ "$(incus config get "${ctName}g" volatile.eth0.ipv4.address)" = "203.0.113.4" ]
+
+    # Test only one NIC per instance can use the automatic gateways.
+    ! incus config device add "${ctName}g" eth1 nic network="${ctName}r" name=eth1 || false
+    incus config device add "${ctName}g" eth1 nic network="${ctName}r" name=eth1 ipv4.gateway=none ipv6.gateway=none
+
+    # Test NICs from a shared profile get their own addresses.
+    incus profile create "${ctName}p"
+    incus profile device add "${ctName}p" eth0 nic network="${ctName}r" name=eth0
+    incus init testimage "${ctName}h" --profile default --profile "${ctName}p"
+    incus init testimage "${ctName}i" --profile default --profile "${ctName}p"
+    incus start "${ctName}h" "${ctName}i"
+    [ -n "$(incus config get "${ctName}h" volatile.eth0.ipv4.address)" ]
+    [ "$(incus config get "${ctName}h" volatile.eth0.ipv4.address)" != "$(incus config get "${ctName}i" volatile.eth0.ipv4.address)" ]
+    [ "$(incus config get "${ctName}h" volatile.eth0.ipv6.address)" != "$(incus config get "${ctName}i" volatile.eth0.ipv6.address)" ]
+    incus delete -f "${ctName}b" "${ctName}c" "${ctName}e" "${ctName}f" "${ctName}g" "${ctName}h" "${ctName}i"
+    incus profile delete "${ctName}p"
+    incus network delete "${ctName}r"
+
+    # Test routed network validation.
+    ! incus network create "${ctName}r" --type=routed ipv4.subnets=203.0.113.1/24 || false
+    ! incus network create "${ctName}r" --type=routed ipv4.host_table=100 || false
+    ! incus network create "${ctName}r" --type=routed vlan=10 || false
+
+    # Test renaming and deleting the network also handles its AppArmor profile.
+    incus network create "${ctName}r" --type=routed
+    profiles="${INCUS_DIR}/security/apparmor/profiles"
+    if [ -e "${profiles}/incus_dnsmasq-${ctName}r" ]; then
+        incus network rename "${ctName}r" "${ctName}s"
+        [ ! -e "${profiles}/incus_dnsmasq-${ctName}r" ]
+        [ -e "${profiles}/incus_dnsmasq-${ctName}s" ]
+        incus network delete "${ctName}s"
+        [ ! -e "${profiles}/incus_dnsmasq-${ctName}s" ]
+    else
+        incus network delete "${ctName}r"
+    fi
+
     # Cleanup routed checks
     incus delete "${ctName}" -f
     incus delete "${ctName}2" -f

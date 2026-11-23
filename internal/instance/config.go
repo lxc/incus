@@ -1539,6 +1539,20 @@ var ConfigDeviceVolatileKeys = map[string]func(value string) error{
 	//  shortdesc: IO bus in use
 	"io.bus": validate.IsAny,
 
+	// gendoc:generate(entity=instance, group=volatile, key=volatile.<name>.ipv4.address)
+	// The address is assigned from the network's `ipv4.subnets` when no `ipv4.address` property is set on a NIC of a `routed` network.
+	// ---
+	//  type: string
+	//  shortdesc: Assigned IPv4 address
+	"ipv4.address": validate.Optional(validate.IsNetworkAddressV4),
+
+	// gendoc:generate(entity=instance, group=volatile, key=volatile.<name>.ipv6.address)
+	// The address is assigned from the network's `ipv6.subnets` when no `ipv6.address` property is set on a NIC of a `routed` network.
+	// ---
+	//  type: string
+	//  shortdesc: Assigned IPv6 address
+	"ipv6.address": validate.Optional(validate.IsNetworkAddressV6),
+
 	// gendoc:generate(entity=instance, group=volatile, key=volatile.<name>.mig.uuid)
 	// The NVIDIA MIG instance UUID.
 	// ---

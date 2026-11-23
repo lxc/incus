@@ -115,6 +115,15 @@ Incus supports the following network types:
 
   It provides a preset configuration to use when connecting OVN networks to a parent interface.
 
+{ref}`network-routed`
+: % Include content from [../reference/network_routed.md](../reference/network_routed.md)
+  ```{include} ../reference/network_routed.md
+      :start-after: <!-- Include start routed intro -->
+      :end-before: <!-- Include end routed intro -->
+  ```
+
+  In Incus context, the `routed` network type provides a preset configuration to use when connecting instances with routed NICs, including DHCP for virtual machines.
+
 ## Recommendations
 
 In general, if you can use a managed network, you should do so because networks are easy to configure and you can reuse the same network for several instances without repeating the configuration.

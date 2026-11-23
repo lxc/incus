@@ -3627,3 +3627,14 @@ This adds a new image property, `volume.size_hint`, which sets the size of the c
 ## `network_allocations_project`
 
 Adds the `project` field to the network allocations API response, holding the project of the network.
+
+## `network_type_routed`
+
+Adds support for managed `routed` networks.
+
+Managed `routed` networks can be created and linked to NIC devices using the NIC `network` property.
+Their `ipv4.subnets` and `ipv6.subnets` restrict the NIC `ipv4.address` and `ipv6.address`, and they can provide routed NIC defaults such as `vrf` and host routing table settings.
+NICs get one address per family, assigned from the subnets if not configured and recorded in `volatile.<name>.ipv4.address` and `volatile.<name>.ipv6.address`.
+
+For virtual machines, the NIC's addresses are handed out over DHCP as a `/32` and over DHCPv6 as a `/128` behind the host-side gateways.
+This is controlled by the new `ipv4.dhcp` and `ipv6.dhcp` keys, with `dns.nameservers` setting the advertised DNS servers.
