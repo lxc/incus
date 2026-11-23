@@ -2361,7 +2361,7 @@ func patchNetworkOVNACLAddressSets(_ string, d *Daemon) error {
 	return nil
 }
 
-// patchStorageLvmclusterExclusiveInstanceLocks switches the storage locks of running VMs on lvmcluster to exclusive.
+// patchStorageLvmclusterExclusiveInstanceLocks switches the lvmcluster storage locks of running VMs to exclusive.
 func patchStorageLvmclusterExclusiveInstanceLocks(_ string, d *Daemon) error {
 	s := d.State()
 
@@ -2383,10 +2383,7 @@ func patchStorageLvmclusterExclusiveInstanceLocks(_ string, d *Daemon) error {
 			continue
 		}
 
-		if pool.Driver().Info().Name != "lvmcluster" {
-			continue
-		}
-
+		// Dependent disks may be on lvmcluster even when the root disk isn't.
 		err = pool.SetInstanceAccessMode(inst, storageDrivers.VolumeAccessModeExclusive, nil)
 		if err != nil {
 			logger.Warn("Failed switching storage locks to exclusive", logger.Ctx{"project": inst.Project().Name, "instance": inst.Name(), "err": err})
