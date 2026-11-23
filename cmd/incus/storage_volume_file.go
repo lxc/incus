@@ -53,6 +53,10 @@ func (c *cmdStorageVolumeFile) command() *cobra.Command {
 	storageVolumeFileDeleteCmd := cmdStorageVolumeFileDelete{global: c.global, storage: c.storage, storageVolume: c.storageVolume, storageVolumeFile: c}
 	cmd.AddCommand(storageVolumeFileDeleteCmd.command())
 
+	// List
+	storageVolumeFileListCmd := cmdStorageVolumeFileList{global: c.global, storage: c.storage, storageVolume: c.storageVolume, storageVolumeFile: c}
+	cmd.AddCommand(storageVolumeFileListCmd.command())
+
 	// Mount
 	storageVolumeFileMountCmd := cmdStorageVolumeFileMount{global: c.global, storage: c.storage, storageVolume: c.storageVolume, storageVolumeFile: c}
 	cmd.AddCommand(storageVolumeFileMountCmd.command())
@@ -309,6 +313,81 @@ func (c *cmdStorageVolumeFileDelete) run(cmd *cobra.Command, args []string) erro
 	}
 
 	return nil
+}
+
+// List.
+type cmdStorageVolumeFileList struct {
+	global            *cmdGlobal
+	storage           *cmdStorage
+	storageVolume     *cmdStorageVolume
+	storageVolumeFile *cmdStorageVolumeFile
+
+	flagFormat  string
+	flagColumns string
+}
+
+var cmdStorageVolumeFileListUsage = u.Usage{u.Pool.Remote(), u.MakePath(u.Volume, u.Path)}
+
+func (c *cmdStorageVolumeFileList) command() *cobra.Command {
+	cmd := &cobra.Command{}
+	cmd.Use = cli.U("list", cmdStorageVolumeFileListUsage...)
+	cmd.Aliases = []string{"ls"}
+	cmd.Short = i18n.G("List files in custom volumes")
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`List files in custom volumes
+
+Default column layout: ntsmugM
+
+== Columns ==
+The -c option takes a comma separated list of arguments that control
+which file attributes to output when displaying in table or csv format.
+
+Commas between consecutive shorthand chars are optional.
+
+Pre-defined column shorthand chars:
+  n - Name
+  t - Type
+  s - Size
+  m - Mode
+  u - UID
+  g - GID
+  M - Modified`))
+	cmd.Example = cli.FormatSection("", i18n.G(
+		`incus storage volume file list default vol1/data
+    List the files in the data directory of custom volume "vol1".`,
+	))
+
+	cli.AddStringFlag(cmd.Flags(), &c.flagColumns, "columns|c", "ntsmugM", "", i18n.G("Columns"))
+	cli.AddStringFlag(cmd.Flags(), &c.flagFormat, "format|f", c.global.defaultListFormat(), "", i18n.G(`Format (csv|json|table|yaml|compact|markdown), use suffix ",noheader" to disable headers and ",header" to enable it if missing, e.g. csv,header`))
+
+	cmd.PreRunE = func(cmd *cobra.Command, _ []string) error {
+		return cli.ValidateFlagFormatForListOutput(cmd.Flag("format").Value.String())
+	}
+
+	cmd.RunE = c.run
+
+	return cmd
+}
+
+func (c *cmdStorageVolumeFileList) run(cmd *cobra.Command, args []string) error {
+	parsed, err := c.global.Parse(cmdStorageVolumeFileListUsage, cmd, args)
+	if err != nil {
+		return err
+	}
+
+	d := parsed[0].RemoteServer
+	poolName := parsed[0].RemoteObject.String
+	volName := parsed[1].List[0].String
+	fPath := parsed[1].List[1].String
+
+	// Connect to SFTP.
+	sftpConn, err := d.GetStoragePoolVolumeFileSFTP(poolName, "custom", volName)
+	if err != nil {
+		return err
+	}
+
+	defer logger.WarnOnError(sftpConn.Close, "Failed to close SFTP connection")
+
+	return sftpListFiles(sftpConn, fPath, c.flagFormat, c.flagColumns)
 }
 
 // Mount.
