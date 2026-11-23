@@ -1144,6 +1144,45 @@ func (o *NB) UpdateLogicalRouterPort(ctx context.Context, portName OVNRouterPort
 	return nil
 }
 
+// UpdateLogicalRouterOptions sets the given router options, deleting those with an empty value.
+func (o *NB) UpdateLogicalRouterOptions(ctx context.Context, routerName OVNRouter, options map[string]string) error {
+	logicalRouter, err := o.GetLogicalRouter(ctx, routerName)
+	if err != nil {
+		return err
+	}
+
+	if logicalRouter.Options == nil {
+		logicalRouter.Options = map[string]string{}
+	}
+
+	for k, v := range options {
+		if v == "" {
+			delete(logicalRouter.Options, k)
+		} else {
+			logicalRouter.Options[k] = v
+		}
+	}
+
+	// Update the record.
+	operations, err := o.client.Where(logicalRouter).Update(logicalRouter)
+	if err != nil {
+		return err
+	}
+
+	// Apply the changes.
+	resp, err := o.client.Transact(ctx, operations...)
+	if err != nil {
+		return err
+	}
+
+	_, err = ovsdb.CheckOperationResults(resp, operations)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // GetLogicalSwitch gets the OVN database record for the switch.
 func (o *NB) GetLogicalSwitch(ctx context.Context, switchName OVNSwitch) (*ovnNB.LogicalSwitch, error) {
 	logicalSwitch := &ovnNB.LogicalSwitch{

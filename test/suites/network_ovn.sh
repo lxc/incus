@@ -2711,3 +2711,172 @@ test_network_ovn_parent_snat() {
     incus network delete ovn1
     incus network delete incusbr0
 }
+
+test_network_ovn_dynamic_routing() {
+    if ! network_ovn_supported; then
+        return
+    fi
+
+    # Print a logical router option of an OVN network (empty if unset).
+    ovn_router_option() {
+        netID="$(incus admin sql global "SELECT id FROM networks WHERE name='${1}'" --format=csv)"
+        ovn-nbctl --if-exists get logical_router "incus-net${netID}-lr" "options:${2}" | tr -d '"'
+    }
+
+    # Check all dynamic routing options of an OVN network are unset.
+    ovn_router_no_dynamic_routing() {
+        for option in dynamic-routing dynamic-routing-vrf-id dynamic-routing-redistribute dynamic-routing-v4-prefix-nexthop dynamic-routing-v6-prefix-nexthop; do
+            [ -z "$(ovn_router_option "${1}" "${option}")" ]
+        done
+    }
+
+    # Wait until a route is present or absent in the OVN routes of a routing table.
+    # OVN's route protocol is 84 (RTPROT_OVN), older iproute2 doesn't know the name "ovn".
+    ovn_wait_exported_route() {
+        for _ in $(seq 30); do
+            routes="$(ip -4 route show table "${2}" proto 84; ip -6 route show table "${2}" proto 84)"
+            if echo "${routes}" | grep -qF "${3}"; then
+                [ "${1}" = "present" ] && return 0
+            else
+                [ "${1}" = "absent" ] && return 0
+            fi
+
+            sleep 1
+        done
+
+        echo "Route ${3} not ${1} in table ${2}:"
+        echo "${routes}"
+        return 1
+    }
+
+    incus network create incusbr0 \
+        ipv4.address=10.10.10.1/24 ipv4.nat=true \
+        ipv4.dhcp.ranges=10.10.10.2-10.10.10.199 \
+        ipv4.ovn.ranges=10.10.10.200-10.10.10.254 \
+        ipv4.routes=192.0.2.0/24 \
+        ipv6.address=fd42:4242:4242:1010::1/64 ipv6.nat=true \
+        ipv6.ovn.ranges=fd42:4242:4242:1010::200-fd42:4242:4242:1010::254
+
+    echo "==> Check the routing table ID validation"
+    for value in 0 252 255 4294967295 foo; do
+        ! incus network set incusbr0 ovn.routes_table="${value}" || false
+    done
+
+    ! incus network create ovn1 --type=ovn network=incusbr0 ovn.routes_table=100 || false
+
+    echo "==> Check the router options of a network created with dynamic routing enabled"
+    incus network set incusbr0 ovn.routes_table=100
+    incus network create ovn1 --type=ovn network=incusbr0 \
+        ipv4.address=10.10.11.1/24 ipv4.nat=true \
+        ipv6.address=fd42:4242:4242:1011::1/64 ipv6.nat=true
+
+    ovn1IPv4="$(incus network get ovn1 volatile.network.ipv4.address)"
+    ovn1IPv6="$(incus network get ovn1 volatile.network.ipv6.address)"
+    [ "$(ovn_router_option ovn1 dynamic-routing)" = "true" ]
+    [ "$(ovn_router_option ovn1 dynamic-routing-vrf-id)" = "100" ]
+    [ "$(ovn_router_option ovn1 dynamic-routing-redistribute)" = "connected,lb,nat" ]
+    [ "$(ovn_router_option ovn1 dynamic-routing-v4-prefix-nexthop)" = "${ovn1IPv4}" ]
+    [ "$(ovn_router_option ovn1 dynamic-routing-v6-prefix-nexthop)" = "${ovn1IPv6}" ]
+
+    # The route export needs the next-hop options (OVN 26.03) and a host VRF.
+    # Only one OVN network may use the table here, as OVN before 27.03 skips a table shared by several.
+    ovnVersion="$(ovn-controller --version | awk '/^ovn-controller/ {print $2}')"
+    if [ "$(printf '%s\n' 26.03 "${ovnVersion}" | sort -V | head -n1)" = "26.03" ] && ip link add incusovnvrf type vrf table 100; then
+        echo "==> Check the routes exported into the host routing table"
+        ip link set incusovnvrf up
+        incus network forward create ovn1 192.0.2.1 target_address=10.10.11.2
+        incus network load-balancer create ovn1 192.0.2.2
+        incus network load-balancer backend add ovn1 192.0.2.2 backend1 10.10.11.3
+        incus network load-balancer port add ovn1 192.0.2.2 tcp 80 backend1
+
+        # The network's subnets, forward and load balancer addresses via the router, and its SNAT address.
+        ovn_wait_exported_route present 100 "10.10.11.0/24 via ${ovn1IPv4} "
+        ovn_wait_exported_route present 100 "fd42:4242:4242:1011::/64 via ${ovn1IPv6} "
+        ovn_wait_exported_route present 100 "192.0.2.1 via ${ovn1IPv4} "
+        ovn_wait_exported_route present 100 "192.0.2.2 via ${ovn1IPv4} "
+        ovn_wait_exported_route present 100 "${ovn1IPv4} via ${ovn1IPv4} "
+
+        incus network forward delete ovn1 192.0.2.1
+        incus network load-balancer delete ovn1 192.0.2.2
+        ovn_wait_exported_route absent 100 "192.0.2.1 via "
+        ovn_wait_exported_route absent 100 "192.0.2.2 via "
+
+        incus network unset incusbr0 ovn.routes_table
+        ovn_wait_exported_route absent 100 "10.10.11.0/24 via "
+        ovn_wait_exported_route absent 100 "fd42:4242:4242:1011::/64 via "
+
+        incus network set incusbr0 ovn.routes_table=100
+        ovn_wait_exported_route present 100 "10.10.11.0/24 via ${ovn1IPv4} "
+
+        ip link delete incusovnvrf
+    else
+        echo "==> SKIP: Route export checks need OVN 26.03 or later and VRF support"
+    fi
+
+    echo "==> Check uplink changes apply to all its OVN networks"
+    incus network create ovn2 --type=ovn network=incusbr0 \
+        ipv4.address=10.10.12.1/24 ipv4.nat=true \
+        ipv6.address=none
+    [ "$(ovn_router_option ovn2 dynamic-routing-vrf-id)" = "100" ]
+
+    incus network set incusbr0 ovn.routes_table=200
+    [ "$(ovn_router_option ovn1 dynamic-routing-vrf-id)" = "200" ]
+    [ "$(ovn_router_option ovn2 dynamic-routing-vrf-id)" = "200" ]
+
+    echo "==> Check unsetting the key only removes the dynamic routing options"
+    incus network unset incusbr0 ovn.routes_table
+    for net in ovn1 ovn2; do
+        ovn_router_no_dynamic_routing "${net}"
+        [ "$(ovn_router_option "${net}" dynamic_neigh_routers)" = "true" ]
+    done
+
+    echo "==> Check enabling it on an uplink already in use"
+    incus network set incusbr0 ovn.routes_table=100
+    [ "$(ovn_router_option ovn1 dynamic-routing-vrf-id)" = "100" ]
+    [ "$(ovn_router_option ovn1 dynamic-routing-v4-prefix-nexthop)" = "${ovn1IPv4}" ]
+
+    echo "==> Check the next-hop follows the router's uplink address"
+    incus network set incusbr0 ipv4.ovn.ranges=10.10.10.230-10.10.10.254
+    newIPv4="$(incus network get ovn1 volatile.network.ipv4.address)"
+    [ "${newIPv4}" != "${ovn1IPv4}" ]
+    [ "$(ovn_router_option ovn1 dynamic-routing-v4-prefix-nexthop)" = "${newIPv4}" ]
+
+    echo "==> Check removing the uplink removes the dynamic routing options"
+    incus network set ovn2 network=none
+    ovn_router_no_dynamic_routing ovn2
+    [ "$(ovn_router_option ovn1 dynamic-routing-vrf-id)" = "100" ]
+
+    incus network delete ovn2
+    incus network delete ovn1
+    incus network delete incusbr0
+
+    echo "==> Check dynamic routing with a physical uplink"
+    ip link add dummybr0 type bridge
+    ip address add 192.0.2.1/24 dev dummybr0
+    ip link set dummybr0 up
+    incus network create dummy --type=physical \
+        parent=dummybr0 \
+        ipv4.gateway=192.0.2.1/24 \
+        ipv4.ovn.ranges=192.0.2.10-192.0.2.19 \
+        ovn.routes_table=100
+
+    for value in 0 252 255 4294967295 foo; do
+        ! incus network set dummy ovn.routes_table="${value}" || false
+    done
+
+    incus network create ovn1 --type=ovn network=dummy \
+        ipv4.address=10.10.11.1/24 ipv4.nat=true \
+        ipv6.address=none
+    [ "$(ovn_router_option ovn1 dynamic-routing-vrf-id)" = "100" ]
+    [ "$(ovn_router_option ovn1 dynamic-routing-v4-prefix-nexthop)" = "$(incus network get ovn1 volatile.network.ipv4.address)" ]
+
+    incus network set dummy ovn.routes_table=200
+    [ "$(ovn_router_option ovn1 dynamic-routing-vrf-id)" = "200" ]
+
+    incus network unset dummy ovn.routes_table
+    ovn_router_no_dynamic_routing ovn1
+
+    incus network delete ovn1
+    incus network delete dummy
+    ip link delete dummybr0
+}

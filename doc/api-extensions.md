@@ -3627,3 +3627,12 @@ This adds a new image property, `volume.size_hint`, which sets the size of the c
 ## `network_allocations_project`
 
 Adds the `project` field to the network allocations API response, holding the project of the network.
+
+## `network_ovn_dynamic_routing`
+
+This adds the `ovn.routes_table` configuration key to `bridge` and
+`physical` networks.
+
+When set on an OVN uplink network, the downstream OVN networks use OVN
+dynamic routing to export their routes into that host routing table (VRF)
+on the cluster member hosting the active OVN gateway chassis.

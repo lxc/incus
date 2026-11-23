@@ -9,6 +9,7 @@ import (
 	"errors"
 	"fmt"
 	"io/fs"
+	"math"
 	"math/big"
 	"math/rand"
 	"net"
@@ -55,6 +56,21 @@ func networkValidPort(value string) error {
 
 	if valueInt < 1 || valueInt > 65536 {
 		return fmt.Errorf("Invalid port number: %s", value)
+	}
+
+	return nil
+}
+
+// networkValidOVNRoutesTable validates a routing table ID for OVN dynamic routing.
+func networkValidOVNRoutesTable(value string) error {
+	tableID, err := strconv.ParseUint(value, 10, 32)
+	if err != nil {
+		return fmt.Errorf("Invalid routing table ID %q", value)
+	}
+
+	// OVN skips the unspec (0), compat (252), local (255) and max table IDs.
+	if tableID == 0 || tableID == 252 || tableID == 255 || tableID == math.MaxUint32 {
+		return fmt.Errorf("Routing table ID %d can't be used", tableID)
 	}
 
 	return nil
