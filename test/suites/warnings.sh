@@ -1,6 +1,6 @@
 test_warnings() {
     # Delete previous warnings
-    incus query --wait /1.0/warnings\?recursion=1 | jq -r '.[].uuid' | xargs -n1 incus warning delete
+    incus query --wait /1.0/warnings\?recursion=1 | jq -r '.[].uuid' | xargs -rn1 incus warning delete
 
     # Create a global warning (no node and no project)
     incus query --wait -X POST -d '{\"type_code\": 0, \"message\": \"global warning\"}' /internal/debug/warnings
