@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io/fs"
+	"maps"
 	"net/http"
 	"os"
 	"os/exec"
@@ -3737,7 +3738,17 @@ func (d *disk) updateDependentAccessMode() (func(), error) {
 		return nil, err
 	}
 
-	return func() { _ = d.pool.Driver().SetVolumeAccessMode(vol, revertMode) }, nil
+	// Exclusive locks are only taken on dependent volumes, so revert with the previous setting.
+	revertConfig := maps.Clone(dbVolume.Config)
+	if revertMode == storageDrivers.VolumeAccessModeExclusive {
+		revertConfig["dependent"] = "true"
+	} else {
+		delete(revertConfig, "dependent")
+	}
+
+	revertVol := d.pool.GetVolume(storageDrivers.VolumeTypeCustom, storageDrivers.ContentType(dbVolume.ContentType), project.StorageVolume(storageProjectName, volName), revertConfig)
+
+	return func() { _ = d.pool.Driver().SetVolumeAccessMode(revertVol, revertMode) }, nil
 }
 
 // updateDependentConfig applies changes to dependent configuration settings.
