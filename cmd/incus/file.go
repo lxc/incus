@@ -59,6 +59,10 @@ func (c *cmdFile) command() *cobra.Command {
 	fileDeleteCmd := cmdFileDelete{global: c.global, file: c}
 	cmd.AddCommand(fileDeleteCmd.command())
 
+	// List
+	fileListCmd := cmdFileList{global: c.global, file: c}
+	cmd.AddCommand(fileListCmd.command())
+
 	// Mount
 	fileMountCmd := cmdFileMount{global: c.global, file: c}
 	cmd.AddCommand(fileMountCmd.command())
@@ -877,6 +881,81 @@ func (c *cmdFilePush) run(cmd *cobra.Command, args []string) error {
 	}
 
 	return c.push(parsed[0].StringList, parsed[1])
+}
+
+// List.
+type cmdFileList struct {
+	global *cmdGlobal
+	file   *cmdFile
+
+	flagFormat  string
+	flagColumns string
+}
+
+var cmdFileListUsage = u.Usage{u.MakePath(u.Instance, u.Path).Remote()}
+
+func (c *cmdFileList) command() *cobra.Command {
+	cmd := &cobra.Command{}
+	cmd.Use = cli.U("list", cmdFileListUsage...)
+	cmd.Aliases = []string{"ls"}
+	cmd.Short = i18n.G("List files in instances")
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`List files in instances
+
+Default column layout: ntsmugM
+
+== Columns ==
+The -c option takes a comma separated list of arguments that control
+which file attributes to output when displaying in table or csv format.
+
+Commas between consecutive shorthand chars are optional.
+
+Pre-defined column shorthand chars:
+  n - Name
+  t - Type
+  s - Size
+  m - Mode
+  u - UID
+  g - GID
+  M - Modified`))
+	cmd.Example = cli.FormatSection("", i18n.G(
+		`incus file list foo/etc
+    List the files in the /etc directory of instance "foo".`,
+	))
+
+	cli.AddStringFlag(cmd.Flags(), &c.flagColumns, "columns|c", "ntsmugM", "", i18n.G("Columns"))
+	cli.AddStringFlag(cmd.Flags(), &c.flagFormat, "format|f", c.global.defaultListFormat(), "", i18n.G(`Format (csv|json|table|yaml|compact|markdown), use suffix ",noheader" to disable headers and ",header" to enable it if missing, e.g. csv,header`))
+
+	cmd.PreRunE = func(cmd *cobra.Command, _ []string) error {
+		return cli.ValidateFlagFormatForListOutput(cmd.Flag("format").Value.String())
+	}
+
+	cmd.RunE = c.run
+
+	cmd.ValidArgsFunction = func(_ *cobra.Command, _ []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+		return c.global.cmpFiles(toComplete, false)
+	}
+
+	return cmd
+}
+
+func (c *cmdFileList) run(cmd *cobra.Command, args []string) error {
+	parsed, err := c.global.Parse(cmdFileListUsage, cmd, args)
+	if err != nil {
+		return err
+	}
+
+	d := parsed[0].RemoteServer
+	instanceName := parsed[0].RemoteObject.List[0].String
+	filePath := parsed[0].RemoteObject.List[1].String
+
+	sftpConn, err := d.GetInstanceFileSFTP(instanceName)
+	if err != nil {
+		return err
+	}
+
+	defer logger.WarnOnError(sftpConn.Close, "Failed to close SFTP connection")
+
+	return sftpListFiles(sftpConn, filePath, c.flagFormat, c.flagColumns)
 }
 
 // Mount.
