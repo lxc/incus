@@ -88,12 +88,6 @@ import (
 )
 
 // Helper functions.
-// forklxcBlockedEnv returns whether an instance or image environment variable must be kept out of
-// the root container start process, as it would alter the behavior of the dynamic loader or of glibc.
-func forklxcBlockedEnv(name string) bool {
-	return strings.HasPrefix(name, "LD_") || name == "GCONV_PATH" || name == "GLIBC_TUNABLES"
-}
-
 func lxcSetConfigItem(c *liblxc.Container, key string, value string) error {
 	if c == nil {
 		return errors.New("Uninitialized go-lxc struct")
@@ -2708,27 +2702,16 @@ func (d *lxc) Start(stateful bool) error {
 
 	name := project.Instance(d.Project().Name, d.name)
 
-	// Setup minimal environment for forkstart.
+	// Setup minimal environment for forkstart; instance variables go through lxc.environment.
 	envDict := map[string]string{
 		"container": "lxc",
-	}
-
-	for k, v := range d.expandedConfig {
-		after, ok := strings.CutPrefix(k, "environment.")
-		if ok && !forklxcBlockedEnv(after) {
-			envDict[after] = v
-		}
+		"PATH":      os.Getenv("PATH"),
 	}
 
 	for _, keepEnv := range []string{"LD_LIBRARY_PATH", "INCUS_DIR", "INCUS_SOCKET"} {
 		if os.Getenv(keepEnv) != "" {
 			envDict[keepEnv] = os.Getenv(keepEnv)
 		}
-	}
-
-	_, ok := envDict["PATH"]
-	if !ok {
-		envDict["PATH"] = os.Getenv("PATH")
 	}
 
 	env := make([]string, 0, len(envDict))
