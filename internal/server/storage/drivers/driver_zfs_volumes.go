@@ -18,7 +18,6 @@ import (
 	"strings"
 	"syscall"
 	"time"
-	"unsafe"
 
 	"github.com/google/uuid"
 	"golang.org/x/sys/unix"
@@ -1706,6 +1705,14 @@ func (d *zfs) deleteVolume(vol Volume, op *operations.Operation) error {
 			return err
 		}
 
+		// Detach any loop device left on the zvol as it would otherwise prevent deletion.
+		if IsContentBlock(vol.contentType) || d.isBlockBacked(vol) {
+			err = d.detachLoopDevices(d.dataset(vol, false))
+			if err != nil {
+				return err
+			}
+		}
+
 		// Handle clones.
 		clones, err := d.getClones(d.dataset(vol, false))
 		if err != nil {
@@ -2315,31 +2322,13 @@ func (d *zfs) getVolumeDiskPathFromDataset(dataset string) (string, error) {
 		return -1
 	})
 
-	zfsDataset := func(devPath string) string {
-		// Open the device.
-		r, err := os.OpenFile(devPath, unix.O_RDONLY|unix.O_CLOEXEC, 0)
-		if err != nil {
-			return ""
-		}
-
-		defer logger.WarnOnError(r.Close, "Failed to close file")
-
-		// Perform the BLKZNAME ioctl.
-		buf := [256]byte{}
-		_, _, errno := unix.Syscall(unix.SYS_IOCTL, uintptr(r.Fd()), linux.IoctlBlkZname, uintptr(unsafe.Pointer(&buf)))
-		if errno != 0 {
-			return ""
-		}
-
-		return string(bytes.Trim(buf[:], "\x00"))
-	}
-
 	// Check each entry for a dataset match.
 	for _, entry := range zfsEntries {
 		// Check if it's our dataset.
 		zfsDev := "/dev/" + entry.Name()
 
-		if zfsDataset(zfsDev) == dataset {
+		zvolDataset, _ := zfsDatasetFromDevice(zfsDev)
+		if zvolDataset == dataset {
 			return zfsDev, nil
 		}
 	}
