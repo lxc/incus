@@ -30,6 +30,35 @@ func GetUcred(conn *net.UnixConn) (*unix.Ucred, error) {
 	return ucred, nil
 }
 
+// GetPeerPidfd returns a pidfd for the peer of a unix socket, which stays tied to that process if its PID is reused.
+func GetPeerPidfd(conn *net.UnixConn) (int, error) {
+	rawConn, err := conn.SyscallConn()
+	if err != nil {
+		return -1, err
+	}
+
+	pidfd := -1
+	var pidfdErr error
+	err = rawConn.Control(func(fd uintptr) {
+		pidfd, pidfdErr = unix.GetsockoptInt(int(fd), unix.SOL_SOCKET, unix.SO_PEERPIDFD)
+	})
+	if err != nil {
+		return -1, err
+	}
+
+	if pidfdErr == nil {
+		return pidfd, nil
+	}
+
+	// SO_PEERPIDFD needs Linux 6.5, so fall back to opening the PID we were told about.
+	ucred, err := GetUcred(conn)
+	if err != nil {
+		return -1, err
+	}
+
+	return unix.PidfdOpen(int(ucred.Pid), 0)
+}
+
 // AcceptSameUser returns the first connection on l whose peer runs as this process's effective
 // user, closing any other. Abstract unix sockets have no owner or mode, so any local user can
 // connect to them.
