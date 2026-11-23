@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lxd\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2026-11-23 20:01-0500\n"
+"POT-Creation-Date: 2026-11-23 21:02-0500\n"
 "PO-Revision-Date: 2026-11-24 00:59+0000\n"
 "Last-Translator: Loge X <loge@users.noreply.hosted.weblate.org>\n"
 "Language-Team: Chinese (Simplified Han script) <https://hosted.weblate.org/"
@@ -664,8 +664,8 @@ msgstr "%s（%s）（%d个可用）"
 msgid "%s (backend=%q, source=%q)"
 msgstr "%s（后端=%q，来源=%q）"
 
-#: cmd/incus/file.go:714 cmd/incus/storage_volume_file.go:762
-#: cmd/incus/utils_copy.go:102 cmd/incus/utils_sftp.go:547
+#: cmd/incus/file.go:718 cmd/incus/storage_volume_file.go:841
+#: cmd/incus/utils_copy.go:102 cmd/incus/utils_sftp.go:550
 #, c-format
 msgid "%s is not a directory"
 msgstr "%s 不是目录"
@@ -685,7 +685,7 @@ msgstr "别名：%s"
 msgid "%s; did you forget a space in %s?\n"
 msgstr ""
 
-#: cmd/incus/utils_sftp.go:401
+#: cmd/incus/utils_sftp.go:404
 #, c-format
 msgid "'%s' isn't a supported file type"
 msgstr "“%s”不是受支持的文件类型"
@@ -886,7 +886,7 @@ msgstr ""
 msgid "A client certificate is already present"
 msgstr "客户端证书已存在"
 
-#: cmd/incus/file.go:763 cmd/incus/storage_volume_file.go:800
+#: cmd/incus/file.go:767 cmd/incus/storage_volume_file.go:879
 msgid ""
 "A target file name must be specified when pushing from stdin; the target is "
 "a directory"
@@ -1212,12 +1212,12 @@ msgstr ""
 msgid "Alternative certificate name"
 msgstr "备选证书名称"
 
-#: cmd/incus/file.go:441 cmd/incus/file.go:671
-#: cmd/incus/storage_volume_file.go:521 cmd/incus/storage_volume_file.go:718
+#: cmd/incus/file.go:445 cmd/incus/file.go:675
+#: cmd/incus/storage_volume_file.go:600 cmd/incus/storage_volume_file.go:797
 msgid "Always follow symbolic links in source path"
 msgstr ""
 
-#: cmd/incus/file.go:963
+#: cmd/incus/file.go:1042
 #, c-format
 msgid "An instance path is required for %s"
 msgstr ""
@@ -1822,6 +1822,7 @@ msgstr "集群成员名称"
 msgid "Clustering enabled"
 msgstr "已启用集群"
 
+#: cmd/incus/file.go:925 cmd/incus/storage_volume_file.go:359
 #: cmd/incus/utils_list.go:113 cmd/incus/utils_list.go:135
 msgid "Columns"
 msgstr "列"
@@ -2159,23 +2160,23 @@ msgstr "创建空实例"
 msgid "Create and start instances from images"
 msgstr "从镜像创建和启动实例"
 
-#: cmd/incus/file.go:110 cmd/incus/file.go:436 cmd/incus/file.go:663
-#: cmd/incus/storage_volume_file.go:106 cmd/incus/storage_volume_file.go:516
-#: cmd/incus/storage_volume_file.go:710
+#: cmd/incus/file.go:114 cmd/incus/file.go:440 cmd/incus/file.go:667
+#: cmd/incus/storage_volume_file.go:110 cmd/incus/storage_volume_file.go:595
+#: cmd/incus/storage_volume_file.go:789
 msgid "Create any directories necessary"
 msgstr "创建任何必要的目录"
 
-#: cmd/incus/storage_volume_file.go:94
+#: cmd/incus/storage_volume_file.go:98
 #, fuzzy
 msgid "Create files and directories in custom vollume"
 msgstr "在实例中创建文件和目录"
 
-#: cmd/incus/storage_volume_file.go:95
+#: cmd/incus/storage_volume_file.go:99
 #, fuzzy
 msgid "Create files and directories in custom volume"
 msgstr "在实例中创建文件和目录"
 
-#: cmd/incus/file.go:98 cmd/incus/file.go:99
+#: cmd/incus/file.go:102 cmd/incus/file.go:103
 msgid "Create files and directories in instances"
 msgstr "在实例中创建文件和目录"
 
@@ -2294,7 +2295,7 @@ msgstr "已创建：%s"
 msgid "Creating %s"
 msgstr "正在创建 %s"
 
-#: cmd/incus/file.go:226 cmd/incus/storage_volume_file.go:219
+#: cmd/incus/file.go:230 cmd/incus/storage_volume_file.go:223
 #, c-format
 msgid "Creating %s: %%s"
 msgstr "正在创建 %s：%%s"
@@ -2341,7 +2342,7 @@ msgid ""
 "Custom columns can be defined with “properties:<key>”, e.g. “properties:os”."
 msgstr ""
 
-#: cmd/incus/utils_sftp.go:499
+#: cmd/incus/utils_sftp.go:502
 #, c-format
 msgid "Cyclic symbolic link %q"
 msgstr ""
@@ -2430,11 +2431,11 @@ msgstr "删除集群组"
 msgid "Delete custom storage volumes"
 msgstr "删除自定义存储卷"
 
-#: cmd/incus/storage_volume_file.go:264 cmd/incus/storage_volume_file.go:265
+#: cmd/incus/storage_volume_file.go:268 cmd/incus/storage_volume_file.go:269
 msgid "Delete files in custom volume"
 msgstr "删除自定义存储卷中的文件"
 
-#: cmd/incus/file.go:269 cmd/incus/file.go:270
+#: cmd/incus/file.go:273 cmd/incus/file.go:274
 msgid "Delete files in instances"
 msgstr "删除实例中的文件"
 
@@ -2670,7 +2671,7 @@ msgstr "目录导入在此平台上不可用"
 msgid "Directory to run the command in (default /root)"
 msgstr "运行命令的目录（默认/根目录）"
 
-#: cmd/incus/file.go:911 cmd/incus/storage_volume_file.go:343
+#: cmd/incus/file.go:990 cmd/incus/storage_volume_file.go:422
 msgid "Disable authentication when using SSH SFTP listener"
 msgstr "使用 SSH SFTP 监听器时禁用身份验证"
 
@@ -2830,11 +2831,11 @@ msgstr "编辑集群组"
 msgid "Edit cluster member configurations as YAML"
 msgstr "将集群成员配置编辑为 YAML"
 
-#: cmd/incus/file.go:353 cmd/incus/file.go:354
+#: cmd/incus/file.go:357 cmd/incus/file.go:358
 msgid "Edit files in instances"
 msgstr "编辑实例中的文件"
 
-#: cmd/incus/storage_volume_file.go:431 cmd/incus/storage_volume_file.go:432
+#: cmd/incus/storage_volume_file.go:510 cmd/incus/storage_volume_file.go:511
 msgid "Edit files in storage volumes"
 msgstr "编辑存储卷中的文件"
 
@@ -2941,6 +2942,11 @@ msgstr "将信任配置编辑为 YAML"
 #: cmd/incus/utils_list.go:178
 #, fuzzy, c-format
 msgid "Empty column entry (redundant, leading or trailing comma) in '%s'"
+msgstr "“%s”中的空列条目（冗余、前导或尾随命令）"
+
+#: cmd/incus/utils_sftp.go:620
+#, fuzzy, c-format
+msgid "Empty column entry (redundant, leading or trailing command) in '%s'"
 msgstr "“%s”中的空列条目（冗余、前导或尾随命令）"
 
 #: cmd/incus/image.go:1096
@@ -3357,8 +3363,8 @@ msgstr "检查实例是否存在“%s:%s”失败：%w"
 msgid "Failed connecting to instance SFTP for client %q: %v"
 msgstr "连接到客户端 %q 的实例 SFTP 失败：%v"
 
-#: cmd/incus/file.go:981 cmd/incus/storage_volume_file.go:400
-#: cmd/incus/storage_volume_file.go:582 cmd/incus/storage_volume_file.go:749
+#: cmd/incus/file.go:1060 cmd/incus/storage_volume_file.go:479
+#: cmd/incus/storage_volume_file.go:661 cmd/incus/storage_volume_file.go:828
 #, c-format
 msgid "Failed connecting to instance SFTP: %w"
 msgstr "连接到实例 SFTP 失败：%w"
@@ -3635,13 +3641,13 @@ msgstr "加载配置失败：%s"
 msgid "Failed to open input file %q: %w"
 msgstr "关闭服务器证书文件 %q 失败：%w"
 
-#: cmd/incus/file.go:789 cmd/incus/storage_volume_file.go:825
-#: cmd/incus/utils_sftp.go:435
+#: cmd/incus/file.go:793 cmd/incus/storage_volume_file.go:904
+#: cmd/incus/utils_sftp.go:438
 #, fuzzy, c-format
 msgid "Failed to open source file %q: %v"
 msgstr "关闭服务器证书文件 %q 失败：%w"
 
-#: cmd/incus/utils_sftp.go:139
+#: cmd/incus/utils_sftp.go:142
 #, fuzzy, c-format
 msgid "Failed to open target file %q: %w"
 msgstr "关闭服务器证书文件 %q 失败：%w"
@@ -3779,7 +3785,7 @@ msgstr "转储实例内存失败：%w"
 msgid "Failed to update cluster member state: %w"
 msgstr "更新群集成员状态失败：%w"
 
-#: cmd/incus/utils_sftp.go:388 cmd/incus/utils_sftp.go:508
+#: cmd/incus/utils_sftp.go:391 cmd/incus/utils_sftp.go:511
 #, c-format
 msgid "Failed to walk path for %s: %s"
 msgstr "为 %s 遍历路径失败：%s"
@@ -3842,8 +3848,8 @@ msgstr ""
 msgid "Flags"
 msgstr ""
 
-#: cmd/incus/file.go:440 cmd/incus/file.go:670
-#: cmd/incus/storage_volume_file.go:520 cmd/incus/storage_volume_file.go:717
+#: cmd/incus/file.go:444 cmd/incus/file.go:674
+#: cmd/incus/storage_volume_file.go:599 cmd/incus/storage_volume_file.go:796
 msgid "Follow command-line symbolic links in source path"
 msgstr ""
 
@@ -3858,7 +3864,7 @@ msgstr ""
 msgid "Force a particular restoration action (only \"skip\" is supported)"
 msgstr "强制采取特定的解散操作"
 
-#: cmd/incus/file.go:111 cmd/incus/storage_volume_file.go:107
+#: cmd/incus/file.go:115 cmd/incus/storage_volume_file.go:111
 msgid "Force creating files or directories"
 msgstr "强制创建文件或目录"
 
@@ -3866,7 +3872,7 @@ msgstr "强制创建文件或目录"
 msgid "Force delete the project and everything it contains."
 msgstr "强制删除项目及其包含的所有内容。"
 
-#: cmd/incus/file.go:272 cmd/incus/storage_volume_file.go:267
+#: cmd/incus/file.go:276 cmd/incus/storage_volume_file.go:271
 msgid "Force deleting files, directories, and subdirectories"
 msgstr "强制删除文件、目录和子目录"
 
@@ -3948,7 +3954,8 @@ msgstr "强制连接到控制台，即使已存在活动会话"
 msgid "Format (base64|binary|efivarfs|hex|json|yaml)"
 msgstr ""
 
-#: cmd/incus/admin_sql.go:58 cmd/incus/project.go:897
+#: cmd/incus/admin_sql.go:58 cmd/incus/file.go:926 cmd/incus/project.go:897
+#: cmd/incus/storage_volume_file.go:360
 #, fuzzy
 msgid ""
 "Format (csv|json|table|yaml|compact|markdown), use suffix \",noheader\" to "
@@ -4048,6 +4055,10 @@ msgstr "频率：%v Mhz"
 #, c-format
 msgid "Frequency: %vMhz (min: %vMhz, max: %vMhz)"
 msgstr "频率：%v Mhz（最低：%v Mhz，最高：%v Mhz）"
+
+#: cmd/incus/utils_sftp.go:613
+msgid "GID"
+msgstr ""
 
 #: cmd/incus/remote.go:1293
 msgid "GLOBAL"
@@ -4680,7 +4691,7 @@ msgstr "客户端 %q 的实例已断开连接"
 msgid "Instance name is: %s"
 msgstr "实例名称是：%s"
 
-#: cmd/incus/file.go:968
+#: cmd/incus/file.go:1047
 msgid "Instance path cannot be used in SSH SFTP listener mode"
 msgstr "实例路径不能在 SSH SFTP 监听模式下使用"
 
@@ -4852,7 +4863,7 @@ msgstr "提供的排序类型无效"
 msgid "Invalid subnet %q for network %q: %w"
 msgstr "无效的卷 %s"
 
-#: cmd/incus/file.go:143 cmd/incus/storage_volume_file.go:140
+#: cmd/incus/file.go:147 cmd/incus/storage_volume_file.go:144
 #, c-format
 msgid "Invalid type %q"
 msgstr "无效的类型 %q"
@@ -5071,6 +5082,96 @@ msgstr "列出可用的存储池"
 #: cmd/incus/operation.go:117 cmd/incus/operation.go:118
 msgid "List background operations"
 msgstr ""
+
+#: cmd/incus/storage_volume_file.go:335
+#, fuzzy
+msgid "List files in custom volumes"
+msgstr "删除自定义存储卷"
+
+#: cmd/incus/storage_volume_file.go:336
+#, fuzzy
+msgid ""
+"List files in custom volumes\n"
+"\n"
+"Default column layout: ntsmugM\n"
+"\n"
+"== Columns ==\n"
+"The -c option takes a comma separated list of arguments that control\n"
+"which file attributes to output when displaying in table or csv format.\n"
+"\n"
+"Commas between consecutive shorthand chars are optional.\n"
+"\n"
+"Pre-defined column shorthand chars:\n"
+"  n - Name\n"
+"  t - Type\n"
+"  s - Size\n"
+"  m - Mode\n"
+"  u - UID\n"
+"  g - GID\n"
+"  M - Modified"
+msgstr ""
+"显示每个实例的 CPU 使用率、内存使用率和磁盘使用率\n"
+"\n"
+"默认列布局：numD\n"
+"\n"
+"== 列 ==\n"
+"-c 选项采用逗号分隔的参数列表，\n"
+"这些参数控制用表格或压缩格式显示时输出哪些实例属性。\n"
+"\n"
+"列参数是预定义的简写字符（见下文）。\n"
+"连续简写字符之间的逗号是可选的。\n"
+"\n"
+"列简写字符：\n"
+"  D - 磁盘使用率\n"
+"  e - 项目名称\n"
+"  m - 内存使用率\n"
+"  n - 实例名称\n"
+"  u - CPU 使用率（秒）"
+
+#: cmd/incus/file.go:901
+#, fuzzy
+msgid "List files in instances"
+msgstr "编辑实例中的文件"
+
+#: cmd/incus/file.go:902
+#, fuzzy
+msgid ""
+"List files in instances\n"
+"\n"
+"Default column layout: ntsmugM\n"
+"\n"
+"== Columns ==\n"
+"The -c option takes a comma separated list of arguments that control\n"
+"which file attributes to output when displaying in table or csv format.\n"
+"\n"
+"Commas between consecutive shorthand chars are optional.\n"
+"\n"
+"Pre-defined column shorthand chars:\n"
+"  n - Name\n"
+"  t - Type\n"
+"  s - Size\n"
+"  m - Mode\n"
+"  u - UID\n"
+"  g - GID\n"
+"  M - Modified"
+msgstr ""
+"显示每个实例的 CPU 使用率、内存使用率和磁盘使用率\n"
+"\n"
+"默认列布局：numD\n"
+"\n"
+"== 列 ==\n"
+"-c 选项采用逗号分隔的参数列表，\n"
+"这些参数控制用表格或压缩格式显示时输出哪些实例属性。\n"
+"\n"
+"列参数是预定义的简写字符（见下文）。\n"
+"连续简写字符之间的逗号是可选的。\n"
+"\n"
+"列简写字符：\n"
+"  D - 磁盘使用率\n"
+"  e - 项目名称\n"
+"  m - 内存使用率\n"
+"  n - 实例名称\n"
+"  u - CPU 使用率（秒）"
 
 #: cmd/incus/image_alias.go:177
 msgid "List image aliases"
@@ -5425,6 +5526,14 @@ msgstr ""
 msgid "MII state"
 msgstr ""
 
+#: cmd/incus/utils_sftp.go:611
+msgid "MODE"
+msgstr ""
+
+#: cmd/incus/utils_sftp.go:614
+msgid "MODIFIED"
+msgstr ""
+
 #: cmd/incus/info.go:803
 msgid "MTU"
 msgstr ""
@@ -5767,7 +5876,7 @@ msgstr ""
 msgid "Minimum size is 1GiB"
 msgstr ""
 
-#: cmd/incus/file.go:717
+#: cmd/incus/file.go:721
 msgid "Missing target directory"
 msgstr ""
 
@@ -5800,7 +5909,7 @@ msgstr ""
 msgid "More than one device matches, specify the device name"
 msgstr ""
 
-#: cmd/incus/file.go:485
+#: cmd/incus/file.go:489
 #, fuzzy
 msgid "More than one file to download, but target is not a directory"
 msgstr "将下载多个文件, 但目标不是目录"
@@ -5811,22 +5920,22 @@ msgid ""
 "\"instance_nvram_bulk_update\" API extension"
 msgstr ""
 
-#: cmd/incus/storage_volume_file.go:331
+#: cmd/incus/storage_volume_file.go:410
 #, fuzzy
 msgid "Mount files from custom storage volumes"
 msgstr "复制自定义存储卷"
 
-#: cmd/incus/storage_volume_file.go:332
+#: cmd/incus/storage_volume_file.go:411
 msgid ""
 "Mount files from custom storage volumes.\n"
 "If no target path is provided, start an SSH SFTP listener instead."
 msgstr ""
 
-#: cmd/incus/file.go:897
+#: cmd/incus/file.go:976
 msgid "Mount files from instances"
 msgstr ""
 
-#: cmd/incus/file.go:898
+#: cmd/incus/file.go:977
 msgid ""
 "Mount files from instances.\n"
 "If no target path is provided, start an SSH SFTP listener instead."
@@ -5898,6 +6007,7 @@ msgstr ""
 #: cmd/incus/storage_bucket.go:762 cmd/incus/storage_volume.go:1508
 #: cmd/incus/storage_volume_bitmap.go:212
 #: cmd/incus/storage_volume_snapshot.go:320 cmd/incus/top.go:44
+#: cmd/incus/utils_sftp.go:608
 msgid "NAME"
 msgstr ""
 
@@ -6235,8 +6345,8 @@ msgstr ""
 msgid "Network zone record %s deleted"
 msgstr ""
 
-#: cmd/incus/file.go:439 cmd/incus/file.go:669
-#: cmd/incus/storage_volume_file.go:519 cmd/incus/storage_volume_file.go:716
+#: cmd/incus/file.go:443 cmd/incus/file.go:673
+#: cmd/incus/storage_volume_file.go:598 cmd/incus/storage_volume_file.go:795
 msgid "Never follow symbolic links in source path"
 msgstr ""
 
@@ -6664,8 +6774,8 @@ msgstr "正在刷新实例: %s"
 msgid "Pre-seed mode, expects YAML config from the given file or from stdin"
 msgstr ""
 
-#: cmd/incus/file.go:437 cmd/incus/file.go:667
-#: cmd/incus/storage_volume_file.go:517 cmd/incus/storage_volume_file.go:714
+#: cmd/incus/file.go:441 cmd/incus/file.go:671
+#: cmd/incus/storage_volume_file.go:596 cmd/incus/storage_volume_file.go:793
 msgid "Preserve ownership, timestamps and mode (implies --recursive)"
 msgstr ""
 
@@ -6904,32 +7014,32 @@ msgstr "发布实例为镜像"
 msgid "Publishing instance: %s"
 msgstr "正在发布实例: %s"
 
-#: cmd/incus/storage_volume_file.go:506 cmd/incus/storage_volume_file.go:507
+#: cmd/incus/storage_volume_file.go:585 cmd/incus/storage_volume_file.go:586
 #, fuzzy
 msgid "Pull files from custom volumes"
 msgstr "复制自定义存储卷"
 
-#: cmd/incus/file.go:426 cmd/incus/file.go:427
+#: cmd/incus/file.go:430 cmd/incus/file.go:431
 msgid "Pull files from instances"
 msgstr "从实例拉取文件"
 
-#: cmd/incus/file.go:569 cmd/incus/storage_volume_file.go:627
-#: cmd/incus/utils_sftp.go:307
+#: cmd/incus/file.go:573 cmd/incus/storage_volume_file.go:706
+#: cmd/incus/utils_sftp.go:310
 #, fuzzy, c-format
 msgid "Pulling %s from %s: %%s"
 msgstr "正在从 %[2]s 拉取 %[1]s: %%s"
 
-#: cmd/incus/storage_volume_file.go:700 cmd/incus/storage_volume_file.go:701
+#: cmd/incus/storage_volume_file.go:779 cmd/incus/storage_volume_file.go:780
 #, fuzzy
 msgid "Push files into custom volumes"
 msgstr "删除自定义存储卷"
 
-#: cmd/incus/file.go:653 cmd/incus/file.go:654
+#: cmd/incus/file.go:657 cmd/incus/file.go:658
 msgid "Push files into instances"
 msgstr "向实例推送文件"
 
-#: cmd/incus/file.go:822 cmd/incus/storage_volume_file.go:858
-#: cmd/incus/utils_sftp.go:446
+#: cmd/incus/file.go:826 cmd/incus/storage_volume_file.go:937
+#: cmd/incus/utils_sftp.go:449
 #, fuzzy, c-format
 msgid "Pushing %s to %s: %%s"
 msgstr "正在向 %[2]s 推送 %[1]s: %%s"
@@ -7016,8 +7126,8 @@ msgid ""
 "database records."
 msgstr ""
 
-#: cmd/incus/file.go:438 cmd/incus/file.go:668
-#: cmd/incus/storage_volume_file.go:518 cmd/incus/storage_volume_file.go:715
+#: cmd/incus/file.go:442 cmd/incus/file.go:672
+#: cmd/incus/storage_volume_file.go:597 cmd/incus/storage_volume_file.go:794
 #, fuzzy
 msgid "Recursively transfer files"
 msgstr "递归传输文件"
@@ -7432,7 +7542,7 @@ msgstr ""
 msgid "SEVERITY"
 msgstr ""
 
-#: cmd/incus/image.go:1069
+#: cmd/incus/image.go:1069 cmd/incus/utils_sftp.go:610
 msgid "SIZE"
 msgstr ""
 
@@ -7607,7 +7717,7 @@ msgstr ""
 msgid "Set a metadata property (key=value, may be passed multiple times)"
 msgstr "要监听的事件类型"
 
-#: cmd/incus/file.go:912 cmd/incus/storage_volume_file.go:344
+#: cmd/incus/file.go:991 cmd/incus/storage_volume_file.go:423
 msgid "Set authentication user when using SSH SFTP listener"
 msgstr ""
 
@@ -7829,41 +7939,41 @@ msgstr ""
 msgid "Set the URL(s) for the remote"
 msgstr ""
 
-#: cmd/incus/file.go:112 cmd/incus/storage_volume_file.go:108
+#: cmd/incus/file.go:116 cmd/incus/storage_volume_file.go:112
 msgid "Set the file's gid on create"
 msgstr ""
 
-#: cmd/incus/storage_volume_file.go:712
+#: cmd/incus/storage_volume_file.go:791
 msgid "Set the file's gid on push"
 msgstr ""
 
-#: cmd/incus/file.go:114 cmd/incus/storage_volume_file.go:110
+#: cmd/incus/file.go:118 cmd/incus/storage_volume_file.go:114
 msgid "Set the file's perms on create"
 msgstr ""
 
-#: cmd/incus/storage_volume_file.go:713
+#: cmd/incus/storage_volume_file.go:792
 msgid "Set the file's perms on push"
 msgstr ""
 
-#: cmd/incus/file.go:666
+#: cmd/incus/file.go:670
 msgid ""
 "Set the file's perms on push (in recursive mode, only sets the target "
 "directory's permissions)"
 msgstr ""
 
-#: cmd/incus/file.go:113 cmd/incus/storage_volume_file.go:109
+#: cmd/incus/file.go:117 cmd/incus/storage_volume_file.go:113
 msgid "Set the file's uid on create"
 msgstr ""
 
-#: cmd/incus/storage_volume_file.go:711
+#: cmd/incus/storage_volume_file.go:790
 msgid "Set the file's uid on push"
 msgstr ""
 
-#: cmd/incus/file.go:665
+#: cmd/incus/file.go:669
 msgid "Set the files' GIDs on push"
 msgstr ""
 
-#: cmd/incus/file.go:664
+#: cmd/incus/file.go:668
 msgid "Set the files' UIDs on push"
 msgstr ""
 
@@ -7957,7 +8067,7 @@ msgstr ""
 msgid "Set values for UEFI variables."
 msgstr ""
 
-#: cmd/incus/file.go:910 cmd/incus/storage_volume_file.go:342
+#: cmd/incus/file.go:989 cmd/incus/storage_volume_file.go:421
 msgid "Setup SSH SFTP listener on address:port instead of mounting"
 msgstr ""
 
@@ -8519,7 +8629,7 @@ msgstr ""
 msgid "Switch the default remote"
 msgstr ""
 
-#: cmd/incus/file.go:148 cmd/incus/storage_volume_file.go:144
+#: cmd/incus/file.go:152 cmd/incus/storage_volume_file.go:148
 msgid "Symlink target path can only be used for type \"symlink\""
 msgstr ""
 
@@ -8559,7 +8669,7 @@ msgstr "设备 %d："
 #: cmd/incus/network.go:1156 cmd/incus/network_allocations.go:51
 #: cmd/incus/network_integration.go:391 cmd/incus/network_peer.go:91
 #: cmd/incus/operation.go:123 cmd/incus/storage_volume.go:1507
-#: cmd/incus/warning.go:77
+#: cmd/incus/utils_sftp.go:609 cmd/incus/warning.go:77
 msgid "TYPE"
 msgstr ""
 
@@ -8582,12 +8692,12 @@ msgstr ""
 msgid "Target path %q already exists"
 msgstr "目标路径 %q 已存在"
 
-#: cmd/incus/file.go:958 cmd/incus/storage_volume_file.go:394
+#: cmd/incus/file.go:1037 cmd/incus/storage_volume_file.go:473
 #, fuzzy
 msgid "Target path and --listen flag cannot be used together"
 msgstr "目标路径和 --listen 标记不能一起使用"
 
-#: cmd/incus/file.go:952 cmd/incus/storage_volume_file.go:389
+#: cmd/incus/file.go:1031 cmd/incus/storage_volume_file.go:468
 msgid "Target path must be a directory"
 msgstr ""
 
@@ -8901,7 +9011,7 @@ msgstr ""
 msgid "The specified disk is not in the given pool (found %s)"
 msgstr ""
 
-#: cmd/incus/file.go:115 cmd/incus/storage_volume_file.go:111
+#: cmd/incus/file.go:119 cmd/incus/storage_volume_file.go:115
 msgid "The type to create (file, symlink, or directory)"
 msgstr ""
 
@@ -9085,6 +9195,10 @@ msgstr ""
 msgid "UEFI variables %s deleted on %s\n"
 msgstr ""
 
+#: cmd/incus/utils_sftp.go:612
+msgid "UID"
+msgstr ""
+
 #: cmd/incus/project.go:952
 msgid "UNLIMITED"
 msgstr ""
@@ -9131,7 +9245,7 @@ msgstr ""
 msgid "Unable to connect to any of the cluster members specified in join token"
 msgstr ""
 
-#: cmd/incus/file.go:385 cmd/incus/storage_volume_file.go:463
+#: cmd/incus/file.go:389 cmd/incus/storage_volume_file.go:542
 #, c-format
 msgid "Unable to create a temporary file: %v"
 msgstr ""
@@ -9210,7 +9324,7 @@ msgid ""
 "“=”"
 msgstr ""
 
-#: cmd/incus/utils_list.go:196
+#: cmd/incus/utils_list.go:196 cmd/incus/utils_sftp.go:626
 #, c-format
 msgid "Unknown column shorthand char '%c' in '%s'"
 msgstr ""
@@ -9220,7 +9334,7 @@ msgstr ""
 msgid "Unknown console type %q"
 msgstr ""
 
-#: cmd/incus/utils_sftp.go:365
+#: cmd/incus/utils_sftp.go:368
 #, c-format
 msgid "Unknown file type '%s'"
 msgstr ""
@@ -10199,7 +10313,7 @@ msgid ""
 "\tDownload a backup tarball with it written to the standard output."
 msgstr ""
 
-#: cmd/incus/file.go:102
+#: cmd/incus/file.go:106
 msgid ""
 "incus file create foo/bar\n"
 "   To create a file /bar in the foo instance.\n"
@@ -10208,7 +10322,13 @@ msgid ""
 "   To create a symlink /bar in instance foo whose target is baz."
 msgstr ""
 
-#: cmd/incus/file.go:902
+#: cmd/incus/file.go:920
+msgid ""
+"incus file list foo/etc\n"
+"    List the files in the /etc directory of instance \"foo\"."
+msgstr ""
+
+#: cmd/incus/file.go:981
 msgid ""
 "incus file mount foo/root fooroot\n"
 "   To mount /root from the instance foo onto the local fooroot directory.\n"
@@ -10217,7 +10337,7 @@ msgid ""
 "   To start an SSH SFTP listener for the root filesystem of instance foo."
 msgstr ""
 
-#: cmd/incus/file.go:428
+#: cmd/incus/file.go:432
 msgid ""
 "incus file pull foo/etc/hosts .\n"
 "   To pull /etc/hosts from the instance and write it to the current "
@@ -10228,7 +10348,7 @@ msgid ""
 "output."
 msgstr ""
 
-#: cmd/incus/file.go:655
+#: cmd/incus/file.go:659
 msgid ""
 "incus file push /etc/hosts foo/etc/hosts\n"
 "   To push /etc/hosts into the instance \"foo\".\n"
@@ -10642,7 +10762,7 @@ msgid ""
 "of volume.yaml"
 msgstr ""
 
-#: cmd/incus/storage_volume_file.go:98
+#: cmd/incus/storage_volume_file.go:102
 msgid ""
 "incus storage volume file create foo bar/baz\n"
 "   To create a file baz in the bar volume on the foo pool.\n"
@@ -10652,7 +10772,13 @@ msgid ""
 "target is baz."
 msgstr ""
 
-#: cmd/incus/storage_volume_file.go:336
+#: cmd/incus/storage_volume_file.go:354
+msgid ""
+"incus storage volume file list default vol1/data\n"
+"    List the files in the data directory of custom volume \"vol1\"."
+msgstr ""
+
+#: cmd/incus/storage_volume_file.go:415
 msgid ""
 "incus storage volume file mount mypool myvolume localdir\n"
 "   To mount the storage volume myvolume from pool mypool onto the local "
@@ -10663,7 +10789,7 @@ msgid ""
 "mypool."
 msgstr ""
 
-#: cmd/incus/storage_volume_file.go:508
+#: cmd/incus/storage_volume_file.go:587
 msgid ""
 "incus storage volume file pull local v1/etc/hosts .\n"
 "   To pull /etc/hosts from the custom volume \"v1\" and write it to the "
@@ -10674,7 +10800,7 @@ msgid ""
 "standard output."
 msgstr ""
 
-#: cmd/incus/storage_volume_file.go:702
+#: cmd/incus/storage_volume_file.go:781
 msgid ""
 "incus storage volume file push /etc/hosts local v1/etc/hosts\n"
 "   To push /etc/hosts into the custom volume \"v1\".\n"
@@ -10945,7 +11071,7 @@ msgstr "sshfs 已停止"
 msgid "sshfs mounting %q on %q"
 msgstr "sshfs 挂载 %q 在 %q"
 
-#: cmd/incus/file.go:759
+#: cmd/incus/file.go:763
 #, fuzzy
 msgid "stdin can only be used once, with no other source arguments"
 msgstr "--target 不能与实例一起使用"
@@ -11442,48 +11568,6 @@ msgstr ""
 #~ "  e - Project name\n"
 #~ "  n - Name\n"
 #~ "  u - Used by"
-#~ msgstr ""
-#~ "显示每个实例的 CPU 使用率、内存使用率和磁盘使用率\n"
-#~ "\n"
-#~ "默认列布局：numD\n"
-#~ "\n"
-#~ "== 列 ==\n"
-#~ "-c 选项采用逗号分隔的参数列表，\n"
-#~ "这些参数控制用表格或压缩格式显示时输出哪些实例属性。\n"
-#~ "\n"
-#~ "列参数是预定义的简写字符（见下文）。\n"
-#~ "连续简写字符之间的逗号是可选的。\n"
-#~ "\n"
-#~ "列简写字符：\n"
-#~ "  D - 磁盘使用率\n"
-#~ "  e - 项目名称\n"
-#~ "  m - 内存使用率\n"
-#~ "  n - 实例名称\n"
-#~ "  u - CPU 使用率（秒）"
-
-#, fuzzy
-#~ msgid ""
-#~ "List available storage pools\n"
-#~ "\n"
-#~ "Default column layout: nDdus\n"
-#~ "\n"
-#~ "== Columns ==\n"
-#~ "The -c option takes a comma separated list of arguments that control\n"
-#~ "which storage pools attributes to output when displaying in table or csv\n"
-#~ "format.\n"
-#~ "\n"
-#~ "Column arguments are either pre-defined shorthand chars (see below),\n"
-#~ "or (extended) config keys.\n"
-#~ "\n"
-#~ "Commas between consecutive shorthand chars are optional.\n"
-#~ "\n"
-#~ "Pre-defined column shorthand chars:\n"
-#~ "  n - Name\n"
-#~ "  D - Driver\n"
-#~ "  d - Description\n"
-#~ "  S - Source\n"
-#~ "  u - used by\n"
-#~ "  s - state"
 #~ msgstr ""
 #~ "显示每个实例的 CPU 使用率、内存使用率和磁盘使用率\n"
 #~ "\n"
