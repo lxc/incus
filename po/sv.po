@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: incus\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2026-11-23 23:38+0100\n"
+"POT-Creation-Date: 2026-11-23 20:01-0500\n"
 "PO-Revision-Date: 2026-11-24 00:59+0000\n"
 "Last-Translator: Anonymous <anonymous@users.noreply.hosted.weblate.org>\n"
 "Language-Team: Swedish <https://hosted.weblate.org/projects/incus/cli/sv/>\n"
@@ -907,7 +907,7 @@ msgstr "ADRESS"
 msgid "ADDRESSES"
 msgstr "ADRESSER"
 
-#: cmd/incus/alias.go:123 cmd/incus/image_alias.go:183 cmd/incus/image.go:1066
+#: cmd/incus/alias.go:123 cmd/incus/image.go:1066 cmd/incus/image_alias.go:183
 msgid "ALIAS"
 msgstr "ALIAS"
 
@@ -953,7 +953,7 @@ msgstr "Åtkomstnyckel (genereras automatiskt om tom)"
 msgid "Access key: %s"
 msgstr "Åtkomstnyckel: %s"
 
-#: cmd/incus/config_device.go:327 cmd/incus/config.go:385
+#: cmd/incus/config.go:385 cmd/incus/config_device.go:327
 msgid "Access the expanded configuration"
 msgstr "Öppna den utökade konfigurationen"
 
@@ -1110,8 +1110,8 @@ msgstr "Ytterligare hjälpämnen:"
 msgid ""
 "Additional storage pool configuration property (KEY=VALUE, empty when done):"
 msgstr ""
-"Ytterligare konfigurationsegenskap för lagringspool (KEY=VALUE, tom när klar)"
-":"
+"Ytterligare konfigurationsegenskap för lagringspool (KEY=VALUE, tom när "
+"klar):"
 
 #: cmd/incus/admin_init.go:56
 msgid "Address to bind to (default: none)"
@@ -1409,8 +1409,8 @@ msgstr "Säkerhetskopior:"
 #, c-format
 msgid "Bad device override syntax, expecting <device>,<key>=<value>: %s"
 msgstr ""
-"Felaktig syntax för enhetsöverskrivning, förväntar sig <enhet>,<nyckel>"
-"=<värde>: %s"
+"Felaktig syntax för enhetsöverskrivning, förväntar sig <enhet>,"
+"<nyckel>=<värde>: %s"
 
 #: cmd/incus/query.go:92
 #, c-format
@@ -1575,9 +1575,9 @@ msgstr "Kan inte ta bort standardfjärrkontrollen"
 msgid "Can't specify --fast with --columns"
 msgstr "Kan inte ange --fast med --columns"
 
-#: cmd/incus/image.go:1275 cmd/incus/list.go:387 cmd/incus/network_acl.go:134
-#: cmd/incus/network_address_set.go:131 cmd/incus/network_allocations.go:132
-#: cmd/incus/network_zone.go:140 cmd/incus/network.go:1104
+#: cmd/incus/image.go:1275 cmd/incus/list.go:387 cmd/incus/network.go:1104
+#: cmd/incus/network_acl.go:134 cmd/incus/network_address_set.go:131
+#: cmd/incus/network_allocations.go:132 cmd/incus/network_zone.go:140
 #: cmd/incus/operation.go:173 cmd/incus/profile.go:735
 #: cmd/incus/storage_bucket.go:477 cmd/incus/storage_volume.go:1540
 #: cmd/incus/top.go:99
@@ -1801,6 +1801,9 @@ msgstr "Klustermedlem %s borttagen från grupp %s"
 #: cmd/incus/config.go:105 cmd/incus/config.go:387 cmd/incus/config.go:529
 #: cmd/incus/config.go:697 cmd/incus/config.go:821 cmd/incus/copy.go:68
 #: cmd/incus/create.go:70 cmd/incus/info.go:59 cmd/incus/move.go:71
+#: cmd/incus/network.go:346 cmd/incus/network.go:801 cmd/incus/network.go:875
+#: cmd/incus/network.go:1043 cmd/incus/network.go:1288
+#: cmd/incus/network.go:1372 cmd/incus/network.go:1434
 #: cmd/incus/network_forward.go:168 cmd/incus/network_forward.go:239
 #: cmd/incus/network_forward.go:405 cmd/incus/network_forward.go:544
 #: cmd/incus/network_forward.go:686 cmd/incus/network_forward.go:764
@@ -1812,33 +1815,30 @@ msgstr "Klustermedlem %s borttagen från grupp %s"
 #: cmd/incus/network_load_balancer.go:743
 #: cmd/incus/network_load_balancer.go:808
 #: cmd/incus/network_load_balancer.go:902
-#: cmd/incus/network_load_balancer.go:968 cmd/incus/network.go:346
-#: cmd/incus/network.go:801 cmd/incus/network.go:875 cmd/incus/network.go:1043
-#: cmd/incus/network.go:1288 cmd/incus/network.go:1372
-#: cmd/incus/network.go:1434 cmd/incus/storage_bucket.go:114
-#: cmd/incus/storage_bucket.go:203 cmd/incus/storage_bucket.go:253
-#: cmd/incus/storage_bucket.go:372 cmd/incus/storage_bucket.go:528
-#: cmd/incus/storage_bucket.go:634 cmd/incus/storage_bucket.go:687
-#: cmd/incus/storage_bucket.go:759 cmd/incus/storage_bucket.go:833
-#: cmd/incus/storage_bucket.go:923 cmd/incus/storage_bucket.go:972
-#: cmd/incus/storage_bucket.go:1094 cmd/incus/storage_bucket.go:1154
-#: cmd/incus/storage_bucket.go:1335 cmd/incus/storage_volume_bitmap.go:76
-#: cmd/incus/storage_volume_bitmap.go:141
+#: cmd/incus/network_load_balancer.go:968 cmd/incus/storage.go:112
+#: cmd/incus/storage.go:392 cmd/incus/storage.go:469 cmd/incus/storage.go:727
+#: cmd/incus/storage.go:821 cmd/incus/storage.go:901
+#: cmd/incus/storage_bucket.go:114 cmd/incus/storage_bucket.go:203
+#: cmd/incus/storage_bucket.go:253 cmd/incus/storage_bucket.go:372
+#: cmd/incus/storage_bucket.go:528 cmd/incus/storage_bucket.go:634
+#: cmd/incus/storage_bucket.go:687 cmd/incus/storage_bucket.go:759
+#: cmd/incus/storage_bucket.go:833 cmd/incus/storage_bucket.go:923
+#: cmd/incus/storage_bucket.go:972 cmd/incus/storage_bucket.go:1094
+#: cmd/incus/storage_bucket.go:1154 cmd/incus/storage_bucket.go:1335
+#: cmd/incus/storage_volume.go:606 cmd/incus/storage_volume.go:701
+#: cmd/incus/storage_volume.go:961 cmd/incus/storage_volume.go:1173
+#: cmd/incus/storage_volume.go:1291 cmd/incus/storage_volume.go:1733
+#: cmd/incus/storage_volume.go:1817 cmd/incus/storage_volume.go:1901
+#: cmd/incus/storage_volume.go:2051 cmd/incus/storage_volume.go:2141
+#: cmd/incus/storage_volume.go:2197 cmd/incus/storage_volume.go:2405
+#: cmd/incus/storage_volume_bitmap.go:76 cmd/incus/storage_volume_bitmap.go:141
 #: cmd/incus/storage_volume_bitmap.go:209
 #: cmd/incus/storage_volume_bitmap.go:278
 #: cmd/incus/storage_volume_snapshot.go:97
 #: cmd/incus/storage_volume_snapshot.go:245
 #: cmd/incus/storage_volume_snapshot.go:404
 #: cmd/incus/storage_volume_snapshot.go:473
-#: cmd/incus/storage_volume_snapshot.go:538 cmd/incus/storage_volume.go:606
-#: cmd/incus/storage_volume.go:701 cmd/incus/storage_volume.go:961
-#: cmd/incus/storage_volume.go:1173 cmd/incus/storage_volume.go:1291
-#: cmd/incus/storage_volume.go:1733 cmd/incus/storage_volume.go:1817
-#: cmd/incus/storage_volume.go:1901 cmd/incus/storage_volume.go:2051
-#: cmd/incus/storage_volume.go:2141 cmd/incus/storage_volume.go:2197
-#: cmd/incus/storage_volume.go:2405 cmd/incus/storage.go:112
-#: cmd/incus/storage.go:392 cmd/incus/storage.go:469 cmd/incus/storage.go:727
-#: cmd/incus/storage.go:821 cmd/incus/storage.go:901
+#: cmd/incus/storage_volume_snapshot.go:538
 msgid "Cluster member name"
 msgstr "Klustermedlemsnamn"
 
@@ -1923,17 +1923,17 @@ msgstr "Konfigurationsnyckel/värde som ska tillämpas på målinstansen"
 msgid "Config option should be in the format KEY=VALUE"
 msgstr "Konfigurationsflaggan ska ha formatet NYCKEL=VÄRDE"
 
-#: cmd/incus/cluster_group.go:369 cmd/incus/cluster.go:856
+#: cmd/incus/cluster.go:856 cmd/incus/cluster_group.go:369
+#: cmd/incus/config.go:269 cmd/incus/config.go:344
 #: cmd/incus/config_metadata.go:148 cmd/incus/config_trust.go:337
-#: cmd/incus/config.go:269 cmd/incus/config.go:344 cmd/incus/image.go:487
-#: cmd/incus/network_acl.go:655 cmd/incus/network_address_set.go:513
-#: cmd/incus/network_forward.go:648 cmd/incus/network_integration.go:296
-#: cmd/incus/network_load_balancer.go:628 cmd/incus/network_peer.go:650
-#: cmd/incus/network_zone.go:600 cmd/incus/network_zone.go:1261
-#: cmd/incus/network.go:761 cmd/incus/profile.go:572 cmd/incus/project.go:392
+#: cmd/incus/image.go:487 cmd/incus/network.go:761 cmd/incus/network_acl.go:655
+#: cmd/incus/network_address_set.go:513 cmd/incus/network_forward.go:648
+#: cmd/incus/network_integration.go:296 cmd/incus/network_load_balancer.go:628
+#: cmd/incus/network_peer.go:650 cmd/incus/network_zone.go:600
+#: cmd/incus/network_zone.go:1261 cmd/incus/profile.go:572
+#: cmd/incus/project.go:392 cmd/incus/storage.go:352
 #: cmd/incus/storage_bucket.go:334 cmd/incus/storage_bucket.go:1054
 #: cmd/incus/storage_volume.go:1088 cmd/incus/storage_volume.go:1120
-#: cmd/incus/storage.go:352
 #, c-format
 msgid "Config parsing error: %s"
 msgstr "Konfigurationsanalysfel: %s"
@@ -2378,17 +2378,17 @@ msgstr ""
 msgid "DEFAULT TARGET ADDRESS"
 msgstr "STANDARDMÅLADRESS"
 
-#: cmd/incus/action.go:330 cmd/incus/cluster_group.go:418
-#: cmd/incus/cluster.go:150 cmd/incus/config_trust.go:382
-#: cmd/incus/image_alias.go:187 cmd/incus/image.go:1062 cmd/incus/list.go:98
-#: cmd/incus/network_acl.go:107 cmd/incus/network_address_set.go:103
-#: cmd/incus/network_forward.go:92 cmd/incus/network_integration.go:390
-#: cmd/incus/network_load_balancer.go:100 cmd/incus/network_peer.go:89
-#: cmd/incus/network_zone.go:100 cmd/incus/network_zone.go:748
-#: cmd/incus/network.go:1037 cmd/incus/operation.go:124
-#: cmd/incus/profile.go:692 cmd/incus/project.go:507
+#: cmd/incus/action.go:330 cmd/incus/cluster.go:150
+#: cmd/incus/cluster_group.go:418 cmd/incus/config_trust.go:382
+#: cmd/incus/image.go:1062 cmd/incus/image_alias.go:187 cmd/incus/list.go:98
+#: cmd/incus/network.go:1037 cmd/incus/network_acl.go:107
+#: cmd/incus/network_address_set.go:103 cmd/incus/network_forward.go:92
+#: cmd/incus/network_integration.go:390 cmd/incus/network_load_balancer.go:100
+#: cmd/incus/network_peer.go:89 cmd/incus/network_zone.go:100
+#: cmd/incus/network_zone.go:748 cmd/incus/operation.go:124
+#: cmd/incus/profile.go:692 cmd/incus/project.go:507 cmd/incus/storage.go:641
 #: cmd/incus/storage_bucket.go:441 cmd/incus/storage_bucket.go:763
-#: cmd/incus/storage_volume.go:1509 cmd/incus/storage.go:641
+#: cmd/incus/storage_volume.go:1509
 msgid "DESCRIPTION"
 msgstr "BESKRIVNING"
 
@@ -2556,17 +2556,17 @@ msgstr "Ta bort ögonblicksbilder av lagringsvolymer"
 msgid "Delete warnings"
 msgstr "Ta bort varningar"
 
-#: cmd/incus/cluster_group.go:418 cmd/incus/cluster.go:150
-#: cmd/incus/config_trust.go:382 cmd/incus/image_alias.go:187
-#: cmd/incus/image.go:1062 cmd/incus/list.go:98 cmd/incus/network_acl.go:107
-#: cmd/incus/network_address_set.go:103 cmd/incus/network_forward.go:92
-#: cmd/incus/network_integration.go:390 cmd/incus/network_load_balancer.go:100
-#: cmd/incus/network_peer.go:89 cmd/incus/network_zone.go:100
-#: cmd/incus/network_zone.go:748 cmd/incus/network.go:1037
+#: cmd/incus/cluster.go:150 cmd/incus/cluster_group.go:418
+#: cmd/incus/config_trust.go:382 cmd/incus/image.go:1062
+#: cmd/incus/image_alias.go:187 cmd/incus/list.go:98 cmd/incus/network.go:1037
+#: cmd/incus/network_acl.go:107 cmd/incus/network_address_set.go:103
+#: cmd/incus/network_forward.go:92 cmd/incus/network_integration.go:390
+#: cmd/incus/network_load_balancer.go:100 cmd/incus/network_peer.go:89
+#: cmd/incus/network_zone.go:100 cmd/incus/network_zone.go:748
 #: cmd/incus/operation.go:124 cmd/incus/profile.go:692 cmd/incus/project.go:507
-#: cmd/incus/storage_bucket.go:441 cmd/incus/storage_bucket.go:763
-#: cmd/incus/storage_volume.go:1415 cmd/incus/storage_volume.go:1509
-#: cmd/incus/storage.go:641 cmd/incus/color/color.go:37
+#: cmd/incus/storage.go:641 cmd/incus/storage_bucket.go:441
+#: cmd/incus/storage_bucket.go:763 cmd/incus/storage_volume.go:1415
+#: cmd/incus/storage_volume.go:1509 cmd/incus/color/color.go:37
 msgid "Description"
 msgstr "Beskrivning"
 
@@ -3069,15 +3069,15 @@ msgstr "Fel vid avkodning av data: %v"
 msgid "Error retrieving aliases: %w"
 msgstr "Fel vid hämtning av alias: %w"
 
-#: cmd/incus/cluster_group.go:846 cmd/incus/cluster.go:474
-#: cmd/incus/config.go:585 cmd/incus/config.go:617 cmd/incus/network_acl.go:482
-#: cmd/incus/network_address_set.go:357 cmd/incus/network_forward.go:459
-#: cmd/incus/network_integration.go:529 cmd/incus/network_load_balancer.go:445
-#: cmd/incus/network_peer.go:480 cmd/incus/network_zone.go:439
-#: cmd/incus/network_zone.go:1091 cmd/incus/network.go:1339
-#: cmd/incus/profile.go:971 cmd/incus/project.go:712
+#: cmd/incus/cluster.go:474 cmd/incus/cluster_group.go:846
+#: cmd/incus/config.go:585 cmd/incus/config.go:617 cmd/incus/network.go:1339
+#: cmd/incus/network_acl.go:482 cmd/incus/network_address_set.go:357
+#: cmd/incus/network_forward.go:459 cmd/incus/network_integration.go:529
+#: cmd/incus/network_load_balancer.go:445 cmd/incus/network_peer.go:480
+#: cmd/incus/network_zone.go:439 cmd/incus/network_zone.go:1091
+#: cmd/incus/profile.go:971 cmd/incus/project.go:712 cmd/incus/storage.go:773
 #: cmd/incus/storage_bucket.go:592 cmd/incus/storage_volume.go:1953
-#: cmd/incus/storage_volume.go:1996 cmd/incus/storage.go:773
+#: cmd/incus/storage_volume.go:1996
 #, c-format
 msgid "Error setting properties: %v"
 msgstr "Fel vid inställning av egenskaper: %v"
@@ -3092,14 +3092,14 @@ msgstr "Fel vid inställning av termstorlek %s"
 msgid "Error unsetting properties: %v"
 msgstr "Fel vid avaktivering av egenskaper: %v"
 
-#: cmd/incus/cluster_group.go:840 cmd/incus/cluster.go:468
-#: cmd/incus/network_acl.go:476 cmd/incus/network_forward.go:453
-#: cmd/incus/network_integration.go:523 cmd/incus/network_load_balancer.go:439
-#: cmd/incus/network_peer.go:474 cmd/incus/network_zone.go:433
-#: cmd/incus/network_zone.go:1085 cmd/incus/network.go:1333
-#: cmd/incus/profile.go:965 cmd/incus/project.go:706
+#: cmd/incus/cluster.go:468 cmd/incus/cluster_group.go:840
+#: cmd/incus/network.go:1333 cmd/incus/network_acl.go:476
+#: cmd/incus/network_forward.go:453 cmd/incus/network_integration.go:523
+#: cmd/incus/network_load_balancer.go:439 cmd/incus/network_peer.go:474
+#: cmd/incus/network_zone.go:433 cmd/incus/network_zone.go:1085
+#: cmd/incus/profile.go:965 cmd/incus/project.go:706 cmd/incus/storage.go:767
 #: cmd/incus/storage_bucket.go:586 cmd/incus/storage_volume.go:1947
-#: cmd/incus/storage_volume.go:1990 cmd/incus/storage.go:767
+#: cmd/incus/storage_volume.go:1990
 #, c-format
 msgid "Error unsetting property: %v"
 msgstr "Fel vid borttagning av egenskap: %v"
@@ -3345,7 +3345,8 @@ msgstr ""
 #: cmd/incus/export.go:53
 #, fuzzy
 msgid "Export the instance without its dependent volumes"
-msgstr "Huruvida endast instansen ska säkerhetskopieras (utan beroende volymer)"
+msgstr ""
+"Huruvida endast instansen ska säkerhetskopieras (utan beroende volymer)"
 
 #: cmd/incus/export.go:52
 #, fuzzy
@@ -3383,8 +3384,8 @@ msgid "FILENAME"
 msgstr "FILNAMN"
 
 #: cmd/incus/config_trust.go:380 cmd/incus/config_trust.go:381
-#: cmd/incus/image_alias.go:184 cmd/incus/image_alias.go:185
-#: cmd/incus/image.go:1064 cmd/incus/image.go:1065 cmd/incus/low_level.go:1565
+#: cmd/incus/image.go:1064 cmd/incus/image.go:1065 cmd/incus/image_alias.go:184
+#: cmd/incus/image_alias.go:185 cmd/incus/low_level.go:1565
 #: cmd/incus/low_level.go:1566
 msgid "FINGERPRINT"
 msgstr "FINGERAVTRYCK"
@@ -3687,7 +3688,7 @@ msgstr "Misslyckades med att begära dump: %w"
 msgid "Failed to listen for connection: %w"
 msgstr "Misslyckades med att lyssna efter anslutning: %w"
 
-#: cmd/incus/main_aliases.go:225 cmd/incus/main.go:147
+#: cmd/incus/main.go:147 cmd/incus/main_aliases.go:225
 #, c-format
 msgid "Failed to load configuration: %s"
 msgstr "Konfigurationen kunde inte läsas in: %s"
@@ -3879,14 +3880,14 @@ msgstr "Snabbläge (samma som --columns=nsacPt)"
 msgid "Fetch instance backup file: %w"
 msgstr "Hämta säkerhetskopia av instans: %w"
 
-#: cmd/incus/config_trust.go:381 cmd/incus/image_alias.go:185
-#: cmd/incus/image.go:1065 cmd/incus/low_level.go:1566
+#: cmd/incus/config_trust.go:381 cmd/incus/image.go:1065
+#: cmd/incus/image_alias.go:185 cmd/incus/low_level.go:1566
 #, fuzzy
 msgid "Fingerprint (long)"
 msgstr "Fingeravtryck: %s"
 
-#: cmd/incus/config_trust.go:380 cmd/incus/image_alias.go:184
-#: cmd/incus/image.go:1064 cmd/incus/low_level.go:1565
+#: cmd/incus/config_trust.go:380 cmd/incus/image.go:1064
+#: cmd/incus/image_alias.go:184 cmd/incus/low_level.go:1565
 #, fuzzy
 msgid "Fingerprint (short)"
 msgstr "Fingeravtryck: %s"
@@ -4181,23 +4182,28 @@ msgstr ""
 "nyckeln. Detta är användbart för fjärrautentiseringsarbetsflöden där en "
 "token skickas till en annan Incus-server."
 
-#: cmd/incus/image.go:1687
+#: cmd/incus/image.go:1689
 msgid "Generate a metadata tarball"
 msgstr "Generera en metadata-tarball"
 
-#: cmd/incus/image.go:1689
+#: cmd/incus/image.go:1691
+#, fuzzy
 msgid ""
 "Generate a metadata tarball\n"
 "\n"
 "This command produces an incus.tar.xz tarball for use during import with an "
 "existing QCOW2 or squashfs disk image.\n"
 "\n"
-"This command will prompt for all of the metadata tarball fields:\n"
-" - Operating system name\n"
-" - Release\n"
-" - Variant\n"
-" - Architecture\n"
-" - Description\n"
+"This command will prompt for any of the metadata tarball fields not passed "
+"with --option:\n"
+" - os (Operating system name)\n"
+" - release (Release name)\n"
+" - variant (Variant name)\n"
+" - architecture (Architecture name)\n"
+" - description (Description)\n"
+"\n"
+"Any other key passed with --option is written to the metadata as is, e.g. "
+"requirements.cdrom_agent=true.\n"
 msgstr ""
 "Generera en metadata-tarball\n"
 "\n"
@@ -4930,6 +4936,11 @@ msgid ""
 msgstr ""
 "Ogiltigt namn i '%s', tom sträng är endast tillåten när maxWidth definieras"
 
+#: cmd/incus/image.go:1735
+#, c-format
+msgid "Invalid option %q, expected key=value"
+msgstr ""
+
 #: cmd/incus/network_peer.go:269
 msgid "Invalid peer type"
 msgstr "Ogiltig peer-typ"
@@ -5033,8 +5044,8 @@ msgstr "GRÄNS"
 msgid "LISTEN ADDRESS"
 msgstr "Lyssna på adress"
 
-#: cmd/incus/list.go:116 cmd/incus/network_forward.go:95
-#: cmd/incus/network_load_balancer.go:102 cmd/incus/network.go:1157
+#: cmd/incus/list.go:116 cmd/incus/network.go:1157
+#: cmd/incus/network_forward.go:95 cmd/incus/network_load_balancer.go:102
 #: cmd/incus/operation.go:128 cmd/incus/storage_bucket.go:442
 #: cmd/incus/storage_volume.go:1513 cmd/incus/warning.go:79
 msgid "LOCATION"
@@ -5581,8 +5592,8 @@ msgstr "Beskrivning av lastbalanserare"
 msgid "Load:"
 msgstr "Belastning:"
 
-#: cmd/incus/list.go:116 cmd/incus/network_forward.go:95
-#: cmd/incus/network_load_balancer.go:102 cmd/incus/network.go:1157
+#: cmd/incus/list.go:116 cmd/incus/network.go:1157
+#: cmd/incus/network_forward.go:95 cmd/incus/network_load_balancer.go:102
 #: cmd/incus/operation.go:128 cmd/incus/storage_bucket.go:442
 #: cmd/incus/storage_volume.go:1513 cmd/incus/warning.go:79
 #, fuzzy
@@ -5646,12 +5657,12 @@ msgstr "Nedre enhet"
 msgid "Lower devices"
 msgstr "Nedre enheter"
 
-#: cmd/incus/network_allocations.go:47 cmd/incus/network.go:1154
+#: cmd/incus/network.go:1154 cmd/incus/network_allocations.go:47
 msgid "MAC ADDRESS"
 msgstr "MAC-ADRESS"
 
-#: cmd/incus/info.go:799 cmd/incus/network_allocations.go:47
-#: cmd/incus/network.go:1154
+#: cmd/incus/info.go:799 cmd/incus/network.go:1154
+#: cmd/incus/network_allocations.go:47
 msgid "MAC address"
 msgstr "MAC-adress"
 
@@ -5812,8 +5823,8 @@ msgstr ""
 "fullständiga hash, kortaste unika partiella hash eller aliasnamn (om ett\n"
 "sådant är angivet)."
 
-#: cmd/incus/admin_other.go:20 cmd/incus/admin_other.go:21
-#: cmd/incus/admin.go:20 cmd/incus/admin.go:21
+#: cmd/incus/admin.go:20 cmd/incus/admin.go:21 cmd/incus/admin_other.go:20
+#: cmd/incus/admin_other.go:21
 msgid "Manage incus daemon"
 msgstr "Hantera incus-daemon"
 
@@ -6197,18 +6208,18 @@ msgstr "Flera regler matchar. Använd --force för att ta bort dem alla"
 msgid "Must run as root to import from directory"
 msgstr "Måste köras som root för att importera från katalogen"
 
-#: cmd/incus/cluster_group.go:416 cmd/incus/cluster.go:145
-#: cmd/incus/cluster.go:1020 cmd/incus/config_device.go:318
+#: cmd/incus/cluster.go:145 cmd/incus/cluster.go:1020
+#: cmd/incus/cluster_group.go:416 cmd/incus/config_device.go:318
 #: cmd/incus/config_trust.go:377 cmd/incus/config_trust.go:492
-#: cmd/incus/list.go:106 cmd/incus/network_acl.go:106
+#: cmd/incus/list.go:106 cmd/incus/network.go:1032 cmd/incus/network_acl.go:106
 #: cmd/incus/network_address_set.go:102 cmd/incus/network_integration.go:389
 #: cmd/incus/network_peer.go:88 cmd/incus/network_zone.go:99
-#: cmd/incus/network_zone.go:747 cmd/incus/network.go:1032
-#: cmd/incus/profile.go:690 cmd/incus/project.go:500 cmd/incus/remote.go:1287
-#: cmd/incus/snapshot.go:317 cmd/incus/storage_bucket.go:440
-#: cmd/incus/storage_bucket.go:762 cmd/incus/storage_volume_bitmap.go:212
-#: cmd/incus/storage_volume_snapshot.go:320 cmd/incus/storage_volume.go:1508
-#: cmd/incus/storage.go:639 cmd/incus/top.go:44
+#: cmd/incus/network_zone.go:747 cmd/incus/profile.go:690
+#: cmd/incus/project.go:500 cmd/incus/remote.go:1287 cmd/incus/snapshot.go:317
+#: cmd/incus/storage.go:639 cmd/incus/storage_bucket.go:440
+#: cmd/incus/storage_bucket.go:762 cmd/incus/storage_volume.go:1508
+#: cmd/incus/storage_volume_bitmap.go:212
+#: cmd/incus/storage_volume_snapshot.go:320 cmd/incus/top.go:44
 msgid "NAME"
 msgstr "NAMN"
 
@@ -6308,19 +6319,19 @@ msgstr "Information om NVIDIA:"
 msgid "NVRM Version: %v"
 msgstr "NVRM-version: %v"
 
-#: cmd/incus/cluster_group.go:416 cmd/incus/cluster.go:1020
+#: cmd/incus/cluster.go:1020 cmd/incus/cluster_group.go:416
 #: cmd/incus/config_device.go:318 cmd/incus/config_trust.go:377
 #: cmd/incus/config_trust.go:492 cmd/incus/info.go:880 cmd/incus/info.go:931
-#: cmd/incus/list.go:106 cmd/incus/network_acl.go:106
+#: cmd/incus/list.go:106 cmd/incus/network.go:1032 cmd/incus/network_acl.go:106
 #: cmd/incus/network_address_set.go:102 cmd/incus/network_integration.go:389
 #: cmd/incus/network_peer.go:88 cmd/incus/network_zone.go:99
-#: cmd/incus/network_zone.go:747 cmd/incus/network.go:1032
-#: cmd/incus/profile.go:690 cmd/incus/project.go:500 cmd/incus/remote.go:1287
-#: cmd/incus/snapshot.go:317 cmd/incus/storage_bucket.go:440
-#: cmd/incus/storage_bucket.go:762 cmd/incus/storage_volume_bitmap.go:212
-#: cmd/incus/storage_volume_snapshot.go:320 cmd/incus/storage_volume.go:1414
+#: cmd/incus/network_zone.go:747 cmd/incus/profile.go:690
+#: cmd/incus/project.go:500 cmd/incus/remote.go:1287 cmd/incus/snapshot.go:317
+#: cmd/incus/storage.go:639 cmd/incus/storage_bucket.go:440
+#: cmd/incus/storage_bucket.go:762 cmd/incus/storage_volume.go:1414
 #: cmd/incus/storage_volume.go:1464 cmd/incus/storage_volume.go:1508
-#: cmd/incus/storage.go:639 cmd/incus/top.go:44
+#: cmd/incus/storage_volume_bitmap.go:212
+#: cmd/incus/storage_volume_snapshot.go:320 cmd/incus/top.go:44
 msgid "Name"
 msgstr "Namn"
 
@@ -6694,10 +6705,11 @@ msgstr ""
 msgid "Number of placement groups"
 msgstr "Antal placeringsgrupper"
 
-#: cmd/incus/network_acl.go:108 cmd/incus/network_address_set.go:105
-#: cmd/incus/network_integration.go:392 cmd/incus/network_zone.go:101
-#: cmd/incus/network.go:1038 cmd/incus/profile.go:693 cmd/incus/project.go:508
-#: cmd/incus/storage_volume.go:1511 cmd/incus/storage.go:643
+#: cmd/incus/network.go:1038 cmd/incus/network_acl.go:108
+#: cmd/incus/network_address_set.go:105 cmd/incus/network_integration.go:392
+#: cmd/incus/network_zone.go:101 cmd/incus/profile.go:693
+#: cmd/incus/project.go:508 cmd/incus/storage.go:643
+#: cmd/incus/storage_volume.go:1511
 #, fuzzy
 msgid "Number of references"
 msgstr "Antal placeringsgrupper"
@@ -6852,9 +6864,9 @@ msgstr "PROCESSER"
 msgid "PROFILES"
 msgstr "PROFILER"
 
-#: cmd/incus/image.go:1063 cmd/incus/list.go:100 cmd/incus/network_acl.go:109
-#: cmd/incus/network_address_set.go:106 cmd/incus/network_allocations.go:46
-#: cmd/incus/network_zone.go:98 cmd/incus/network.go:1031
+#: cmd/incus/image.go:1063 cmd/incus/list.go:100 cmd/incus/network.go:1031
+#: cmd/incus/network_acl.go:109 cmd/incus/network_address_set.go:106
+#: cmd/incus/network_allocations.go:46 cmd/incus/network_zone.go:98
 #: cmd/incus/profile.go:691 cmd/incus/storage_bucket.go:439
 #: cmd/incus/storage_volume.go:1514 cmd/incus/top.go:43 cmd/incus/warning.go:74
 msgid "PROJECT"
@@ -7019,18 +7031,18 @@ msgstr "Tryck på CTRL-C för att avsluta"
 msgid "Press ctrl+c to finish"
 msgstr "Tryck på Ctrl+C för att avsluta"
 
-#: cmd/incus/cluster_group.go:370 cmd/incus/cluster.go:857
+#: cmd/incus/cluster.go:857 cmd/incus/cluster_group.go:370
+#: cmd/incus/config.go:270 cmd/incus/config.go:345
 #: cmd/incus/config_metadata.go:149 cmd/incus/config_template.go:233
-#: cmd/incus/config_trust.go:338 cmd/incus/config.go:270
-#: cmd/incus/config.go:345 cmd/incus/image.go:488 cmd/incus/low_level.go:575
+#: cmd/incus/config_trust.go:338 cmd/incus/image.go:488
+#: cmd/incus/low_level.go:575 cmd/incus/network.go:762
 #: cmd/incus/network_acl.go:656 cmd/incus/network_address_set.go:514
 #: cmd/incus/network_forward.go:649 cmd/incus/network_integration.go:297
 #: cmd/incus/network_load_balancer.go:629 cmd/incus/network_peer.go:651
 #: cmd/incus/network_zone.go:601 cmd/incus/network_zone.go:1262
-#: cmd/incus/network.go:762 cmd/incus/profile.go:573 cmd/incus/project.go:393
+#: cmd/incus/profile.go:573 cmd/incus/project.go:393 cmd/incus/storage.go:353
 #: cmd/incus/storage_bucket.go:335 cmd/incus/storage_bucket.go:1055
 #: cmd/incus/storage_volume.go:1089 cmd/incus/storage_volume.go:1121
-#: cmd/incus/storage.go:353
 msgid "Press enter to open the editor again or ctrl+c to abort change"
 msgstr ""
 "Tryck på Enter för att öppna redigeraren igen eller Ctrl+C för att avbryta "
@@ -7155,9 +7167,9 @@ msgstr "Profiler:"
 msgid "Profiles: "
 msgstr "Profiler: "
 
-#: cmd/incus/image.go:1063 cmd/incus/list.go:100 cmd/incus/network_acl.go:109
-#: cmd/incus/network_address_set.go:106 cmd/incus/network_zone.go:98
-#: cmd/incus/network.go:1031 cmd/incus/profile.go:691
+#: cmd/incus/image.go:1063 cmd/incus/list.go:100 cmd/incus/network.go:1031
+#: cmd/incus/network_acl.go:109 cmd/incus/network_address_set.go:106
+#: cmd/incus/network_zone.go:98 cmd/incus/profile.go:691
 #: cmd/incus/storage_bucket.go:439 cmd/incus/storage_volume.go:1514
 #: cmd/incus/top.go:43 cmd/incus/warning.go:74
 #, fuzzy
@@ -7822,8 +7834,8 @@ msgstr "SSH-klienten frånkopplad %q"
 msgid "STARTED"
 msgstr "STARTAD"
 
-#: cmd/incus/cluster.go:151 cmd/incus/list.go:111 cmd/incus/network_peer.go:92
-#: cmd/incus/network.go:1039 cmd/incus/operation.go:125
+#: cmd/incus/cluster.go:151 cmd/incus/list.go:111 cmd/incus/network.go:1039
+#: cmd/incus/network_peer.go:92 cmd/incus/operation.go:125
 #: cmd/incus/storage.go:644 cmd/incus/warning.go:76
 msgid "STATE"
 msgstr "TILLSTÅND"
@@ -7916,9 +7928,8 @@ msgstr "Servercertifikat avvisat av användaren"
 msgid "Server doesn't trust us after authentication"
 msgstr "Servern litar inte på oss efter autentisering"
 
-#: cmd/incus/cluster_group.go:461 cmd/incus/cluster.go:223
-#: cmd/incus/cluster.go:1065 cmd/incus/cluster.go:1139
-#: cmd/incus/cluster.go:1235
+#: cmd/incus/cluster.go:223 cmd/incus/cluster.go:1065 cmd/incus/cluster.go:1139
+#: cmd/incus/cluster.go:1235 cmd/incus/cluster_group.go:461
 msgid "Server isn't part of a cluster"
 msgstr "Servern ingår inte i ett kluster"
 
@@ -7952,6 +7963,11 @@ msgstr "Ställ in konfigurationsnycklarna för en klustermedlem"
 #: cmd/incus/remote.go:1759 cmd/incus/remote.go:1760
 msgid "Set a keepalive timeout for a remote"
 msgstr "Ställ in en keepalive-timeout för en fjärr"
+
+#: cmd/incus/image.go:1704
+#, fuzzy
+msgid "Set a metadata property (key=value, may be passed multiple times)"
+msgstr "Nytt alias att definiera vid målet"
 
 #: cmd/incus/file.go:912 cmd/incus/storage_volume_file.go:344
 msgid "Set authentication user when using SSH SFTP listener"
@@ -8778,7 +8794,7 @@ msgid "Starting recovery..."
 msgstr "Startar återställning..."
 
 #: cmd/incus/cluster.go:151 cmd/incus/info.go:793 cmd/incus/list.go:111
-#: cmd/incus/network_peer.go:92 cmd/incus/network.go:1039
+#: cmd/incus/network.go:1039 cmd/incus/network_peer.go:92
 #: cmd/incus/operation.go:125 cmd/incus/storage.go:644 cmd/incus/warning.go:76
 msgid "State"
 msgstr "Tillstånd"
@@ -9007,10 +9023,10 @@ msgid "TPM devices:"
 msgstr "PCI-enheter:"
 
 #: cmd/incus/config_device.go:319 cmd/incus/config_trust.go:378
-#: cmd/incus/image_alias.go:186 cmd/incus/image.go:1070 cmd/incus/list.go:113
-#: cmd/incus/low_level.go:1574 cmd/incus/network_allocations.go:51
+#: cmd/incus/image.go:1070 cmd/incus/image_alias.go:186 cmd/incus/list.go:113
+#: cmd/incus/low_level.go:1574 cmd/incus/network.go:1033
+#: cmd/incus/network.go:1156 cmd/incus/network_allocations.go:51
 #: cmd/incus/network_integration.go:391 cmd/incus/network_peer.go:91
-#: cmd/incus/network.go:1033 cmd/incus/network.go:1156
 #: cmd/incus/operation.go:123 cmd/incus/storage_volume.go:1507
 #: cmd/incus/warning.go:77
 msgid "TYPE"
@@ -9527,7 +9543,7 @@ msgstr "Överföringsläge. Drag, tryck eller relä"
 msgid "Transferring image: %s"
 msgstr "Överför avbildning: %s"
 
-#: cmd/incus/copy.go:369 cmd/incus/move_nearlive.go:147 cmd/incus/move.go:312
+#: cmd/incus/copy.go:369 cmd/incus/move.go:312 cmd/incus/move_nearlive.go:147
 #, c-format
 msgid "Transferring instance: %s"
 msgstr "Överföring av instans: %s"
@@ -9546,11 +9562,11 @@ msgstr "Förtroendetoken för %s: "
 msgid "Try `incus info --show-log %s%s` for more info"
 msgstr "Prova `incus info --show-log %s%s` för mer information"
 
-#: cmd/incus/config_device.go:319 cmd/incus/image_alias.go:186
-#: cmd/incus/image.go:1070 cmd/incus/info.go:792 cmd/incus/list.go:113
+#: cmd/incus/config_device.go:319 cmd/incus/image.go:1070
+#: cmd/incus/image_alias.go:186 cmd/incus/info.go:792 cmd/incus/list.go:113
+#: cmd/incus/network.go:1033 cmd/incus/network.go:1156
 #: cmd/incus/network_allocations.go:51 cmd/incus/network_integration.go:391
-#: cmd/incus/network_peer.go:91 cmd/incus/network.go:1033
-#: cmd/incus/network.go:1156 cmd/incus/operation.go:123
+#: cmd/incus/network_peer.go:91 cmd/incus/operation.go:123
 #: cmd/incus/storage_volume.go:1507 cmd/incus/warning.go:77
 msgid "Type"
 msgstr "Typ"
@@ -9613,11 +9629,11 @@ msgstr "USB-enhet:"
 msgid "USB devices:"
 msgstr "USB-enheter:"
 
-#: cmd/incus/network_acl.go:108 cmd/incus/network_address_set.go:105
-#: cmd/incus/network_allocations.go:52 cmd/incus/network_integration.go:392
-#: cmd/incus/network_zone.go:101 cmd/incus/network.go:1038
-#: cmd/incus/profile.go:693 cmd/incus/project.go:508
-#: cmd/incus/storage_volume.go:1511 cmd/incus/storage.go:643
+#: cmd/incus/network.go:1038 cmd/incus/network_acl.go:108
+#: cmd/incus/network_address_set.go:105 cmd/incus/network_allocations.go:52
+#: cmd/incus/network_integration.go:392 cmd/incus/network_zone.go:101
+#: cmd/incus/profile.go:693 cmd/incus/project.go:508 cmd/incus/storage.go:643
+#: cmd/incus/storage_volume.go:1511
 msgid "USED BY"
 msgstr "ANVÄNDS AV"
 
@@ -10211,8 +10227,8 @@ msgid ""
 "they otherwise would."
 msgstr ""
 "Vi har upptäckt att du kör i en container utan privilegier.\n"
-"Det innebär att om du inte manuellt har konfigurerat din värd på annat sätt, "
-"\n"
+"Det innebär att om du inte manuellt har konfigurerat din värd på annat "
+"sätt, \n"
 "kommer du inte att ha tillräckligt med uid och gid att tilldela dina "
 "containrar.\n"
 "\n"
@@ -10273,7 +10289,8 @@ msgstr ""
 
 #: cmd/incus/snapshot.go:98
 msgid "Whether or not to snapshot the instance's running state"
-msgstr "Om man ska ta en ögonblicksbild av instansens körningsstatus eller inte"
+msgstr ""
+"Om man ska ta en ögonblicksbild av instansens körningsstatus eller inte"
 
 #: cmd/incus/storage_volume_bitmap.go:216
 #, fuzzy
