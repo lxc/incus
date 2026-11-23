@@ -178,12 +178,6 @@ func lxcSetConfigItem(c *liblxc.Container, key string, value string) error {
 	return nil
 }
 
-// forklxcBlockedEnv returns whether an instance or image environment variable must be kept out of
-// the root forklxc process, as it would alter the behavior of the dynamic loader or of glibc.
-func forklxcBlockedEnv(name string) bool {
-	return strings.HasPrefix(name, "LD_") || slices.Contains([]string{"GCONV_PATH", "GLIBC_TUNABLES"}, name)
-}
-
 // isOCI returns whether the container was created from an OCI image.
 func (d *lxc) isOCI() bool {
 	return util.IsTrue(d.expandedConfig["volatile.container.oci"]) || d.localConfig["image.type"] == "oci"
@@ -3243,49 +3237,16 @@ func (d *lxc) start(stateful bool, op *operationlock.InstanceOperation) error {
 
 	name := project.Instance(d.Project().Name, d.name)
 
-	// Setup minimal environment for forklxc.
+	// Setup minimal environment for forklxc; instance and image variables go through lxc.environment.
 	envDict := map[string]string{
 		"container": "lxc",
-	}
-
-	for k, v := range d.expandedConfig {
-		after, ok := strings.CutPrefix(k, "environment.")
-		if ok && !forklxcBlockedEnv(after) {
-			envDict[after] = v
-		}
-	}
-
-	// Add the image environment of application containers.
-	if d.isOCI() {
-		spec, err := instance.OCISpec(d.Path())
-		if err != nil {
-			op.Done(err)
-			return err
-		}
-
-		ociEnv, err := instance.OCIEnvironment(spec)
-		if err != nil {
-			op.Done(err)
-			return err
-		}
-
-		for k, v := range ociEnv {
-			_, ok := envDict[k]
-			if !ok && !forklxcBlockedEnv(k) {
-				envDict[k] = v
-			}
-		}
+		"PATH":      os.Getenv("PATH"),
 	}
 
 	for _, keepEnv := range []string{"LD_LIBRARY_PATH", "INCUS_DIR", "INCUS_SOCKET"} {
 		if os.Getenv(keepEnv) != "" {
 			envDict[keepEnv] = os.Getenv(keepEnv)
 		}
-	}
-
-	_, ok := envDict["PATH"]
-	if !ok {
-		envDict["PATH"] = os.Getenv("PATH")
 	}
 
 	env := make([]string, 0, len(envDict))
