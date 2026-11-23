@@ -1308,6 +1308,26 @@ func (d *lvm) UnmountVolume(vol Volume, keepBlockDev bool, op *operations.Operat
 				return false, ErrInUse
 			}
 
+			// The config volume may be active without being mounted, e.g. after a failed live move.
+			if vol.IsVMBlock() {
+				fsVol := vol.NewVMBlockFilesystemVolume()
+
+				// The config volume can be mounted on its own, e.g. by backup file updates.
+				unlockFs, err := fsVol.MountLock()
+				if err != nil {
+					return false, err
+				}
+
+				if !fsVol.MountInUse() && !linux.IsMountPoint(fsVol.MountPath()) {
+					_, err = d.deactivateVolume(fsVol)
+				}
+
+				unlockFs()
+				if err != nil {
+					return false, err
+				}
+			}
+
 			_, err = d.deactivateVolume(vol)
 			if err != nil {
 				return false, err
