@@ -315,8 +315,8 @@ func storagePoolBucketsGet(d *Daemon, r *http.Request) response.Response {
 			location = bucket.Location
 		}
 
-		// In all-projects mode each bucket must be checked against its own project.
-		objectProjectName := requestProjectName
+		// Each bucket is checked against the project that holds it.
+		objectProjectName := bucketProjectName
 		if allProjects {
 			objectProjectName = bucket.Project
 		}
@@ -374,7 +374,7 @@ func storagePoolBucketsGet(d *Daemon, r *http.Request) response.Response {
 					location = filteredDBBuckets[i].Location
 				}
 
-				objectProjectName := requestProjectName
+				objectProjectName := bucketProjectName
 				if allProjects {
 					objectProjectName = filteredDBBuckets[i].Project
 				}
@@ -542,7 +542,7 @@ func storagePoolBucketGet(d *Daemon, r *http.Request) response.Response {
 
 		// S3 keys are only returned to callers allowed to edit the bucket.
 		var canEdit bool
-		err = s.Authorizer.CheckPermission(r.Context(), r, auth.ObjectStorageBucket(request.ProjectParam(r), poolName, bucketName, location), auth.EntitlementCanEdit)
+		err = s.Authorizer.CheckPermission(r.Context(), r, auth.ObjectStorageBucket(bucketProjectName, poolName, bucketName, location), auth.EntitlementCanEdit)
 		if err == nil {
 			canEdit = true
 		} else if !api.StatusErrorCheck(err, http.StatusForbidden) {
