@@ -1442,6 +1442,11 @@ func (d *lvm) SetVolumeAccessMode(vol Volume, mode VolumeAccessMode) error {
 		return nil
 	}
 
+	// The caller's devices may be stale, the volume config tells whether it's still dependent.
+	if mode == VolumeAccessModeExclusive && !d.exclusiveVolume(vol) {
+		return nil
+	}
+
 	activation := "ey"
 	revertActivation := "sy"
 	if mode == VolumeAccessModeShared {
