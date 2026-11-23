@@ -3629,8 +3629,8 @@ func (d *qemu) templateApplyNow(trigger instance.TemplateTrigger, path string) e
 				return fmt.Errorf("Couldn't access template file: %w", err)
 			}
 
-			if tplFileStat.Mode()&os.ModeSymlink == os.ModeSymlink {
-				return errors.New("Template file is a symlink")
+			if !tplFileStat.Mode().IsRegular() {
+				return errors.New("Template file isn't a regular file")
 			}
 
 			// Create the file itself.
