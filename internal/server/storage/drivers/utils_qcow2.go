@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"io/fs"
 	"os"
 	"path/filepath"
@@ -167,9 +168,37 @@ func Qcow2Commit(path string) error {
 	return nil
 }
 
-// Qcow2Info returns information about a qcow2 image.
+// qcow2Format returns the format to pass to qemu-img, qcow2 only when the header carries its magic.
+// Trusting qemu-img's detection would let it follow a path named by a header written into the volume.
+func qcow2Format(path string) (string, error) {
+	f, err := os.Open(path)
+	if err != nil {
+		return "", err
+	}
+
+	defer func() { _ = f.Close() }()
+
+	magic := make([]byte, 4)
+	_, err = io.ReadFull(f, magic)
+	if err != nil && !errors.Is(err, io.ErrUnexpectedEOF) && !errors.Is(err, io.EOF) {
+		return "", err
+	}
+
+	if string(magic) == "QFI\xfb" {
+		return BlockVolumeTypeQcow2, nil
+	}
+
+	return BlockVolumeTypeRaw, nil
+}
+
+// Qcow2Info returns information about a qcow2 image, or a raw one if the path isn't a qcow2 file.
 func Qcow2Info(path string) (*ImageInfo, error) {
-	imgJSON, err := subprocess.RunCommand("qemu-img", "info", "-U", "--output=json", path)
+	format, err := qcow2Format(path)
+	if err != nil {
+		return nil, err
+	}
+
+	imgJSON, err := subprocess.RunCommand("qemu-img", "info", "-U", "--output=json", "-f", format, path)
 	if err != nil {
 		return nil, err
 	}
@@ -187,7 +216,12 @@ func Qcow2Info(path string) (*ImageInfo, error) {
 // Qcow2BackingChain returns information about the backing chain of a qcow2 image.
 func Qcow2BackingChain(path string) ([]string, error) {
 	result := []string{}
-	imgJSON, err := subprocess.RunCommand("qemu-img", "info", "-U", "--backing-chain", "--output=json", path)
+	format, err := qcow2Format(path)
+	if err != nil {
+		return nil, err
+	}
+
+	imgJSON, err := subprocess.RunCommand("qemu-img", "info", "-U", "--backing-chain", "--output=json", "-f", format, path)
 	if err != nil {
 		return nil, err
 	}
