@@ -1049,7 +1049,7 @@ func (d *linstor) copyVolume(vol Volume, srcVol Volume) error {
 
 	targetResourceDefinitionName := d.generateUUIDWithPrefix()
 
-	srcResourceDefinition, err := d.getResourceDefinition(srcVol, false)
+	srcResourceDefinition, err := d.getResourceDefinition(srcVol, true)
 	if err != nil {
 		return err
 	}
@@ -1076,8 +1076,11 @@ func (d *linstor) copyVolume(vol Volume, srcVol Volume) error {
 	}
 
 	if growBytes > 0 {
+		// LINSTOR expects one entry per volume definition, 0 keeps the source size.
+		cloneRequest.VolumeSizes = make([]int64, len(srcResourceDefinition.VolumeDefinitions))
+		cloneRequest.VolumeSizes[d.volumeDefinitionIndex(srcVol, srcResourceDefinition)] = growBytes / 1024
+
 		// The exact size property prevents resizing and is dropped by any resize anyway.
-		cloneRequest.VolumeSizes = []int64{growBytes / 1024}
 		cloneRequest.DeleteProps = []string{"DrbdOptions/ExactSize"}
 	}
 
@@ -1214,15 +1217,17 @@ func (d *linstor) getVolumeSize(vol Volume) (int64, error) {
 		return 0, err
 	}
 
-	volumeIndex := 0
-	if len(resourceDefinition.VolumeDefinitions) == 2 {
-		// For VM volumes, the associated filesystem volume is a second volume on the same LINSTOR resource.
-		if (vol.volType == VolumeTypeVM || vol.volType == VolumeTypeImage) && vol.contentType == ContentTypeFS {
-			volumeIndex = 1
-		}
+	return int64(resourceDefinition.VolumeDefinitions[d.volumeDefinitionIndex(vol, resourceDefinition)].SizeKib * 1024), nil
+}
+
+// volumeDefinitionIndex returns the index of the volume's volume definition in its resource definition.
+func (d *linstor) volumeDefinitionIndex(vol Volume, resourceDefinition linstorClient.ResourceDefinitionWithVolumeDefinition) int {
+	// For VM volumes, the associated filesystem volume is a second volume on the same LINSTOR resource.
+	if len(resourceDefinition.VolumeDefinitions) == 2 && (vol.volType == VolumeTypeVM || vol.volType == VolumeTypeImage) && vol.contentType == ContentTypeFS {
+		return 1
 	}
 
-	return int64(resourceDefinition.VolumeDefinitions[volumeIndex].SizeKib * 1024), nil
+	return 0
 }
 
 // getResourceDefinitions returns all available resource definitions.
