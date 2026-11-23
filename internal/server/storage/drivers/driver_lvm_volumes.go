@@ -211,12 +211,17 @@ func (d *lvm) CreateVolumeFromMigration(vol Volume, conn io.ReadWriteCloser, vol
 			return err
 		}
 
+		reverter := revert.New()
+		defer reverter.Fail()
+
 		// The source keeps using the volume until the live migration completes.
 		if volTargetArgs.Live && d.exclusiveVolume(vol) {
 			err := d.activateVolumeShared(vol)
 			if err != nil {
 				return err
 			}
+
+			reverter.Add(func() { _, _ = d.deactivateVolume(vol) })
 		}
 
 		if vol.IsVMBlock() {
@@ -227,6 +232,7 @@ func (d *lvm) CreateVolumeFromMigration(vol Volume, conn io.ReadWriteCloser, vol
 			}
 		}
 
+		reverter.Success()
 		return nil
 	}
 
@@ -1394,7 +1400,8 @@ func (d *lvm) RenameVolume(vol Volume, newVolName string, op *operations.Operati
 
 // SetVolumeAccessMode switches the lock of an active volume to the given access mode.
 func (d *lvm) SetVolumeAccessMode(vol Volume, mode VolumeAccessMode) error {
-	if !d.clustered || !d.exclusiveVolume(vol) {
+	// Custom block volumes get switched both ways when their dependent setting changes.
+	if !d.clustered || vol.IsSnapshot() || (vol.volType != VolumeTypeVM && !vol.IsCustomBlock()) {
 		return nil
 	}
 

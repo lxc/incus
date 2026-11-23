@@ -2045,6 +2045,16 @@ func (d *disk) Update(oldDevices deviceConfig.Devices, isRunning bool) error {
 		}
 
 		reverter.Add(func() { _ = cleanup() })
+
+		oldDependent := util.IsTrue(oldDevices[d.name]["dependent"])
+		if isRunning && oldDependent != util.IsTrue(d.config["dependent"]) {
+			revertMode, err := d.updateDependentAccessMode()
+			if err != nil {
+				return err
+			}
+
+			reverter.Add(revertMode)
+		}
 	}
 
 	// Only apply IO limits and attach/detach logic if instance is running.
@@ -3698,6 +3708,36 @@ func (d *disk) getAttachedInstanceCount(projectName string, volume *db.StorageVo
 	}
 
 	return count, nil
+}
+
+// updateDependentAccessMode switches the lock of the volume to match its dependent setting.
+func (d *disk) updateDependentAccessMode() (func(), error) {
+	volName, _ := internalInstance.SplitVolumeSource(d.config["source"])
+
+	storageProjectName, err := project.StorageVolumeProject(d.state.DB.Cluster, d.inst.Project().Name, db.StoragePoolVolumeTypeCustom)
+	if err != nil {
+		return nil, err
+	}
+
+	dbVolume, err := storagePools.VolumeDBGet(d.pool, storageProjectName, volName, storageDrivers.VolumeTypeCustom)
+	if err != nil {
+		return nil, err
+	}
+
+	vol := d.pool.GetVolume(storageDrivers.VolumeTypeCustom, storageDrivers.ContentType(dbVolume.ContentType), project.StorageVolume(storageProjectName, volName), dbVolume.Config)
+
+	mode := storageDrivers.VolumeAccessModeShared
+	revertMode := storageDrivers.VolumeAccessModeExclusive
+	if util.IsTrue(d.config["dependent"]) {
+		mode, revertMode = revertMode, mode
+	}
+
+	err = d.pool.Driver().SetVolumeAccessMode(vol, mode)
+	if err != nil {
+		return nil, err
+	}
+
+	return func() { _ = d.pool.Driver().SetVolumeAccessMode(vol, revertMode) }, nil
 }
 
 // updateDependentConfig applies changes to dependent configuration settings.
