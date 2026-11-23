@@ -7954,8 +7954,8 @@ func (d *lxc) templateApplyNow(trigger instance.TemplateTrigger) error {
 				return fmt.Errorf("Couldn't access template file: %w", err)
 			}
 
-			if tplFileStat.Mode()&os.ModeSymlink == os.ModeSymlink {
-				return errors.New("Template file is a symlink")
+			if !tplFileStat.Mode().IsRegular() {
+				return errors.New("Template file isn't a regular file")
 			}
 
 			// Create the directory hierarchy, this has to be done
