@@ -8601,6 +8601,15 @@
 						}
 					},
 					{
+						"lvm.snapshots.chunk_size": {
+							"condition": "pool without a thin pool",
+							"default": "same as `volume.lvm.snapshots.chunk_size` or LVM's default (4KiB)",
+							"longdesc": "",
+							"shortdesc": "Copy-on-write chunk size of new snapshots (power of two between 4KiB and 512KiB)",
+							"type": "string"
+						}
+					},
+					{
 						"lvm.stripes": {
 							"condition": "pool not using a thin pool (`lvm.use_thinpool=false` or `lvmcluster` driver)",
 							"default": "same as `volume.lvm.stripes`",
