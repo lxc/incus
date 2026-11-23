@@ -50,3 +50,4 @@ That file system tree must then be placed on a regular web server which supports
 
 When importing an image that doesn't come with an Incus metadata tarball, the `incus-simplestreams generate-metadata` command
 can be used to generate a new basic metadata tarball from a few questions.
+Any of those fields, as well as additional properties such as `requirements.cdrom_agent`, can instead be passed with `--option key=value`.
