@@ -3770,6 +3770,16 @@ func (d *disk) updateDependentConfig() (func() error, error) {
 		return nil, err
 	}
 
+	if util.IsTrue(d.config["dependent"]) == util.IsTrue(dbVolume.Config["dependent"]) {
+		return func() error { return nil }, nil
+	}
+
+	// Writable shares the config map with dbVolume.
+	oldConfig := maps.Clone(dbVolume.Config)
+
+	reverter := revert.New()
+	defer reverter.Fail()
+
 	if dbVolume.Type == db.StoragePoolVolumeTypeNameCustom {
 		// A volume already flagged dependent was restored with its instance, its snapshots are in sync.
 		if util.IsTrue(d.config["dependent"]) && !util.IsTrue(dbVolume.Config["dependent"]) {
@@ -3801,6 +3811,10 @@ func (d *disk) updateDependentConfig() (func() error, error) {
 				if err != nil {
 					return nil, err
 				}
+
+				reverter.Add(func() {
+					_ = d.pool.DeleteCustomVolumeSnapshot(storageProjectName, fmt.Sprintf("%s/%s", volName, snapName), nil)
+				})
 			}
 		}
 
@@ -3813,25 +3827,19 @@ func (d *disk) updateDependentConfig() (func() error, error) {
 		if err != nil {
 			return nil, err
 		}
-	}
 
-	cleanup := func() error {
-		poolVolumePut := dbVolume.Writable()
-		if util.IsTrue(d.config["dependent"]) {
-			poolVolumePut.Config["dependent"] = ""
-		} else {
-			poolVolumePut.Config["dependent"] = "true"
-		}
-
-		err = d.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
-			return tx.UpdateStoragePoolVolume(ctx, storageProjectName, volName, db.StoragePoolVolumeTypeCustom, d.pool.ID(), poolVolumePut.Description, poolVolumePut.Config)
+		reverter.Add(func() {
+			_ = d.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+				return tx.UpdateStoragePoolVolume(ctx, storageProjectName, volName, db.StoragePoolVolumeTypeCustom, d.pool.ID(), dbVolume.Description, oldConfig)
+			})
 		})
-		if err != nil {
-			return err
-		}
-
-		return nil
 	}
 
-	return cleanup, nil
+	cleanup := reverter.Clone().Fail
+	reverter.Success()
+
+	return func() error {
+		cleanup()
+		return nil
+	}, nil
 }
