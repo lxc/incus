@@ -234,6 +234,7 @@ snap_restore() {
     else
         initialUUID=$(incus config get bar volatile.uuid)
         initialGenerationID=$(incus config get bar volatile.uuid.generation)
+        incus config set bar migration.stateful=true
         incus start bar
         incus snapshot create bar snap2 --stateful
         restore_and_compare_fs snap2
