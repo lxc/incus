@@ -5870,7 +5870,7 @@
 						"features.storage.buckets": {
 							"defaultdesc": "`false`",
 							"initialvaluedesc": "`true`",
-							"longdesc": "",
+							"longdesc": "When disabled, the project shares the buckets of the `default` project.",
 							"shortdesc": "Whether to use a separate set of storage buckets for the project",
 							"type": "bool"
 						}
@@ -5879,7 +5879,7 @@
 						"features.storage.volumes": {
 							"defaultdesc": "`false`",
 							"initialvaluedesc": "`true`",
-							"longdesc": "",
+							"longdesc": "When disabled, the project shares the storage volumes of the `default` project.",
 							"shortdesc": "Whether to use a separate set of storage volumes for the project",
 							"type": "bool"
 						}
