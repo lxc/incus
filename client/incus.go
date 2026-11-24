@@ -499,12 +499,13 @@ func (r *ProtocolIncus) rawWebsocket(url string) (*websocket.Conn, error) {
 	if err != nil {
 		if resp != nil {
 			apiResp, _, parseErr := incusParseResponse(resp)
-			if parseErr != nil {
-				err = errors.Join(err, parseErr)
+			if apiResp != nil && apiResp.Type == api.ErrorResponse {
+				// The server's error is more useful than the generic handshake failure.
+				return nil, parseErr
 			}
 
-			if apiResp != nil && apiResp.Error != "" {
-				err = errors.Join(err, errors.New(apiResp.Error))
+			if parseErr != nil {
+				err = errors.Join(err, parseErr)
 			}
 		}
 
