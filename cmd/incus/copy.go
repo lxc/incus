@@ -277,6 +277,7 @@ func (c *cmdCopy) copyOrMove(cmd *cobra.Command, src *u.Parsed, dst *u.Parsed, k
 		args := incus.InstanceCopyArgs{
 			Name:                dstInstanceName,
 			Live:                stateful,
+			KeepPaused:          move,
 			InstanceOnly:        instanceOnly,
 			Mode:                mode,
 			Refresh:             c.flagRefresh,
