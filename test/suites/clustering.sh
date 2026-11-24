@@ -3850,6 +3850,11 @@ test_clustering_events() {
     INCUS_DIR="${INCUS_THREE_DIR}" stdbuf -oL incus monitor --type=lifecycle > "${TEST_DIR}/node3.log" &
     monitorNode3PID=$!
 
+    # Monitor a specific member through another one.
+    ! INCUS_DIR="${INCUS_ONE_DIR}" incus monitor --target node9 || false
+    INCUS_DIR="${INCUS_ONE_DIR}" stdbuf -oL incus monitor --target node2 --type=lifecycle > "${TEST_DIR}/target.log" &
+    monitorTargetPID=$!
+
     # Restart instance generating restart lifecycle event.
     INCUS_DIR="${INCUS_ONE_DIR}" incus restart -f c1
     INCUS_DIR="${INCUS_THREE_DIR}" incus restart -f c2
@@ -3860,6 +3865,11 @@ test_clustering_events() {
         cat "${TEST_DIR}/node${i}.log"
         grep -Fc "instance-restarted" "${TEST_DIR}/node${i}.log" | grep -Fx 2
     done
+
+    # Check the targeted stream got the events too.
+    grep -Fc "instance-restarted" "${TEST_DIR}/target.log" | grep -Fx 2
+    grep -Fc "location: node2" "${TEST_DIR}/target.log" | grep -Fx 1
+    kill -9 ${monitorTargetPID} || true
 
     # Switch into event-hub mode.
     INCUS_DIR="${INCUS_ONE_DIR}" incus cluster role add node1 event-hub
