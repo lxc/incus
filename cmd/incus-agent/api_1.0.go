@@ -83,7 +83,8 @@ func setConnectionInfo(d *Daemon, rd io.Reader) (*agentAPI.API10Put, error) {
 // as happens after a live migration or a stateful restore.
 func syncClock(hostTime time.Time) error {
 	offset := time.Until(hostTime)
-	if offset < 500*time.Millisecond {
+	// Small offsets are left to the guest's own time sync, as host and guest clocks may legitimately differ.
+	if offset < 50*time.Millisecond {
 		return nil
 	}
 
