@@ -167,6 +167,7 @@ func (s *migrationSourceWs) do(migrateOp *operations.Operation) error {
 		AllowInconsistent:    s.allowInconsistent,
 		Devices:              s.devices,
 		SkipDependentVolumes: s.skipDependentVolumes,
+		KeepPaused:           s.keepPaused,
 	})
 	if err != nil {
 		l.Error("Failed migration on source", logger.Ctx{"err": err})
