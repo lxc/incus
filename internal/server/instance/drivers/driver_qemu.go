@@ -10579,9 +10579,6 @@ func (d *qemu) sendMigrationSnapshot(ctx context.Context, diskName string, files
 	d.logger.Debug("Migration storage snapshot transfer finished")
 
 	finalizeFunc := func() error {
-		filesystemConn.Close()
-		_ = g.Wait()
-
 		// Complete the migration snapshot sync process (the guest OS will remain paused).
 		// Keep the NBD connection up until the mirror job is gone, or its last I/O and flush fail.
 		d.logger.Debug("Migration storage snapshot transfer commit started")
@@ -10592,13 +10589,17 @@ func (d *qemu) sendMigrationSnapshot(ctx context.Context, diskName string, files
 
 		d.logger.Debug("Migration storage snapshot transfer commit finished")
 
-		// Remove the NBD client disk.
+		// Remove the NBD client disk, which flushes it and closes QEMU's NBD connection.
 		err = monitor.RemoveBlockDevice(targetDiskName)
 		if err != nil {
 			d.logger.Warn("Failed removing NBD storage target device", logger.Ctx{"err": err})
 		}
 
 		d.logger.Debug("Removed NBD storage target device")
+
+		// Only now end the transfer, which lets the target stop its NBD server.
+		filesystemConn.Close()
+		_ = g.Wait()
 
 		// The caller merges the snapshot back once the guest runs again, to keep the pause short.
 		return nil
