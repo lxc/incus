@@ -23,6 +23,7 @@ import (
 	"github.com/lxc/incus/v7/shared/api"
 	"github.com/lxc/incus/v7/shared/logger"
 	"github.com/lxc/incus/v7/shared/revert"
+	"github.com/lxc/incus/v7/shared/util"
 )
 
 // dependentDiskTransfer moves the volumes of an instance's dependent disks on local storage,
@@ -370,6 +371,34 @@ func runNearLiveCopyRound(ctx context.Context, s *state.State, inst instance.Ins
 	return nil
 }
 
+// deleteInstanceCopy removes an instance copy from the target member, lifting any deletion protection it inherited.
+func deleteInstanceCopy(target incus.InstanceServer, name string) error {
+	copyInst, _, err := target.GetInstance(name)
+	if err != nil {
+		return err
+	}
+
+	if util.IsTrue(copyInst.ExpandedConfig["security.protection.delete"]) {
+		copyInst.Config["security.protection.delete"] = "false"
+
+		op, err := target.UpdateInstance(name, copyInst.Writable(), "")
+		if err == nil {
+			err = op.Wait()
+		}
+
+		if err != nil {
+			return fmt.Errorf("Failed lifting deletion protection: %w", err)
+		}
+	}
+
+	op, err := target.DeleteInstance(name)
+	if err != nil {
+		return err
+	}
+
+	return op.Wait()
+}
+
 // migrateInstanceNearLive moves a running container to another cluster member with minimal downtime.
 //
 // The container is copied to the target member under a temporary name while it keeps running, then
@@ -377,9 +406,6 @@ func runNearLiveCopyRound(ctx context.Context, s *state.State, inst instance.Ins
 // to carry the changes written since the last snapshot. Once the final transfer lands, the source
 // is deleted and the copy is renamed to the real name and started.
 func migrateInstanceNearLive(ctx context.Context, s *state.State, inst instance.Instance, target incus.InstanceServer, targetInstInfo *api.Instance, sourceMemberInfo *db.NodeInfo, deviceOverrides api.DevicesMap, op *operations.Operation, progressHandler func(newOp api.Operation)) error {
-	reverter := revert.New()
-	defer reverter.Fail()
-
 	instName := inst.Name()
 	projectName := inst.Project().Name
 
@@ -399,6 +425,10 @@ func migrateInstanceNearLive(ctx context.Context, s *state.State, inst instance.
 	}
 
 	defer target.Disconnect()
+
+	// Set up after the event listener so the revert hooks can still wait on operations.
+	reverter := revert.New()
+	defer reverter.Fail()
 
 	targetName, err := instance.MoveTemporaryName(inst)
 	if err != nil {
@@ -477,11 +507,7 @@ func migrateInstanceNearLive(ctx context.Context, s *state.State, inst instance.
 		// From now on a failure leaves a full copy behind on the target member.
 		if round == 1 {
 			reverter.Add(func() {
-				op, err := target.DeleteInstance(targetName)
-				if err == nil {
-					err = op.Wait()
-				}
-
+				err := deleteInstanceCopy(target, targetName)
 				if err != nil {
 					l.Warn("Failed removing partial copy after failed near-live migration", logger.Ctx{"err": err})
 					return
