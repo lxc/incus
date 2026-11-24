@@ -592,8 +592,11 @@ func (r *forwardedResponse) Render(w http.ResponseWriter) error {
 		w.Header().Set(key, response.Header.Get(key))
 	}
 
-	if w.Header().Get("Connection") != "keep-alive" {
-		w.WriteHeader(response.StatusCode)
+	// Send the headers with no wait, long operations send body after completion this avoids ResponseHeaderTimeout errors on clients.
+	w.WriteHeader(response.StatusCode)
+	f, ok := w.(http.Flusher)
+	if ok {
+		f.Flush()
 	}
 
 	_, err = util.SafeCopy(w, response.Body)
