@@ -71,6 +71,7 @@ type RunConfig struct {
 	Mounts                   []MountEntryItem // Mounts to setup/remove.
 	Uevents                  [][]string       // Uevents to inject.
 	PostHooks                []func() error   // Functions to be run after device attach/detach.
+	RunningHooks             []func() error   // Functions to be run as soon as the instance runs, before PostHooks.
 	GPUDevice                []RunConfigItem  // GPU device configuration settings.
 	USBDevice                []USBDeviceItem  // USB device configuration settings.
 	TPMDevice                []RunConfigItem  // TPM device configuration settings.
