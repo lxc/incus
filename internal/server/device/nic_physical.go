@@ -132,7 +132,16 @@ func (d *nicPhysical) validateConfig(instConf instance.ConfigReader, partialVali
 		//  managed: no
 		//  condition: container
 		//  shortdesc: Comma-delimited list of VLAN IDs or VLAN ranges to join for tagged traffic
-		optionalFields = append(optionalFields, "gvrp", "hwaddr", "mtu", "vlan", "vlan.tagged")
+
+		// gendoc:generate(entity=devices, group=nic_physical, key=vlan.ingress)
+		// Used for private VLANs where the instance sends on the untagged VLAN (`vlan`) and gets its return traffic on the ingress VLAN.
+		// Only supported when the parent is a native Linux bridge.
+		// ---
+		//  type: integer
+		//  managed: no
+		//  condition: container
+		//  shortdesc: The ingress VLAN ID to also receive non-tagged traffic from (requires `vlan` and `security.mac_filtering`)
+		optionalFields = append(optionalFields, "gvrp", "hwaddr", "mtu", "vlan", "vlan.ingress", "vlan.tagged")
 	}
 
 	// gendoc:generate(entity=devices, group=nic_physical, key=network)
@@ -143,7 +152,7 @@ func (d *nicPhysical) validateConfig(instConf instance.ConfigReader, partialVali
 	//  shortdesc: The managed network to link the device to (instead of specifying the `nictype` directly)
 	if d.config["network"] != "" {
 		// List of properties we import from the parent network.
-		networkFields := []string{"gvrp", "mtu", "vlan", "vlan.tagged"}
+		networkFields := []string{"gvrp", "mtu", "vlan", "vlan.ingress", "vlan.tagged"}
 
 		requiredFields = append(requiredFields, "network")
 
@@ -223,6 +232,10 @@ func (d *nicPhysical) validateEnvironment() error {
 
 	if d.inst.Type() == instancetype.Container && d.config["name"] == "" {
 		return errors.New("Requires name property to start")
+	}
+
+	if d.config["vlan.ingress"] != "" && !isParentBridge {
+		return errors.New("Ingress VLAN is only supported on native Linux bridges")
 	}
 
 	if !network.InterfaceExists(d.config["parent"]) {
