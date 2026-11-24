@@ -35,6 +35,15 @@ For example, if you enable {config:option}`project-features:features.networks` f
 
 See the list of available {ref}`project-features` for information about which features are enabled or disabled when you create a project.
 
+```{warning}
+Disabling a feature does not give the project a private copy of the inherited entities.
+The project uses the ones in the `default` project directly, so there is no per-project ownership among them: users of the project see the `default` project's entities of that type, including those created by other projects that inherit them and by the `default` project itself.
+
+Inherited entities are visible through the project but cannot be created, modified or deleted through it; that requires access to the `default` project itself.
+
+Take this into account when you confine untrusted users to a project, as described in {ref}`projects-confined`, and enable the feature for every type of entity that they must not share.
+```
+
 ```{note}
 You must select the features that you want to enable before starting to use a new project.
 When a project contains instances, the features are locked.
