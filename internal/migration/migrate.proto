@@ -105,6 +105,7 @@ message MigrationHeader {
 	optional blockFeatures			blockFeatures		= 15;
 	optional uint32				multifdChannels		= 16;
 	optional bool				dirtyBitmaps		= 17;
+	optional string				uuid			= 18;
 }
 
 message MigrationControl {
