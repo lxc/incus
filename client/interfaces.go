@@ -650,6 +650,9 @@ type InstanceCopyArgs struct {
 	// If set, the instance running state will be transferred (live migration)
 	Live bool
 
+	// If set, the instance is left paused on the source once the live migration completes.
+	KeepPaused bool
+
 	// If set, only the instance will copied, its snapshots won't
 	InstanceOnly bool
 
