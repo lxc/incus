@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: LXD\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2026-11-23 21:02-0500\n"
+"POT-Creation-Date: 2026-11-24 14:19+0000\n"
 "PO-Revision-Date: 2026-11-24 00:58+0000\n"
 "Last-Translator: Kazantsev Mikhail "
 "<kazan417@users.noreply.hosted.weblate.org>\n"
@@ -915,7 +915,7 @@ msgstr "ADRESSE"
 msgid "ADDRESSES"
 msgstr "ADRESSES"
 
-#: cmd/incus/alias.go:123 cmd/incus/image.go:1066 cmd/incus/image_alias.go:183
+#: cmd/incus/alias.go:124 cmd/incus/image.go:1066 cmd/incus/image_alias.go:183
 msgid "ALIAS"
 msgstr "ALIAS"
 
@@ -1014,7 +1014,7 @@ msgstr "Ajoutez des périphériques à l'instance"
 msgid "Add member to group"
 msgstr "Ajoutez des membres à un groupe"
 
-#: cmd/incus/alias.go:65 cmd/incus/alias.go:66
+#: cmd/incus/alias.go:66 cmd/incus/alias.go:67
 msgid "Add new aliases"
 msgstr "Ajouter de nouveaux alias"
 
@@ -1160,20 +1160,25 @@ msgstr "Clef d'accès administrateur : %s"
 msgid "Admin secret key: %s"
 msgstr "Clef d'accès secrète administrateur : %s"
 
-#: cmd/incus/alias.go:123 cmd/incus/image_alias.go:183
+#: cmd/incus/alias.go:124 cmd/incus/image_alias.go:183
 #, fuzzy
 msgid "Alias"
 msgstr "alias"
 
-#: cmd/incus/alias.go:96 cmd/incus/alias.go:196
+#: cmd/incus/alias.go:97 cmd/incus/alias.go:197
 #, c-format
 msgid "Alias %s already exists"
 msgstr "L’alias %s existe déjà"
 
-#: cmd/incus/alias.go:190 cmd/incus/alias.go:245
+#: cmd/incus/alias.go:191 cmd/incus/alias.go:251
 #, c-format
 msgid "Alias %s doesn't exist"
 msgstr "L'alias %s n'existe pas"
+
+#: cmd/incus/alias.go:249
+#, fuzzy, c-format
+msgid "Alias %s is built-in and cannot be removed"
+msgstr "Le serveur distant « %s » est global et ne peut donc pas être supprimé"
 
 #: cmd/incus/image.go:1020
 #, c-format
@@ -5180,7 +5185,7 @@ msgstr "Lister les GUID et variables UEFI"
 msgid "List address sets across all projects"
 msgstr "Répertorier les ensembles d'adresses pour tous projets confondus"
 
-#: cmd/incus/alias.go:119 cmd/incus/alias.go:120
+#: cmd/incus/alias.go:120 cmd/incus/alias.go:121
 msgid "List aliases"
 msgstr "Lister les alias"
 
@@ -5875,7 +5880,7 @@ msgstr "Gérer les membres du cluster"
 msgid "Manage cluster roles"
 msgstr "Gérer les rôles du cluster"
 
-#: cmd/incus/alias.go:27 cmd/incus/alias.go:28
+#: cmd/incus/alias.go:28 cmd/incus/alias.go:29
 msgid "Manage command aliases"
 msgstr "Gérer les alias des commandes"
 
@@ -7624,7 +7629,7 @@ msgstr "Enlever une entrée d’un enregistrement de zone réseau"
 msgid "Remove addresses from a network address set"
 msgstr "Enlever des adresses d’un ensemble d’adresses réseau"
 
-#: cmd/incus/alias.go:219 cmd/incus/alias.go:220
+#: cmd/incus/alias.go:220 cmd/incus/alias.go:221
 msgid "Remove aliases"
 msgstr "Enlever des alias"
 
@@ -7706,7 +7711,7 @@ msgstr "Renommer un groupe de serveurs"
 msgid "Rename a cluster member"
 msgstr "Renommer un membre du cluster"
 
-#: cmd/incus/alias.go:164 cmd/incus/alias.go:165 cmd/incus/image_alias.go:294
+#: cmd/incus/alias.go:165 cmd/incus/alias.go:166 cmd/incus/image_alias.go:294
 #: cmd/incus/image_alias.go:295
 msgid "Rename aliases"
 msgstr "Renommer un alias"
@@ -9061,7 +9066,7 @@ msgstr "Système :"
 msgid "TAKEN"
 msgstr "PRIS LE"
 
-#: cmd/incus/alias.go:124
+#: cmd/incus/alias.go:125
 msgid "TARGET"
 msgstr "CIBLE"
 
@@ -9097,7 +9102,7 @@ msgstr "TYPE"
 msgid "Taken at"
 msgstr "Pris à"
 
-#: cmd/incus/alias.go:124
+#: cmd/incus/alias.go:125
 #, fuzzy
 msgid "Target command"
 msgstr "commande"
@@ -10580,7 +10585,7 @@ msgstr "client"
 msgid "cluster"
 msgstr "cluster"
 
-#: cmd/incus/alias.go:59
+#: cmd/incus/alias.go:60
 msgid "command"
 msgstr "commande"
 
@@ -10662,7 +10667,7 @@ msgstr "groupe"
 msgid "image"
 msgstr "image"
 
-#: cmd/incus/alias.go:67
+#: cmd/incus/alias.go:68
 msgid ""
 "incus alias add list \"list -c ns46S\"\n"
 "    Overwrite the \"list\" command to pass -c ns46S.\n"
@@ -10674,7 +10679,7 @@ msgid ""
 "    Create a command for displaying file content of instances"
 msgstr ""
 
-#: cmd/incus/alias.go:221
+#: cmd/incus/alias.go:222
 msgid ""
 "incus alias remove my-list\n"
 "    Remove the \"my-list\" alias."
@@ -10682,7 +10687,7 @@ msgstr ""
 "incus alias remove my-list\n"
 "    Supprime l’alias « my-list »."
 
-#: cmd/incus/alias.go:166
+#: cmd/incus/alias.go:167
 msgid ""
 "incus alias rename list my-list\n"
 "    Rename existing alias \"list\" to \"my-list\"."

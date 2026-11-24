@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: LXD\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2026-11-23 21:02-0500\n"
+"POT-Creation-Date: 2026-11-24 14:19+0000\n"
 "PO-Revision-Date: 2026-11-24 00:58+0000\n"
 "Last-Translator: KATOH Yasufumi "
 "<tenforward@users.noreply.hosted.weblate.org>\n"
@@ -910,7 +910,7 @@ msgstr "ADDRESS"
 msgid "ADDRESSES"
 msgstr "ADDRESS"
 
-#: cmd/incus/alias.go:123 cmd/incus/image.go:1066 cmd/incus/image_alias.go:183
+#: cmd/incus/alias.go:124 cmd/incus/image.go:1066 cmd/incus/image_alias.go:183
 msgid "ALIAS"
 msgstr "ALIAS"
 
@@ -1010,7 +1010,7 @@ msgstr "インスタンスにデバイスを追加します"
 msgid "Add member to group"
 msgstr "メンバーをグループに追加します"
 
-#: cmd/incus/alias.go:65 cmd/incus/alias.go:66
+#: cmd/incus/alias.go:66 cmd/incus/alias.go:67
 msgid "Add new aliases"
 msgstr "新たにエイリアスを追加します"
 
@@ -1152,20 +1152,25 @@ msgstr "管理者アクセスキー: %s"
 msgid "Admin secret key: %s"
 msgstr "管理者秘密鍵: %s"
 
-#: cmd/incus/alias.go:123 cmd/incus/image_alias.go:183
+#: cmd/incus/alias.go:124 cmd/incus/image_alias.go:183
 #, fuzzy
 msgid "Alias"
 msgstr "<alias>"
 
-#: cmd/incus/alias.go:96 cmd/incus/alias.go:196
+#: cmd/incus/alias.go:97 cmd/incus/alias.go:197
 #, c-format
 msgid "Alias %s already exists"
 msgstr "エイリアス %s は既に存在します"
 
-#: cmd/incus/alias.go:190 cmd/incus/alias.go:245
+#: cmd/incus/alias.go:191 cmd/incus/alias.go:251
 #, c-format
 msgid "Alias %s doesn't exist"
 msgstr "エイリアス %s は存在しません"
+
+#: cmd/incus/alias.go:249
+#, fuzzy, c-format
+msgid "Alias %s is built-in and cannot be removed"
+msgstr "リモート %s は global ですので削除できません"
 
 #: cmd/incus/image.go:1020
 #, c-format
@@ -5122,7 +5127,7 @@ msgstr ""
 msgid "List address sets across all projects"
 msgstr "すべてのプロジェクトのインスタンスを表示します"
 
-#: cmd/incus/alias.go:119 cmd/incus/alias.go:120
+#: cmd/incus/alias.go:120 cmd/incus/alias.go:121
 msgid "List aliases"
 msgstr "エイリアスを一覧表示します"
 
@@ -5876,7 +5881,7 @@ msgstr "クラスターのメンバを管理します"
 msgid "Manage cluster roles"
 msgstr "クラスターロールを管理します"
 
-#: cmd/incus/alias.go:27 cmd/incus/alias.go:28
+#: cmd/incus/alias.go:28 cmd/incus/alias.go:29
 msgid "Manage command aliases"
 msgstr "コマンドのエイリアスを管理します"
 
@@ -7670,7 +7675,7 @@ msgstr "ネットワークゾーンレコードエントリを削除します"
 msgid "Remove addresses from a network address set"
 msgstr "ネットワークゾーンレコードからエントリを削除します"
 
-#: cmd/incus/alias.go:219 cmd/incus/alias.go:220
+#: cmd/incus/alias.go:220 cmd/incus/alias.go:221
 msgid "Remove aliases"
 msgstr "エイリアスを削除します"
 
@@ -7754,7 +7759,7 @@ msgstr "クラスターグループの名前を変更します"
 msgid "Rename a cluster member"
 msgstr "クラスターメンバの名前を変更します"
 
-#: cmd/incus/alias.go:164 cmd/incus/alias.go:165 cmd/incus/image_alias.go:294
+#: cmd/incus/alias.go:165 cmd/incus/alias.go:166 cmd/incus/image_alias.go:294
 #: cmd/incus/image_alias.go:295
 msgid "Rename aliases"
 msgstr "エイリアスの名前を変更します"
@@ -9212,7 +9217,7 @@ msgstr "システム:"
 msgid "TAKEN"
 msgstr "TAKEN AT"
 
-#: cmd/incus/alias.go:124
+#: cmd/incus/alias.go:125
 msgid "TARGET"
 msgstr "TARGET"
 
@@ -9248,7 +9253,7 @@ msgstr "TYPE"
 msgid "Taken at"
 msgstr "取得日時"
 
-#: cmd/incus/alias.go:124
+#: cmd/incus/alias.go:125
 #, fuzzy
 msgid "Target command"
 msgstr "デバッグコマンド"
@@ -10841,7 +10846,7 @@ msgstr "クライアント"
 msgid "cluster"
 msgstr "cluster"
 
-#: cmd/incus/alias.go:59
+#: cmd/incus/alias.go:60
 #, fuzzy
 msgid "command"
 msgstr "デバッグコマンド"
@@ -10933,7 +10938,7 @@ msgstr "グループ"
 msgid "image"
 msgstr "image"
 
-#: cmd/incus/alias.go:67
+#: cmd/incus/alias.go:68
 msgid ""
 "incus alias add list \"list -c ns46S\"\n"
 "    Overwrite the \"list\" command to pass -c ns46S.\n"
@@ -10954,7 +10959,7 @@ msgstr ""
 "incus alias add cat \"exec @ARG1@ -- cat @ARG2@\"\n"
 "    インスタンス内のファイルの中身を表示するコマンドを作成します"
 
-#: cmd/incus/alias.go:221
+#: cmd/incus/alias.go:222
 #, fuzzy
 msgid ""
 "incus alias remove my-list\n"
@@ -10963,7 +10968,7 @@ msgstr ""
 "lxc alias remove my-list\n"
 "     \"my-list\" というエイリアスを削除します。"
 
-#: cmd/incus/alias.go:166
+#: cmd/incus/alias.go:167
 #, fuzzy
 msgid ""
 "incus alias rename list my-list\n"
