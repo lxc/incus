@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: incus\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2026-11-24 14:19+0000\n"
+"POT-Creation-Date: 2026-11-24 13:19-0500\n"
 "PO-Revision-Date: 2026-11-24 09:56+0000\n"
 "Last-Translator: Américo Monteiro <a-"
 "monteiro@users.noreply.hosted.weblate.org>\n"
@@ -4602,7 +4602,7 @@ msgstr "Se o alias da imagem já existir, apaga e cria um novo"
 msgid "If the snapshot name already exists, delete and create a new one"
 msgstr "Se o nome do instantâneo já existir, apaga e cria um novo"
 
-#: cmd/incus/main.go:608
+#: cmd/incus/main.go:611
 msgid ""
 "If this is your first time running Incus on this machine, you should also "
 "run: incus admin init"
@@ -7046,7 +7046,7 @@ msgstr "Pacotes enviados"
 msgid "Partitions:"
 msgstr "Partições:"
 
-#: cmd/incus/main.go:568 cmd/incus/remote.go:232 cmd/incus/remote.go:948
+#: cmd/incus/main.go:577 cmd/incus/remote.go:232 cmd/incus/remote.go:948
 #: cmd/incus/remote.go:1139
 #, c-format
 msgid "Password for %s: "
@@ -9643,7 +9643,7 @@ msgstr "Para criar uma nova rede, use: incus network create"
 msgid "To detach from the console, press: <ctrl>+a q"
 msgstr "Para separar da consola, pressione: <ctrl>+a q"
 
-#: cmd/incus/main.go:616
+#: cmd/incus/main.go:619
 #, c-format
 msgid ""
 "To start your first container, try: incus launch images:%s\n"

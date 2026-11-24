@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: LXD\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2026-11-24 14:19+0000\n"
+"POT-Creation-Date: 2026-11-24 13:19-0500\n"
 "PO-Revision-Date: 2026-11-24 00:58+0000\n"
 "Last-Translator: Kazantsev Mikhail "
 "<kazan417@users.noreply.hosted.weblate.org>\n"
@@ -4670,7 +4670,7 @@ msgid "If the snapshot name already exists, delete and create a new one"
 msgstr ""
 "Si l'instantané de l'image existe déjà, le supprimer d'abord puis le recréer"
 
-#: cmd/incus/main.go:608
+#: cmd/incus/main.go:611
 msgid ""
 "If this is your first time running Incus on this machine, you should also "
 "run: incus admin init"
@@ -7026,7 +7026,7 @@ msgstr "Paquets émis"
 msgid "Partitions:"
 msgstr "Partitions :"
 
-#: cmd/incus/main.go:568 cmd/incus/remote.go:232 cmd/incus/remote.go:948
+#: cmd/incus/main.go:577 cmd/incus/remote.go:232 cmd/incus/remote.go:948
 #: cmd/incus/remote.go:1139
 #, c-format
 msgid "Password for %s: "
@@ -9535,7 +9535,7 @@ msgstr "Pour créer un réseau, utiliser : lxc network create"
 msgid "To detach from the console, press: <ctrl>+a q"
 msgstr "Pour quitter la console, veuillez entrer Ctrl+A, puis Q"
 
-#: cmd/incus/main.go:616
+#: cmd/incus/main.go:619
 #, c-format
 msgid ""
 "To start your first container, try: incus launch images:%s\n"
