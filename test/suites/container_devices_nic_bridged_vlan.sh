@@ -170,6 +170,47 @@ test_container_devices_nic_bridged_vlan() {
         incus config device remove "${prefix}-ctA" eth0
         incus stop -f "${prefix}-ctB"
         incus config device remove "${prefix}-ctB" eth0
+
+        # Test ingress VLAN validation.
+        ! incus config device override "${prefix}-ctA" eth0 parent="${prefix}B" vlan.ingress=3 || false                                                  # Check untagged VLAN ID is required.
+        ! incus config device override "${prefix}-ctA" eth0 parent="${prefix}B" vlan=2 vlan.ingress=3 || false                                           # Check MAC filtering is required.
+        ! incus config device override "${prefix}-ctA" eth0 parent="${prefix}B" vlan=2 vlan.ingress=2 security.mac_filtering=true || false               # Check same ingress VLAN ID as untagged VLAN ID.
+        ! incus config device override "${prefix}-ctA" eth0 parent="${prefix}B" vlan=2 vlan.ingress=3 vlan.tagged=3 security.mac_filtering=true || false # Check same ingress VLAN ID as tagged VLAN ID.
+        ! incus config device override "${prefix}-ctA" eth0 parent="${prefix}B" vlan=2 vlan.ingress=0 security.mac_filtering=true || false               # Check ingress VLAN ID 0.
+        ! incus network create "${prefix}P" --type=physical parent="${prefix}B" vlan.ingress=3 || false                                                  # Check untagged VLAN ID is required on networks.
+        ! incus network create "${prefix}P" --type=physical parent="${prefix}B" vlan=3 vlan.ingress=3 || false                                           # Check same ingress VLAN ID as untagged VLAN ID on networks.
+
+        # Test private VLANs, each container sends on the other one's ingress VLAN (physical NICs with a bridge parent behave as bridged).
+        incus config device override "${prefix}-ctA" eth0 nictype=physical parent="${prefix}B" vlan=2 vlan.ingress=3 security.mac_filtering=true
+        incus start "${prefix}-ctA"
+        incus exec "${prefix}-ctA" -- ip link set eth0 up
+        incus exec "${prefix}-ctA" -- ip a add 192.0.2.1/24 dev eth0
+        incus config device override "${prefix}-ctB" eth0 parent="${prefix}B" vlan=3 vlan.ingress=2 security.mac_filtering=true
+        incus start "${prefix}-ctB"
+        incus exec "${prefix}-ctB" -- ip link set eth0 up
+        incus exec "${prefix}-ctB" -- ip a add 192.0.2.2/24 dev eth0
+        ctAHost=$(incus config get "${prefix}-ctA" volatile.eth0.host_name)
+        ctAHwaddr=$(incus config get "${prefix}-ctA" volatile.eth0.hwaddr)
+        bridge vlan show dev "${ctAHost}" | grep -F " 3"
+        bridge fdb show dev "${ctAHost}" vlan 3 | grep -F "${ctAHwaddr}" | grep -F "static"
+        incus exec "${prefix}-ctA" -- ping -c2 -W5 192.0.2.2
+        incus exec "${prefix}-ctB" -- ping -c2 -W5 192.0.2.1
+        incus stop -f "${prefix}-ctA"
+        incus config device remove "${prefix}-ctA" eth0
+
+        # Test the same through a physical network backed by the bridge.
+        incus network create "${prefix}P" --type=physical parent="${prefix}B" vlan=2 vlan.ingress=3
+        incus config device add "${prefix}-ctA" eth1 nic network="${prefix}P" name=eth1 security.mac_filtering=true
+        incus start "${prefix}-ctA"
+        incus exec "${prefix}-ctA" -- ip link set eth1 up
+        incus exec "${prefix}-ctA" -- ip a add 192.0.2.1/24 dev eth1
+        incus exec "${prefix}-ctA" -- ping -c2 -W5 192.0.2.2
+        incus exec "${prefix}-ctB" -- ping -c2 -W5 192.0.2.1
+        incus stop -f "${prefix}-ctA"
+        incus config device remove "${prefix}-ctA" eth1
+        incus stop -f "${prefix}-ctB"
+        incus config device remove "${prefix}-ctB" eth0
+        incus network delete "${prefix}P"
         ip link delete "${prefix}B"
     fi
 
