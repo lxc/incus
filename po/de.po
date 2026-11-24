@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: LXD\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2026-11-23 21:02-0500\n"
+"POT-Creation-Date: 2026-11-24 14:19+0000\n"
 "PO-Revision-Date: 2026-11-24 00:58+0000\n"
 "Last-Translator: Jan Mittelstädter "
 "<janm84@users.noreply.hosted.weblate.org>\n"
@@ -915,7 +915,7 @@ msgstr "ADRESSE"
 msgid "ADDRESSES"
 msgstr "ADRESSE"
 
-#: cmd/incus/alias.go:123 cmd/incus/image.go:1066 cmd/incus/image_alias.go:183
+#: cmd/incus/alias.go:124 cmd/incus/image.go:1066 cmd/incus/image_alias.go:183
 msgid "ALIAS"
 msgstr "ALIAS"
 
@@ -1021,7 +1021,7 @@ msgstr "Füge Devices zu einer Instanz hinzu"
 msgid "Add member to group"
 msgstr "Mitglied zu einer Gruppe hinzufügen"
 
-#: cmd/incus/alias.go:65 cmd/incus/alias.go:66
+#: cmd/incus/alias.go:66 cmd/incus/alias.go:67
 msgid "Add new aliases"
 msgstr "Erstelle neue Aliasse"
 
@@ -1167,20 +1167,25 @@ msgstr "Administrator Zugangsschlüssel: %s"
 msgid "Admin secret key: %s"
 msgstr "Administrator Geheimer Schlüssel: %s"
 
-#: cmd/incus/alias.go:123 cmd/incus/image_alias.go:183
+#: cmd/incus/alias.go:124 cmd/incus/image_alias.go:183
 #, fuzzy
 msgid "Alias"
 msgstr "<Alias>"
 
-#: cmd/incus/alias.go:96 cmd/incus/alias.go:196
+#: cmd/incus/alias.go:97 cmd/incus/alias.go:197
 #, c-format
 msgid "Alias %s already exists"
 msgstr "Alias %s existiert bereits"
 
-#: cmd/incus/alias.go:190 cmd/incus/alias.go:245
+#: cmd/incus/alias.go:191 cmd/incus/alias.go:251
 #, c-format
 msgid "Alias %s doesn't exist"
 msgstr "Alias %s existiert nicht"
+
+#: cmd/incus/alias.go:249
+#, c-format
+msgid "Alias %s is built-in and cannot be removed"
+msgstr ""
 
 #: cmd/incus/image.go:1020
 #, c-format
@@ -5183,7 +5188,7 @@ msgstr ""
 msgid "List address sets across all projects"
 msgstr "Herunterfahren des Containers erzwingen."
 
-#: cmd/incus/alias.go:119 cmd/incus/alias.go:120
+#: cmd/incus/alias.go:120 cmd/incus/alias.go:121
 #, fuzzy
 msgid "List aliases"
 msgstr "Aliasse:\n"
@@ -5741,7 +5746,7 @@ msgstr ""
 msgid "Manage cluster roles"
 msgstr "Kein Zertifikat für diese Verbindung"
 
-#: cmd/incus/alias.go:27 cmd/incus/alias.go:28
+#: cmd/incus/alias.go:28 cmd/incus/alias.go:29
 #, fuzzy
 msgid "Manage command aliases"
 msgstr "Unbekannter Befehl %s für Abbild"
@@ -7488,7 +7493,7 @@ msgstr "Profil %s erstellt\n"
 msgid "Remove addresses from a network address set"
 msgstr "kann nicht zum selben Container Namen kopieren"
 
-#: cmd/incus/alias.go:219 cmd/incus/alias.go:220
+#: cmd/incus/alias.go:220 cmd/incus/alias.go:221
 #, fuzzy
 msgid "Remove aliases"
 msgstr "Entferntes Administrator Passwort"
@@ -7582,7 +7587,7 @@ msgstr ""
 msgid "Rename a cluster member"
 msgstr ""
 
-#: cmd/incus/alias.go:164 cmd/incus/alias.go:165 cmd/incus/image_alias.go:294
+#: cmd/incus/alias.go:165 cmd/incus/alias.go:166 cmd/incus/image_alias.go:294
 #: cmd/incus/image_alias.go:295
 msgid "Rename aliases"
 msgstr ""
@@ -8990,7 +8995,7 @@ msgstr ""
 msgid "TAKEN"
 msgstr ""
 
-#: cmd/incus/alias.go:124
+#: cmd/incus/alias.go:125
 msgid "TARGET"
 msgstr ""
 
@@ -9026,7 +9031,7 @@ msgstr ""
 msgid "Taken at"
 msgstr ""
 
-#: cmd/incus/alias.go:124
+#: cmd/incus/alias.go:125
 #, fuzzy
 msgid "Target command"
 msgstr "Unbekannter Befehl %s für Abbild"
@@ -10509,7 +10514,7 @@ msgstr ""
 msgid "cluster"
 msgstr ""
 
-#: cmd/incus/alias.go:59
+#: cmd/incus/alias.go:60
 msgid "command"
 msgstr ""
 
@@ -10597,7 +10602,7 @@ msgstr ""
 msgid "image"
 msgstr ""
 
-#: cmd/incus/alias.go:67
+#: cmd/incus/alias.go:68
 msgid ""
 "incus alias add list \"list -c ns46S\"\n"
 "    Overwrite the \"list\" command to pass -c ns46S.\n"
@@ -10609,13 +10614,13 @@ msgid ""
 "    Create a command for displaying file content of instances"
 msgstr ""
 
-#: cmd/incus/alias.go:221
+#: cmd/incus/alias.go:222
 msgid ""
 "incus alias remove my-list\n"
 "    Remove the \"my-list\" alias."
 msgstr ""
 
-#: cmd/incus/alias.go:166
+#: cmd/incus/alias.go:167
 msgid ""
 "incus alias rename list my-list\n"
 "    Rename existing alias \"list\" to \"my-list\"."

@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lxd\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2026-11-23 21:02-0500\n"
+"POT-Creation-Date: 2026-11-24 14:19+0000\n"
 "PO-Revision-Date: 2026-11-24 00:59+0000\n"
 "Last-Translator: Kazantsev Mikhail "
 "<kazan417@users.noreply.hosted.weblate.org>\n"
@@ -913,7 +913,7 @@ msgstr "Адрес"
 msgid "ADDRESSES"
 msgstr "Адреса"
 
-#: cmd/incus/alias.go:123 cmd/incus/image.go:1066 cmd/incus/image_alias.go:183
+#: cmd/incus/alias.go:124 cmd/incus/image.go:1066 cmd/incus/image_alias.go:183
 msgid "ALIAS"
 msgstr "ПСЕВДОНИМ"
 
@@ -1012,7 +1012,7 @@ msgstr "Добавление устройств к экземпляру"
 msgid "Add member to group"
 msgstr "Добавить участника в группу"
 
-#: cmd/incus/alias.go:65 cmd/incus/alias.go:66
+#: cmd/incus/alias.go:66 cmd/incus/alias.go:67
 msgid "Add new aliases"
 msgstr "Добавление новых псевдонимов"
 
@@ -1162,20 +1162,25 @@ msgstr "Публичный ключ доступа администратора:
 msgid "Admin secret key: %s"
 msgstr "Приватный ключ администратора: %s"
 
-#: cmd/incus/alias.go:123 cmd/incus/image_alias.go:183
+#: cmd/incus/alias.go:124 cmd/incus/image_alias.go:183
 #, fuzzy
 msgid "Alias"
 msgstr "псевдоним"
 
-#: cmd/incus/alias.go:96 cmd/incus/alias.go:196
+#: cmd/incus/alias.go:97 cmd/incus/alias.go:197
 #, c-format
 msgid "Alias %s already exists"
 msgstr "Псевдоним %s уже существует"
 
-#: cmd/incus/alias.go:190 cmd/incus/alias.go:245
+#: cmd/incus/alias.go:191 cmd/incus/alias.go:251
 #, c-format
 msgid "Alias %s doesn't exist"
 msgstr "Псевдоним %s не существует"
+
+#: cmd/incus/alias.go:249
+#, fuzzy, c-format
+msgid "Alias %s is built-in and cannot be removed"
+msgstr "Сервер %s является глобальным и не может быть удален"
 
 #: cmd/incus/image.go:1020
 #, c-format
@@ -5174,7 +5179,7 @@ msgstr "Вывести список GUID и переменных UEFI"
 msgid "List address sets across all projects"
 msgstr "Вывести наборы адресов из всех проектов"
 
-#: cmd/incus/alias.go:119 cmd/incus/alias.go:120
+#: cmd/incus/alias.go:120 cmd/incus/alias.go:121
 msgid "List aliases"
 msgstr "Показать псевдонимы"
 
@@ -5933,7 +5938,7 @@ msgstr "Управление участниками кластера"
 msgid "Manage cluster roles"
 msgstr "Управлять ролями кластера"
 
-#: cmd/incus/alias.go:27 cmd/incus/alias.go:28
+#: cmd/incus/alias.go:28 cmd/incus/alias.go:29
 msgid "Manage command aliases"
 msgstr "Управление псевдонимами команд"
 
@@ -7707,7 +7712,7 @@ msgstr "удалить значение записи сетевой DNS зоны
 msgid "Remove addresses from a network address set"
 msgstr "Удалить адреса из набора сетевых адресов"
 
-#: cmd/incus/alias.go:219 cmd/incus/alias.go:220
+#: cmd/incus/alias.go:220 cmd/incus/alias.go:221
 msgid "Remove aliases"
 msgstr "Удалить псевдонимы"
 
@@ -7790,7 +7795,7 @@ msgstr "Переименовать кластерную группу"
 msgid "Rename a cluster member"
 msgstr "Переименовать участника кластера"
 
-#: cmd/incus/alias.go:164 cmd/incus/alias.go:165 cmd/incus/image_alias.go:294
+#: cmd/incus/alias.go:165 cmd/incus/alias.go:166 cmd/incus/image_alias.go:294
 #: cmd/incus/image_alias.go:295
 msgid "Rename aliases"
 msgstr "Переименовать псевдонимы"
@@ -9223,7 +9228,7 @@ msgstr "Система:"
 msgid "TAKEN"
 msgstr "СДЕЛАН В"
 
-#: cmd/incus/alias.go:124
+#: cmd/incus/alias.go:125
 msgid "TARGET"
 msgstr "ЦЕЛЬ"
 
@@ -9259,7 +9264,7 @@ msgstr "ТИП"
 msgid "Taken at"
 msgstr "Сделан в"
 
-#: cmd/incus/alias.go:124
+#: cmd/incus/alias.go:125
 #, fuzzy
 msgid "Target command"
 msgstr "команда"
@@ -10808,7 +10813,7 @@ msgstr "клиент"
 msgid "cluster"
 msgstr "кластер"
 
-#: cmd/incus/alias.go:59
+#: cmd/incus/alias.go:60
 msgid "command"
 msgstr "команда"
 
@@ -10890,7 +10895,7 @@ msgstr "группа"
 msgid "image"
 msgstr "образ"
 
-#: cmd/incus/alias.go:67
+#: cmd/incus/alias.go:68
 msgid ""
 "incus alias add list \"list -c ns46S\"\n"
 "    Overwrite the \"list\" command to pass -c ns46S.\n"
@@ -10910,7 +10915,7 @@ msgstr ""
 "incus alias add cat \"exec @ARG1@ -- cat @ARG2@\"\n"
 "    Создать команду для отображения содержимого файлов экземпляров"
 
-#: cmd/incus/alias.go:221
+#: cmd/incus/alias.go:222
 msgid ""
 "incus alias remove my-list\n"
 "    Remove the \"my-list\" alias."
@@ -10918,7 +10923,7 @@ msgstr ""
 "incus alias remove my-list\n"
 "    Удалить псевдоним \"my-list\"."
 
-#: cmd/incus/alias.go:166
+#: cmd/incus/alias.go:167
 msgid ""
 "incus alias rename list my-list\n"
 "    Rename existing alias \"list\" to \"my-list\"."
