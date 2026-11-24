@@ -1198,14 +1198,6 @@ func (m *Monitor) SEVCapabilities() (AMDSEVCapabilities, error) {
 
 // NBDServerStart starts internal NBD server and returns a connection to it.
 func (m *Monitor) NBDServerStart(listenPath string, maxConnections int) (net.Conn, error) {
-	var args struct {
-		Addr struct {
-			Data map[string]any `json:"data"`
-			Type string         `json:"type"`
-		} `json:"addr"`
-		MaxConnections int `json:"max-connections"`
-	}
-
 	// QEMU may have dropped privileges, bind the socket ourselves and pass the FD.
 	err := os.Remove(listenPath)
 	if err != nil && !errors.Is(err, fs.ErrNotExist) {
@@ -1232,14 +1224,7 @@ func (m *Monitor) NBDServerStart(listenPath string, maxConnections int) (net.Con
 		return nil, fmt.Errorf("Failed sending listener file descriptor: %w", err)
 	}
 
-	args.Addr.Type = "fd"
-	args.Addr.Data = map[string]any{
-		"str": listenPath,
-	}
-
-	args.MaxConnections = maxConnections
-
-	err = m.Run("nbd-server-start", args, nil)
+	err = m.nbdServerStart(listenPath, maxConnections)
 	if err != nil {
 		return nil, err
 	}
@@ -1255,26 +1240,30 @@ func (m *Monitor) NBDServerStart(listenPath string, maxConnections int) (net.Con
 
 // NBDUnixServerStart starts an internal NBD server listening on the specified Unix socket.
 func (m *Monitor) NBDUnixServerStart(path string) error {
-	var args struct {
-		Addr struct {
-			Data struct {
-				Str string `json:"str"`
-			} `json:"data"`
-			Type string `json:"type"`
-		} `json:"addr"`
-		MaxConnections int `json:"max-connections"`
-	}
+	return m.nbdServerStart(path, 1)
+}
 
-	args.Addr.Type = "fd"
-	args.Addr.Data.Str = path
-	args.MaxConnections = 1
+// nbdServerStart starts the internal NBD server on a previously sent file descriptor.
+// Clients connect before the exports are ready, so QEMU's 10s handshake limit is turned off.
+func (m *Monitor) nbdServerStart(fdName string, maxConnections int) error {
+	args := map[string]any{
+		"addr": map[string]any{
+			"type": "fd",
+			"data": map[string]any{"str": fdName},
+		},
+		"max-connections":       maxConnections,
+		"handshake-max-seconds": 0,
+	}
 
 	err := m.Run("nbd-server-start", args, nil)
-	if err != nil {
-		return err
+	if err != nil && strings.Contains(err.Error(), "handshake-max-seconds") {
+		// QEMU versions before 9.2 have no handshake limit.
+		delete(args, "handshake-max-seconds")
+
+		err = m.Run("nbd-server-start", args, nil)
 	}
 
-	return nil
+	return err
 }
 
 // NBDServerStop stops the internal NBD server.
