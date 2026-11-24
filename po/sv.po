@@ -9,8 +9,7 @@ msgstr ""
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
 "POT-Creation-Date: 2026-11-24 13:35-0500\n"
 "PO-Revision-Date: 2026-11-24 19:14+0000\n"
-"Last-Translator: Daniel Nylander <yeager74@users.noreply.hosted.weblate.org>"
-"\n"
+"Last-Translator: Anonymous <anonymous@users.noreply.hosted.weblate.org>\n"
 "Language-Team: Swedish <https://hosted.weblate.org/projects/incus/cli/sv/>\n"
 "Language: sv\n"
 "MIME-Version: 1.0\n"
@@ -2979,14 +2978,12 @@ msgstr "Redigera förtroendekonfigurationer som YAML"
 #: cmd/incus/utils_list.go:178
 #, fuzzy, c-format
 msgid "Empty column entry (redundant, leading or trailing comma) in '%s'"
-msgstr ""
-"Tom kolumnpost (överflödig, inledande eller avslutande kommando) i '%s'"
+msgstr "Tom kolumnpost (överflödig, inledande eller avslutande kommando) i '%s'"
 
 #: cmd/incus/utils_sftp.go:620
 #, fuzzy, c-format
 msgid "Empty column entry (redundant, leading or trailing command) in '%s'"
-msgstr ""
-"Tom kolumnpost (överflödig, inledande eller avslutande kommando) i '%s'"
+msgstr "Tom kolumnpost (överflödig, inledande eller avslutande kommando) i '%s'"
 
 #: cmd/incus/image.go:1096
 #, c-format
@@ -3358,8 +3355,7 @@ msgstr ""
 #: cmd/incus/export.go:53
 #, fuzzy
 msgid "Export the instance without its dependent volumes"
-msgstr ""
-"Huruvida endast instansen ska säkerhetskopieras (utan beroende volymer)"
+msgstr "Huruvida endast instansen ska säkerhetskopieras (utan beroende volymer)"
 
 #: cmd/incus/export.go:52
 #, fuzzy
@@ -5474,8 +5470,8 @@ msgstr ""
 "  L - Instansens plats (t.ex. dess klustermedlem) \n"
 "  f - Fingeravtryck för basavbildning (kort) \n"
 "  F - Fingeravtryck för basavbildning (långt) \n"
-"Anpassade kolumner definieras med \"[config:|devices:]key[:name][:maxWidth]"
-"\":\n"
+"Anpassade kolumner definieras med "
+"\"[config:|devices:]key[:name][:maxWidth]\":\n"
 "\n"
 "KEY: Den (utökade) konfigurations- eller enhetsnyckeln som ska visas. Om\n"
 "[config:|devices:] utelämnas är standardvärdet konfigurationsnyckeln. NAME: "
@@ -10297,8 +10293,7 @@ msgstr ""
 #: cmd/incus/snapshot.go:320
 #, fuzzy
 msgid "Whether the snapshot is stateful"
-msgstr ""
-"Om man ska ta en ögonblicksbild av instansens körningsstatus eller inte"
+msgstr "Om man ska ta en ögonblicksbild av instansens körningsstatus eller inte"
 
 #: cmd/incus/rebuild.go:28
 msgid ""
