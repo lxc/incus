@@ -379,12 +379,7 @@ func (c *cmdNetworkLoadBalancerSet) command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("set", cmdNetworkLoadBalancerSetUsage...)
 	cmd.Short = i18n.G("Set network load balancer keys")
-	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
-		`Set network load balancer keys
-
-For backward compatibility, a single configuration key may still be set with:
-    incus network set [<remote>:]<network> <listen_address> <key> <value>`,
-	))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G("Set network load balancer keys"))
 	cmd.RunE = c.run
 
 	cli.AddBoolFlag(cmd.Flags(), &c.flagIsProperty, "property|p", i18n.G("Set the key as a network load balancer property"))

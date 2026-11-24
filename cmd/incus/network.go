@@ -1278,12 +1278,7 @@ func (c *cmdNetworkSet) command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("set", cmdNetworkSetUsage...)
 	cmd.Short = i18n.G("Set network configuration keys")
-	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
-		`Set network configuration keys
-
-For backward compatibility, a single configuration key may still be set with:
-    incus network set [<remote>:]<network> <key> <value>`,
-	))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G("Set network configuration keys"))
 
 	cli.AddStringFlag(cmd.Flags(), &c.network.flagTarget, "target", "", "", i18n.G("Cluster member name"))
 	cli.AddBoolFlag(cmd.Flags(), &c.flagIsProperty, "property|p", i18n.G("Set the key as a network property"))

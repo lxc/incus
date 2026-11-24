@@ -916,12 +916,7 @@ func (c *cmdProfileSet) command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("set", cmdProfileSetUsage...)
 	cmd.Short = i18n.G("Set profile configuration keys")
-	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
-		`Set profile configuration keys
-
-For backward compatibility, a single configuration key may still be set with:
-    incus profile set [<remote>:]<profile> <key> <value>`,
-	))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G("Set profile configuration keys"))
 
 	cmd.RunE = c.run
 	cli.AddBoolFlag(cmd.Flags(), &c.flagIsProperty, "property|p", i18n.G("Set the key as a profile property"))

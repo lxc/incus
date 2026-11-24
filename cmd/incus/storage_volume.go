@@ -1884,9 +1884,6 @@ func (c *cmdStorageVolumeSet) command() *cobra.Command {
 	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
 		`Set storage volume configuration keys
 
-For backward compatibility, a single configuration key may still be set with:
-    incus storage volume set [<remote>:]<pool> [<type>/]<volume> <key> <value>
-
 If the type is not specified, Incus assumes the type is "custom".
 Supported values for type are "custom", "container" and "virtual-machine".`,
 	))
