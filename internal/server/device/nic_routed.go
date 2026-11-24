@@ -751,9 +751,10 @@ func (d *nicRouted) Start() (*deviceConfig.RunConfig, error) {
 	// Perform instance NIC configuration.
 	runConf := deviceConfig.RunConfig{}
 
-	// The host routes attract traffic, so a VM only gets them once it runs (after a live migration's hand-over).
+	// The host routes attract traffic, so a VM only gets them once it runs (after a live migration's hand-over),
+	// and as soon as it does.
 	if d.inst.Type() == instancetype.VM {
-		runConf.PostHooks = []func() error{d.setupHostRoutes}
+		runConf.RunningHooks = []func() error{d.setupHostRoutes}
 	} else {
 		err = d.setupHostRoutes()
 		if err != nil {
