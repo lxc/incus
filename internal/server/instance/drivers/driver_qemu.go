@@ -2336,6 +2336,7 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 
 	devConfs := make([]*deviceConfig.RunConfig, 0, len(d.expandedDevices))
 	postStartHooks := []func() error{}
+	runningHooks := []func() error{}
 
 	sortedDevices := d.expandedDevices.Sorted()
 	startDevices := make([]device.Device, 0, len(sortedDevices))
@@ -2391,7 +2392,8 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 			reverter.Add(runConf.Revert)
 		}
 
-		// Add post-start hooks
+		// Add running and post-start hooks
+		runningHooks = append(runningHooks, runConf.RunningHooks...)
 		if len(runConf.PostHooks) > 0 {
 			postStartHooks = append(postStartHooks, runConf.PostHooks...)
 		}
@@ -3021,6 +3023,14 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 	err = monitor.Start()
 	if err != nil {
 		err = fmt.Errorf("Failed starting VM: %w", err)
+		op.Done(err)
+		return err
+	}
+
+	// Run the hooks that must follow the guest as closely as possible, such as host routes that
+	// attract its traffic. After a live migration, the guest runs from here on.
+	err = d.runHooks(runningHooks)
+	if err != nil {
 		op.Done(err)
 		return err
 	}
@@ -3713,8 +3723,13 @@ func (d *qemu) deviceStart(dev device.Device, instanceRunning bool) (*deviceConf
 				}
 			}
 
-			// If running, run post start hooks now (if not, they will be run
+			// If running, run running and post start hooks now (if not, they will be run
 			// once the instance is started).
+			err = d.runHooks(runConf.RunningHooks)
+			if err != nil {
+				return nil, err
+			}
+
 			err = d.runHooks(runConf.PostHooks)
 			if err != nil {
 				return nil, err
