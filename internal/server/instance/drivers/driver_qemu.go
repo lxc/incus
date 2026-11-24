@@ -10133,6 +10133,25 @@ func (d *qemu) MigrateSend(args instance.MigrateSendArgs) error {
 	}
 }
 
+// ephemeralSnapshotDir returns the host-local directory temporary snapshots are created in.
+// They hold guest writes, so can't live on the instance volume with its small quota and read-only periods.
+func (d *qemu) ephemeralSnapshotDir() (string, error) {
+	snapshotDir := d.localImageMetadataDir()
+
+	err := os.MkdirAll(snapshotDir, 0o700)
+	if err != nil {
+		return "", fmt.Errorf("Failed creating temporary snapshot directory: %w", err)
+	}
+
+	// Label the directory for the confined QEMU process, the snapshots inherit it.
+	err = d.selinuxLabelPath(snapshotDir)
+	if err != nil {
+		return "", err
+	}
+
+	return snapshotDir, nil
+}
+
 // prepareEphemeralSnapshot sets up an overlay block device suitable for short lived operations.
 // When backed is true, the overlay is opened with the disk's current top node as its backing
 // node, as needed by copy-before-write overlays.
@@ -10704,21 +10723,9 @@ func (d *qemu) migrateSendLive(ctx context.Context, pool storagePools.Pool, clus
 			}
 		})
 
-		// The config volume is read-only while shared with the target, so keep the snapshots on this member.
-		snapshotDir := d.Path()
-		if sameSharedStorage {
-			snapshotDir = d.localImageMetadataDir()
-
-			err = os.MkdirAll(snapshotDir, 0o700)
-			if err != nil {
-				return fmt.Errorf("Failed creating migration snapshot directory: %w", err)
-			}
-
-			// Label the directory for the confined QEMU process, the snapshots inherit it.
-			err = d.selinuxLabelPath(snapshotDir)
-			if err != nil {
-				return err
-			}
+		snapshotDir, err := d.ephemeralSnapshotDir()
+		if err != nil {
+			return err
 		}
 
 		if !sameSharedStorage {
@@ -14526,7 +14533,12 @@ func (d *qemu) ConnectNBD(diskName string, volSize int64, writable bool) (net.Co
 	if !writable {
 		// Expose a frozen view of the disk through a copy-before-write overlay
 		// (see ConnectNBDAllDisks).
-		snapNode, baseNode, removeOverlay, err := d.prepareEphemeralSnapshot(monitor, blockExport, volSize, true, d.Path())
+		snapshotDir, err := d.ephemeralSnapshotDir()
+		if err != nil {
+			return nil, nil, err
+		}
+
+		snapNode, baseNode, removeOverlay, err := d.prepareEphemeralSnapshot(monitor, blockExport, volSize, true, snapshotDir)
 		if err != nil {
 			return nil, nil, fmt.Errorf("Failed creating temporary snapshot: %w", err)
 		}
@@ -14746,7 +14758,12 @@ func (d *qemu) ConnectNBDAllDisks(reuse bool) (net.Conn, func(), error) {
 			bitmapNames = append(bitmapNames, b.Name)
 		}
 
-		overlayNode, baseNode, removeOverlay, err := d.prepareEphemeralSnapshot(monitor, nodeName, 0, true, d.Path())
+		snapshotDir, err := d.ephemeralSnapshotDir()
+		if err != nil {
+			return nil, nil, err
+		}
+
+		overlayNode, baseNode, removeOverlay, err := d.prepareEphemeralSnapshot(monitor, nodeName, 0, true, snapshotDir)
 		if err != nil {
 			return nil, nil, fmt.Errorf("Failed creating temporary snapshot for %q: %w", devName, err)
 		}
