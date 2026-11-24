@@ -970,6 +970,14 @@
 						}
 					},
 					{
+						"vlan.ingress": {
+							"longdesc": "Used for private VLANs where the instance sends on the secondary VLAN (`vlan`) and gets its return traffic on the ingress VLAN.\nOnly supported on native Linux bridges.",
+							"managed": "no",
+							"shortdesc": "The ingress VLAN ID to also receive non-tagged traffic from (requires `vlan` and `security.mac_filtering`)",
+							"type": "integer"
+						}
+					},
+					{
 						"vlan.tagged": {
 							"longdesc": "",
 							"managed": "no",
@@ -1788,6 +1796,15 @@
 							"longdesc": "",
 							"managed": "no",
 							"shortdesc": "The VLAN ID to attach to",
+							"type": "integer"
+						}
+					},
+					{
+						"vlan.ingress": {
+							"condition": "container",
+							"longdesc": "Used for private VLANs where the instance sends on the untagged VLAN (`vlan`) and gets its return traffic on the ingress VLAN.\nOnly supported when the parent is a native Linux bridge.",
+							"managed": "no",
+							"shortdesc": "The ingress VLAN ID to also receive non-tagged traffic from (requires `vlan` and `security.mac_filtering`)",
 							"type": "integer"
 						}
 					},
@@ -5565,6 +5582,14 @@
 							"condition": "-",
 							"longdesc": "",
 							"shortdesc": "The VLAN ID to attach to",
+							"type": "integer"
+						}
+					},
+					{
+						"vlan.ingress": {
+							"condition": "Parent must be an existing bridge",
+							"longdesc": "Used for private VLANs where instances send on the untagged VLAN (`vlan`) and get their return traffic on the ingress VLAN.",
+							"shortdesc": "The ingress VLAN ID to also receive non-tagged traffic from (requires `vlan`)",
 							"type": "integer"
 						}
 					},
