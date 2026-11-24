@@ -191,28 +191,24 @@ func (d *nicPhysical) validateConfig(instConf instance.ConfigReader, partialVali
 				d.config[field] = netConfig[field]
 			}
 		}
-
-		// Check if the parent is a bridge.
-		isParentBridge := d.config["parent"] != "" && network.IsNativeBridge(d.config["parent"])
-		if isParentBridge {
-			// Validate the NIC as if bridged.
-			bridgedConfig := d.config.Clone()
-			bridgedConfig["type"] = "nic"
-			bridgedConfig["nictype"] = "bridged"
-			bridgedConfig["network"] = ""
-
-			// Instantiate the new device.
-			bridged, err := load(nil, d.state, instConf.Project().Name, d.name, bridgedConfig, nil, nil)
-			if err != nil {
-				return fmt.Errorf("Failed to initialize bridged device: %w", err)
-			}
-
-			// Forward the validateConfig call.
-			return bridged.validateConfig(instConf, partialValidation)
-		}
 	} else {
 		// If no network property supplied, then parent property is required.
 		requiredFields = append(requiredFields, "parent")
+	}
+
+	// A bridge parent is handled as a bridged NIC, so validate it as one.
+	if d.config["parent"] != "" && network.IsNativeBridge(d.config["parent"]) {
+		bridgedConfig := d.config.Clone()
+		bridgedConfig["type"] = "nic"
+		bridgedConfig["nictype"] = "bridged"
+		bridgedConfig["network"] = ""
+
+		bridged, err := load(nil, d.state, instConf.Project().Name, d.name, bridgedConfig, nil, nil)
+		if err != nil {
+			return fmt.Errorf("Failed to initialize bridged device: %w", err)
+		}
+
+		return bridged.validateConfig(instConf, partialValidation)
 	}
 
 	err := d.config.Validate(nicValidationRules(requiredFields, optionalFields, instConf))
@@ -600,6 +596,10 @@ func IsPhysicalNICWithBridge(s *state.State, deviceProjectName string, d deviceC
 		}
 
 		return network.IsNativeBridge(parent)
+	}
+
+	if d["parent"] != "" {
+		return network.IsNativeBridge(d["parent"])
 	}
 
 	return false
