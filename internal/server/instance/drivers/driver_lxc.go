@@ -1575,8 +1575,13 @@ func (d *lxc) deviceStart(dev device.Device, instanceRunning bool) (*deviceConfi
 				}
 			}
 
-			// If running, run post start hooks now (if not running, they will be run
+			// If running, run running and post start hooks now (if not running, they will be run
 			// once the instance is started).
+			err = d.runHooks(runConf.RunningHooks)
+			if err != nil {
+				return nil, err
+			}
+
 			err = d.runHooks(runConf.PostHooks)
 			if err != nil {
 				return nil, err
@@ -2521,6 +2526,7 @@ func (d *lxc) startCommon() (string, []func() error, error) {
 		}
 
 		// Add any post start hooks.
+		postStartHooks = append(postStartHooks, runConf.RunningHooks...)
 		if len(runConf.PostHooks) > 0 {
 			postStartHooks = append(postStartHooks, runConf.PostHooks...)
 		}
