@@ -215,6 +215,7 @@ run_standalone_core() {
     run_test test_filtering "API filtering"
     run_test test_fuidshift "fuidshift"
     run_test test_get_operations "test_get_operations"
+    run_test test_operation_wait "operation wait without events"
     run_test test_image_acl "image acl"
     run_test test_image_auto_update "image auto-update"
     run_test test_image_expiry "image expiry"
