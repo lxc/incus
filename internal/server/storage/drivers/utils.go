@@ -676,7 +676,8 @@ func regenerateFilesystemBTRFSUUID(devPath string) error {
 		return err
 	}
 
-	_, err = subprocess.RunCommand("btrfstune", "-f", "-u", devPath)
+	// Only change the metadata UUID as rewriting every metadata block with -u is much slower.
+	_, err = subprocess.RunCommand("btrfstune", "-f", "-m", devPath)
 	if err != nil {
 		return err
 	}
