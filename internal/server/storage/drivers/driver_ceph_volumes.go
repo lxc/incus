@@ -1269,8 +1269,9 @@ func (d *ceph) SetVolumeQuota(vol Volume, size string, allowUnsafeResize bool, o
 				return fmt.Errorf("Block volumes cannot be shrunk: %w", ErrCannotBeShrunk)
 			}
 
-			if inUse {
-				return ErrInUse // We don't allow online resizing of block volumes.
+			// NBD devices don't reflect the new size until reconnected, preventing online growth.
+			if inUse && strings.HasPrefix(devPath, "/dev/nbd") {
+				return ErrInUse
 			}
 		}
 
