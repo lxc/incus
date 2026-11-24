@@ -428,9 +428,10 @@ func (op *Operation) Cancel() (chan error, error) {
 			}
 
 			// A running function completes the operation itself so its result isn't lost.
+			// Until then the operation stays in the cancelling state for those waiting on it.
 			op.lock.Lock()
 			running := op.running
-			if op.status == api.Cancelling {
+			if op.status == api.Cancelling && !running {
 				op.status = api.Cancelled
 			}
 
@@ -465,7 +466,7 @@ func (op *Operation) Cancel() (chan error, error) {
 	if !hasOnCancel {
 		op.lock.Lock()
 		running := op.running
-		if op.status == api.Cancelling {
+		if op.status == api.Cancelling && !running {
 			op.status = api.Cancelled
 		}
 
