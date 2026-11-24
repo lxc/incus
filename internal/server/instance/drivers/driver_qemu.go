@@ -1494,24 +1494,42 @@ func (d *qemu) restoreStateWait(ctx context.Context, monitor *qmp.Monitor) error
 	return nil
 }
 
-// receiveMigrationSnapshot handles an incoming disk snapshot during migration.
-func (d *qemu) receiveMigrationSnapshot(monitor *qmp.Monitor, blockExport string, filesystemConn io.ReadWriteCloser) error {
+// startMigrationSnapshotExport starts the NBD server an incoming disk snapshot gets written through.
+func (d *qemu) startMigrationSnapshotExport(monitor *qmp.Monitor, blockExport string) (net.Conn, error) {
 	nbdConn, err := monitor.NBDServerStart(d.nbdPath(), 1)
 	if err != nil {
-		return fmt.Errorf("Failed starting NBD server: %w", err)
+		return nil, fmt.Errorf("Failed starting NBD server: %w", err)
 	}
 
 	d.logger.Debug("Migration NBD server started")
+
+	err = monitor.NBDBlockExportAdd(blockExport, blockExport, true, "", nil)
+	if err != nil {
+		_ = nbdConn.Close()
+		_ = monitor.NBDServerStop()
+
+		return nil, fmt.Errorf("Failed adding disk to NBD server: %w", err)
+	}
+
+	return nbdConn, nil
+}
+
+// receiveMigrationSnapshot handles an incoming disk snapshot during migration.
+// The NBD server is started here unless the caller already did.
+func (d *qemu) receiveMigrationSnapshot(monitor *qmp.Monitor, blockExport string, filesystemConn io.ReadWriteCloser, nbdConn net.Conn) error {
+	if nbdConn == nil {
+		var err error
+
+		nbdConn, err = d.startMigrationSnapshotExport(monitor, blockExport)
+		if err != nil {
+			return err
+		}
+	}
 
 	defer func() {
 		_ = nbdConn.Close()
 		_ = monitor.NBDServerStop()
 	}()
-
-	err = monitor.NBDBlockExportAdd(blockExport, blockExport, true, "", nil)
-	if err != nil {
-		return fmt.Errorf("Failed adding root disk to NBD server: %w", err)
-	}
 
 	d.logger.Debug("Migration storage NBD export starting")
 
@@ -1536,18 +1554,28 @@ func (d *qemu) restoreState(monitor *qmp.Monitor) error {
 		// Perform non-shared storage transfer if requested.
 		filesystemConn := d.migrationReceiveStateful[api.SecretNameFilesystem]
 		if filesystemConn != nil {
+			var rootDiskName string
+			var rootNBDConn net.Conn
+
+			if d.migrationRootDisk {
+				rootDevName, _, err := internalInstance.GetRootDiskDevice(d.expandedDevices.CloneNative())
+				if err != nil {
+					return fmt.Errorf("Failed getting instance root disk: %w", err)
+				}
+
+				rootDiskName = d.blockNodeName(linux.PathNameEncode(rootDevName))
+
+				// Exporting a freshly received disk can hold the monitor for a while on slow storage,
+				// so have it done before the state transfer commands are sent.
+				rootNBDConn, err = d.startMigrationSnapshotExport(monitor, rootDiskName)
+				if err != nil {
+					return err
+				}
+			}
+
 			go func() {
 				if d.migrationRootDisk {
-					rootDiskName, _, err := internalInstance.GetRootDiskDevice(d.expandedDevices.CloneNative())
-					if err != nil {
-						d.logger.Error("Failed getting instance root disk", logger.Ctx{"err": err})
-						return
-					}
-
-					escapedDeviceName := linux.PathNameEncode(rootDiskName)
-					rootDiskName = d.blockNodeName(escapedDeviceName)
-
-					err = d.receiveMigrationSnapshot(monitor, rootDiskName, filesystemConn)
+					err := d.receiveMigrationSnapshot(monitor, rootDiskName, filesystemConn, rootNBDConn)
 					if err != nil {
 						d.logger.Error("Failed receiving migration snapshot", logger.Ctx{"err": err})
 						return
@@ -1578,7 +1606,7 @@ func (d *qemu) restoreState(monitor *qmp.Monitor) error {
 
 					diskName := d.blockNodeName(linux.PathNameEncode(deviceName))
 
-					err = d.receiveMigrationSnapshot(monitor, diskName, filesystemConn)
+					err = d.receiveMigrationSnapshot(monitor, diskName, filesystemConn, nil)
 					if err != nil {
 						d.logger.Error("Failed receiving migration snapshot", logger.Ctx{"err": err})
 					}
