@@ -8,8 +8,9 @@ msgstr ""
 "Project-Id-Version: incus\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
 "POT-Creation-Date: 2026-11-24 13:35-0500\n"
-"PO-Revision-Date: 2026-11-24 19:14+0000\n"
-"Last-Translator: Anonymous <anonymous@users.noreply.hosted.weblate.org>\n"
+"PO-Revision-Date: 2026-11-24 21:33+0000\n"
+"Last-Translator: Américo Monteiro <a-"
+"monteiro@users.noreply.hosted.weblate.org>\n"
 "Language-Team: Portuguese <https://hosted.weblate.org/projects/incus/cli/pt/>"
 "\n"
 "Language: pt\n"
@@ -703,7 +704,7 @@ msgstr "(dados binários)"
 #: cmd/incus/utils_list.go:137
 #, c-format
 msgid "(default layout: %s)"
-msgstr ""
+msgstr "(disposição predefinida: %s)"
 
 #: cmd/incus/low_level.go:761
 #, c-format
@@ -721,7 +722,7 @@ msgstr "(não é um certificado)"
 
 #: cmd/incus/utils_list.go:263
 msgid "(separated with commas)"
-msgstr ""
+msgstr "(separado com vírgulas)"
 
 #: cmd/incus/usage/parse.go:245
 #, c-format
@@ -1165,9 +1166,9 @@ msgid "Alias %s doesn't exist"
 msgstr "Alias %s não existe"
 
 #: cmd/incus/alias.go:249
-#, fuzzy, c-format
+#, c-format
 msgid "Alias %s is built-in and cannot be removed"
-msgstr "Remoto %s é global e não pode ser removido"
+msgstr "Nome alternativo %s está embutido e não pode ser removido"
 
 #: cmd/incus/image.go:1020
 #, c-format
@@ -1212,12 +1213,12 @@ msgstr "Endereços alocados individual)"
 
 #: cmd/incus/network_allocations.go:45
 msgid "Allocated addresses (ranges)"
-msgstr ""
+msgstr "Endereços alocados (gamas)"
 
 #: cmd/incus/network_allocations.go:190
 #, c-format
 msgid "Allocation %q from unknown network %q"
-msgstr ""
+msgstr "Alocação %q de rede desconhecida %q"
 
 #: cmd/incus/config_trust.go:185
 msgid "Alternative certificate name"
@@ -1326,9 +1327,8 @@ msgid "Attributes"
 msgstr "Atributos"
 
 #: cmd/incus/remote.go:1290
-#, fuzzy
 msgid "Authentication type"
-msgstr "Negociação automática: %v"
+msgstr "Tipo de autenticação"
 
 #: cmd/incus/remote.go:810
 #, c-format
@@ -1430,14 +1430,12 @@ msgid "Bad key=value pair: %q"
 msgstr "Mau par de chave=valor: %q"
 
 #: cmd/incus/list.go:102
-#, fuzzy
 msgid "Base image fingerprint (long)"
-msgstr "Impressão digital do certificado: %s"
+msgstr "Imagem de impressão digital base (longa)"
 
 #: cmd/incus/list.go:101
-#, fuzzy
 msgid "Base image fingerprint (short)"
-msgstr "Impressão digital do certificado: %s"
+msgstr "Imagem de impressão digital base (curta)"
 
 #: cmd/incus/remote.go:161
 msgid "Binary helper for retrieving credentials"
@@ -1591,9 +1589,9 @@ msgid "Can't specify a remote with --all-remotes"
 msgstr "Não pode especificar um remoto com --all-remotes"
 
 #: cmd/incus/utils_list.go:90
-#, fuzzy
 msgid "Can't specify column L when querying a single standalone server"
-msgstr "Não pode especificar column L quando não em agrupamento"
+msgstr ""
+"Não pode especificar coluna L quando consulta um único servidor autônomo"
 
 #: cmd/incus/config.go:620
 #, c-format
@@ -1975,9 +1973,8 @@ msgstr ""
 "corrente de certificado"
 
 #: cmd/incus/storage_volume.go:1510
-#, fuzzy
 msgid "Content type (filesystem or block)"
-msgstr "Tipo de conteúdo, bloco ou sistema de ficheiros"
+msgstr "Tipo de conteúdo (sistema de ficheiros ou bloco)"
 
 #: cmd/incus/storage_volume.go:607
 msgid "Content type, block or filesystem"
@@ -2340,9 +2337,8 @@ msgstr "A criar a instância"
 
 #: cmd/incus/list.go:97 cmd/incus/operation.go:127 cmd/incus/snapshot.go:318
 #: cmd/incus/storage_volume_snapshot.go:321
-#, fuzzy
 msgid "Creation date"
-msgstr "A criar %s"
+msgstr "Data de criação"
 
 #: cmd/incus/storage_volume.go:1512
 msgid "Current disk usage"
@@ -2368,11 +2364,21 @@ msgid ""
 "    <width>: Max column width (longer results are truncated), 0 = limit to "
 "header width, -1 = unlimited (defaults to -1)"
 msgstr ""
+"Colunas personalizadas podem ser definidas com \"[config:|devices:]<key>"
+"[:<name>][:<width>]\":\n"
+"    <key>:   Configuração estendida ou chave de dispositivo a mostrar (se "
+"[config:|devices:] for omitido, predefine para config:)\n"
+"    <name>:  Nome a mostrar no cabeçalho da coluna (predefinido para <key> "
+"se não especificado ou vazio)\n"
+"    <width>: Largura máxima da coluna (resultados maiores são truncados), 0 "
+"= limite para largura do cabeçalho, -1 = sem limite (predefinido para -1)"
 
 #: cmd/incus/image.go:1074
 msgid ""
 "Custom columns can be defined with “properties:<key>”, e.g. “properties:os”."
 msgstr ""
+"Colunas personalizadas podem ser definidas com “properties:<chave>”, ex. “"
+"properties:os”."
 
 #: cmd/incus/utils_sftp.go:502
 #, c-format
@@ -2433,9 +2439,8 @@ msgid "Default VLAN ID"
 msgstr "ID VLAN predefinido"
 
 #: cmd/incus/network_forward.go:93
-#, fuzzy
 msgid "Default target address"
-msgstr "Apaga conjuntos de endereços de rede"
+msgstr "Endereço alvo predefinido"
 
 #: cmd/incus/storage_bucket.go:1148
 msgid "Define a compression algorithm: for backup or none"
@@ -2763,9 +2768,10 @@ msgid "Display storage pool buckets from all projects"
 msgstr "Mostra buckets de pool de todos os projetos"
 
 #: cmd/incus/top.go:40
-#, fuzzy
 msgid "Displays CPU usage, memory usage, and disk usage per instance"
-msgstr "Mostra informação de uso de recursos por instância"
+msgstr ""
+"Mostra utilização de CPU, utilização de memória, e utilização de disco por "
+"instância"
 
 #: cmd/incus/admin_init_interactive.go:222
 msgid "Do you want to configure a new local storage pool?"
@@ -2971,13 +2977,13 @@ msgid "Edit trust configurations as YAML"
 msgstr "Edita configurações de confiança como YAML"
 
 #: cmd/incus/utils_list.go:178
-#, fuzzy, c-format
+#, c-format
 msgid "Empty column entry (redundant, leading or trailing comma) in '%s'"
 msgstr ""
-"Entrada de coluna vazia (comando redundante, no inicio ou no final) em '%s '"
+"Entrada de coluna vazia (vírgula redundante, no inicio ou no final) em '%s '"
 
 #: cmd/incus/utils_sftp.go:620
-#, fuzzy, c-format
+#, c-format
 msgid "Empty column entry (redundant, leading or trailing command) in '%s'"
 msgstr ""
 "Entrada de coluna vazia (comando redundante, no inicio ou no final) em '%s '"
@@ -3264,9 +3270,8 @@ msgid "Expected a struct, got a %v"
 msgstr "Esperado uma estrutura, obtido %v"
 
 #: cmd/incus/network_allocations.go:199
-#, fuzzy
 msgid "Expected single IP"
-msgstr "esperado %s"
+msgstr "Esperado IP único"
 
 #: cmd/incus/cluster.go:1022 cmd/incus/config_trust.go:384
 #: cmd/incus/config_trust.go:494 cmd/incus/snapshot.go:319
@@ -3868,11 +3873,11 @@ msgstr "Falhou ao requisitar validação: %w"
 
 #: cmd/incus/cluster.go:149
 msgid "Failure domain"
-msgstr ""
+msgstr "Domínio de falha"
 
 #: cmd/incus/low_level.go:705
 msgid "Familiar GUID name or GUID if none"
-msgstr ""
+msgstr "Nome GUID familiar ou GUID se nenhum"
 
 #: cmd/incus/info.go:438
 #, c-format
@@ -3880,9 +3885,8 @@ msgid "Family: %v"
 msgstr "Família: %v"
 
 #: cmd/incus/list.go:138
-#, fuzzy
 msgid "Fast mode (same as --columns=[Re]nsacPt[L])"
-msgstr "Modo rápido (mesmo que --columns=nsacPt)"
+msgstr "Modo rápido (o mesmo que --columns=[Re]nsacPt[L])"
 
 #: cmd/incus/export.go:184
 #, c-format
@@ -3906,7 +3910,7 @@ msgstr "Impressão digital: %s"
 
 #: cmd/incus/warning.go:72
 msgid "First seen date"
-msgstr ""
+msgstr "Data de visto pela primeira vez"
 
 #: cmd/incus/color/color.go:43
 msgid "Flags"
@@ -4038,25 +4042,24 @@ msgstr ""
 "csv,header"
 
 #: cmd/incus/list.go:143
-#, fuzzy
 msgid ""
 "Format (csv|json|table|yaml|compact|markdown), use suffix \",noheader\" to "
 "disable headers and \",header\" to enable them if missing, and suffix "
 "\",raw\" to skip formatting numeric units, e.g. csv,header,raw"
 msgstr ""
 "Formato (csv|json|table|yaml|compact|markdown), use sufixo \",noheader\" "
-"para desativar cabeçalhos e \",header\" para os ativar se em falta, ex. "
-"csv,header"
+"para desativar cabeçalhos e \",header\" para os ativar se em falta, e o "
+"sufixo \"raw\" para saltar a formatação de unidades numéricas, ex. "
+"csv,header,raw"
 
 #: cmd/incus/utils_list.go:98
-#, fuzzy
 msgid ""
 "Format (csv|json|table|yaml|compact|markdown), use suffix \",noheader\" to "
 "disable headers and \",header\" to enable them if missing, e.g. csv,header"
 msgstr ""
 "Formato (csv|json|table|yaml|compact|markdown), use sufixo \",noheader\" "
-"para desativar cabeçalhos e \",header\" para os ativar se em falta, ex. "
-"csv,header"
+"para desativar cabeçalhos e \",header\" para os ativar se estiverem em "
+"falta, ex. csv,header"
 
 #: cmd/incus/monitor.go:59
 msgid "Format (json|pretty|yaml)"
@@ -4071,14 +4074,12 @@ msgid "Format (pem|pfx)"
 msgstr "Formato (pem|pfx)"
 
 #: cmd/incus/top.go:54
-#, fuzzy
 msgid ""
 "Format (table|compact), use suffix \",noheader\" to disable headers, e.g. "
 "compact,header"
 msgstr ""
-"Formato (csv|json|table|yaml|compact|markdown), use sufixo \",noheader\" "
-"para desativar cabeçalhos e \",header\" para os ativar se preciso, ex. "
-"csv,header"
+"Formato (table|compact), use sufixo \",noheader\" para desativar cabeçalhos, "
+"ex. compact,header"
 
 #: cmd/incus/low_level.go:226
 msgid ""
@@ -4194,7 +4195,6 @@ msgid "Generate a metadata tarball"
 msgstr "Gerar um tarball de metadados"
 
 #: cmd/incus/image.go:1691
-#, fuzzy
 msgid ""
 "Generate a metadata tarball\n"
 "\n"
@@ -4214,15 +4214,19 @@ msgid ""
 msgstr ""
 "Gerar um tarball de metadados\n"
 "\n"
-"Este comando produz um tarball incus.tar.xz para suar durante a importação "
+"Este comando produz um tarball incus.tar.xz para usar durante a importação "
 "com uma imagem de disco QCOW2 ou squashfs existente.\n"
 "\n"
-"Este comando vai perguntar por todos os campos do tarball de metadados:\n"
-" - Nome do sistema operativo\n"
-" - Lançamento \n"
-" - Variante\n"
-" - Arquitectura\n"
-" - Descrição\n"
+"Este comando vai perguntar por qualquer dos campos do tarball de metadados "
+"não passados com --option:\n"
+" - os (Nome do sistema operativo)\n"
+" - release (Nome de lançamento) \n"
+" - variant (Nome de variante)\n"
+" - architecture (Nome da arquitectura)\n"
+" - description (Descrição)\n"
+"\n"
+"Qualquer outra chave passada com --option é escrita nos metadados como está, "
+"ex. requirements.cdrom_agent=true.\n"
 
 #: cmd/incus/manpage.go:27 cmd/incus/manpage.go:28
 msgid "Generate manpages for all commands"
@@ -4430,7 +4434,7 @@ msgstr "Bandeiras Globais"
 
 #: cmd/incus/storage_volume_bitmap.go:214
 msgid "Granularity"
-msgstr ""
+msgstr "Granularidade"
 
 #: cmd/incus/low_level.go:111 cmd/incus/storage_volume_bitmap.go:73
 msgid "Granularity of the dirty bitmap in bytes"
@@ -4525,7 +4529,7 @@ msgstr "ENDEREÇO IP"
 
 #: cmd/incus/network.go:1155
 msgid "IP address"
-msgstr "Endereços IP"
+msgstr "Endereço IP"
 
 #: cmd/incus/info.go:811
 msgid "IP addresses"
@@ -4756,7 +4760,7 @@ msgstr "Infiniband:"
 
 #: cmd/incus/list.go:108
 msgid "Init process PID"
-msgstr ""
+msgstr "PID de processo de iniciação"
 
 #: cmd/incus/query.go:58
 msgid "Input data"
@@ -4844,9 +4848,9 @@ msgid "Invalid URL scheme \"%s\" in \"%s\""
 msgstr "Esquema de URL inválido \"%s\" em \"%s\""
 
 #: cmd/incus/network_allocations.go:195 cmd/incus/network_allocations.go:199
-#, fuzzy, c-format
+#, c-format
 msgid "Invalid allocation %q for network %q: %w"
-msgstr "Sub-rede %q inválida para rede %q: %w"
+msgstr "Alocação inválida %q para rede %q: %w"
 
 #: cmd/incus/main_aliases.go:147 cmd/incus/main_aliases.go:189
 #, c-format
@@ -4941,7 +4945,7 @@ msgstr ""
 #: cmd/incus/image.go:1735
 #, c-format
 msgid "Invalid option %q, expected key=value"
-msgstr ""
+msgstr "Opção inválida %q, esperado chave=valor"
 
 #: cmd/incus/network_peer.go:269
 msgid "Invalid peer type"
@@ -4995,14 +4999,12 @@ msgid "Issue date"
 msgstr "Data de emissão"
 
 #: cmd/incus/low_level.go:1568
-#, fuzzy
 msgid "Issuer (long, for certificates)"
-msgstr "(não é um certificado)"
+msgstr "Emissor (longo, para certificados)"
 
 #: cmd/incus/low_level.go:1567
-#, fuzzy
 msgid "Issuer (short, for certificates)"
-msgstr "(não é um certificado)"
+msgstr "Emissor (curto, para certificados)"
 
 #: cmd/incus/cluster.go:889 cmd/incus/cluster.go:890
 msgid "Join an existing server to a cluster"
@@ -5057,14 +5059,12 @@ msgid "Last Used: %s"
 msgstr "Última vez Usado: %s"
 
 #: cmd/incus/warning.go:73
-#, fuzzy
 msgid "Last seen date"
-msgstr "Última vez usado: nunca"
+msgstr "Data de última vez visto"
 
 #: cmd/incus/list.go:103
-#, fuzzy
 msgid "Last used date"
-msgstr "Última vez usado: %s"
+msgstr "Data de última vez usado"
 
 #: cmd/incus/image.go:994
 #, c-format
@@ -5135,9 +5135,8 @@ msgid "List all warnings"
 msgstr "Lista todos os avisos"
 
 #: cmd/incus/network_acl.go:101 cmd/incus/network_acl.go:102
-#, fuzzy
 msgid "List available network ACLs"
-msgstr "Lista ACL de rede disponível"
+msgstr "Lista ACLs de rede disponíveis"
 
 #: cmd/incus/network_address_set.go:97 cmd/incus/network_address_set.go:98
 msgid "List available network address sets"
@@ -5168,7 +5167,6 @@ msgid "List available networks"
 msgstr "Lista redes disponíveis"
 
 #: cmd/incus/network.go:1020
-#, fuzzy
 msgid ""
 "List available networks\n"
 "\n"
@@ -5189,24 +5187,7 @@ msgstr ""
 "Exemplos:\n"
 "  - \"foo\" lista todas as redes que começam com o nome foo\n"
 "  - \"name=foo\" lista todas as redes que têm exatamente o nome foo\n"
-"  - \"type=bridge\" lista todas as redes com o tipo bridge\n"
-"\n"
-"A opção -c recebe uma lista de argumentos (opcionalmente separados por "
-"vírgulas)\n"
-"que controlam quais atributos de redes são incluídos ao mostrar em tabela\n"
-"ou formato csv.\n"
-"\n"
-"Disposição predefinida de coluna: ntm46dus\n"
-"Caracteres curtos pre-definidos da coluna:\n"
-"4 - Endereços IPv4\n"
-"6 - Endereços IPv6\n"
-"d - Descrição\n"
-"e - Nome do projeto\n"
-"m - Estado de gestão\n"
-"n - Nome da Interface de Rede\n"
-"s - Estado\n"
-"t - Tipo de Interface\n"
-"u - Usado por (contagem)"
+"  - \"type=bridge\" lista todas as redes com o tipo bridge"
 
 #: cmd/incus/storage.go:635 cmd/incus/storage.go:636
 msgid "List available storage pools"
@@ -5217,9 +5198,8 @@ msgid "List background operations"
 msgstr "Lista operações nos bastidores"
 
 #: cmd/incus/storage_volume_file.go:335
-#, fuzzy
 msgid "List files in custom volumes"
-msgstr "Empurra ficheiros para volumes personalizados"
+msgstr "Lista ficheiros em volumes personalizados"
 
 #: cmd/incus/storage_volume_file.go:336
 #, fuzzy
@@ -5268,9 +5248,8 @@ msgstr ""
 "  s - Estado"
 
 #: cmd/incus/file.go:901
-#, fuzzy
 msgid "List files in instances"
-msgstr "Edita ficheiros em instâncias"
+msgstr "Lista ficheiros em instâncias"
 
 #: cmd/incus/file.go:902
 #, fuzzy
@@ -5328,6 +5307,10 @@ msgid ""
 "\n"
 "Filters may be part of the image hash or part of the image alias name."
 msgstr ""
+"Lista nomes alternativos de imagem\n"
+"\n"
+"Filtros podem ser parte da cinza da imagem ou parte do nome alternativo da "
+"imagem."
 
 #: cmd/incus/image.go:1050
 msgid "List images"
@@ -5340,6 +5323,11 @@ msgid ""
 "Filters may be of the <key>=<value> form for property based filtering,\n"
 "or part of the image hash or part of the image alias name."
 msgstr ""
+"Lista imagens\n"
+"\n"
+"Filtros podem ser do formato <chave>=<valor> para filtragem baseada em "
+"propriedade,\n"
+"ou parte da cinza da imagem ou parte do nome alternativo da imagem."
 
 #: cmd/incus/config_device.go:324 cmd/incus/config_device.go:325
 msgid "List instance devices"
@@ -6170,14 +6158,13 @@ msgid "Memory (peak)"
 msgstr "Memória (pico)"
 
 #: cmd/incus/list.go:104 cmd/incus/top.go:46
-#, fuzzy
 msgid "Memory usage"
-msgstr "Utilização de memória:"
+msgstr "Utilização de memória"
 
 #: cmd/incus/list.go:105
-#, fuzzy, c-format
+#, c-format
 msgid "Memory usage (%)"
-msgstr "Utilização de memória:"
+msgstr "Utilização de memória (%)"
 
 #: cmd/incus/info.go:774
 msgid "Memory usage:"
