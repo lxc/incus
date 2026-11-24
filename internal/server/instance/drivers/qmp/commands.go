@@ -1648,6 +1648,9 @@ func (m *Monitor) blockJobDismiss(jobID string) error {
 func (m *Monitor) blockJobWait(jobID string, waitReady bool, exitOnNotFound bool) (bool, error) {
 	queryDeadline := time.Now().Add(2 * time.Minute)
 
+	// Poll quickly at first, as most jobs settle within milliseconds, then back off to once a second.
+	interval := 10 * time.Millisecond
+
 	for {
 		var resp struct {
 			Return []struct {
@@ -1707,7 +1710,8 @@ func (m *Monitor) blockJobWait(jobID string, waitReady bool, exitOnNotFound bool
 			return true, nil
 		}
 
-		time.Sleep(1 * time.Second)
+		time.Sleep(interval)
+		interval = min(interval*2, time.Second)
 	}
 }
 
