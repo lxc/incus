@@ -9,7 +9,8 @@ msgstr ""
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
 "POT-Creation-Date: 2026-11-23 23:38+0100\n"
 "PO-Revision-Date: 2026-11-24 00:58+0000\n"
-"Last-Translator: Anonymous <anonymous@users.noreply.hosted.weblate.org>\n"
+"Last-Translator: Jan Mittelstädter <janm84@users.noreply.hosted.weblate.org>"
+"\n"
 "Language-Team: German <https://hosted.weblate.org/projects/incus/cli/de/>\n"
 "Language: de\n"
 "MIME-Version: 1.0\n"
@@ -1434,8 +1435,8 @@ msgstr "Sicherungen:"
 #, c-format
 msgid "Bad device override syntax, expecting <device>,<key>=<value>: %s"
 msgstr ""
-"Ungültige Gerätüberschreibungs-Syntax, erwartet wird <Gerät>,"
-"<Schlüssel>=<Wert>: %s"
+"Ungültige Gerätüberschreibungs-Syntax, erwartet wird <Gerät>,<Schlüssel>"
+"=<Wert>: %s"
 
 #: cmd/incus/query.go:92
 #, c-format
@@ -1626,8 +1627,7 @@ msgstr ""
 #: cmd/incus/config.go:625
 #, c-format
 msgid "Can't unset key '%s', it's not currently set"
-msgstr ""
-"Kann Schlüssel '%s' nicht zurücksetzen, da er derzeit nicht gesetzt ist"
+msgstr "Kann Schlüssel '%s' nicht zurücksetzen, da er derzeit nicht gesetzt ist"
 
 #: cmd/incus/admin_init.go:74
 msgid "Can't use --auto and --preseed together"
@@ -1645,8 +1645,7 @@ msgstr "Die Option --minimal und --auto können nicht zusammen genutzt werden"
 
 #: cmd/incus/admin_init.go:78
 msgid "Can't use --minimal and --preseed together"
-msgstr ""
-"Die Option --minimal und --preseed können nicht zusammen genutzt werden"
+msgstr "Die Option --minimal und --preseed können nicht zusammen genutzt werden"
 
 #: cmd/incus/snapshot.go:128 cmd/incus/storage_volume_snapshot.go:130
 msgid "Can't use both --no-expiry and --expiry"
@@ -1690,8 +1689,7 @@ msgstr ""
 
 #: cmd/incus/storage_volume.go:443
 msgid "Cannot set --target when source server is not clustered"
-msgstr ""
-"\"Kann --target nicht setzen, wenn der Quellserver nicht im Cluster ist"
+msgstr "\"Kann --target nicht setzen, wenn der Quellserver nicht im Cluster ist"
 
 #: cmd/incus/storage_volume.go:457
 msgid "Cannot set --volume-only when copying a snapshot"
