@@ -8,8 +8,9 @@ msgstr ""
 "Project-Id-Version: incus\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
 "POT-Creation-Date: 2026-11-24 13:35-0500\n"
-"PO-Revision-Date: 2026-11-24 00:59+0000\n"
-"Last-Translator: Anonymous <anonymous@users.noreply.hosted.weblate.org>\n"
+"PO-Revision-Date: 2026-11-24 19:14+0000\n"
+"Last-Translator: Daniel Nylander <yeager74@users.noreply.hosted.weblate.org>"
+"\n"
 "Language-Team: Swedish <https://hosted.weblate.org/projects/incus/cli/sv/>\n"
 "Language: sv\n"
 "MIME-Version: 1.0\n"
@@ -1110,8 +1111,8 @@ msgstr "Ytterligare hjälpämnen:"
 msgid ""
 "Additional storage pool configuration property (KEY=VALUE, empty when done):"
 msgstr ""
-"Ytterligare konfigurationsegenskap för lagringspool (KEY=VALUE, tom när "
-"klar):"
+"Ytterligare konfigurationsegenskap för lagringspool (KEY=VALUE, tom när klar)"
+":"
 
 #: cmd/incus/admin_init.go:56
 msgid "Address to bind to (default: none)"
@@ -1414,8 +1415,8 @@ msgstr "Säkerhetskopior:"
 #, c-format
 msgid "Bad device override syntax, expecting <device>,<key>=<value>: %s"
 msgstr ""
-"Felaktig syntax för enhetsöverskrivning, förväntar sig <enhet>,"
-"<nyckel>=<värde>: %s"
+"Felaktig syntax för enhetsöverskrivning, förväntar sig <enhet>,<nyckel>"
+"=<värde>: %s"
 
 #: cmd/incus/query.go:92
 #, c-format
@@ -10153,8 +10154,8 @@ msgid ""
 "they otherwise would."
 msgstr ""
 "Vi har upptäckt att du kör i en container utan privilegier.\n"
-"Det innebär att om du inte manuellt har konfigurerat din värd på annat "
-"sätt, \n"
+"Det innebär att om du inte manuellt har konfigurerat din värd på annat sätt, "
+"\n"
 "kommer du inte att ha tillräckligt med uid och gid att tilldela dina "
 "containrar.\n"
 "\n"
@@ -10215,8 +10216,7 @@ msgstr ""
 
 #: cmd/incus/snapshot.go:98
 msgid "Whether or not to snapshot the instance's running state"
-msgstr ""
-"Om man ska ta en ögonblicksbild av instansens körningsstatus eller inte"
+msgstr "Om man ska ta en ögonblicksbild av instansens körningsstatus eller inte"
 
 #: cmd/incus/storage_volume_bitmap.go:216
 #, fuzzy
