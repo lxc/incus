@@ -9,8 +9,7 @@ msgstr ""
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
 "POT-Creation-Date: 2026-11-24 13:35-0500\n"
 "PO-Revision-Date: 2026-11-24 19:13+0000\n"
-"Last-Translator: Kazantsev Mikhail "
-"<kazan417@users.noreply.hosted.weblate.org>\n"
+"Last-Translator: Anonymous <anonymous@users.noreply.hosted.weblate.org>\n"
 "Language-Team: Russian <https://hosted.weblate.org/projects/incus/cli/ru/>\n"
 "Language: ru\n"
 "MIME-Version: 1.0\n"
@@ -2792,8 +2791,7 @@ msgstr "Показать сегменты хранилища пулов хран
 #: cmd/incus/top.go:40
 #, fuzzy
 msgid "Displays CPU usage, memory usage, and disk usage per instance"
-msgstr ""
-"Отображение информации об использовании ресурсов для каждого экземпляра"
+msgstr "Отображение информации об использовании ресурсов для каждого экземпляра"
 
 #: cmd/incus/admin_init_interactive.go:222
 msgid "Do you want to configure a new local storage pool?"
@@ -5527,15 +5525,15 @@ msgstr ""
 "  f - Отпечаток базового образа (краткий)\n"
 "  F - Отпечаток базового образа (длинный)\n"
 "\n"
-"Пользовательские столбцы определяются с помощью \"[config:|"
-"devices:]key[:name][:maxWidth]\":\n"
+"Пользовательские столбцы определяются с помощью "
+"\"[config:|devices:]key[:name][:maxWidth]\":\n"
 "  KEY: (расширенный) ключ конфигурации или устройств для отображения. Если "
 "[config:|devices:] опущено,\n"
 "    по умолчанию используется ключ конфигурации.\n"
 "  NAME: Название для отображения в заголовке столбца.\n"
 "    По умолчанию используется ключ, если не указан или пуст.\n"
-"  MAXWIDTH: Максимальная ширина столбца (более длинные результаты "
-"обрезаются).\n"
+"  MAXWIDTH: Максимальная ширина столбца (более длинные результаты обрезаются)"
+".\n"
 "    По умолчанию -1 (неограниченная). Используйте 0, чтобы ограничить размер "
 "до размера заголовка столбца."
 
@@ -10342,8 +10340,7 @@ msgstr "Создайте битовую карту в выключенном с�
 #: cmd/incus/config_trust.go:385
 #, fuzzy
 msgid "Whether the certificate is restricted"
-msgstr ""
-"Ограничьте права доступа по сертификату одним или несколькими проектами"
+msgstr "Ограничьте права доступа по сертификату одним или несколькими проектами"
 
 #: cmd/incus/config_device.go:326
 msgid "Whether the device is inherited"
