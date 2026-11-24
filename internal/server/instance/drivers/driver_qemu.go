@@ -9852,6 +9852,10 @@ func (d *qemu) MigrateSend(args instance.MigrateSendArgs) error {
 		channels := qemuMigrationChannels()
 		offerHeader.MultifdChannels = &channels
 
+		// QEMU only accepts parallel channels from a VM with its own UUID.
+		instUUID := d.localConfig["volatile.uuid"]
+		offerHeader.Uuid = &instUUID
+
 		// Offer to carry the persistent bitmaps in the state transfer.
 		offerHeader.DirtyBitmaps = new(true)
 	}
@@ -11240,7 +11244,9 @@ func (d *qemu) MigrateReceive(args instance.MigrateReceiveArgs) error {
 		useStateConn = true
 
 		// Use parallel channels when offered and we're the one opening the connections.
-		if args.StateConnExtra != nil && offerHeader.GetMultifdChannels() > 0 {
+		// A copy gets a new UUID, which QEMU refuses on those channels.
+		sameUUID := offerHeader.GetUuid() == "" || offerHeader.GetUuid() == d.localConfig["volatile.uuid"]
+		if args.StateConnExtra != nil && offerHeader.GetMultifdChannels() > 0 && sameUUID {
 			channels = min(offerHeader.GetMultifdChannels(), qemuMigrationChannels())
 			respHeader.MultifdChannels = &channels
 		}
