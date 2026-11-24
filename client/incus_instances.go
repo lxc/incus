@@ -714,6 +714,10 @@ func (r *ProtocolIncus) tryCreateInstance(req api.InstancesPost, urls []string, 
 		select {
 		case err = <-chConnect:
 		case err = <-chWait:
+			// The source being done doesn't tell us how the target fared.
+			if err == nil {
+				err = <-chConnect
+			}
 		}
 
 		rop.err = err
@@ -1121,6 +1125,10 @@ func (r *ProtocolIncus) tryMigrateInstance(source InstanceServer, name string, r
 		select {
 		case err = <-chConnect:
 		case err = <-chWait:
+			// The source being done doesn't tell us how the target fared.
+			if err == nil {
+				err = <-chConnect
+			}
 		}
 
 		rop.err = err
