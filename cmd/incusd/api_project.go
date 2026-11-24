@@ -1644,7 +1644,7 @@ func projectValidateConfig(s *state.State, config map[string]string) error {
 		"features.images": validate.Optional(validate.IsBool),
 
 		// gendoc:generate(entity=project, group=features, key=features.storage.volumes)
-		//
+		// When disabled, the project shares the storage volumes of the `default` project.
 		// ---
 		//  type: bool
 		//  defaultdesc: `false`
@@ -1653,7 +1653,7 @@ func projectValidateConfig(s *state.State, config map[string]string) error {
 		"features.storage.volumes": validate.Optional(validate.IsBool),
 
 		// gendoc:generate(entity=project, group=features, key=features.storage.buckets)
-		//
+		// When disabled, the project shares the buckets of the `default` project.
 		// ---
 		//  type: bool
 		//  defaultdesc: `false`

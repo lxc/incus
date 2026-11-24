@@ -926,7 +926,7 @@ func (d Nftables) InstanceSetupNetPrio(projectName string, instanceName string, 
 // InstanceClearNetPrio removes setting of skb->priority for the specified instance device on the host interface.
 func (d Nftables) InstanceClearNetPrio(projectName string, instanceName string, deviceName string) error {
 	if deviceName == "" {
-		return fmt.Errorf("Failed clearing netprio rules for instance %q in project %q: device name is empty", projectName, instanceName)
+		return fmt.Errorf("Failed clearing netprio rules for instance %q in project %q: device name is empty", instanceName, projectName)
 	}
 
 	deviceLabel := d.instanceDeviceLabel(projectName, instanceName, deviceName)

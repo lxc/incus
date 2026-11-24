@@ -125,7 +125,7 @@ func UsedByInstanceDevices(s *state.State, networkProjectName string, networkNam
 		// Look for NIC devices using this network.
 		devices := db.ExpandInstanceDevices(inst.Devices.Clone(), inst.Profiles)
 		for devName, devConfig := range devices {
-			if isInUseByDevice(networkName, networkType, devConfig) {
+			if DeviceUsesNetwork(networkName, networkType, devConfig) {
 				err := usageFunc(inst, devName, devConfig)
 				if err != nil {
 					return err
@@ -309,7 +309,7 @@ func usedByProfileDevices(s *state.State, profileDevices map[string]cluster.Devi
 	}
 
 	for _, d := range deviceConfig.NewDevices(cluster.DevicesToAPI(profileDevices)) {
-		if isInUseByDevice(networkName, networkType, d) {
+		if DeviceUsesNetwork(networkName, networkType, d) {
 			return true, nil
 		}
 	}
@@ -317,8 +317,8 @@ func usedByProfileDevices(s *state.State, profileDevices map[string]cluster.Devi
 	return false, nil
 }
 
-// isInUseByDevices inspects a device's config to find references for a network being used.
-func isInUseByDevice(networkName string, networkType string, d deviceConfig.Device) bool {
+// DeviceUsesNetwork inspects a device's config to find references for a network being used.
+func DeviceUsesNetwork(networkName string, networkType string, d deviceConfig.Device) bool {
 	if d["type"] != "nic" {
 		return false
 	}

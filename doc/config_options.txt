@@ -5240,7 +5240,7 @@ This feature requires the server to be configured for OVN.
 :initialvaluedesc: "`true`"
 :shortdesc: "Whether to use a separate set of storage buckets for the project"
 :type: "bool"
-
+When disabled, the project shares the buckets of the `default` project.
 ```
 
 ```{config:option} features.storage.volumes project-features
@@ -5248,7 +5248,7 @@ This feature requires the server to be configured for OVN.
 :initialvaluedesc: "`true`"
 :shortdesc: "Whether to use a separate set of storage volumes for the project"
 :type: "bool"
-
+When disabled, the project shares the storage volumes of the `default` project.
 ```
 
 <!-- config group project-features end -->

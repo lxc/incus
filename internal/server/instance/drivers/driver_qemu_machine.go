@@ -422,8 +422,9 @@ func (d *qemu) cpuType(bs *qemuBootState) (string, error) {
 	_, nested := info.Features["nested"]
 
 	// Add +invtsc for fast TSC on x86 when not expected to be migratable and not nested.
+	// The model itself stays migratable so that CPU features unknown to QEMU aren't passed through.
 	if !nested && d.architecture == osarch.ARCH_64BIT_INTEL_X86 && !d.CanLiveMigrate() {
-		cpuExtensions = append(cpuExtensions, "migratable=no", "+invtsc")
+		cpuExtensions = append(cpuExtensions, "+invtsc")
 	}
 
 	// Some older OSes will kernel panic with SMAP enabled, so explicitly disable it if we detect those versions.

@@ -1052,6 +1052,14 @@ test_projects_restrictions() {
 
     incus delete c1
 
+    # It's not possible to restrict a project holding an instance that conflicts
+    # with the restrictions.
+    incus project set p1 restricted=false
+    incus init testimage c1 -c security.privileged=true
+    ! incus project set p1 restricted=true || false
+    incus delete c1
+    incus project set p1 restricted=true
+
     # Setting restricted.containers.lowlevel to 'allow' makes it possible to set
     # low-level options.
     incus project set p1 restricted.containers.lowlevel=allow

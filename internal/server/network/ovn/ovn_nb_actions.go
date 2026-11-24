@@ -3141,12 +3141,18 @@ func (o *NB) CreatePortGroup(ctx context.Context, projectID int64, portGroupName
 
 	// Apply the changes.
 	resp, err := o.client.Transact(ctx, operations...)
-	if err != nil {
-		return err
+	if err == nil {
+		_, err = ovsdb.CheckOperationResults(resp, operations)
 	}
 
-	_, err = ovsdb.CheckOperationResults(resp, operations)
 	if err != nil {
+		// A concurrent creation of the same port group makes the transaction fail.
+		existing := ovnNB.PortGroup{Name: string(portGroupName)}
+		getErr := o.get(ctx, &existing)
+		if getErr == nil {
+			return ErrExists
+		}
+
 		return err
 	}
 

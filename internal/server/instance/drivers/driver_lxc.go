@@ -2728,14 +2728,29 @@ func (d *lxc) startCommon() (string, []func() error, error) {
 			lxcMounts = append(lxcMounts, destination)
 		}
 
-		// Mount /run as a tmpfs if it isn't already mounted and the image's /run is empty.
-		if !slices.Contains(lxcMounts, "/run") {
-			// Confine the check to the rootfs to avoid following image-planted symlinks.
-			rootfsRoot, err := os.OpenRoot(d.RootfsPath())
+		// Confine rootfs lookups to the rootfs to avoid following image-planted symlinks.
+		rootfsRoot, err := os.OpenRoot(d.RootfsPath())
+		if err != nil {
+			return "", nil, err
+		}
+
+		defer logger.WarnOnError(rootfsRoot.Close, "Failed to close rootfs root")
+
+		// liblxc can't bind mount over a symlink, replace anything that isn't a regular file.
+		for _, name := range []string{"etc/hosts", "etc/hostname", "etc/resolv.conf"} {
+			fi, err := rootfsRoot.Lstat(name)
+			if err != nil || fi.Mode().IsRegular() {
+				continue
+			}
+
+			err = rootfsRoot.RemoveAll(name)
 			if err != nil {
 				return "", nil, err
 			}
+		}
 
+		// Mount /run as a tmpfs if it isn't already mounted and the image's /run is empty.
+		if !slices.Contains(lxcMounts, "/run") {
 			runEmpty := true
 			runDir, err := rootfsRoot.Open("run")
 			if err == nil {
@@ -2744,8 +2759,6 @@ func (d *lxc) startCommon() (string, []func() error, error) {
 
 				_ = runDir.Close()
 			}
-
-			_ = rootfsRoot.Close()
 
 			if runEmpty {
 				err = lxcSetConfigItem(cc, "lxc.mount.entry", "none run tmpfs mode=755,optional")
