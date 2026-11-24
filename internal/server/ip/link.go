@@ -6,6 +6,7 @@ import (
 	"strconv"
 
 	"github.com/vishvananda/netlink"
+	"golang.org/x/sys/unix"
 )
 
 // Link represents base arguments for link device.
@@ -418,6 +419,28 @@ func (l *Link) BridgeVLANDelete(vid string, self bool) error {
 			Name: l.Name,
 		},
 	}, uint16(vidInt), false, false, self, !self)
+}
+
+// BridgeFDBAdd adds a static forwarding database entry for the bridge port.
+func (l *Link) BridgeFDBAdd(mac net.HardwareAddr, vid string) error {
+	vidInt, err := strconv.Atoi(vid)
+	if err != nil {
+		return err
+	}
+
+	link, err := linkByName(l.Name)
+	if err != nil {
+		return err
+	}
+
+	return netlink.NeighSet(&netlink.Neigh{
+		LinkIndex:    link.Attrs().Index,
+		Family:       unix.AF_BRIDGE,
+		State:        unix.NUD_NOARP,
+		Flags:        unix.NTF_MASTER,
+		HardwareAddr: mac,
+		Vlan:         vidInt,
+	})
 }
 
 // BridgeLinkSetIsolated sets bridge 'isolated' attribute on a port.

@@ -603,6 +603,7 @@ var APIExtensions = []string{
 	"image_volume_size_hint",
 	"network_allocations_project",
 	"storage_lvm_snapshot_chunk_size",
+	"nic_bridged_vlan_ingress",
 }
 
 // APIExtensionsCount returns the number of available API extensions.

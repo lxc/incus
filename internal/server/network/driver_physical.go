@@ -80,6 +80,14 @@ func (n *physical) Validate(config map[string]string, clientType request.ClientT
 			return nil
 		},
 
+		// gendoc:generate(entity=network_physical, group=common, key=vlan.ingress)
+		// Used for private VLANs where instances send on the untagged VLAN (`vlan`) and get their return traffic on the ingress VLAN.
+		// ---
+		// type: integer
+		// condition: Parent must be an existing bridge
+		// shortdesc: The ingress VLAN ID to also receive non-tagged traffic from (requires `vlan`)
+		"vlan.ingress": validate.Optional(validate.IsNetworkVLAN),
+
 		// gendoc:generate(entity=network_physical, group=common, key=gvrp)
 		//
 		// ---
@@ -242,6 +250,17 @@ func (n *physical) Validate(config map[string]string, clientType request.ClientT
 	err = n.validate(config, rules)
 	if err != nil {
 		return err
+	}
+
+	// The ingress VLAN is delivered next to the untagged VLAN, so it needs one and must differ from it.
+	if config["vlan.ingress"] != "" {
+		if config["vlan"] == "" {
+			return errors.New("Ingress VLAN requires an untagged VLAN ID")
+		}
+
+		if config["vlan.ingress"] == config["vlan"] {
+			return fmt.Errorf("Ingress VLAN ID %q cannot be the same as untagged VLAN ID", config["vlan.ingress"])
+		}
 	}
 
 	return nil
