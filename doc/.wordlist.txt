@@ -364,6 +364,7 @@ unmanaged
 unmount
 unmounting
 untagged
+untrusted
 uplink
 uptime
 URI
