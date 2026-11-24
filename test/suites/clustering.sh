@@ -439,6 +439,13 @@ test_clustering_containers() {
     # Exec a command in the container via node1
     INCUS_DIR="${INCUS_ONE_DIR}" incus exec foo -- ls / | grep -qxF proc
 
+    # Ensure that waiting on node1 an op from node2 gets us response headers before op end.
+    op="$(curl -fsS --unix-socket "${INCUS_ONE_DIR}/unix.socket" -X POST -d '{"command": ["sleep", "5"], "wait-for-websocket": false}' incus/1.0/instances/foo/exec | jq -er .operation)"
+    headers="$(curl -fsS --max-time 15 -o "${TEST_DIR}/wait.json" -w '%{time_starttransfer}' --unix-socket "${INCUS_ONE_DIR}/unix.socket" "incus${op}/wait")"
+    [ "$(jq -r .metadata.metadata.return "${TEST_DIR}/wait.json")" = "0" ]
+    [ "${headers%%.*}" -lt 3 ]
+    rm "${TEST_DIR}/wait.json"
+
     # Pull, push and delete files from the container via node1
     ! INCUS_DIR="${INCUS_ONE_DIR}" incus file pull foo/non-existing-file "${TEST_DIR}/non-existing-file" || false
     mkdir "${TEST_DIR}/hello-world"
