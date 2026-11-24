@@ -8,11 +8,11 @@ msgstr ""
 "Project-Id-Version: incus\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
 "POT-Creation-Date: 2026-11-23 23:38+0100\n"
-"PO-Revision-Date: 2026-11-22 14:25+0000\n"
+"PO-Revision-Date: 2026-11-24 00:59+0000\n"
 "Last-Translator: Américo Monteiro <a-"
 "monteiro@users.noreply.hosted.weblate.org>\n"
-"Language-Team: Portuguese <https://hosted.weblate.org/projects/incus/cli/pt/"
-">\n"
+"Language-Team: Portuguese <https://hosted.weblate.org/projects/incus/cli/pt/>"
+"\n"
 "Language: pt\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -1414,8 +1414,8 @@ msgstr "Salvaguardas:"
 #, c-format
 msgid "Bad device override syntax, expecting <device>,<key>=<value>: %s"
 msgstr ""
-"Má sintaxe de sobreposição de dispositivo, esperando <dispositivo>,"
-"<chave>=<valor>: %s"
+"Má sintaxe de sobreposição de dispositivo, esperando <dispositivo>,<chave>"
+"=<valor>: %s"
 
 #: cmd/incus/query.go:92
 #, c-format
@@ -2694,8 +2694,7 @@ msgstr "Não recebi o nome da nova instância do servidor"
 
 #: cmd/incus/snapshot.go:201
 msgid "Didn't get name of new instance snapshot from the server"
-msgstr ""
-"Não recebi o nome do novo instantâneo de instância a partir do servidor"
+msgstr "Não recebi o nome do novo instantâneo de instância a partir do servidor"
 
 #: cmd/incus/storage_volume_snapshot.go:213
 msgid "Didn't get name of new volume snapshot from the server"
@@ -3737,8 +3736,7 @@ msgstr "Falhou ao analisar resposta de despejo: %w"
 
 #: cmd/incus/low_level.go:1139
 msgid "Failed to parse input file as either PEM or DER certificate"
-msgstr ""
-"Falhou ao analisar ficheiro de entrada seja como certificado PEM ou DER"
+msgstr "Falhou ao analisar ficheiro de entrada seja como certificado PEM ou DER"
 
 #: cmd/incus/admin_init_preseed.go:39
 #, c-format
@@ -4094,8 +4092,8 @@ msgstr ""
 msgid ""
 "Format of memory dump (e.g. elf, win-dmp, kdump-zlib, kdump-raw-zlib, ...)"
 msgstr ""
-"Formato de despejo de memória (ex. elf, win-dmp, kdump-zlib, kdump-raw-"
-"zlib, ...)"
+"Formato de despejo de memória (ex. elf, win-dmp, kdump-zlib, kdump-raw-zlib, "
+"...)"
 
 #: cmd/incus/port_forward.go:30
 msgid "Forward a local TCP port to the instance"
@@ -5646,8 +5644,7 @@ msgstr "Registo (%s):"
 
 #: cmd/incus/monitor.go:82
 msgid "Log level filtering can only be used with pretty formatting"
-msgstr ""
-"Filtragem de nível de relatório só pode ser usada com formatação bonita"
+msgstr "Filtragem de nível de relatório só pode ser usada com formatação bonita"
 
 #: cmd/incus/network.go:985
 msgid "Logical router"
@@ -6634,8 +6631,7 @@ msgstr "Nenhum %s backend de armazenamento disponível"
 #: cmd/incus/config_trust.go:652
 #, c-format
 msgid "No certificate add token for member %s on remote: %s"
-msgstr ""
-"Nenhum testemunho de adição de certificado para membro %s em remoto: %s"
+msgstr "Nenhum testemunho de adição de certificado para membro %s em remoto: %s"
 
 #: cmd/incus/cluster.go:1177
 #, c-format
@@ -8424,8 +8420,8 @@ msgstr "Definir os atributos da variável (requer `--format=base64|binary|hex`)"
 msgid ""
 "Set the variable timestamp (requires `--format=base64|binary|efivarfs|hex`)"
 msgstr ""
-"Definir a marca temporal da variável (requer `--format=base64|binary|"
-"efivarfs|hex`)"
+"Definir a marca temporal da variável (requer `--"
+"format=base64|binary|efivarfs|hex`)"
 
 #: cmd/incus/low_level.go:822
 msgid "Set values for UEFI variables"
@@ -8755,8 +8751,7 @@ msgstr "Instantâneo de volumes de armazenamento"
 
 #: cmd/incus/storage_volume.go:1965
 msgid "Snapshots are read-only and can't have their configuration changed"
-msgstr ""
-"Os instantâneos são só leitura e não se pode alterar a sua configuração"
+msgstr "Os instantâneos são só leitura e não se pode alterar a sua configuração"
 
 #: cmd/incus/info.go:849 cmd/incus/storage_volume.go:1393
 msgid "Snapshots:"
@@ -9129,8 +9124,7 @@ msgstr "A bandeira --show-log só é suportada pelo tipo de saída 'console'"
 
 #: cmd/incus/network_allocations.go:59
 msgid "The --summary flag cannot be used with custom columns (-c)"
-msgstr ""
-"A bandeira --summary não pode ser usada com colunas personalizadas (-c)"
+msgstr "A bandeira --summary não pode ser usada com colunas personalizadas (-c)"
 
 #: cmd/incus/utils_list.go:139
 msgid ""
@@ -9235,8 +9229,7 @@ msgstr ""
 
 #: cmd/incus/create.go:432
 msgid "The instance you are starting doesn't have any network attached to it."
-msgstr ""
-"A instância que você está a iniciar não tem nenhuma rede anexada a ela."
+msgstr "A instância que você está a iniciar não tem nenhuma rede anexada a ela."
 
 #: cmd/incus/cluster_group.go:780
 #, c-format
@@ -9764,8 +9757,8 @@ msgstr "Tipo de canal desconhecido para cliente %q: %s"
 msgid ""
 "Unknown character %c in %s; expected one of “r”, “w”, “x”, “X”, “s” or “t”"
 msgstr ""
-"Caractere desconhecido %c em %s; esperado um de “r”, “w”, “x”, “X”, “s” ou "
-"“t”"
+"Caractere desconhecido %c em %s; esperado um de “r”, “w”, “x”, “X”, “s” ou “t"
+"”"
 
 #: cmd/incus/utils.go:801
 #, c-format
@@ -9822,8 +9815,7 @@ msgstr "Desconfigurar variáveis UEFI"
 
 #: cmd/incus/cluster_group.go:879
 msgid "Unset a cluster group's configuration keys"
-msgstr ""
-"Retira definições das chaves de configuração de um grupo de agrupamento"
+msgstr "Retira definições das chaves de configuração de um grupo de agrupamento"
 
 #: cmd/incus/cluster.go:507
 msgid "Unset a cluster member's configuration keys"
@@ -10304,8 +10296,7 @@ msgstr "Servidor Web a correr em: %s"
 
 #: cmd/incus/cluster.go:1521
 msgid "What IP address or DNS name should be used to reach this server?"
-msgstr ""
-"Que endereço IP ou nome DNS deve ser usado para alcançar este servidor?"
+msgstr "Que endereço IP ou nome DNS deve ser usado para alcançar este servidor?"
 
 #: cmd/incus/admin_init_interactive.go:171
 msgid "What IPv4 address should be used?"
@@ -11627,7 +11618,6 @@ msgstr ""
 "da pool mypool."
 
 #: cmd/incus/storage_volume_file.go:508
-#, fuzzy
 msgid ""
 "incus storage volume file pull local v1/etc/hosts .\n"
 "   To pull /etc/hosts from the custom volume \"v1\" and write it to the "
@@ -11637,16 +11627,15 @@ msgid ""
 "   To pull /etc/hosts from the custom volume \"v1\" and write its output to "
 "standard output."
 msgstr ""
-"incus custom volume file pull local v1/foo/etc/hosts .\n"
-"   Para puxar /etc/hosts a partir do volume personalizado e escrevê-lo no "
-"directório atual.\n"
+"incus storage volume file pull local v1/etc/hosts .\n"
+"   Para puxar /etc/hosts do volume personalizado \"v1\" e escrevê-lo no "
+"diretório atual.\n"
 "\n"
-"incus file pull local v1 foo/etc/hosts -\n"
-"   Para puxar /etc/hosts a partir do volume personalizado e escrever o seu "
+"incus storage volume file pull local v1/etc/hosts -\n"
+"   Para puxar /etc/hosts do volume personalizado \"v1\" e escrever o seu "
 "resultado na saída standard."
 
 #: cmd/incus/storage_volume_file.go:702
-#, fuzzy
 msgid ""
 "incus storage volume file push /etc/hosts local v1/etc/hosts\n"
 "   To push /etc/hosts into the custom volume \"v1\".\n"
@@ -11658,7 +11647,7 @@ msgstr ""
 "incus storage volume file push /etc/hosts local v1/etc/hosts\n"
 "   Para empurrar /etc/hosts para o volume personalizado \"v1\".\n"
 "\n"
-"echo \"Hello world\" | incus storage volume file push - local v1 test\n"
+"echo \"Hello world\" | incus storage volume file push - local v1/test\n"
 "   Para ler \"Hello world\" a partir da entrada standard e escrevê-lo em "
 "test no volume \"v1\"."
 

@@ -8,8 +8,9 @@ msgstr ""
 "Project-Id-Version: lxd\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
 "POT-Creation-Date: 2026-11-23 23:38+0100\n"
-"PO-Revision-Date: 2026-08-29 22:38+0000\n"
-"Last-Translator: Anonymous <noreply@weblate.org>\n"
+"PO-Revision-Date: 2026-11-24 00:59+0000\n"
+"Last-Translator: Kazantsev Mikhail "
+"<kazan417@users.noreply.hosted.weblate.org>\n"
 "Language-Team: Russian <https://hosted.weblate.org/projects/incus/cli/ru/>\n"
 "Language: ru\n"
 "MIME-Version: 1.0\n"
@@ -17,7 +18,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
 "n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
-"X-Generator: Weblate 2026.9.dev0\n"
+"X-Generator: Weblate 2026.12.dev0\n"
 
 #: cmd/incus/info.go:459
 msgid "  Chassis:"
@@ -1264,8 +1265,8 @@ msgstr "Вы присоединяетесь к существующему кла
 #, c-format
 msgid "Are you sure you want to %s cluster member %q? (yes/no) [default=no]: "
 msgstr ""
-"Вы уверены, что хотите совершить действие %s над участником кластера %q? "
-"да(yes)/нет(no) [по умолчанию=no]: "
+"Вы уверены, что хотите совершить действие %s над участником кластера %q? да"
+"(yes)/нет(no) [по умолчанию=no]: "
 
 #: cmd/incus/console.go:457
 msgid "As neither could be found, the raw SPICE socket can be found at:"
@@ -1417,8 +1418,8 @@ msgstr "Резервные копии:"
 #, c-format
 msgid "Bad device override syntax, expecting <device>,<key>=<value>: %s"
 msgstr ""
-"Неверный синтаксис переопределения устройства, ожидается <устройство>,"
-"<параметр>=<значение>: %s"
+"Неверный синтаксис переопределения устройства, ожидается <устройство>"
+",<параметр>=<значение>: %s"
 
 #: cmd/incus/query.go:92
 #, c-format
@@ -1674,8 +1675,7 @@ msgstr ""
 
 #: cmd/incus/storage_volume.go:457
 msgid "Cannot set --volume-only when copying a snapshot"
-msgstr ""
-"Невозможно применить --volume-only при копировании моментального снимка"
+msgstr "Невозможно применить --volume-only при копировании моментального снимка"
 
 #: cmd/incus/network_acl.go:883
 #, c-format
@@ -2777,8 +2777,7 @@ msgstr "Показать профили из всех проектов"
 
 #: cmd/incus/top.go:39
 msgid "Display resource usage info per instance"
-msgstr ""
-"Отображение информации об использовании ресурсов для каждого экземпляра"
+msgstr "Отображение информации об использовании ресурсов для каждого экземпляра"
 
 #: cmd/incus/storage_bucket.go:436
 msgid "Display storage pool buckets from all projects"
@@ -3655,8 +3654,7 @@ msgstr "Не удалось удалить исходный экземпляр �
 #: cmd/incus/move_nearlive.go:110
 #, c-format
 msgid "Failed to delete partial copy of instance %q on the target server: %s"
-msgstr ""
-"Не удалось удалить частичную копию экземпляра %q на целевом сервере: %s"
+msgstr "Не удалось удалить частичную копию экземпляра %q на целевом сервере: %s"
 
 #: cmd/incus/move_nearlive.go:24
 #, c-format
@@ -4042,8 +4040,8 @@ msgstr ""
 "строя, был переустановлен\n"
 "или по какой-либо другой причине больше никогда не заработает.\n"
 "\n"
-"Вы действительно уверены, что хотите принудительно удалить %s? да(yes)/"
-"нет(no): "
+"Вы действительно уверены, что хотите принудительно удалить %s? да(yes)/нет"
+"(no): "
 
 #: cmd/incus/console.go:56
 msgid ""
@@ -4137,8 +4135,8 @@ msgstr ""
 "на него соединения\n"
 "на указанный адрес и порт внутри экземпляра.\n"
 "\n"
-"Перед номером любого из портов можно указать адрес (в формате "
-"«ADDRESS:PORT»);\n"
+"Перед номером любого из портов можно указать адрес (в формате «ADDRESS:PORT»)"
+";\n"
 "если адрес не указан, по умолчанию используется 127.0.0.1. Адреса IPv6 "
 "необходимо заключать\n"
 "в квадратные скобки (например, «[::1]:80»)."
@@ -6257,8 +6255,7 @@ msgstr ""
 
 #: cmd/incus/image.go:727
 msgid "Must run as root to import from directory"
-msgstr ""
-"Для импорта из директории необходимо запустить программу с правами root"
+msgstr "Для импорта из директории необходимо запустить программу с правами root"
 
 #: cmd/incus/cluster_group.go:416 cmd/incus/cluster.go:145
 #: cmd/incus/cluster.go:1020 cmd/incus/config_device.go:318
@@ -7725,8 +7722,7 @@ msgstr "Обработка: %s (%s)"
 
 #: cmd/incus/cluster.go:954 cmd/incus/cluster.go:955
 msgid "Request a join token for adding a cluster member"
-msgstr ""
-"Запросить токен присоединения для добавления нового участника в кластер"
+msgstr "Запросить токен присоединения для добавления нового участника в кластер"
 
 #: cmd/incus/delete.go:41 cmd/incus/snapshot.go:233
 msgid "Require user confirmation"
@@ -7789,8 +7785,7 @@ msgstr "Восстановление участника кластера: %s"
 
 #: cmd/incus/config_trust.go:106 cmd/incus/config_trust.go:183
 msgid "Restrict the certificate to one or more projects"
-msgstr ""
-"Ограничьте права доступа по сертификату одним или несколькими проектами"
+msgstr "Ограничьте права доступа по сертификату одним или несколькими проектами"
 
 #: cmd/incus/action.go:86 cmd/incus/action.go:87
 msgid "Resume instances"
@@ -8476,8 +8471,8 @@ msgstr "Задать параметры переменной (требуется
 msgid ""
 "Set the variable timestamp (requires `--format=base64|binary|efivarfs|hex`)"
 msgstr ""
-"Задать отметку времени переменной (требуется `--format=base64|binary|"
-"efivarfs|hex`)"
+"Задать отметку времени переменной (требуется `--"
+"format=base64|binary|efivarfs|hex`)"
 
 #: cmd/incus/low_level.go:822
 msgid "Set values for UEFI variables"
@@ -8497,8 +8492,7 @@ msgstr "Настроить хранилище на основе устройст
 
 #: cmd/incus/admin_init.go:60
 msgid "Setup loop based storage with SIZE in GiB"
-msgstr ""
-"Настроить хранилища на основе loop устройства с указанием размера в ГиБ"
+msgstr "Настроить хранилища на основе loop устройства с указанием размера в ГиБ"
 
 #: cmd/incus/low_level.go:1828
 msgid "Several signatures match the given fingerprint"
@@ -8811,8 +8805,7 @@ msgstr "Сделать моментальный снимок тома хране
 
 #: cmd/incus/storage_volume.go:1965
 msgid "Snapshots are read-only and can't have their configuration changed"
-msgstr ""
-"Моментальные снимки только для чтения и их конфигурацию нельзя изменить"
+msgstr "Моментальные снимки только для чтения и их конфигурацию нельзя изменить"
 
 #: cmd/incus/info.go:849 cmd/incus/storage_volume.go:1393
 msgid "Snapshots:"
@@ -9281,8 +9274,8 @@ msgstr "Сертификат клиента хранится на сервере
 #, c-format
 msgid "The instance %s is currently running, stop it first or pass --force"
 msgstr ""
-"Экземпляр %s в настоящее время запущен, сначала остановите его или передайте "
-"--force"
+"Экземпляр %s в настоящее время запущен, сначала остановите его или "
+"передайте --force"
 
 #: cmd/incus/publish.go:90
 msgid ""
@@ -10504,8 +10497,7 @@ msgstr ""
 
 #: cmd/incus/admin_init_interactive.go:616
 msgid "Would you like stale cached images to be updated automatically?"
-msgstr ""
-"Хотите, чтобы устаревшие кэшированные образы автоматически обновлялись?"
+msgstr "Хотите, чтобы устаревшие кэшированные образы автоматически обновлялись?"
 
 #: cmd/incus/admin_init_interactive.go:562
 msgid "Would you like the server to be available over the network?"
