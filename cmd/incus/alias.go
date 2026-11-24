@@ -242,6 +242,11 @@ func (c *cmdAliasRemove) run(cmd *cobra.Command, args []string) error {
 	// Look for the alias
 	_, ok := conf.Aliases[alias]
 	if !ok {
+		_, ok := defaultAliases[alias]
+		if ok {
+			return fmt.Errorf(i18n.G("Alias %s is built-in and cannot be removed"), alias)
+		}
+
 		return fmt.Errorf(i18n.G("Alias %s doesn't exist"), alias)
 	}
 
