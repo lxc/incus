@@ -9,7 +9,7 @@ msgstr ""
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
 "POT-Creation-Date: 2026-11-24 13:35-0500\n"
 "PO-Revision-Date: 2026-11-24 19:13+0000\n"
-"Last-Translator: Benjamin Somers <bensmrs@users.noreply.hosted.weblate.org>\n"
+"Last-Translator: montag451 <montag451@users.noreply.hosted.weblate.org>\n"
 "Language-Team: French <https://hosted.weblate.org/projects/incus/cli/fr/>\n"
 "Language: fr\n"
 "MIME-Version: 1.0\n"
@@ -3595,8 +3595,7 @@ msgstr "Échec de la configuration du cluster : %w"
 #: cmd/incus/admin_init.go:107
 #, c-format
 msgid "Failed to connect to get server info: %w"
-msgstr ""
-"Échec de la connexion pour obtenir des informations sur le serveur : %w"
+msgstr "Échec de la connexion pour obtenir des informations sur le serveur : %w"
 
 #: cmd/incus/admin_init.go:102
 #, c-format
@@ -4629,8 +4628,7 @@ msgstr ""
 
 #: cmd/incus/image.go:703 cmd/incus/publish.go:46
 msgid "If the image alias already exists, delete and create a new one"
-msgstr ""
-"Si l'alias de l'image existe déjà, le supprimer d'abord puis le recréer"
+msgstr "Si l'alias de l'image existe déjà, le supprimer d'abord puis le recréer"
 
 #: cmd/incus/snapshot.go:101 cmd/incus/storage_volume_snapshot.go:96
 msgid "If the snapshot name already exists, delete and create a new one"
