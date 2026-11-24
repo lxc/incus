@@ -420,12 +420,7 @@ func (c *cmdNetworkPeerSet) command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("set", cmdNetworkPeerSetUsage...)
 	cmd.Short = i18n.G("Set network peer keys")
-	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
-		`Set network peer keys
-
-For backward compatibility, a single configuration key may still be set with:
-    incus network set [<remote>:]<network> <peer_name> <key> <value>`,
-	))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G("Set network peer keys"))
 	cmd.RunE = c.run
 
 	cli.AddBoolFlag(cmd.Flags(), &c.flagIsProperty, "property|p", i18n.G("Set the key as a network peer property"))

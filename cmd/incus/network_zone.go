@@ -388,12 +388,7 @@ func (c *cmdNetworkZoneSet) command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("set", cmdNetworkZoneSetUsage...)
 	cmd.Short = i18n.G("Set network zone configuration keys")
-	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
-		`Set network zone configuration keys
-
-For backward compatibility, a single configuration key may still be set with:
-    incus network set [<remote>:]<Zone> <key> <value>`,
-	))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G("Set network zone configuration keys"))
 
 	cmd.RunE = c.run
 	cli.AddBoolFlag(cmd.Flags(), &c.flagIsProperty, "property|p", i18n.G("Set the key as a network zone property"))

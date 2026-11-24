@@ -509,12 +509,7 @@ func (c *cmdConfigSet) command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("set", cmdConfigSetUsage...)
 	cmd.Short = i18n.G("Set instance or server configuration keys")
-	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
-		`Set instance or server configuration keys
-
-For backward compatibility, a single configuration key may still be set with:
-    incus config set [<remote>:][<instance>] <key> <value>`,
-	))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G("Set instance or server configuration keys"))
 	cmd.Example = cli.FormatSection("", i18n.G(
 		`incus config set [<remote>:]<instance> limits.cpu=2
     Will set a CPU limit of "2" for the instance.

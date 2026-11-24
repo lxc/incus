@@ -487,12 +487,7 @@ func (c *cmdNetworkIntegrationSet) command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("set", cmdNetworkIntegrationSetUsage...)
 	cmd.Short = i18n.G("Set network integration configuration keys")
-	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
-		`Set network integration configuration keys
-
-For backward compatibility, a single configuration key may still be set with:
-    incus network integration set [<remote>:]<network integration> <key> <value>`,
-	))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G("Set network integration configuration keys"))
 
 	cmd.RunE = c.run
 	cli.AddBoolFlag(cmd.Flags(), &c.flagIsProperty, "property|p", i18n.G("Set the key as a network integration property"))

@@ -717,12 +717,7 @@ func (c *cmdStorageSet) command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("set", cmdStorageSetUsage...)
 	cmd.Short = i18n.G("Set storage pool configuration keys")
-	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
-		`Set storage pool configuration keys
-
-For backward compatibility, a single configuration key may still be set with:
-    incus storage set [<remote>:]<pool> <key> <value>`,
-	))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G("Set storage pool configuration keys"))
 
 	cli.AddStringFlag(cmd.Flags(), &c.storage.flagTarget, "target", "", "", i18n.G("Cluster member name"))
 	cli.AddBoolFlag(cmd.Flags(), &c.flagIsProperty, "property|p", i18n.G("Set the key as a storage property"))
