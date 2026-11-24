@@ -8,11 +8,11 @@ msgstr ""
 "Project-Id-Version: incus\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
 "POT-Creation-Date: 2026-11-23 21:02-0500\n"
-"PO-Revision-Date: 2026-11-24 00:59+0000\n"
+"PO-Revision-Date: 2026-11-24 09:56+0000\n"
 "Last-Translator: Américo Monteiro <a-"
 "monteiro@users.noreply.hosted.weblate.org>\n"
-"Language-Team: Portuguese <https://hosted.weblate.org/projects/incus/cli/pt/"
-">\n"
+"Language-Team: Portuguese <https://hosted.weblate.org/projects/incus/cli/pt/>"
+"\n"
 "Language: pt\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -683,9 +683,9 @@ msgid "%s the %s syntax is deprecated; %s\n"
 msgstr "%s a sintaxe de %s está descontinuada; %s\n"
 
 #: cmd/incus/utils_list.go:151 cmd/incus/usage/parse.go:186
-#, fuzzy, c-format
+#, c-format
 msgid "%s: %s"
-msgstr "Alias: %s"
+msgstr "%s: %s"
 
 #: cmd/incus/usage/usage.go:967
 #, c-format
@@ -916,9 +916,8 @@ msgid "ALIASES"
 msgstr "NOMES ALTERNATIVOS"
 
 #: cmd/incus/network_allocations.go:44 cmd/incus/network_allocations.go:45
-#, fuzzy
 msgid "ALLOCATED"
-msgstr "CRIADO"
+msgstr "ALOCADO"
 
 #: cmd/incus/query.go:36
 msgid "API path"
@@ -1102,9 +1101,8 @@ msgid "Add rules to an ACL"
 msgstr "Adiciona regras a um ACL"
 
 #: cmd/incus/color/color.go:45
-#, fuzzy
 msgid "Additional Help Topics"
-msgstr "Tópicos de Ajuda Adicionais:"
+msgstr "Tópicos de Ajuda Adicionais"
 
 #: cmd/incus/admin_recover.go:126
 msgid ""
@@ -1122,9 +1120,8 @@ msgid "Address to bind to (not including port)"
 msgstr "Endereço a onde unir (não incluindo o porto)"
 
 #: cmd/incus/network_allocations.go:43
-#, fuzzy
 msgid "Address/subnet"
-msgstr "conjunto de endereço"
+msgstr "Endereço/sub-rede"
 
 #: cmd/incus/info.go:221
 #, c-format
@@ -1137,9 +1134,8 @@ msgid "Address: %v"
 msgstr "Endereço: %v"
 
 #: cmd/incus/network_address_set.go:104
-#, fuzzy
 msgid "Addresses"
-msgstr "Endereço: %s"
+msgstr "Endereços"
 
 #: cmd/incus/remote.go:451
 msgid "Addresses cannot be empty"
@@ -1156,9 +1152,8 @@ msgid "Admin secret key: %s"
 msgstr "Chave secreta do administrador: %s"
 
 #: cmd/incus/alias.go:123 cmd/incus/image_alias.go:183
-#, fuzzy
 msgid "Alias"
-msgstr "nome alternativo"
+msgstr "Nome alternativo"
 
 #: cmd/incus/alias.go:96 cmd/incus/alias.go:196
 #, c-format
@@ -1176,9 +1171,8 @@ msgid "Alias: %s"
 msgstr "Alias: %s"
 
 #: cmd/incus/color/color.go:40
-#, fuzzy
 msgid "Aliases"
-msgstr "Nomes alternativos (Aliases):"
+msgstr "Nomes alternativos (Aliases)"
 
 #: cmd/incus/publish.go:211
 #, c-format
@@ -1210,7 +1204,7 @@ msgstr "Todos os endereços do servidor não estão disponíveis"
 
 #: cmd/incus/network_allocations.go:44
 msgid "Allocated addresses (individual)"
-msgstr ""
+msgstr "Endereços alocados individual)"
 
 #: cmd/incus/network_allocations.go:45
 msgid "Allocated addresses (ranges)"
@@ -1236,9 +1230,8 @@ msgid "An instance path is required for %s"
 msgstr "E necessário um caminho de instância para %s"
 
 #: cmd/incus/cluster.go:148 cmd/incus/image.go:1061 cmd/incus/list.go:95
-#, fuzzy
 msgid "Architecture"
-msgstr "Arquitetura: %s"
+msgstr "Arquitetura"
 
 #: cmd/incus/image.go:976 cmd/incus/info.go:523 cmd/incus/info.go:527
 #: cmd/incus/info.go:691
@@ -1326,7 +1319,7 @@ msgstr ""
 
 #: cmd/incus/low_level.go:703
 msgid "Attributes"
-msgstr ""
+msgstr "Atributos"
 
 #: cmd/incus/remote.go:1290
 #, fuzzy
@@ -1357,9 +1350,8 @@ msgid "Automatic (non-interactive) mode"
 msgstr "Modo automático (não interativo)"
 
 #: cmd/incus/color/color.go:42
-#, fuzzy
 msgid "Available Commands"
-msgstr "Comandos Disponíveis:"
+msgstr "Comandos Disponíveis"
 
 #: cmd/incus/remote.go:194
 msgid "Available projects:"
@@ -1626,7 +1618,7 @@ msgstr "Não pode usar ambos --no-expiry e --expiry"
 
 #: cmd/incus/operation.go:126
 msgid "Cancelable"
-msgstr ""
+msgstr "Cancelável"
 
 #: cmd/incus/low_level.go:1108
 msgid "Cannot add signature without --bundle"
@@ -1718,9 +1710,8 @@ msgid "Certificate fingerprint: %s"
 msgstr "Impressão digital do certificado: %s"
 
 #: cmd/incus/config_trust.go:378
-#, fuzzy
 msgid "Certificate type"
-msgstr "Tipo de certificado desconhecido %q"
+msgstr "Tipo de certificado"
 
 #: cmd/incus/network.go:981
 msgid "Chassis"
@@ -1881,9 +1872,8 @@ msgstr ""
 "\"incus alias\" para os controlar."
 
 #: cmd/incus/config_trust.go:379
-#, fuzzy
 msgid "Common name"
-msgstr "Nome de unidade"
+msgstr "Nome comum"
 
 #: cmd/incus/publish.go:44
 msgid "Compression algorithm to use (`none` for uncompressed)"
@@ -2160,7 +2150,7 @@ msgstr "Incapaz de statfs %s: %w"
 
 #: cmd/incus/warning.go:71
 msgid "Count"
-msgstr ""
+msgstr "Contagem"
 
 #: cmd/incus/cluster_group.go:166 cmd/incus/cluster_group.go:167
 msgid "Create a cluster group"
@@ -2351,9 +2341,8 @@ msgid "Creation date"
 msgstr "A criar %s"
 
 #: cmd/incus/storage_volume.go:1512
-#, fuzzy
 msgid "Current disk usage"
-msgstr "Utilização do disco:"
+msgstr "Utilização atual do disco"
 
 #: cmd/incus/info.go:157 cmd/incus/info.go:266
 #, c-format
@@ -2361,9 +2350,8 @@ msgid "Current number of VFs: %d"
 msgstr "Número atual de VFs: %d"
 
 #: cmd/incus/utils_list.go:261
-#, fuzzy
 msgid "Custom columns"
-msgstr "Colunas"
+msgstr "Colunas personalizadas"
 
 #: cmd/incus/list.go:119
 msgid ""
@@ -2728,9 +2716,8 @@ msgid "Disk %d:"
 msgstr "Disco %d:"
 
 #: cmd/incus/list.go:99 cmd/incus/top.go:47
-#, fuzzy
 msgid "Disk usage"
-msgstr "Utilização do disco:"
+msgstr "Utilização do disco"
 
 #: cmd/incus/info.go:740
 msgid "Disk usage:"
@@ -2814,9 +2801,8 @@ msgid "Down delay"
 msgstr "Atraso em baixo"
 
 #: cmd/incus/storage.go:640
-#, fuzzy
 msgid "Driver"
-msgstr "driver"
+msgstr "Controlador"
 
 #: cmd/incus/info.go:388 cmd/incus/info.go:400
 #, c-format
@@ -2863,9 +2849,8 @@ msgstr "EXISTENTE: %q (backend=%q, source=%q)"
 #: cmd/incus/cluster.go:1022 cmd/incus/config_trust.go:384
 #: cmd/incus/config_trust.go:494 cmd/incus/snapshot.go:319
 #: cmd/incus/storage_volume_snapshot.go:322
-#, fuzzy
 msgid "EXPIRES"
-msgstr "EXPIRA EM"
+msgstr "EXPIRA"
 
 #: cmd/incus/cluster_group.go:299 cmd/incus/cluster_group.go:300
 msgid "Edit a cluster group"
@@ -3050,7 +3035,7 @@ msgstr "Insira novo atraso em segundos:"
 
 #: cmd/incus/network_zone.go:749
 msgid "Entries"
-msgstr ""
+msgstr "Entradas"
 
 #: cmd/incus/network_zone.go:1369
 msgid "Entry TTL"
@@ -3163,9 +3148,8 @@ msgid "Event type to listen for (may be passed multiple times)"
 msgstr "Tipo de evento para escutar (pode ser passado várias vezes)"
 
 #: cmd/incus/color/color.go:41
-#, fuzzy
 msgid "Examples"
-msgstr "Exemplos:"
+msgstr "Exemplos"
 
 #: cmd/incus/admin_sql.go:30
 msgid "Execute a SQL query against the local or global database"
@@ -3284,9 +3268,8 @@ msgstr "esperado %s"
 #: cmd/incus/cluster.go:1022 cmd/incus/config_trust.go:384
 #: cmd/incus/config_trust.go:494 cmd/incus/snapshot.go:319
 #: cmd/incus/storage_volume_snapshot.go:322
-#, fuzzy
 msgid "Expiration date"
-msgstr "Data de validade inválida: %w"
+msgstr "Data de expiração"
 
 #: cmd/incus/info.go:882 cmd/incus/info.go:933 cmd/incus/storage_volume.go:1416
 #: cmd/incus/storage_volume.go:1466
@@ -3906,15 +3889,13 @@ msgstr "Procura ficheiro de salvaguarda de instância: %w"
 
 #: cmd/incus/config_trust.go:381 cmd/incus/image.go:1065
 #: cmd/incus/image_alias.go:185 cmd/incus/low_level.go:1566
-#, fuzzy
 msgid "Fingerprint (long)"
-msgstr "Impressão digital: %s"
+msgstr "Impressão digital (longa)"
 
 #: cmd/incus/config_trust.go:380 cmd/incus/image.go:1064
 #: cmd/incus/image_alias.go:184 cmd/incus/low_level.go:1565
-#, fuzzy
 msgid "Fingerprint (short)"
-msgstr "Impressão digital: %s"
+msgstr "Impressão digital (curta)"
 
 #: cmd/incus/image.go:974
 #, c-format
@@ -3926,9 +3907,8 @@ msgid "First seen date"
 msgstr ""
 
 #: cmd/incus/color/color.go:43
-#, fuzzy
 msgid "Flags"
-msgstr "Bandeiras:"
+msgstr "Bandeiras"
 
 #: cmd/incus/file.go:444 cmd/incus/file.go:674
 #: cmd/incus/storage_volume_file.go:599 cmd/incus/storage_volume_file.go:796
@@ -4162,9 +4142,8 @@ msgid "Frequency: %vMhz (min: %vMhz, max: %vMhz)"
 msgstr "Frequência: %vMhz (min: %vMhz, max: %vMhz)"
 
 #: cmd/incus/utils_sftp.go:613
-#, fuzzy
 msgid "GID"
-msgstr "GUID"
+msgstr "GID"
 
 #: cmd/incus/remote.go:1293
 msgid "GLOBAL"
@@ -4444,9 +4423,8 @@ msgid "Given target %q does not match source volume location %q"
 msgstr "Alvo fornecido %q não corresponde à localização do volume fonte %q"
 
 #: cmd/incus/color/color.go:44
-#, fuzzy
 msgid "Global Flags"
-msgstr "Bandeiras Globais:"
+msgstr "Bandeiras Globais"
 
 #: cmd/incus/storage_volume_bitmap.go:214
 msgid "Granularity"
@@ -4528,7 +4506,7 @@ msgstr "INCONSISTENTE"
 
 #: cmd/incus/config_device.go:326
 msgid "INHERITED"
-msgstr ""
+msgstr "HERDADO"
 
 #: cmd/incus/low_level.go:709
 msgid "INTERPRETED VALUE"
@@ -4544,7 +4522,6 @@ msgid "IP ADDRESS"
 msgstr "ENDEREÇO IP"
 
 #: cmd/incus/network.go:1155
-#, fuzzy
 msgid "IP address"
 msgstr "Endereços IP"
 
@@ -4569,18 +4546,16 @@ msgid "IPV6"
 msgstr "IPV6"
 
 #: cmd/incus/list.go:93 cmd/incus/network.go:1035
-#, fuzzy
 msgid "IPv4 address"
-msgstr "Endereços IP"
+msgstr "Endereços IPv4"
 
 #: cmd/incus/network.go:993
 msgid "IPv4 uplink address"
 msgstr "Endereço uplink IPv4"
 
 #: cmd/incus/list.go:94 cmd/incus/network.go:1036
-#, fuzzy
 msgid "IPv6 address"
-msgstr "Endereços IP"
+msgstr "Endereços IPv6"
 
 #: cmd/incus/network.go:997
 msgid "IPv6 uplink address"
@@ -4839,7 +4814,7 @@ msgstr "Nome de instantâneo de instância é: %s"
 
 #: cmd/incus/low_level.go:709
 msgid "Interpreted value"
-msgstr ""
+msgstr "Valor interpretado"
 
 #: cmd/incus/low_level.go:786
 #, c-format
@@ -5014,9 +4989,8 @@ msgid "IsSM: %s (%s)"
 msgstr "IsSM: %s (%s)"
 
 #: cmd/incus/config_trust.go:383
-#, fuzzy
 msgid "Issue date"
-msgstr "Dados de entrada"
+msgstr "Data de emissão"
 
 #: cmd/incus/low_level.go:1568
 #, fuzzy
@@ -5057,9 +5031,8 @@ msgid "LAST SEEN"
 msgstr "ÚLTIMA VEZ VISTO"
 
 #: cmd/incus/list.go:103
-#, fuzzy
 msgid "LAST USED"
-msgstr "ÚLTIMA VEZ USADO EM"
+msgstr "ÚLTIMA VEZ USADO"
 
 #: cmd/incus/project.go:981
 msgid "LIMIT"
