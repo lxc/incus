@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"maps"
 
@@ -210,7 +211,7 @@ type cmdAliasRemove struct {
 	alias  *cmdAlias
 }
 
-var cmdAliasRemoveUsage = u.Usage{u.Alias}
+var cmdAliasRemoveUsage = u.Usage{u.Alias.List(1)}
 
 func (c *cmdAliasRemove) command() *cobra.Command {
 	cmd := &cobra.Command{}
@@ -237,22 +238,31 @@ func (c *cmdAliasRemove) run(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	alias := parsed[0].String
+	var errs []error
+	changed := false
+	for _, alias := range parsed[0].StringList {
+		// Look for the alias
+		_, ok := conf.Aliases[alias]
+		if !ok {
+			_, ok := defaultAliases[alias]
+			if ok {
+				errs = append(errs, fmt.Errorf(i18n.G("Alias %s is built-in and cannot be removed"), alias))
+			} else {
+				errs = append(errs, fmt.Errorf(i18n.G("Alias %s doesn't exist"), alias))
+			}
 
-	// Look for the alias
-	_, ok := conf.Aliases[alias]
-	if !ok {
-		_, ok := defaultAliases[alias]
-		if ok {
-			return fmt.Errorf(i18n.G("Alias %s is built-in and cannot be removed"), alias)
+			continue
 		}
 
-		return fmt.Errorf(i18n.G("Alias %s doesn't exist"), alias)
+		// Delete the alias
+		delete(conf.Aliases, alias)
+		changed = true
 	}
 
-	// Delete the alias
-	delete(conf.Aliases, alias)
+	if changed {
+		// Save the config
+		errs = append(errs, conf.SaveConfig(c.global.confPath))
+	}
 
-	// Save the config
-	return conf.SaveConfig(c.global.confPath)
+	return errors.Join(errs...)
 }
