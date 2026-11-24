@@ -610,19 +610,9 @@ func (c *cmdConfigDeviceSet) command() *cobra.Command {
 	cmd.Use = cli.U("set", c.configDevice.formatUsage(cmdConfigDeviceSetUsage)...)
 	cmd.Short = i18n.G("Set device configuration keys")
 	if c.config != nil {
-		cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
-			`Set device configuration keys
-
-For backward compatibility, a single configuration key may still be set with:
-    incus config device set [<remote>:]<instance> <device> <key> <value>`,
-		))
+		cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G("Set device configuration keys"))
 	} else if c.profile != nil {
-		cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
-			`Set device configuration keys
-
-For backward compatibility, a single configuration key may still be set with:
-    incus profile device set [<remote>:]<profile> <device> <key> <value>`,
-		))
+		cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G("Set device configuration keys"))
 	}
 
 	cmd.RunE = c.run

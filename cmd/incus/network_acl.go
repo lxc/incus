@@ -431,12 +431,7 @@ func (c *cmdNetworkACLSet) command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("set", cmdNetworkACLSetUsage...)
 	cmd.Short = i18n.G("Set network ACL configuration keys")
-	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
-		`Set network ACL configuration keys
-
-For backward compatibility, a single configuration key may still be set with:
-    incus network set [<remote>:]<ACL> <key> <value>`,
-	))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G("Set network ACL configuration keys"))
 
 	cli.AddBoolFlag(cmd.Flags(), &c.flagIsProperty, "property|p", i18n.G("Set the key as a network ACL property"))
 	cmd.RunE = c.run
