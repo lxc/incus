@@ -866,14 +866,16 @@ func genericVFSCopyVolume(d Driver, initVolume func(vol Volume) (revert.Hook, er
 				// subsequent filesystem rsync transfers benefit from only transferring the files
 				// that changed between snapshots.
 				err := srcVol.MountTask(func(srcMountPath string, op *operations.Operation) error {
-					if srcVol.contentType != ContentTypeBlock || srcVol.volType != VolumeTypeCustom {
+					// Custom block and ISO volumes only hold a disk.
+					customBlock := srcVol.volType == VolumeTypeCustom && IsContentBlock(srcVol.contentType)
+					if !customBlock {
 						err := sendFSVol(srcMountPath, targetMountPath)
 						if err != nil {
 							return err
 						}
 					}
 
-					if srcVol.IsVMBlock() || srcVol.contentType == ContentTypeBlock && srcVol.volType == VolumeTypeCustom {
+					if srcVol.IsVMBlock() || customBlock {
 						err := sendBlockVol(srcVol, vol)
 						if err != nil {
 							return err
@@ -913,14 +915,16 @@ func genericVFSCopyVolume(d Driver, initVolume func(vol Volume) (revert.Hook, er
 
 		// Copy source to destination (mounting each volume if needed).
 		err := srcVol.MountTask(func(srcMountPath string, op *operations.Operation) error {
-			if srcVol.contentType != ContentTypeBlock || srcVol.volType != VolumeTypeCustom {
+			// Custom block and ISO volumes only hold a disk.
+			customBlock := srcVol.volType == VolumeTypeCustom && IsContentBlock(srcVol.contentType)
+			if !customBlock {
 				err := sendFSVol(srcMountPath, targetMountPath)
 				if err != nil {
 					return err
 				}
 			}
 
-			if srcVol.IsVMBlock() || srcVol.contentType == ContentTypeBlock && srcVol.volType == VolumeTypeCustom {
+			if srcVol.IsVMBlock() || customBlock {
 				err := sendBlockVol(srcVol, vol)
 				if err != nil {
 					return err
