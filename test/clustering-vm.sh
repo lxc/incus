@@ -88,12 +88,17 @@ incus storage volume create "${POOL}" "${PREFIX}-shared" --type=block size=40GiB
 log "Launch ${MEMBERS} virtual machines"
 for i in $(seq "${MEMBERS}"); do
     incus init "${IMAGE}" "$(member "${i}")" --vm -c security.nesting=true -c limits.cpu=2 -c limits.memory=4GiB -d root,size=30GiB
-    incus config device add "$(member "${i}")" shared disk pool="${POOL}" source="${PREFIX}-shared"
     incus start "$(member "${i}")"
 done
 
 for i in $(seq "${MEMBERS}"); do
     incus wait "$(member "${i}")" agent --timeout=300 --interval=2
+done
+
+# The image grows its root partition assuming the root disk is the first one, so attach the shared disk only once booted.
+for i in $(seq "${MEMBERS}"); do
+    incus config device add "$(member "${i}")" shared disk pool="${POOL}" source="${PREFIX}-shared"
+    wait_disks "$(member "${i}")" scsi-0QEMU_QEMU_HARDDISK_incus_shared
 done
 
 # Member setup script, run inside each virtual machine.
