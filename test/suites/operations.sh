@@ -73,3 +73,28 @@ test_get_operations() {
         incus delete c2 --force --project "${proj2}"
     )
 }
+
+test_operation_wait() {
+    ensure_import_testimage
+
+    (
+        cd operation-wait || return
+        # Use -buildvcs=false here to prevent git complaining about untrusted directory when tests are run as root.
+        go build -v -buildvcs=false ./...
+    )
+
+    incus launch testimage c1
+
+    # Without events, the wait ends with the wait or the client context.
+    [ "$(timeout 15 ./operation-wait/operation-wait "${INCUS_DIR}/unix.socket" c1 deadline 2)" = "context deadline exceeded" ]
+    [ "$(timeout 15 ./operation-wait/operation-wait "${INCUS_DIR}/unix.socket" c1 deadline -1)" = "context deadline exceeded" ]
+    [ "$(timeout 15 ./operation-wait/operation-wait "${INCUS_DIR}/unix.socket" c1 cancel 2)" = "context canceled" ]
+    timeout 15 ./operation-wait/operation-wait "${INCUS_DIR}/unix.socket" c1 client-cancel 2 | grep -q "context canceled"
+
+    # Without deadline or cancellation, the wait lasts until the operation ends.
+    start="$(date +%s)"
+    [ "$(timeout 15 ./operation-wait/operation-wait "${INCUS_DIR}/unix.socket" c1 none 0)" = "<nil>" ]
+    [ "$(($(date +%s) - start))" -ge 9 ]
+
+    incus delete c1 --force
+}

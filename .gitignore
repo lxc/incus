@@ -20,6 +20,7 @@ test/dev_incus-client/dev_incus-client
 test/syscall/sysinfo/sysinfo
 test/mini-oidc/mini-oidc
 test/mini-oidc/user.data
+test/operation-wait/operation-wait
 test/tls2jwt/tls2jwt
 
 # Sphinx
