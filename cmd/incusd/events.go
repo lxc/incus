@@ -9,8 +9,9 @@ import (
 	"strings"
 
 	"github.com/lxc/incus/v7/internal/server/auth"
+	"github.com/lxc/incus/v7/internal/server/cluster"
 	"github.com/lxc/incus/v7/internal/server/db"
-	"github.com/lxc/incus/v7/internal/server/db/cluster"
+	dbCluster "github.com/lxc/incus/v7/internal/server/db/cluster"
 	"github.com/lxc/incus/v7/internal/server/events"
 	"github.com/lxc/incus/v7/internal/server/request"
 	"github.com/lxc/incus/v7/internal/server/response"
@@ -51,6 +52,19 @@ func (r *eventsServe) Code() int {
 }
 
 func eventsSocket(s *state.State, r *http.Request, w http.ResponseWriter) error {
+	// Relay the event stream of another cluster member when targeted (groups are served locally).
+	targetMember := request.QueryParam(r, "target")
+	if targetMember != "" && !strings.HasPrefix(targetMember, targetGroupPrefix) {
+		address, err := cluster.ResolveTarget(r.Context(), s, targetMember)
+		if err != nil {
+			return err
+		}
+
+		if address != "" {
+			return eventsForward(s, r, w, address)
+		}
+	}
+
 	// Detect project mode.
 	projectName := request.QueryParam(r, "project")
 	allProjects := util.IsTrue(request.QueryParam(r, "all-projects"))
@@ -121,7 +135,7 @@ func eventsSocket(s *state.State, r *http.Request, w http.ResponseWriter) error 
 		fingerprint, found := ctx.Value(request.CtxUsername).(string)
 		if found {
 			err := s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
-				cert, err := cluster.GetCertificateByFingerprintPrefix(context.Background(), tx.Tx(), fingerprint)
+				cert, err := dbCluster.GetCertificateByFingerprintPrefix(context.Background(), tx.Tx(), fingerprint)
 				if err != nil {
 					return fmt.Errorf("Failed matching client certificate to cluster member: %w", err)
 				}
@@ -175,6 +189,57 @@ func eventsSocket(s *state.State, r *http.Request, w http.ResponseWriter) error 
 	return nil
 }
 
+// eventsForward relays the event stream of the target cluster member to the client.
+func eventsForward(s *state.State, r *http.Request, w http.ResponseWriter, address string) error {
+	client, err := cluster.Connect(address, s.Endpoints.NetworkCert(), s.ServerCert(), r, false)
+	if err != nil {
+		return err
+	}
+
+	// The target resolves to itself and serves the stream locally.
+	source, err := client.RawWebsocket("/events?" + r.URL.RawQuery)
+	if err != nil {
+		return err
+	}
+
+	defer logger.WarnOnErrorExcept(source.Close, []error{net.ErrClosed}, "Failed to close source connection")
+
+	conn, err := ws.Upgrader.Upgrade(w, r, nil)
+	if err != nil {
+		logger.Warn("Failed upgrading event connection", logger.Ctx{"remote": r.RemoteAddr, "err": err})
+		return nil
+	}
+
+	defer logger.WarnOnErrorExcept(conn.Close, []error{net.ErrClosed}, "Failed to close connection")
+
+	ctx, cancel := context.WithCancel(r.Context())
+	defer cancel()
+
+	// Unblock the relay loop below once the client is gone.
+	stop := context.AfterFunc(ctx, func() { _ = source.Close() })
+	defer stop()
+
+	// The listener connection pings the client and notices it going away.
+	listenerConnection := events.NewWebsocketListenerConnection(conn)
+	go func() {
+		listenerConnection.Reader(ctx, nil)
+		cancel()
+	}()
+
+	for {
+		event := api.Event{}
+		err = source.ReadJSON(&event)
+		if err != nil {
+			return nil
+		}
+
+		err = listenerConnection.WriteJSON(event)
+		if err != nil {
+			return nil
+		}
+	}
+}
+
 // swagger:operation GET /1.0/events server events_get
 //
 //	Get the event stream
@@ -199,6 +264,11 @@ func eventsSocket(s *state.State, r *http.Request, w http.ResponseWriter) error 
 //	    name: all-projects
 //	    description: Retrieve instances from all projects
 //	    type: boolean
+//	  - in: query
+//	    name: target
+//	    description: Cluster member
+//	    type: string
+//	    x-example: default
 //	responses:
 //	  "101":
 //	    description: Websocket message (JSON)
