@@ -1376,10 +1376,6 @@ func (d *linstor) SetVolumeQuota(vol Volume, size string, allowUnsafeResize bool
 			if sizeBytes < oldSizeBytes {
 				return fmt.Errorf("Block volumes cannot be shrunk: %w", ErrCannotBeShrunk)
 			}
-
-			if inUse {
-				return ErrInUse // We don't allow online resizing of block volumes.
-			}
 		}
 
 		// Resize block device.
