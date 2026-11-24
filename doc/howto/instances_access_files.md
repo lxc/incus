@@ -2,11 +2,21 @@
 # How to access files in an instance
 
 You can manage files inside an instance using the Incus client without needing to access the instance through the network.
-Files can be individually edited or deleted, pushed from or pulled to the local machine.
+Files can be individually listed, edited or deleted, pushed from or pulled to the local machine.
 Alternatively, you can mount the instance's file system onto the local machine.
 
 For containers, these file operations always work and are handled directly by Incus.
 For virtual machines, the `incus-agent` process must be running inside of the virtual machine for them to work.
+
+## List instance files
+
+To list the files in a directory of your instance, enter the following command:
+
+    incus file list <instance_name>/<path_to_directory>
+
+For example, to list the `/etc` directory of the instance along with the type, size, mode, ownership and modification time of each entry, enter the following command:
+
+    incus file list my-instance/etc
 
 ## Edit instance files
 

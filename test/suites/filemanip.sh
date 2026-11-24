@@ -527,6 +527,18 @@ test_filemanip() {
     incus exec filemanip --project=test -- [ -f /tmp/foo/one/one/foo ]
     incus exec filemanip --project=test -- [ -f /tmp/foo/one/one/bar ]
 
+    # Test incus file list.
+    incus file delete -f filemanip/tmp/foo --project=test
+    incus file create --type=directory filemanip/tmp/foo --project=test
+    incus file create filemanip/tmp/foo/file --project=test
+    incus file create --type=directory filemanip/tmp/foo/dir --project=test
+    incus file create --type=symlink filemanip/tmp/foo/link file --project=test
+    [ "$(incus file list filemanip/tmp/foo --format csv -c nt --project=test)" = "$(printf 'dir,directory\nfile,file\nlink,symlink')" ]
+    [ "$(incus file ls filemanip/tmp/foo/link --format csv -c ntug --project=test)" = "link,symlink,0,0" ]
+    [ "$(incus file list filemanip/tmp/foo/dir --format json --project=test | jq length)" = "0" ]
+    [ "$(incus file list filemanip/tmp/foo --format json --project=test | jq -r '.[1].mode')" = "0644" ]
+    ! incus file list filemanip/tmp/missing --project=test || false
+
     # Test SFTP functionality.
     cmd=$(
         unset -f incus
