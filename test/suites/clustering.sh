@@ -523,9 +523,13 @@ test_clustering_containers() {
         ! INCUS_DIR="${INCUS_TWO_DIR}" incus move egg --target node3 --stateless || false
         INCUS_DIR="${INCUS_ONE_DIR}" incus info egg | grep -q "Location: node1"
         INCUS_DIR="${INCUS_TWO_DIR}" incus stop -f egg
+
+        # Put it back where the rest of the test expects it.
+        INCUS_DIR="${INCUS_TWO_DIR}" incus move egg --target node3
+        INCUS_DIR="${INCUS_ONE_DIR}" incus info egg | grep -q "Location: node3"
     fi
 
-    # Create backup and attempt to move container. Move should fail and container should remain on node1.
+    # Create backup and attempt to move container. Move should fail and container should remain on node3.
     INCUS_DIR="${INCUS_THREE_DIR}" incus query -X POST --wait -d '{\"name\":\"foo\"}' /1.0/instances/egg/backups
     ! INCUS_DIR="${INCUS_THREE_DIR}" incus move egg --target node2 || false
     INCUS_DIR="${INCUS_THREE_DIR}" incus info egg | grep -q "Location: node3"

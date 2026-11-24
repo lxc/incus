@@ -411,9 +411,17 @@ do_storage_driver_zfs() {
 
 do_zfs_export_with_dependent_volumes() {
     # shellcheck disable=2039,3043
-    local storage_pool storage_volume
+    local storage_pool storage_volume incus_backend
+
+    incus_backend=$(storage_backend "$INCUS_DIR")
+    if [ "$incus_backend" != "zfs" ]; then
+        return
+    fi
+
     storage_pool="incustest-$(basename "${INCUS_DIR}")"
     storage_volume="${storage_pool}-vol1"
+
+    ensure_import_testimage
 
     incus init testimage c1
     incus storage volume create "${storage_pool}" "${storage_volume}"

@@ -734,7 +734,7 @@ migration() {
     fi
 
     echo "==> CRIU: starting testing live-migration"
-    incus_remote launch testimage l1:migratee -c raw.lxc=lxc.console.path=none
+    incus_remote launch testimage l1:migratee -c raw.lxc=lxc.console.path=none -c migration.stateful=true
 
     # Wait for the container to be done booting
     sleep 1
