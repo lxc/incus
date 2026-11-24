@@ -48,8 +48,13 @@ EOL
 
         incus launch testimage nettest -n inct$$
 
-        incus exec nettest -- ip route list | grep -q "1.2.0.0/16 via 10.13.37.5"
-        incus exec nettest -- ip route list | grep -q "2.3.0.0/16 via 10.13.37.7"
+        incus file push "${TEST_DIR}/udhcpc.sh" nettest/udhcpc.sh
+        incus exec nettest -- chmod a+rx /udhcpc.sh
+
+        staticroutes_output=$(incus exec nettest -- udhcpc -s /udhcpc.sh 2> /dev/null | grep STATICROUTES)
+
+        echo "$staticroutes_output" | grep -q "1.2.0.0/16 10.13.37.5"
+        echo "$staticroutes_output" | grep -q "2.3.0.0/16 10.13.37.7"
 
         incus delete nettest -f
         incus network delete inct$$
