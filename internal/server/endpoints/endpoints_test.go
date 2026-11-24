@@ -15,6 +15,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"golang.org/x/sys/unix"
 
 	"github.com/lxc/incus/v7/internal/server/endpoints"
 	localUtil "github.com/lxc/incus/v7/internal/server/util"
@@ -93,10 +94,14 @@ func newServer() *http.Server {
 
 // Set the environment-variable for socket-based activation using the given
 // file.
-func setupSocketBasedActivation(eps *endpoints.Endpoints, file *os.File) {
+func setupSocketBasedActivation(t *testing.T, eps *endpoints.Endpoints, file *os.File) {
+	// Hand over a copy of the descriptor as the endpoints take ownership of it.
+	fd, err := unix.Dup(int(file.Fd()))
+	require.NoError(t, err)
+
 	_ = os.Setenv("LISTEN_PID", strconv.Itoa(os.Getpid()))
 	_ = os.Setenv("LISTEN_FDS", "1")
-	eps.SystemdListenFDsStart(int(file.Fd()))
+	eps.SystemdListenFDsStart(fd)
 }
 
 // Assert that there are no socket-based activation variables in the

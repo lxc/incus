@@ -56,7 +56,7 @@ func TestEndpoints_NetworkSocketBasedActivation(t *testing.T) {
 	file, err := listener.File()
 	require.NoError(t, err)
 
-	setupSocketBasedActivation(endpoints, file)
+	setupSocketBasedActivation(t, endpoints, file)
 
 	require.NoError(t, endpoints.Up(config))
 
