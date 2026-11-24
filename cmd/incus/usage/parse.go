@@ -183,9 +183,10 @@ func (u Usage) diagnose(cmd *cobra.Command, parsedValues []*Parsed, parseRTL boo
 	}
 
 	commandPath := cmd.CommandPath()
-	fmt.Println(cliColor.UsagePrefix + " " + commandPath + " " + strings.Join(renderedAtoms, " "))
+	prefixColonSuffix := i18n.G("%s: %s")
+	fmt.Printf(prefixColonSuffix, cliColor.UsagePrefix, commandPath+" "+strings.Join(renderedAtoms, " ")+"\n")
 	parsedCount := len(parsedValues)
-	usagePrefixLen := runewidth.StringWidth(cliColor.RawUsagePrefix) + runewidth.StringWidth(commandPath) + 1
+	usagePrefixLen := runewidth.StringWidth(prefixColonSuffix) - 4 + runewidth.StringWidth(cliColor.RawUsagePrefix) + runewidth.StringWidth(commandPath)
 	cursor := 0
 	if parseRTL {
 		slices.Reverse(parsedValues)

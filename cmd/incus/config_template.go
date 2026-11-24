@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"sort"
 
 	"github.com/spf13/cobra"
 
@@ -40,7 +39,7 @@ func (c *cmdConfigTemplate) command() *cobra.Command {
 	cmd.AddCommand(configTemplateEditCmd.command())
 
 	// List
-	configTemplateListCmd := cmdConfigTemplateList{global: c.global, config: c.config, configTemplate: c}
+	configTemplateListCmd := cmdConfigTemplateList{global: c.global, config: c.config, configTemplate: c, lister: &listable[string]{global: c.global}}
 	cmd.AddCommand(configTemplateListCmd.command())
 
 	// Show
@@ -257,8 +256,7 @@ type cmdConfigTemplateList struct {
 	global         *cmdGlobal
 	config         *cmdConfig
 	configTemplate *cmdConfigTemplate
-
-	flagFormat string
+	lister         *listable[string]
 }
 
 var cmdConfigTemplateListUsage = u.Usage{u.Instance.Remote()}
@@ -269,11 +267,10 @@ func (c *cmdConfigTemplateList) command() *cobra.Command {
 	cmd.Aliases = []string{"ls"}
 	cmd.Short = i18n.G("List instance file templates")
 	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`List instance file templates`))
-	cli.AddStringFlag(cmd.Flags(), &c.flagFormat, "format|f", c.global.defaultListFormat(), "", i18n.G(`Format (csv|json|table|yaml|compact|markdown), use suffix ",noheader" to disable headers and ",header" to enable it if missing, e.g. csv,header`))
 
-	cmd.PreRunE = func(cmd *cobra.Command, _ []string) error {
-		return cli.ValidateFlagFormatForListOutput(cmd.Flag("format").Value.String())
-	}
+	c.lister.init(cmd, "f", map[rune]listColumn[string]{
+		'f': {header: i18n.G("FILENAME"), handler: func(s string) string { return s }},
+	})
 
 	cmd.RunE = c.run
 
@@ -303,19 +300,7 @@ func (c *cmdConfigTemplateList) run(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	// Render the table
-	data := [][]string{}
-	for _, template := range templates {
-		data = append(data, []string{template})
-	}
-
-	sort.Sort(cli.SortColumnsNaturally(data))
-
-	header := []string{
-		i18n.G("FILENAME"),
-	}
-
-	return cli.RenderTable(os.Stdout, c.flagFormat, header, data, templates)
+	return c.lister.run(templates)
 }
 
 // Show.

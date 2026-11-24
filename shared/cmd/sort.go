@@ -1,8 +1,6 @@
 package cmd
 
 import (
-	"strings"
-
 	"github.com/fvbommel/sortorder"
 )
 
@@ -53,12 +51,10 @@ func (a SortColumnsNaturally) Less(i, j int) bool {
 			continue
 		}
 
-		if a[i][k] == "" {
-			return false
-		}
-
-		if a[j][k] == "" {
-			return true
+		rankI := sortRank(a[i][k])
+		rankJ := sortRank(a[j][k])
+		if rankI != rankJ {
+			return rankI < rankJ
 		}
 
 		return sortorder.NaturalLess(a[i][k], a[j][k])
@@ -67,33 +63,15 @@ func (a SortColumnsNaturally) Less(i, j int) bool {
 	return false
 }
 
-// ByNameAndType represents the type for sorting Storage volumes.
-type ByNameAndType [][]string
-
-func (a ByNameAndType) Len() int {
-	return len(a)
-}
-
-func (a ByNameAndType) Swap(i, j int) {
-	a[i], a[j] = a[j], a[i]
-}
-
-func (a ByNameAndType) Less(i, j int) bool {
-	// Sort snapshot and parent together.
-	iType, _, _ := strings.Cut(a[i][0], " ")
-	jType, _, _ := strings.Cut(a[j][0], " ")
-
-	if iType != jType {
-		return sortorder.NaturalLess(a[i][0], a[j][0])
+// sortRank puts parenthesized cells after regular ones and empty cells last.
+func sortRank(cell string) int {
+	if cell == "" {
+		return 2
 	}
 
-	if a[i][1] == "" {
-		return false
+	if cell[0] == '(' {
+		return 1
 	}
 
-	if a[j][1] == "" {
-		return true
-	}
-
-	return sortorder.NaturalLess(a[i][1], a[j][1])
+	return 0
 }

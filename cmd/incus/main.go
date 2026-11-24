@@ -263,7 +263,7 @@ Custom commands can be defined through aliases, use "incus alias" to control tho
 	app.AddCommand(launchCmd.command())
 
 	// list sub-command
-	listCmd := cmdList{global: &globalCmd}
+	listCmd := cmdList{global: &globalCmd, lister: &listable[instanceWithRemote]{global: &globalCmd}}
 	app.AddCommand(listCmd.command())
 
 	// manpage sub-command
@@ -351,7 +351,7 @@ Custom commands can be defined through aliases, use "incus alias" to control tho
 	app.AddCommand(versionCmd.command())
 
 	// top sub-command
-	topCmd := cmdTop{global: &globalCmd}
+	topCmd := cmdTop{global: &globalCmd, lister: &listable[displayData]{global: &globalCmd}}
 	app.AddCommand(topCmd.command())
 
 	// warning sub-command

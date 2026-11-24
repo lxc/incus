@@ -7,7 +7,6 @@ import (
 	"maps"
 	"os"
 	"slices"
-	"sort"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -32,7 +31,7 @@ func (c *cmdNetworkPeer) command() *cobra.Command {
 	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G("Manage network peerings"))
 
 	// List.
-	networkPeerListCmd := cmdNetworkPeerList{global: c.global, networkPeer: c}
+	networkPeerListCmd := cmdNetworkPeerList{global: c.global, networkPeer: c, lister: &listable[api.NetworkPeer]{global: c.global}}
 	cmd.AddCommand(networkPeerListCmd.command())
 
 	// Show.
@@ -73,14 +72,7 @@ func (c *cmdNetworkPeer) command() *cobra.Command {
 type cmdNetworkPeerList struct {
 	global      *cmdGlobal
 	networkPeer *cmdNetworkPeer
-
-	flagFormat  string
-	flagColumns string
-}
-
-type networkPeerColumn struct {
-	Name string
-	Data func(api.NetworkPeer) string
+	lister      *listable[api.NetworkPeer]
 }
 
 var cmdNetworkPeerListUsage = u.Usage{u.Network.Remote()}
@@ -90,36 +82,17 @@ func (c *cmdNetworkPeerList) command() *cobra.Command {
 	cmd.Use = cli.U("list", cmdNetworkPeerListUsage...)
 	cmd.Aliases = []string{"ls"}
 	cmd.Short = i18n.G("List available network peers")
-	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
-		`List available network peers
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G("List available network peers"))
 
-Default column layout: ndpts
-
-== Columns ==
-The -c option takes a comma separated list of arguments that control
-which network peer attributes to output when displaying in table or csv
-format.
-
-Column arguments are either pre-defined shorthand chars (see below),
-or (extended) config keys.
-
-Commas between consecutive shorthand chars are optional.
-
-Pre-defined column shorthand chars:
-  n - Name
-  d - description
-  p - Peer
-  t - Type
-  s - State`,
-	))
+	c.lister.init(cmd, "ndpts", map[rune]listColumn[api.NetworkPeer]{
+		'n': {i18n.G("NAME"), i18n.G("Name"), c.nameColumnData},
+		'd': {i18n.G("DESCRIPTION"), i18n.G("Description"), c.descriptionColumnData},
+		'p': {i18n.G("PEER"), i18n.G("Peer"), c.peerColumnData},
+		't': {i18n.G("TYPE"), i18n.G("Type"), c.typeColumnData},
+		's': {i18n.G("STATE"), i18n.G("State"), c.stateColumnData},
+	})
 
 	cmd.RunE = c.run
-	cli.AddStringFlag(cmd.Flags(), &c.flagFormat, "format|f", c.global.defaultListFormat(), "", i18n.G(`Format (csv|json|table|yaml|compact|markdown), use suffix ",noheader" to disable headers and ",header" to enable it if missing, e.g. csv,header`))
-	cli.AddStringFlag(cmd.Flags(), &c.flagColumns, "columns|c", defaultNetworkPeerListColumns, "", i18n.G("Columns"))
-
-	cmd.PreRunE = func(cmd *cobra.Command, _ []string) error {
-		return cli.ValidateFlagFormatForListOutput(cmd.Flag("format").Value.String())
-	}
 
 	cmd.ValidArgsFunction = func(_ *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		if len(args) == 0 {
@@ -130,38 +103,6 @@ Pre-defined column shorthand chars:
 	}
 
 	return cmd
-}
-
-const defaultNetworkPeerListColumns = "ndpts"
-
-func (c *cmdNetworkPeerList) parseColumns() ([]networkPeerColumn, error) {
-	columnsShorthandMap := map[rune]networkPeerColumn{
-		'n': {i18n.G("NAME"), c.nameColumnData},
-		'd': {i18n.G("DESCRIPTION"), c.descriptionColumnData},
-		'p': {i18n.G("PEER"), c.peerColumnData},
-		't': {i18n.G("TYPE"), c.typeColumnData},
-		's': {i18n.G("STATE"), c.stateColumnData},
-	}
-
-	columnList := strings.Split(c.flagColumns, ",")
-	columns := []networkPeerColumn{}
-
-	for _, columnEntry := range columnList {
-		if columnEntry == "" {
-			return nil, fmt.Errorf(i18n.G("Empty column entry (redundant, leading or trailing command) in '%s'"), c.flagColumns)
-		}
-
-		for _, columnRune := range columnEntry {
-			column, ok := columnsShorthandMap[columnRune]
-			if !ok {
-				return nil, fmt.Errorf(i18n.G("Unknown column shorthand char '%c' in '%s'"), columnRune, columnEntry)
-			}
-
-			columns = append(columns, column)
-		}
-	}
-
-	return columns, nil
 }
 
 func (c *cmdNetworkPeerList) nameColumnData(peer api.NetworkPeer) string {
@@ -206,30 +147,7 @@ func (c *cmdNetworkPeerList) run(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	// Parse column flags.
-	columns, err := c.parseColumns()
-	if err != nil {
-		return err
-	}
-
-	data := [][]string{}
-	for _, peer := range peers {
-		line := []string{}
-		for _, column := range columns {
-			line = append(line, column.Data(peer))
-		}
-
-		data = append(data, line)
-	}
-
-	sort.Sort(cli.SortColumnsNaturally(data))
-
-	header := []string{}
-	for _, column := range columns {
-		header = append(header, column.Name)
-	}
-
-	return cli.RenderTable(os.Stdout, c.flagFormat, header, data, peers)
+	return c.lister.run(peers)
 }
 
 // Show.
