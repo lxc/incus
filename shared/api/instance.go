@@ -133,6 +133,12 @@ type InstancePost struct {
 	//
 	// API extension: instance_move_config
 	Profiles []string `json:"profiles" yaml:"profiles"`
+
+	// Whether to leave the instance paused on the source once a live migration completes (migration only)
+	// Example: false
+	//
+	// API extension: instance_migration_keep_paused
+	KeepPaused bool `json:"keep_paused,omitempty" yaml:"keep_paused,omitempty"`
 }
 
 // InstancePostTarget represents the migration target host and operation.
