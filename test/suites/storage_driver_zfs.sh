@@ -9,6 +9,8 @@ test_storage_driver_zfs() {
     do_zfs_encryption
 
     do_zfs_export_with_dependent_volumes
+
+    do_zfs_resize_limits
 }
 
 do_zfs_delegate() {
@@ -430,4 +432,39 @@ do_zfs_export_with_dependent_volumes() {
     incus storage volume detach "${storage_pool}" "${storage_volume}" c1
     incus storage volume delete "${storage_pool}" "${storage_volume}"
     incus delete --force c1
+}
+
+do_zfs_resize_limits() {
+    # shellcheck disable=2039,3043
+    local incus_backend storage_pool dataset
+
+    incus_backend=$(storage_backend "$INCUS_DIR")
+    if [ "$incus_backend" != "zfs" ]; then
+        return
+    fi
+
+    storage_pool="incustest-$(basename "${INCUS_DIR}")"
+    dataset="${storage_pool}/custom/default_vol1"
+
+    incus launch testimage c1
+    incus storage volume create "${storage_pool}" vol1 size=100MiB zfs.reserve_space=true zfs.use_refquota=true
+    incus storage volume attach "${storage_pool}" vol1 c1 vol1 /mnt
+    incus exec c1 -- dd if=/dev/urandom of=/mnt/data bs=1M count=30 conv=fsync
+    zpool sync "${storage_pool}"
+
+    # Resize failures must be leaving limits in place (quota, refquota, reservation, refreservation).
+    ! incus storage volume set "${storage_pool}" vol1 size=10MiB || false
+    ! incus storage volume set "${storage_pool}" vol1 size=100TiB || false
+    [ "$(zfs get -H -p -o value quota,refquota,reservation,refreservation "${dataset}" | paste -sd,)" = "0,104857600,0,104857600" ]
+    [ "$(incus storage volume get "${storage_pool}" vol1 size)" = "100MiB" ]
+
+    # Switching to refquotas must still work even if now snapshot is accounted.
+    incus storage volume snapshot create "${storage_pool}" vol1
+    incus exec c1 -- dd if=/dev/urandom of=/mnt/data bs=1M count=30 conv=fsync,notrunc
+    zpool sync "${storage_pool}"
+    incus storage volume set "${storage_pool}" vol1 zfs.use_refquota=false
+    [ "$(zfs get -H -p -o value quota,refquota,reservation,refreservation "${dataset}" | paste -sd,)" = "104857600,0,104857600,0" ]
+
+    incus delete -f c1
+    incus storage volume delete "${storage_pool}" vol1
 }
