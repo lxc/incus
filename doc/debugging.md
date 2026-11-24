@@ -18,6 +18,10 @@ logging call:
 
 This command will monitor messages as they appear on remote server.
 
+In a cluster, debug messages aren't forwarded between members, use `--target` to monitor a specific member:
+
+    incus monitor --target server01 --pretty --type=logging
+
 ## REST API through local socket
 
 On server side the most easy way is to communicate with Incus through
