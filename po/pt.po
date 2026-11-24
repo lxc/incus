@@ -7,12 +7,12 @@ msgid ""
 msgstr ""
 "Project-Id-Version: incus\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2026-11-24 19:52-0500\n"
+"POT-Creation-Date: 2026-11-25 16:40-0500\n"
 "PO-Revision-Date: 2026-11-25 18:25+0000\n"
 "Last-Translator: Américo Monteiro <a-"
 "monteiro@users.noreply.hosted.weblate.org>\n"
-"Language-Team: Portuguese <https://hosted.weblate.org/projects/incus/cli/pt/>"
-"\n"
+"Language-Team: Portuguese <https://hosted.weblate.org/projects/incus/cli/pt/"
+">\n"
 "Language: pt\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -2364,8 +2364,8 @@ msgid ""
 "    <width>: Max column width (longer results are truncated), 0 = limit to "
 "header width, -1 = unlimited (defaults to -1)"
 msgstr ""
-"Colunas personalizadas podem ser definidas com \"[config:|devices:]<key>"
-"[:<name>][:<width>]\":\n"
+"Colunas personalizadas podem ser definidas com \"[config:|devices:]<key>[:"
+"<name>][:<width>]\":\n"
 "    <key>:   Configuração estendida ou chave de dispositivo a mostrar (se "
 "[config:|devices:] for omitido, predefine para config:)\n"
 "    <name>:  Nome a mostrar no cabeçalho da coluna (predefinido para <key> "
@@ -2377,8 +2377,8 @@ msgstr ""
 msgid ""
 "Custom columns can be defined with “properties:<key>”, e.g. “properties:os”."
 msgstr ""
-"Colunas personalizadas podem ser definidas com “properties:<chave>”, ex. “"
-"properties:os”."
+"Colunas personalizadas podem ser definidas com “properties:<chave>”, ex. "
+"“properties:os”."
 
 #: cmd/incus/utils_sftp.go:502
 #, c-format
@@ -3764,7 +3764,7 @@ msgstr "Falhou ao ler do stdin: %w"
 msgid "Failed to receive the command output: %w"
 msgstr "Falhou ao receber a saída do comando: %w"
 
-#: cmd/incus/copy.go:391
+#: cmd/incus/copy.go:392
 #, c-format
 msgid "Failed to refresh target instance '%s': %v"
 msgstr "Falhou ao refrescar instância alvo: '%s': %v"
@@ -5564,8 +5564,8 @@ msgstr ""
 "  - static={verdadeiro ou falso}\n"
 "  - global={verdadeiro ou falso}\n"
 "\n"
-"Os valores são correspondidos como expressões regulares. (ex. url=https://"
-".*:8443).\n"
+"Os valores são correspondidos como expressões regulares. (ex. "
+"url=https://.*:8443).\n"
 "\n"
 "Quando são passados vários filtros, eles são adicionados um no topo do "
 "outro,\n"
@@ -7385,7 +7385,7 @@ msgstr "Refresca e atualiza as cópias de volume de armazenamento existentes"
 msgid "Refresh images"
 msgstr "Refresca imagens"
 
-#: cmd/incus/copy.go:436
+#: cmd/incus/copy.go:437
 #, c-format
 msgid "Refreshing instance: %s"
 msgstr "A refrescar instância: %s"
@@ -9338,7 +9338,7 @@ msgstr "Modo de transferência. Um de pull, push ou relay"
 msgid "Transferring image: %s"
 msgstr "A transferir imagem: %s"
 
-#: cmd/incus/copy.go:369 cmd/incus/move.go:312 cmd/incus/move_nearlive.go:147
+#: cmd/incus/copy.go:370 cmd/incus/move.go:312 cmd/incus/move_nearlive.go:147
 #, c-format
 msgid "Transferring instance: %s"
 msgstr "A transferir instância: %s"

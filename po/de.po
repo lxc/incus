@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: LXD\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2026-11-24 19:52-0500\n"
+"POT-Creation-Date: 2026-11-25 16:40-0500\n"
 "PO-Revision-Date: 2026-11-24 19:13+0000\n"
 "Last-Translator: Jan Mittelstädter "
 "<janm84@users.noreply.hosted.weblate.org>\n"
@@ -3861,7 +3861,7 @@ msgstr "Akzeptiere Zertifikat"
 msgid "Failed to receive the command output: %w"
 msgstr "Akzeptiere Zertifikat"
 
-#: cmd/incus/copy.go:391
+#: cmd/incus/copy.go:392
 #, fuzzy, c-format
 msgid "Failed to refresh target instance '%s': %v"
 msgstr "kann nicht zum selben Container Namen kopieren"
@@ -7379,7 +7379,7 @@ msgstr "Anhalten des Containers fehlgeschlagen!"
 msgid "Refresh images"
 msgstr ""
 
-#: cmd/incus/copy.go:436
+#: cmd/incus/copy.go:437
 #, fuzzy, c-format
 msgid "Refreshing instance: %s"
 msgstr "Herunterfahren des Containers erzwingen."
@@ -9371,7 +9371,7 @@ msgstr ""
 msgid "Transferring image: %s"
 msgstr ""
 
-#: cmd/incus/copy.go:369 cmd/incus/move.go:312 cmd/incus/move_nearlive.go:147
+#: cmd/incus/copy.go:370 cmd/incus/move.go:312 cmd/incus/move_nearlive.go:147
 #, fuzzy, c-format
 msgid "Transferring instance: %s"
 msgstr "kann nicht zum selben Container Namen kopieren"

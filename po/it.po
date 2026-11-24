@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lxd\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2026-11-24 19:52-0500\n"
+"POT-Creation-Date: 2026-11-25 16:40-0500\n"
 "PO-Revision-Date: 2026-08-29 22:37+0000\n"
 "Last-Translator: Alberto Donato <ack@users.noreply.hosted.weblate.org>\n"
 "Language-Team: Italian <https://hosted.weblate.org/projects/incus/cli/it/>\n"
@@ -3655,7 +3655,7 @@ msgstr "Impossible leggere da stdin: %s"
 msgid "Failed to receive the command output: %w"
 msgstr "Accetta certificato"
 
-#: cmd/incus/copy.go:391
+#: cmd/incus/copy.go:392
 #, c-format
 msgid "Failed to refresh target instance '%s': %v"
 msgstr ""
@@ -7084,7 +7084,7 @@ msgstr ""
 msgid "Refresh images"
 msgstr ""
 
-#: cmd/incus/copy.go:436
+#: cmd/incus/copy.go:437
 #, fuzzy, c-format
 msgid "Refreshing instance: %s"
 msgstr "Creazione del container in corso"
@@ -9000,7 +9000,7 @@ msgstr ""
 msgid "Transferring image: %s"
 msgstr ""
 
-#: cmd/incus/copy.go:369 cmd/incus/move.go:312 cmd/incus/move_nearlive.go:147
+#: cmd/incus/copy.go:370 cmd/incus/move.go:312 cmd/incus/move_nearlive.go:147
 #, fuzzy, c-format
 msgid "Transferring instance: %s"
 msgstr "Creazione del container in corso"

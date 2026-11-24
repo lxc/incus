@@ -7,7 +7,7 @@
 msgid   ""
 msgstr  "Project-Id-Version: incus\n"
         "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-        "POT-Creation-Date: 2026-11-24 19:52-0500\n"
+        "POT-Creation-Date: 2026-11-25 16:40-0500\n"
         "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
         "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
         "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -3055,7 +3055,7 @@ msgstr  ""
 msgid   "Failed to receive the command output: %w"
 msgstr  ""
 
-#: cmd/incus/copy.go:391
+#: cmd/incus/copy.go:392
 #, c-format
 msgid   "Failed to refresh target instance '%s': %v"
 msgstr  ""
@@ -3382,7 +3382,7 @@ msgstr  ""
 msgid   "GRANULARITY"
 msgstr  ""
 
-#: cmd/incus/low_level.go:693 cmd/incus/low_level.go:704 cmd/incus/low_level.go:704
+#: cmd/incus/low_level.go:693 cmd/incus/low_level.go:704
 msgid   "GUID"
 msgstr  ""
 
@@ -3661,7 +3661,7 @@ msgstr  ""
 msgid   "I/O copy from sshfs to instance failed: %v"
 msgstr  ""
 
-#: cmd/incus/action.go:330 cmd/incus/network.go:959 cmd/incus/operation.go:122 cmd/incus/operation.go:122
+#: cmd/incus/action.go:330 cmd/incus/network.go:959 cmd/incus/operation.go:122
 msgid   "ID"
 msgstr  ""
 
@@ -6179,7 +6179,7 @@ msgstr  ""
 msgid   "Refresh images"
 msgstr  ""
 
-#: cmd/incus/copy.go:436
+#: cmd/incus/copy.go:437
 #, c-format
 msgid   "Refreshing instance: %s"
 msgstr  ""
@@ -7928,7 +7928,7 @@ msgstr  ""
 msgid   "Transferring image: %s"
 msgstr  ""
 
-#: cmd/incus/copy.go:369 cmd/incus/move.go:312 cmd/incus/move_nearlive.go:147
+#: cmd/incus/copy.go:370 cmd/incus/move.go:312 cmd/incus/move_nearlive.go:147
 #, c-format
 msgid   "Transferring instance: %s"
 msgstr  ""
@@ -7990,7 +7990,7 @@ msgstr  ""
 msgid   "UPLOAD DATE"
 msgstr  ""
 
-#: cmd/incus/cluster.go:146 cmd/incus/cluster.go:146 cmd/incus/remote.go:1288 cmd/incus/remote.go:1288 cmd/incus/usage/usage.go:873
+#: cmd/incus/cluster.go:146 cmd/incus/remote.go:1288 cmd/incus/usage/usage.go:873
 msgid   "URL"
 msgstr  ""
 
@@ -8010,7 +8010,7 @@ msgstr  ""
 msgid   "USED BY"
 msgstr  ""
 
-#: cmd/incus/warning.go:78 cmd/incus/warning.go:78
+#: cmd/incus/warning.go:78
 msgid   "UUID"
 msgstr  ""
 
