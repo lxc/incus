@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lxd\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2026-11-24 13:35-0500\n"
+"POT-Creation-Date: 2026-11-24 19:52-0500\n"
 "PO-Revision-Date: 2026-08-29 22:38+0000\n"
 "Last-Translator: Kazantsev Mikhail <kazan417@mail.ru>\n"
 "Language-Team: Portuguese (Brazil) <https://hosted.weblate.org/projects/"
@@ -1790,9 +1790,9 @@ msgstr "Dispositivo %s removido de %s"
 
 #: cmd/incus/config.go:105 cmd/incus/config.go:387 cmd/incus/config.go:524
 #: cmd/incus/config.go:692 cmd/incus/config.go:816 cmd/incus/copy.go:68
-#: cmd/incus/create.go:70 cmd/incus/info.go:59 cmd/incus/move.go:71
-#: cmd/incus/network.go:346 cmd/incus/network.go:801 cmd/incus/network.go:875
-#: cmd/incus/network.go:1043 cmd/incus/network.go:1283
+#: cmd/incus/create.go:70 cmd/incus/info.go:59 cmd/incus/monitor.go:64
+#: cmd/incus/move.go:71 cmd/incus/network.go:346 cmd/incus/network.go:801
+#: cmd/incus/network.go:875 cmd/incus/network.go:1043 cmd/incus/network.go:1283
 #: cmd/incus/network.go:1367 cmd/incus/network.go:1429
 #: cmd/incus/network_forward.go:168 cmd/incus/network_forward.go:239
 #: cmd/incus/network_forward.go:400 cmd/incus/network_forward.go:539
@@ -3153,7 +3153,7 @@ msgstr ""
 msgid "Evacuating cluster member: %s"
 msgstr "Nome de membro do cluster"
 
-#: cmd/incus/monitor.go:57
+#: cmd/incus/monitor.go:61
 #, fuzzy
 msgid "Event type to listen for (may be passed multiple times)"
 msgstr "Tipo de evento a escutar"
@@ -3979,7 +3979,7 @@ msgid ""
 "disable headers and \",header\" to enable them if missing, e.g. csv,header"
 msgstr ""
 
-#: cmd/incus/monitor.go:59
+#: cmd/incus/monitor.go:63
 msgid "Format (json|pretty|yaml)"
 msgstr ""
 
@@ -4810,7 +4810,7 @@ msgid "Invalid format %q"
 msgstr "Editar arquivos no container"
 
 #: cmd/incus/low_level.go:663 cmd/incus/low_level.go:954
-#: cmd/incus/monitor.go:73
+#: cmd/incus/monitor.go:78
 #, fuzzy, c-format
 msgid "Invalid format: %s"
 msgstr "Editar arquivos no container"
@@ -5403,7 +5403,7 @@ msgstr ""
 msgid "Log (%s):"
 msgstr ""
 
-#: cmd/incus/monitor.go:82
+#: cmd/incus/monitor.go:87
 msgid "Log level filtering can only be used with pretty formatting"
 msgstr ""
 
@@ -5867,7 +5867,7 @@ msgstr ""
 msgid "Minimal configuration (non-interactive)"
 msgstr ""
 
-#: cmd/incus/monitor.go:58
+#: cmd/incus/monitor.go:62
 msgid ""
 "Minimum level for log messages (only available when using pretty format)"
 msgstr ""
@@ -5894,12 +5894,12 @@ msgstr ""
 msgid "Model: %v"
 msgstr ""
 
-#: cmd/incus/monitor.go:36
+#: cmd/incus/monitor.go:37
 #, fuzzy
 msgid "Monitor a local or remote server"
 msgstr "Adicionar novos servidores remoto"
 
-#: cmd/incus/monitor.go:37
+#: cmd/incus/monitor.go:38
 msgid ""
 "Monitor a local or remote server\n"
 "\n"
@@ -6823,7 +6823,7 @@ msgstr ""
 msgid "Press enter to open the editor again or ctrl+c to abort change"
 msgstr ""
 
-#: cmd/incus/monitor.go:55
+#: cmd/incus/monitor.go:59
 msgid "Pretty rendering (short for --format=pretty)"
 msgstr ""
 
@@ -8061,7 +8061,7 @@ msgstr ""
 msgid "Show details on a background operation"
 msgstr ""
 
-#: cmd/incus/monitor.go:56
+#: cmd/incus/monitor.go:60
 msgid "Show events from all projects"
 msgstr ""
 
@@ -8948,6 +8948,11 @@ msgstr ""
 msgid "The server doesn't implement incremental instance transfers"
 msgstr ""
 
+#: cmd/incus/monitor.go:97
+#, fuzzy
+msgid "The server doesn't implement monitoring a specific cluster member"
+msgstr "Nome de membro do cluster"
+
 #: cmd/incus/info.go:415
 msgid "The server doesn't implement the newer v2 resources API"
 msgstr ""
@@ -9061,7 +9066,7 @@ msgstr ""
 
 #: cmd/incus/config.go:294 cmd/incus/config.go:480 cmd/incus/config.go:641
 #: cmd/incus/config.go:727 cmd/incus/copy.go:172 cmd/incus/info.go:407
-#: cmd/incus/network.go:901 cmd/incus/storage.go:495
+#: cmd/incus/monitor.go:93 cmd/incus/network.go:901 cmd/incus/storage.go:495
 msgid "To use --target, the destination remote must be a cluster"
 msgstr ""
 
@@ -10440,7 +10445,7 @@ msgid ""
 "    Creates an ELF format memory dump of the vm1 instance."
 msgstr ""
 
-#: cmd/incus/monitor.go:42
+#: cmd/incus/monitor.go:43
 msgid ""
 "incus monitor --type=logging\n"
 "    Only show log messages.\n"
@@ -10449,7 +10454,10 @@ msgid ""
 "    Show a pretty log of messages with info level or higher.\n"
 "\n"
 "incus monitor --type=lifecycle\n"
-"    Only show lifecycle events."
+"    Only show lifecycle events.\n"
+"\n"
+"incus monitor --target=server01 --type=logging\n"
+"    Only show log messages from a specific cluster member."
 msgstr ""
 
 #: cmd/incus/move.go:53
@@ -11987,10 +11995,6 @@ msgstr ""
 
 #, fuzzy
 #~ msgid "Removes a cluster member from a cluster group"
-#~ msgstr "Nome de membro do cluster"
-
-#, fuzzy
-#~ msgid "The key %q doest not exist on cluster member %q"
 #~ msgstr "Nome de membro do cluster"
 
 #, fuzzy
