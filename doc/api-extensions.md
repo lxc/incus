@@ -3639,3 +3639,6 @@ This adds a new `vlan.ingress` option to `bridged` NICs, to `physical` NICs and 
 ## `network_dns_domain_none`
 
 Adds support for the `none` value on the `dns.domain` and `dns.search` options of `bridge` and `ovn` networks, which stops the domain or search list from being advertised to the instances.
+## `events_target`
+
+Adds the `target` query parameter to `GET /1.0/events` to get the event stream of a specific cluster member.

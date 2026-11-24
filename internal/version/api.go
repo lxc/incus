@@ -605,6 +605,7 @@ var APIExtensions = []string{
 	"storage_lvm_snapshot_chunk_size",
 	"nic_bridged_vlan_ingress",
 	"network_dns_domain_none",
+	"events_target",
 }
 
 // APIExtensionsCount returns the number of available API extensions.
