@@ -596,41 +596,14 @@ type fileListEntry struct {
 	Modified time.Time `json:"modified" yaml:"modified"`
 }
 
-// fileListColumn renders one column of a file listing.
-type fileListColumn struct {
-	Name string
-	Data func(entry fileListEntry) string
-}
-
-// fileListParseColumns turns the column shorthands into columns.
-func fileListParseColumns(columns string) ([]fileListColumn, error) {
-	columnsAll := map[rune]fileListColumn{
-		'n': {i18n.G("NAME"), func(entry fileListEntry) string { return entry.Name }},
-		't': {i18n.G("TYPE"), func(entry fileListEntry) string { return entry.Type }},
-		's': {i18n.G("SIZE"), func(entry fileListEntry) string { return units.GetByteSizeStringIEC(entry.Size, 2) }},
-		'm': {i18n.G("MODE"), func(entry fileListEntry) string { return entry.Mode }},
-		'u': {i18n.G("UID"), func(entry fileListEntry) string { return strconv.FormatInt(entry.UID, 10) }},
-		'g': {i18n.G("GID"), func(entry fileListEntry) string { return strconv.FormatInt(entry.GID, 10) }},
-		'M': {i18n.G("MODIFIED"), func(entry fileListEntry) string { return entry.Modified.Local().Format(dateLayout) }},
-	}
-
-	parsed := []fileListColumn{}
-	for _, columnEntry := range strings.Split(columns, ",") {
-		if columnEntry == "" {
-			return nil, fmt.Errorf(i18n.G("Empty column entry (redundant, leading or trailing command) in '%s'"), columns)
-		}
-
-		for _, columnRune := range columnEntry {
-			column, ok := columnsAll[columnRune]
-			if !ok {
-				return nil, fmt.Errorf(i18n.G("Unknown column shorthand char '%c' in '%s'"), columnRune, columnEntry)
-			}
-
-			parsed = append(parsed, column)
-		}
-	}
-
-	return parsed, nil
+var fileListColumns = map[rune]listColumn[fileListEntry]{
+	'n': {i18n.G("NAME"), i18n.G("Name"), func(entry fileListEntry) string { return entry.Name }},
+	't': {i18n.G("TYPE"), i18n.G("Type"), func(entry fileListEntry) string { return entry.Type }},
+	's': {i18n.G("SIZE"), i18n.G("Size"), func(entry fileListEntry) string { return units.GetByteSizeStringIEC(entry.Size, 2) }},
+	'm': {i18n.G("MODE"), i18n.G("Mode"), func(entry fileListEntry) string { return entry.Mode }},
+	'u': {i18n.G("UID"), i18n.G("UID"), func(entry fileListEntry) string { return strconv.FormatInt(entry.UID, 10) }},
+	'g': {i18n.G("GID"), i18n.G("GID"), func(entry fileListEntry) string { return strconv.FormatInt(entry.GID, 10) }},
+	'M': {i18n.G("MODIFIED"), i18n.G("Modification date"), func(entry fileListEntry) string { return entry.Modified.Local().Format(dateLayout) }},
 }
 
 // fileListEntryFromInfo converts the SFTP file info into a listing entry.
@@ -667,56 +640,36 @@ func fileListEntryFromInfo(fInfo os.FileInfo) fileListEntry {
 	return entry
 }
 
-// sftpListFiles renders the listing of a remote path, the content of a directory or the entry itself otherwise.
-func sftpListFiles(sftpConn *sftp.Client, filePath string, format string, columns string) error {
-	parsedColumns, err := fileListParseColumns(columns)
-	if err != nil {
-		return err
-	}
-
+// sftpListFiles lists a remote path, the content of a directory or the entry itself otherwise.
+func sftpListFiles(sftpConn *sftp.Client, filePath string) ([]fileListEntry, error) {
 	normalizedPath, _ := normalizePath(filePath)
 
 	fInfo, err := sftpConn.Stat(normalizedPath)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	var fInfos []os.FileInfo
 	if fInfo.IsDir() {
 		fInfos, err = sftpConn.ReadDir(normalizedPath)
 		if err != nil {
-			return err
+			return nil, err
 		}
 	} else {
 		// Show the symlink itself rather than its target.
 		fInfo, err = sftpConn.Lstat(normalizedPath)
 		if err != nil {
-			return err
+			return nil, err
 		}
 
 		fInfos = []os.FileInfo{fInfo}
 	}
 
 	slices.SortFunc(fInfos, func(a os.FileInfo, b os.FileInfo) int { return strings.Compare(a.Name(), b.Name()) })
-
-	header := make([]string, 0, len(parsedColumns))
-	for _, column := range parsedColumns {
-		header = append(header, column.Name)
+	entries := make([]fileListEntry, len(fInfos))
+	for i, fInfo := range fInfos {
+		entries[i] = fileListEntryFromInfo(fInfo)
 	}
 
-	entries := make([]fileListEntry, 0, len(fInfos))
-	data := make([][]string, 0, len(fInfos))
-	for _, fInfo := range fInfos {
-		entry := fileListEntryFromInfo(fInfo)
-		entries = append(entries, entry)
-
-		row := make([]string, 0, len(parsedColumns))
-		for _, column := range parsedColumns {
-			row = append(row, column.Data(entry))
-		}
-
-		data = append(data, row)
-	}
-
-	return cli.RenderTable(os.Stdout, format, header, data, entries)
+	return entries, nil
 }
