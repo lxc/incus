@@ -110,9 +110,18 @@ func (c *cmdExec) run(cmd *cobra.Command, args []string) error {
 	instanceName := parsed[0].RemoteObject.String
 	command := parsed[2].StringList
 
-	// Aliases use @LOGIN@ for a login shell.
+	// Aliases use @LOGIN@ for a login shell, which depends on the guest OS.
 	if os.Getenv("INCUS_ALIASES") == "1" && slices.Equal(command, []string{"@LOGIN@"}) {
-		command = []string{"su", "-l"}
+		inst, _, err := d.GetInstance(instanceName)
+		if err != nil {
+			return err
+		}
+
+		if strings.EqualFold(inst.ExpandedConfig["image.os"], "windows") {
+			command = []string{"cmd.exe"}
+		} else {
+			command = []string{"su", "-l"}
+		}
 	}
 
 	if c.flagForceInteractive && c.flagForceNonInteractive {
