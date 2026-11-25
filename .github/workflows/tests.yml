@@ -1181,6 +1181,10 @@ jobs:
         run: |
             mkdir bin
 
+      - name: Generate the translation catalogs
+        run: |
+          go run ./cmd/generate-catalogs po po/catalogs
+
       - name: Build static incus (x86_64)
         env:
           CGO_ENABLED: 0
