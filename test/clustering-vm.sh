@@ -29,10 +29,18 @@ member_ip() {
     incus exec "${1}" -- sh -c "ip -4 -o addr show scope global | awk '{print \$4}' | cut -d/ -f1 | head -n1"
 }
 
+# Wait for the given disks to show up in the guest, dumping the guest's view on timeout.
+wait_disks() {
+    vm="${1}"
+    shift
+    # shellcheck disable=SC2016
+    incus exec "${vm}" -- sh -c 'for _ in $(seq 120); do missing=0; for disk in "$@"; do [ -e "/dev/disk/by-id/${disk}" ] || missing=1; done; [ "${missing}" = 0 ] && exit 0; sleep 1; done; echo "Timed out waiting for $*"; ls -l /dev/disk/by-id/; lsblk; dmesg | tail -n 20; exit 1' sh "$@"
+}
+
 dump_logs() {
     for i in $(seq "${MEMBERS}"); do
         echo "==> Logs for $(member "${i}")"
-        incus exec "$(member "${i}")" -- sh -c "journalctl -u incus -u sanlock -u lvmlockd --no-pager -n 100; tail -n 200 /var/log/incus/incusd.log; dmesg | tail -n 30; sanlock client status; lvmlockctl -i" || true
+        incus exec "$(member "${i}")" -- sh -c "journalctl -u incus -u sanlock -u lvmlockd --no-pager -n 100; tail -n 200 /var/log/incus/incusd.log; dmesg | tail -n 30; df -h /; sanlock client status; lvmlockctl -i" || true
     done
 }
 
@@ -80,12 +88,17 @@ incus storage volume create "${POOL}" "${PREFIX}-shared" --type=block size=40GiB
 log "Launch ${MEMBERS} virtual machines"
 for i in $(seq "${MEMBERS}"); do
     incus init "${IMAGE}" "$(member "${i}")" --vm -c security.nesting=true -c limits.cpu=2 -c limits.memory=4GiB -d root,size=30GiB
-    incus config device add "$(member "${i}")" shared disk pool="${POOL}" source="${PREFIX}-shared"
     incus start "$(member "${i}")"
 done
 
 for i in $(seq "${MEMBERS}"); do
     incus wait "$(member "${i}")" agent --timeout=300 --interval=2
+done
+
+# The image grows its root partition assuming the root disk is the first one, so attach the shared disk only once booted.
+for i in $(seq "${MEMBERS}"); do
+    incus config device add "$(member "${i}")" shared disk pool="${POOL}" source="${PREFIX}-shared"
+    wait_disks "$(member "${i}")" scsi-0QEMU_QEMU_HARDDISK_incus_shared
 done
 
 # Member setup script, run inside each virtual machine.
@@ -230,12 +243,10 @@ incus wait "${REMOTE}:v1" agent --timeout=600 --interval=2
 incus wait "${REMOTE}:v2" agent --timeout=600 --interval=2
 
 # The by-id links are created asynchronously at boot.
-# shellcheck disable=SC2016
-incus exec "${REMOTE}:v2" -- sh -c 'for _ in $(seq 60); do [ -e /dev/disk/by-id/scsi-0QEMU_QEMU_HARDDISK_incus_vol1 ] && [ -e /dev/disk/by-id/scsi-0QEMU_QEMU_CD-ROM_incus_vol2 ] && exit 0; sleep 1; done; ls -l /dev/disk/by-id/; exit 1'
+wait_disks "${REMOTE}:v2" scsi-0QEMU_QEMU_HARDDISK_incus_vol1 scsi-0QEMU_QEMU_CD-ROM_incus_vol2
 incus exec "${REMOTE}:v2" -- sh -c "mkfs.ext4 -q /dev/disk/by-id/scsi-0QEMU_QEMU_HARDDISK_incus_vol1 && mount /dev/disk/by-id/scsi-0QEMU_QEMU_HARDDISK_incus_vol1 /mnt && echo data > /mnt/marker && umount /mnt"
 
-# shellcheck disable=SC2016
-incus exec "${REMOTE}:v1" -- sh -c 'for _ in $(seq 60); do [ -e /dev/disk/by-id/scsi-0QEMU_QEMU_HARDDISK_incus_vol3 ] && exit 0; sleep 1; done; ls -l /dev/disk/by-id/; exit 1'
+wait_disks "${REMOTE}:v1" scsi-0QEMU_QEMU_HARDDISK_incus_vol3
 incus exec "${REMOTE}:v1" -- sh -c "mkfs.ext4 -q /dev/disk/by-id/scsi-0QEMU_QEMU_HARDDISK_incus_vol3 && mount /dev/disk/by-id/scsi-0QEMU_QEMU_HARDDISK_incus_vol3 /mnt && echo data > /mnt/marker && umount /mnt"
 
 # check_vm checks that a VM runs on the given member and kept its memory state.
@@ -616,8 +627,7 @@ incus snapshot restore "${REMOTE}:v3" snap7
 check_marker v3 snap7
 incus delete -f "${REMOTE}:v3"
 incus storage volume attach "${REMOTE}:shared" vol1 v2
-# shellcheck disable=SC2016
-incus exec "${REMOTE}:v2" -- sh -c 'for _ in $(seq 60); do [ -e /dev/disk/by-id/scsi-0QEMU_QEMU_HARDDISK_incus_vol1 ] && exit 0; sleep 1; done; exit 1'
+wait_disks "${REMOTE}:v2" scsi-0QEMU_QEMU_HARDDISK_incus_vol1
 check_vm v2 "$(member 1)"
 check_volumes
 

@@ -972,14 +972,6 @@ func (d *zfs) CreateVolumeFromCopy(vol Volume, srcVol Volume, copySnapshots bool
 				return err
 			}
 		}
-
-		// Mount the volume and ensure the permissions are set correctly inside the mounted volume.
-		err := vol.MountTask(func(_ string, _ *operations.Operation) error {
-			return vol.EnsureMountPath(false)
-		}, op)
-		if err != nil {
-			return err
-		}
 	}
 
 	// Pass allowUnsafeResize as true when resizing block backed filesystem volumes because we want to allow
@@ -993,9 +985,21 @@ func (d *zfs) CreateVolumeFromCopy(vol Volume, srcVol Volume, copySnapshots bool
 
 	// Resize volume to the size specified. Only uses volume "size" property and does not use pool/defaults
 	// to give the caller more control over the size being used.
+	// This happens before the first mount so the zvol isn't hidden and re-exposed right before its volsize
+	// changes, that sequence races the asynchronous minor removal in ZFS 2.4 and crashes the kernel.
 	err = d.SetVolumeQuota(vol, vol.config["size"], allowUnsafeResize, op)
 	if err != nil {
 		return err
+	}
+
+	if vol.contentType == ContentTypeFS {
+		// Mount the volume and ensure the permissions are set correctly inside the mounted volume.
+		err := vol.MountTask(func(_ string, _ *operations.Operation) error {
+			return vol.EnsureMountPath(false)
+		}, op)
+		if err != nil {
+			return err
+		}
 	}
 
 	// All done.
