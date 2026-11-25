@@ -10972,14 +10972,7 @@ func (b *backend) createDependentVolumesFromMigration(inst instance.Instance, co
 
 	createdVolumes := []localMigration.DependentVolumeArgs{}
 	cleanup := func() {
-		for _, vol := range createdVolumes {
-			diskPool, err := LoadByName(b.state, vol.Pool)
-			if err != nil {
-				continue
-			}
-
-			_ = diskPool.DeleteCustomVolume(storageProjectName, vol.Name, nil)
-		}
+		DeleteDependentVolumes(b.state, storageProjectName, createdVolumes)
 	}
 
 	reverter.Add(func() { cleanup() })
