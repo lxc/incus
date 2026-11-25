@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -108,6 +109,20 @@ func (c *cmdExec) run(cmd *cobra.Command, args []string) error {
 	d := parsed[0].RemoteServer
 	instanceName := parsed[0].RemoteObject.String
 	command := parsed[2].StringList
+
+	// Aliases use @LOGIN@ for a login shell, which depends on the guest OS.
+	if os.Getenv("INCUS_ALIASES") == "1" && slices.Equal(command, []string{"@LOGIN@"}) {
+		inst, _, err := d.GetInstance(instanceName)
+		if err != nil {
+			return err
+		}
+
+		if strings.EqualFold(inst.ExpandedConfig["image.os"], "windows") {
+			command = []string{"cmd.exe"}
+		} else {
+			command = []string{"su", "-l"}
+		}
+	}
 
 	if c.flagForceInteractive && c.flagForceNonInteractive {
 		return errors.New(i18n.G("You can't pass -t and -T at the same time"))
