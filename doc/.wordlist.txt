@@ -356,6 +356,7 @@ UFW
 UI
 UID
 UIDs
+UKI
 uncomment
 unconfigured
 unevictable
