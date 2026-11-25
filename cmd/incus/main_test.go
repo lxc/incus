@@ -76,6 +76,10 @@ func TestExpandAliases(t *testing.T) {
 			expected: []string{"incus", "exec", "c1", "--", "echo", "buzz"},
 		},
 		{
+			input:    []string{"incus", "shell", "c1"},
+			expected: []string{"incus", "exec", "c1", "--", "@LOGIN@"},
+		},
+		{
 			input:     []string{"incus", "fizz", "c1"},
 			expectErr: true,
 		},
