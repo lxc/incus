@@ -7386,6 +7386,16 @@ func (d *lxc) MigrateReceive(args instance.MigrateReceiveArgs) error {
 			})
 		}
 
+		// Delete the dependent volumes created above on error, a refresh reuses existing ones.
+		if !volTargetArgs.Refresh && len(dependentVolumes) > 0 {
+			storageProjectName, err := project.StorageVolumeProject(d.state.DB.Cluster, d.project.Name, db.StoragePoolVolumeTypeCustom)
+			if err != nil {
+				return err
+			}
+
+			reverter.Add(func() { storagePools.DeleteDependentVolumes(d.state, storageProjectName, dependentVolumes) })
+		}
+
 		// For containers, the fs map of the source is sent as part of the migration
 		// stream, then at the end we need to record that map as last_state so that
 		// shifting can happen on startup if needed.
