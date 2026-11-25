@@ -2824,7 +2824,7 @@ func storagePoolVolumeDelete(d *Daemon, r *http.Request) response.Response {
 	return response.EmptySyncResponse
 }
 
-func createStoragePoolVolumeFromISO(s *state.State, r *http.Request, requestProjectName string, projectName string, data io.Reader, pool string, volName string) response.Response {
+func createStoragePoolVolumeFromISO(s *state.State, r *http.Request, requestProjectName string, projectName string, data io.Reader, poolName string, volName string) response.Response {
 	reverter := revert.New()
 	defer reverter.Fail()
 
@@ -2836,6 +2836,11 @@ func createStoragePoolVolumeFromISO(s *state.State, r *http.Request, requestProj
 	err := validate.IsAPIName(volName, false)
 	if err != nil {
 		return response.BadRequest(fmt.Errorf("Invalid volume name: %w", err))
+	}
+
+	pool, err := storagePools.LoadByName(s, poolName)
+	if err != nil {
+		return response.SmartError(err)
 	}
 
 	// Create isos directory if needed.
@@ -2883,11 +2888,6 @@ func createStoragePoolVolumeFromISO(s *state.State, r *http.Request, requestProj
 		defer logger.WarnOnError(isoFile.Close, "Failed to close ISO file")
 		defer runReverter.Fail()
 
-		pool, err := storagePools.LoadByName(s, pool)
-		if err != nil {
-			return err
-		}
-
 		// Dump ISO to storage.
 		err = pool.CreateCustomVolumeFromISO(projectName, volName, isoFile, size, op)
 		if err != nil {
@@ -2899,7 +2899,7 @@ func createStoragePoolVolumeFromISO(s *state.State, r *http.Request, requestProj
 	}
 
 	resources := map[string][]api.URL{}
-	resources["storage_volumes"] = []api.URL{*api.NewURL().Path(version.APIVersion, "storage-pools", pool, "volumes", "custom", volName)}
+	resources["storage_volumes"] = []api.URL{*api.NewURL().Path(version.APIVersion, "storage-pools", poolName, "volumes", "custom", volName)}
 
 	op, err := operations.OperationCreate(s, requestProjectName, operations.OperationClassTask, operationtype.VolumeCreate, resources, nil, run, nil, nil, r)
 	if err != nil {
