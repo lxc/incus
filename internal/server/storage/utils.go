@@ -1679,6 +1679,18 @@ func ShouldMigrateDependentVolume(s *state.State, poolName string, volumeName st
 	return true, nil
 }
 
+// DeleteDependentVolumes deletes the dependent volumes created by a migration, ignoring errors.
+func DeleteDependentVolumes(s *state.State, projectName string, volumes []localMigration.DependentVolumeArgs) {
+	for _, vol := range volumes {
+		diskPool, err := LoadByName(s, vol.Pool)
+		if err != nil {
+			continue
+		}
+
+		_ = diskPool.DeleteCustomVolume(projectName, vol.Name, nil)
+	}
+}
+
 // InstanceByVolumeName returns the instance associated with the given volume name.
 func InstanceByVolumeName(s *state.State, poolName string, projectName string, volumeName string, volumeDBType int) (instance.Instance, string, error) {
 	if volumeDBType == db.StoragePoolVolumeTypeVM {

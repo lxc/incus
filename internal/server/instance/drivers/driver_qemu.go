@@ -11586,6 +11586,11 @@ func (d *qemu) MigrateReceive(args instance.MigrateReceiveArgs) error {
 			return err
 		}
 
+		// Delete the dependent volumes created above on error, a refresh reuses existing ones.
+		if !volTargetArgs.Refresh && len(dependentVolumes) > 0 {
+			reverter.Add(func() { storagePools.DeleteDependentVolumes(d.state, storageProjectName, dependentVolumes) })
+		}
+
 		// Notify the dependent block disks that they're going to be accessed from another system.
 		if args.ClusterMoveSourceName != "" {
 			for _, dev := range d.expandedDevices.Sorted() {
