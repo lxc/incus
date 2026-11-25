@@ -2510,11 +2510,24 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) (err er
 
 	seCtx := d.localConfig["volatile.selinux.context"]
 
-	var biosSet, kernelSet bool
+	var biosSet, kernelSet, isUKI bool
 	var kernelPath, initrdPath string
 	var kernel, initrd *os.File
+	// First, look for a kernel.img file.
 	kernel, err = os.Open(filepath.Join(d.Path(), "kernel.img"))
 	if err == nil {
+		// Make sure no kernel.uki file is there.
+		_, err = os.Stat(filepath.Join(d.Path(), "kernel.uki"))
+		if !errors.Is(err, fs.ErrNotExist) {
+			if err == nil {
+				err = errors.New("kernel.img and kernel.uki must not be present at the same time")
+			} else {
+				err = fmt.Errorf("Could not check for kernel UKI: %w", err)
+			}
+
+			return err
+		}
+
 		kernelSet = true
 		kernelPath = fmt.Sprintf("/proc/self/fd/%d", d.addFileDescriptor(&fdFiles, kernel))
 		initrd, err = os.Open(filepath.Join(d.Path(), "initrd.img"))
@@ -2524,7 +2537,30 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) (err er
 			err = fmt.Errorf("Failed to open initrd image: %w", err)
 			return err
 		}
-	} else if !errors.Is(err, fs.ErrNotExist) {
+	} else if errors.Is(err, fs.ErrNotExist) {
+		// Else fallback to kernel.uki.
+		kernel, err = os.Open(filepath.Join(d.Path(), "kernel.uki"))
+		if err == nil {
+			// Make sure no initrd.img is there.
+			_, err = os.Stat(filepath.Join(d.Path(), "initrd.img"))
+			if !errors.Is(err, fs.ErrNotExist) {
+				if err == nil {
+					err = errors.New("initrd.img and kernel.uki must not be present at the same time")
+				} else {
+					err = fmt.Errorf("Could not check for initrd image: %w", err)
+				}
+
+				return err
+			}
+
+			kernelSet = true
+			kernelPath = fmt.Sprintf("/proc/self/fd/%d", d.addFileDescriptor(&fdFiles, kernel))
+			isUKI = true
+		} else if !errors.Is(err, fs.ErrNotExist) {
+			err = fmt.Errorf("Failed to open kernel UKI: %w", err)
+			return err
+		}
+	} else {
 		err = fmt.Errorf("Failed to open kernel image: %w", err)
 		return err
 	}
@@ -2542,7 +2578,7 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) (err er
 
 	// Generate the QEMU configuration.
 	var monHooks []monitorHook
-	monHooks, err = d.generateQemuConfig(bs, mountInfo, qemuBus, vsockFD, devConfs, &fdFiles, biosSet, kernelSet)
+	monHooks, err = d.generateQemuConfig(bs, mountInfo, qemuBus, vsockFD, devConfs, &fdFiles, biosSet, kernelSet, isUKI)
 	if err != nil {
 		return err
 	}
@@ -2571,31 +2607,37 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) (err er
 			qemuArgs = append(qemuArgs, "-initrd", initrdPath)
 		}
 
-		if d.expandedConfig["boot.kernel.cmdline"] != "" {
-			qemuArgs = append(qemuArgs, "-append", d.expandedConfig["boot.kernel.cmdline"])
-		} else {
-			var cmdline []byte
-			var cmdlineF *os.File
-			cmdlineF, err = os.Open(filepath.Join(d.Path(), "kernel.cmdline"))
-			if err == nil {
-				defer logger.WarnOnError(cmdlineF.Close, "Failed to close kernel command-line arguments file")
-				// Accept up to 4096 characters, fail if the file is bigger.
-				cmdline, err = io.ReadAll(io.LimitReader(cmdlineF, 4097))
-				if err != nil {
-					err = fmt.Errorf("Could not read kernel command-line arguments file: %w", err)
-					return err
-				}
+		var cmdline []byte
+		var cmdlineF *os.File
+		cmdlineF, err = os.Open(filepath.Join(d.Path(), "kernel.cmdline"))
+		if err == nil {
+			if isUKI {
+				_ = cmdlineF.Close()
+				err = errors.New("kernel.cmdline and kernel.uki must not be present at the same time")
+				return err
+			}
 
-				if len(cmdline) > 4096 {
-					err = fmt.Errorf("kernel.cmdline exceeds 4096 bytes")
-					return err
-				}
-
-				qemuArgs = append(qemuArgs, "-append", string(cmdline))
-			} else if !errors.Is(err, fs.ErrNotExist) {
+			// Accept up to 4096 characters, fail if the file is bigger.
+			cmdline, err = io.ReadAll(io.LimitReader(cmdlineF, 4097))
+			_ = cmdlineF.Close()
+			if err != nil {
 				err = fmt.Errorf("Could not read kernel command-line arguments file: %w", err)
 				return err
 			}
+
+			if len(cmdline) > 4096 {
+				err = errors.New("kernel.cmdline exceeds 4096 bytes")
+				return err
+			}
+		} else if !errors.Is(err, fs.ErrNotExist) {
+			err = fmt.Errorf("Could not open kernel command-line arguments file: %w", err)
+			return err
+		}
+
+		if d.expandedConfig["boot.kernel.cmdline"] != "" {
+			qemuArgs = append(qemuArgs, "-append", d.expandedConfig["boot.kernel.cmdline"])
+		} else if cmdline != nil {
+			qemuArgs = append(qemuArgs, "-append", strings.TrimSpace(string(cmdline)))
 		}
 	}
 
@@ -5167,7 +5209,7 @@ func (d *qemu) gpuNativeContextConfig(devConfs []*deviceConfig.RunConfig) (bool,
 }
 
 // generateQemuConfig generates the QEMU configuration.
-func (d *qemu) generateQemuConfig(bs *qemuBootState, mountInfo *storagePools.MountInfo, busName string, vsockFD int, devConfs []*deviceConfig.RunConfig, fdFiles *[]*os.File, biosSet bool, kernelSet bool) ([]monitorHook, error) {
+func (d *qemu) generateQemuConfig(bs *qemuBootState, mountInfo *storagePools.MountInfo, busName string, vsockFD int, devConfs []*deviceConfig.RunConfig, fdFiles *[]*os.File, biosSet bool, kernelSet bool, isUKI bool) ([]monitorHook, error) {
 	var monHooks []monitorHook
 
 	guestOS := d.GuestOS()
@@ -5189,8 +5231,8 @@ func (d *qemu) generateQemuConfig(bs *qemuBootState, mountInfo *storagePools.Mou
 	// Allow disabling the UEFI firmware.
 	if biosSet {
 		d.logger.Warn("Starting VM without default firmware (BIOS overridden)")
-	} else if kernelSet {
-		d.logger.Info("Starting VM without default firmware (booting a kernel)")
+	} else if kernelSet && !isUKI {
+		d.logger.Info("Starting VM without default firmware (booting a non-UEFI kernel)")
 	} else if d.architectureSupportsUEFI(d.architecture) {
 		// Determine expected firmware.
 		firmware, err := d.selectedFirmware()
