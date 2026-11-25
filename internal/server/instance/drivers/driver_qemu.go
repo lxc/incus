@@ -10690,6 +10690,48 @@ func (d *qemu) cancelMigrationSnapshot(monitor *qmp.Monitor, diskName string) {
 	}
 }
 
+// migrationHandOverDevices lets the devices release host resources that attract the instance's
+// traffic once a live migration has handed the instance over to its target.
+func (d *qemu) migrationHandOverDevices() {
+	for _, entry := range d.expandedDevices.Sorted() {
+		dev, err := d.deviceLoad(d, entry.Name, entry.Config, false)
+		if err != nil {
+			continue
+		}
+
+		handOver, ok := dev.(device.MigrationHandOver)
+		if !ok {
+			continue
+		}
+
+		err = handOver.MigrationHandedOver()
+		if err != nil {
+			d.logger.Warn("Failed releasing device after migration hand-over", logger.Ctx{"device": entry.Name, "err": err})
+		}
+	}
+}
+
+// migrationHandOverRevertDevices lets the devices restore the host resources released by
+// migrationHandOverDevices when the instance resumes here after all.
+func (d *qemu) migrationHandOverRevertDevices() {
+	for _, entry := range d.expandedDevices.Sorted() {
+		dev, err := d.deviceLoad(d, entry.Name, entry.Config, false)
+		if err != nil {
+			continue
+		}
+
+		handOver, ok := dev.(device.MigrationHandOver)
+		if !ok {
+			continue
+		}
+
+		err = handOver.MigrationHandOverReverted()
+		if err != nil {
+			d.logger.Warn("Failed restoring device after failed migration hand-over", logger.Ctx{"device": entry.Name, "err": err})
+		}
+	}
+}
+
 // migrateSendLive performs live migration send process.
 // When targetResult is set, the guest is left paused once the target reports success rather than resumed.
 func (d *qemu) migrateSendLive(ctx context.Context, pool storagePools.Pool, clusterMoveSourceName string, storagePool string, rootDiskSize int64, filesystemConn io.ReadWriteCloser, stateConn io.ReadWriteCloser, stateConnExtra []io.ReadWriteCloser, volSourceArgs *localMigration.VolumeSourceArgs, dirtyBitmaps bool, committed *bool, targetResult <-chan error) error {
@@ -11113,6 +11155,14 @@ func (d *qemu) migrateSendLive(ctx context.Context, pool storagePools.Pool, clus
 		// The target owns the instance state now, none of the local copies may be written back.
 		mirror.Discard(d.RunPath())
 		_ = os.RemoveAll(d.localImageMetadataDir())
+	}
+
+	// When the guest won't resume here, it runs from the target from now on, so stop attracting its
+	// traffic here right away rather than once the target confirms or the source stops. Should the
+	// target fail to take it over, the reverter restores that before resuming the guest here.
+	if clusterMoveSourceName != "" || targetResult != nil {
+		d.migrationHandOverDevices()
+		reverter.Add(d.migrationHandOverRevertDevices)
 	}
 
 	// Hold the guest paused until the target has it running so it never runs on both servers.
