@@ -21,7 +21,7 @@ var numberedArgRegex = regexp.MustCompile(`@ARG(\d+)@`)
 // defaultAliases contains LXC's built-in command line aliases.  The built-in
 // aliases are checked only if no user-defined alias was found.
 var defaultAliases = map[string]string{
-	"shell": "exec @ARGS@ -- su -l",
+	"shell": "exec @ARGS@ -- @LOGIN@",
 }
 
 func findAlias(aliases map[string]string, origArgs []string) ([]string, []string, bool) {
