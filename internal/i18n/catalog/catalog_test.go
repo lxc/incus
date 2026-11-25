@@ -1,6 +1,8 @@
 package catalog
 
 import (
+	"maps"
+	"strings"
 	"testing"
 )
 
@@ -47,5 +49,26 @@ msgstr "dire \"salut\" a\\b"
 		if translations[msgid] != msgstr {
 			t.Errorf("%q: got %q, want %q", msgid, translations[msgid], msgstr)
 		}
+	}
+}
+
+func TestWriteRoundTrip(t *testing.T) {
+	translations := map[string]string{
+		"single":        "un",
+		"line1\nline2":  "ligne1\nligne2",
+		`say "hi" a\b`:  `dire "salut" a\b`,
+		"tab\tand\\n":   "tabulation\tet\\n",
+		"percent %s %d": "pourcentage %s %d",
+	}
+
+	b := &strings.Builder{}
+	err := Write(b, translations)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	parsed := Parse(b.String())
+	if !maps.Equal(parsed, translations) {
+		t.Fatalf("Round trip mismatch: got %v, want %v", parsed, translations)
 	}
 }

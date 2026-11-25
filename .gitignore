@@ -1,5 +1,6 @@
 *.swp
 po/*.mo
+po/catalogs/*.po.gz
 po/*.po~
 incus-*.tar.xz
 installers
