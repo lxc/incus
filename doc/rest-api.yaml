@@ -2414,6 +2414,14 @@ definitions:
                 example: false
                 type: boolean
                 x-go-name: InstanceOnly
+            keep_paused:
+                description: |-
+                    Whether to leave the instance paused on the source once a live migration completes (migration only)
+
+                    API extension: instance_migration_keep_paused
+                example: false
+                type: boolean
+                x-go-name: KeepPaused
             live:
                 description: Whether to perform a live migration (migration only)
                 example: false

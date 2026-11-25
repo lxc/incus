@@ -286,6 +286,7 @@ type MigrateSendArgs struct {
 	AllowInconsistent    bool
 	Devices              api.DevicesMap
 	SkipDependentVolumes []string
+	KeepPaused           bool // Leave the instance paused once the live migration completes.
 }
 
 // MigrateReceiveArgs represent arguments for instance migration receive.

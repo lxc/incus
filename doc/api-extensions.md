@@ -3647,3 +3647,8 @@ Adds the `target` query parameter to `GET /1.0/events` to get the event stream o
 ## `network_ovn_parent_shared`
 
 The `parent` of an OVN network can now be a network of the default project shared into the network's project through `restricted.networks.access`.
+## `instance_migration_keep_paused`
+
+Adds a `keep_paused` field to `POST /1.0/instances/{name}` for live migrations to another server.
+When set, the instance is left paused on the source once the target runs it, rather than resumed.
+It can then be deleted, as `incus move` does, or resumed like any paused instance.

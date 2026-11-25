@@ -564,6 +564,8 @@ func instancePost(d *Daemon, r *http.Request) response.Response {
 		return response.InternalError(err)
 	}
 
+	ws.keepPaused = req.KeepPaused
+
 	resources := map[string][]api.URL{}
 	resources["instances"] = []api.URL{*api.NewURL().Path(version.APIVersion, "instances", name)}
 	run := func(op *operations.Operation) error {

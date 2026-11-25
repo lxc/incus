@@ -10060,6 +10060,9 @@ func (d *qemu) MigrateSend(args instance.MigrateSendArgs) error {
 	// Tracks whether a live cluster move completed the state hand-over to the target.
 	committed := false
 
+	// Receives what the target made of the migration.
+	chTarget := make(chan error, 1)
+
 	// Start control connection monitor.
 	g.Go(func() error {
 		d.logger.Debug("Migrate send control monitor started")
@@ -10086,6 +10089,8 @@ func (d *qemu) MigrateSend(args instance.MigrateSendArgs) error {
 			err = ctx.Err()
 		case err = <-controlResult:
 		}
+
+		chTarget <- err
 
 		return err
 	})
@@ -10122,7 +10127,12 @@ func (d *qemu) MigrateSend(args instance.MigrateSendArgs) error {
 				defer instanceRefClear(d)
 			}
 
-			err = d.migrateSendLive(ctx, pool, args.ClusterMoveSourceName, args.StoragePool, blockSize, filesystemConn, stateConn, stateConnExtra, volSourceArgs, respHeader.GetDirtyBitmaps(), &committed)
+			var targetResult <-chan error
+			if args.KeepPaused {
+				targetResult = chTarget
+			}
+
+			err = d.migrateSendLive(ctx, pool, args.ClusterMoveSourceName, args.StoragePool, blockSize, filesystemConn, stateConn, stateConnExtra, volSourceArgs, respHeader.GetDirtyBitmaps(), &committed, targetResult)
 			if err != nil {
 				return err
 			}
@@ -10310,13 +10320,14 @@ func (d *qemu) prepareEphemeralSnapshot(monitor *qmp.Monitor, diskName string, d
 }
 
 // resumeGuest resumes a paused guest, leaving a guest that shut down to its stop hook.
+// A guest finishing a migration is left alone too as QEMU refuses to resume it.
 func (d *qemu) resumeGuest(monitor *qmp.Monitor) error {
 	status, err := monitor.Status()
 	if err != nil {
 		return err
 	}
 
-	if status == "shutdown" {
+	if status == "shutdown" || status == "finish-migrate" {
 		return nil
 	}
 
@@ -10665,7 +10676,8 @@ func (d *qemu) cancelMigrationSnapshot(monitor *qmp.Monitor, diskName string) {
 }
 
 // migrateSendLive performs live migration send process.
-func (d *qemu) migrateSendLive(ctx context.Context, pool storagePools.Pool, clusterMoveSourceName string, storagePool string, rootDiskSize int64, filesystemConn io.ReadWriteCloser, stateConn io.ReadWriteCloser, stateConnExtra []io.ReadWriteCloser, volSourceArgs *localMigration.VolumeSourceArgs, dirtyBitmaps bool, committed *bool) error {
+// When targetResult is set, the guest is left paused once the target reports success rather than resumed.
+func (d *qemu) migrateSendLive(ctx context.Context, pool storagePools.Pool, clusterMoveSourceName string, storagePool string, rootDiskSize int64, filesystemConn io.ReadWriteCloser, stateConn io.ReadWriteCloser, stateConnExtra []io.ReadWriteCloser, volSourceArgs *localMigration.VolumeSourceArgs, dirtyBitmaps bool, committed *bool, targetResult <-chan error) error {
 	monitor, err := d.qmpConnect()
 	if err != nil {
 		return err
@@ -11032,8 +11044,8 @@ func (d *qemu) migrateSendLive(ctx context.Context, pool storagePools.Pool, clus
 			}
 		}
 
-		// A cluster move stops the source at the hand-over, so merge the snapshots back now to keep its disk whole.
-		if clusterMoveSourceName != "" {
+		// The source stops or stays paused at the hand-over, so merge the snapshots back now to keep its disk whole.
+		if clusterMoveSourceName != "" || targetResult != nil {
 			for _, overlay := range snapshotOverlays {
 				err = d.mergeEphemeralSnapshot(monitor, overlay)
 				if err != nil {
@@ -11088,6 +11100,17 @@ func (d *qemu) migrateSendLive(ctx context.Context, pool storagePools.Pool, clus
 		_ = os.RemoveAll(d.localImageMetadataDir())
 	}
 
+	// Hold the guest paused until the target has it running so it never runs on both servers.
+	// Should the target fail, the reverter resumes the guest here.
+	if targetResult != nil {
+		d.logger.Debug("Waiting for the target to run the instance")
+
+		err = <-targetResult
+		if err != nil {
+			return fmt.Errorf("Failed starting instance on target: %w", err)
+		}
+	}
+
 	reverter.Success()
 
 	if clusterMoveSourceName != "" {
@@ -11102,6 +11125,13 @@ func (d *qemu) migrateSendLive(ctx context.Context, pool storagePools.Pool, clus
 				return fmt.Errorf("Failed stopping instance: %w", err)
 			}
 		}
+
+		return nil
+	}
+
+	if targetResult != nil {
+		// Leave the guest paused as requested, a start request resumes it and a delete stops it.
+		d.logger.Debug("Left instance paused after hand-over")
 	} else {
 		// Resume guest.
 		err = monitor.Start()
@@ -11119,11 +11149,11 @@ func (d *qemu) migrateSendLive(ctx context.Context, pool storagePools.Pool, clus
 				d.logger.Warn("Failed merging migration snapshot after hand-over", logger.Ctx{"overlay": overlay, "err": err})
 			}
 		}
+	}
 
-		err = monitor.SetAction(map[string]string{"shutdown": "poweroff"})
-		if err != nil {
-			return err
-		}
+	err = monitor.SetAction(map[string]string{"shutdown": "poweroff"})
+	if err != nil {
+		return err
 	}
 
 	return nil

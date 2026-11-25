@@ -891,6 +891,11 @@ func (r *ProtocolIncus) CopyInstance(source InstanceServer, instance api.Instanc
 		sourceReq.Devices = req.Devices
 	}
 
+	// Leave the source paused once the live migration completes.
+	if args != nil && args.KeepPaused && source.HasExtension("instance_migration_keep_paused") {
+		sourceReq.KeepPaused = true
+	}
+
 	// Push mode migration
 	if args != nil && args.Mode == "push" {
 		// Get target server connection information
