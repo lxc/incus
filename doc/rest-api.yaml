@@ -3263,6 +3263,23 @@ definitions:
         title: InstancesPut represents the fields available for a mass update.
         type: object
         x-go-package: github.com/lxc/incus/v7/shared/api
+    License:
+        properties:
+            content:
+                type: string
+                x-go-name: Content
+            name:
+                type: string
+                x-go-name: Name
+            type:
+                $ref: '#/definitions/LicenseType'
+        title: License holds the license information for a single component of the system.
+        type: object
+        x-go-package: github.com/lxc/incus-os/incus-osd/api
+    LicenseType:
+        title: LicenseType defines a custom type for the kind of license entry.
+        type: string
+        x-go-package: github.com/lxc/incus-os/incus-osd/api
     MetadataConfig:
         additionalProperties:
             additionalProperties:
@@ -7897,9 +7914,6 @@ definitions:
             disable_thermal_protection:
                 type: boolean
                 x-go-name: DisableThermalProtection
-            scaling_governor:
-                type: string
-                x-go-name: ScalingGovernor
         title: SystemKernelConfigCPU holds CPU-specific kernel configuration.
         type: object
         x-go-package: github.com/lxc/incus-os/incus-osd/api
@@ -7983,6 +7997,9 @@ definitions:
             pci_address:
                 type: string
                 x-go-name: PCIAddress
+            switchdev:
+                type: boolean
+                x-go-name: Switchdev
             vf_count:
                 format: int64
                 type: integer
@@ -8042,14 +8059,14 @@ definitions:
                 format: int64
                 type: integer
                 x-go-name: Disksize
-            incompressed_size:
-                format: int64
-                type: integer
-                x-go-name: UncompressedSize
             total_memory_use:
                 format: int64
                 type: integer
                 x-go-name: TotalMemoryUse
+            uncompressed_size:
+                format: int64
+                type: integer
+                x-go-name: UncompressedSize
         title: SystemKernelStateMemoryZramSwap reports statistics about the configured zram-backed swap device, if present.
         type: object
         x-go-package: github.com/lxc/incus-os/incus-osd/api
@@ -8137,6 +8154,9 @@ definitions:
             lldp:
                 type: boolean
                 x-go-name: LLDP
+            lldp_receive_only:
+                type: boolean
+                x-go-name: LLDPReceiveOnly
             members:
                 items:
                     type: string
@@ -8296,6 +8316,11 @@ definitions:
         x-go-package: github.com/lxc/incus-os/incus-osd/api
     SystemNetworkEthernet:
         properties:
+            advertise:
+                items:
+                    type: string
+                type: array
+                x-go-name: Advertise
             disable_energy_efficient:
                 type: boolean
                 x-go-name: DisableEnergyEfficient
@@ -8311,6 +8336,9 @@ definitions:
             disable_ipv6_tso:
                 type: boolean
                 x-go-name: DisableIPv6TSO
+            half_duplex:
+                type: boolean
+                x-go-name: HalfDuplex
             rx_buffer_size:
                 type: string
                 x-go-name: RxBufferSize
@@ -8320,6 +8348,10 @@ definitions:
             rx_mini_buffer_size:
                 type: string
                 x-go-name: RxMiniBufferSize
+            speed:
+                format: int64
+                type: integer
+                x-go-name: Speed
             tx_buffer_size:
                 type: string
                 x-go-name: TxBufferSize
@@ -8377,6 +8409,9 @@ definitions:
             lldp:
                 type: boolean
                 x-go-name: LLDP
+            lldp_receive_only:
+                type: boolean
+                x-go-name: LLDPReceiveOnly
             mtu:
                 format: int64
                 type: integer
@@ -8495,9 +8530,17 @@ definitions:
         x-go-package: github.com/lxc/incus-os/incus-osd/api
     SystemNetworkLLDPState:
         properties:
+            capabilities:
+                items:
+                    type: string
+                type: array
+                x-go-name: Capabilities
             chassis_id:
                 type: string
                 x-go-name: ChassisID
+            description:
+                type: string
+                x-go-name: Description
             name:
                 type: string
                 x-go-name: Name
@@ -8507,7 +8550,24 @@ definitions:
             port_id:
                 type: string
                 x-go-name: PortID
+            vlan:
+                format: int64
+                type: integer
+                x-go-name: VLAN
         title: SystemNetworkLLDPState holds information about the LLDP state.
+        type: object
+        x-go-package: github.com/lxc/incus-os/incus-osd/api
+    SystemNetworkLink:
+        properties:
+            name:
+                description: Interface name, or MAC address or device name of an interface or bond member
+                type: string
+                x-go-name: Name
+            state:
+                description: Either "up" or "down"
+                type: string
+                x-go-name: State
+        title: SystemNetworkLink defines a struct with information on which link to set up or down.
         type: object
         x-go-package: github.com/lxc/incus-os/incus-osd/api
     SystemNetworkProxy:
@@ -8762,6 +8822,86 @@ definitions:
                 type: string
                 x-go-name: NextBootVersion
         title: SystemNextBootVersion defines a struct that is used to specify what version of IncusOS to boot the next time the system starts.
+        type: object
+        x-go-package: github.com/lxc/incus-os/incus-osd/api
+    SystemPower:
+        properties:
+            config:
+                $ref: '#/definitions/SystemPowerConfig'
+            state:
+                $ref: '#/definitions/SystemPowerState'
+        title: SystemPower defines a struct to hold information about the system's power management configuration and its state.
+        type: object
+        x-go-package: github.com/lxc/incus-os/incus-osd/api
+    SystemPowerConfig:
+        properties:
+            cpu:
+                $ref: '#/definitions/SystemPowerConfigCPU'
+            screen:
+                $ref: '#/definitions/SystemPowerConfigScreen'
+        title: SystemPowerConfig holds power management related configuration for the system.
+        type: object
+        x-go-package: github.com/lxc/incus-os/incus-osd/api
+    SystemPowerConfigCPU:
+        properties:
+            energy_performance_preference:
+                type: string
+                x-go-name: EnergyPerformancePreference
+            scaling_governor:
+                type: string
+                x-go-name: ScalingGovernor
+        title: SystemPowerConfigCPU holds power management related configuration for CPU.
+        type: object
+        x-go-package: github.com/lxc/incus-os/incus-osd/api
+    SystemPowerConfigScreen:
+        properties:
+            blank_timeout:
+                format: int64
+                type: integer
+                x-go-name: BlankTimeout
+        title: SystemPowerConfigScreen holds power management related configuration for screen.
+        type: object
+        x-go-package: github.com/lxc/incus-os/incus-osd/api
+    SystemPowerState:
+        properties:
+            cpu:
+                $ref: '#/definitions/SystemPowerStateCPU'
+            screen:
+                $ref: '#/definitions/SystemPowerStateScreen'
+        title: SystemPowerState represents state for the system's power management configuration.
+        type: object
+        x-go-package: github.com/lxc/incus-os/incus-osd/api
+    SystemPowerStateCPU:
+        properties:
+            energy_performance_available_preferences:
+                items:
+                    type: string
+                type: array
+                x-go-name: EnergyPerformanceAvailablePreferences
+            energy_performance_preference:
+                type: string
+                x-go-name: EnergyPerformancePreference
+            scaling_available_governors:
+                items:
+                    type: string
+                type: array
+                x-go-name: ScalingAvailableGovernors
+            scaling_driver:
+                type: string
+                x-go-name: ScalingDriver
+            scaling_governor:
+                type: string
+                x-go-name: ScalingGovernor
+        title: SystemPowerStateCPU represents state for the system's CPU related power management configuration.
+        type: object
+        x-go-package: github.com/lxc/incus-os/incus-osd/api
+    SystemPowerStateScreen:
+        properties:
+            blank_timeout:
+                format: int64
+                type: integer
+                x-go-name: BlankTimeout
+        title: SystemPowerStateScreen represents state for the system's screen related power management configuration.
         type: object
         x-go-package: github.com/lxc/incus-os/incus-osd/api
     SystemProvider:
