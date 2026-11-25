@@ -1597,7 +1597,7 @@ func (d Nftables) NetworkDeleteAddressSetsIfUnused(nftTable string) error {
 	// Collect set names.
 	setNames := make(map[string]struct{})
 	for _, entry := range setsOutput.Nftables {
-		if entry.Set != nil && entry.Set.Family == nftTable {
+		if entry.Set != nil && entry.Set.Family == nftTable && entry.Set.Table == nftablesNamespace {
 			setNames[entry.Set.Name] = struct{}{}
 		}
 	}
