@@ -1533,9 +1533,25 @@ func (d *qemu) receiveMigrationSnapshot(monitor *qmp.Monitor, blockExport string
 
 	d.logger.Debug("Migration storage NBD export starting")
 
-	go func() { _, _ = util.SafeCopy(filesystemConn, nbdConn) }()
+	forwarded := make(chan struct{})
+	go func() {
+		_, _ = util.SafeCopy(filesystemConn, nbdConn)
+		close(forwarded)
+	}()
 
 	_, _ = util.SafeCopy(nbdConn, filesystemConn)
+
+	// Let the server close its side and forward its last replies, or they'd land in the next transfer.
+	unixConn, ok := nbdConn.(*net.UnixConn)
+	if ok {
+		_ = unixConn.CloseWrite()
+	}
+
+	select {
+	case <-forwarded:
+	case <-time.After(30 * time.Second):
+		d.logger.Warn("Timed out waiting for the migration NBD server to finish")
+	}
 
 	filesystemConn.Close()
 	d.logger.Debug("Migration storage NBD export finished")
@@ -10502,7 +10518,13 @@ func (d *qemu) sendMigrationSnapshot(ctx context.Context, diskName string, files
 
 	g, _ := errgroup.WithContext(context.Background())
 
+	// Closed once all QEMU sent over NBD is forwarded, which has to happen before the transfer ends.
+	nbdForwarded := make(chan struct{})
+	closeForwarded := sync.OnceFunc(func() { close(nbdForwarded) })
+
 	g.Go(func() error {
+		defer closeForwarded()
+
 		d.logger.Debug("NBD listener waiting for accept")
 
 		var nbdConn *net.UnixConn
@@ -10535,7 +10557,10 @@ func (d *qemu) sendMigrationSnapshot(ctx context.Context, diskName string, files
 			return fmt.Errorf("Failed forwarding NBD server greeting: %w", err)
 		}
 
-		go func() { _, _ = util.SafeCopy(filesystemConn, nbdConn) }()
+		go func() {
+			_, _ = util.SafeCopy(filesystemConn, nbdConn)
+			closeForwarded()
+		}()
 
 		_, _ = util.SafeCopy(nbdConn, filesystemConn)
 		d.logger.Debug("NBD connection on source finished")
@@ -10607,6 +10632,13 @@ func (d *qemu) sendMigrationSnapshot(ctx context.Context, diskName string, files
 		}
 
 		d.logger.Debug("Removed NBD storage target device")
+
+		// QEMU closed its NBD connection, so wait for its last requests to be forwarded.
+		select {
+		case <-nbdForwarded:
+		case <-time.After(30 * time.Second):
+			d.logger.Warn("Timed out waiting for the migration NBD connection to finish")
+		}
 
 		// Only now end the transfer, which lets the target stop its NBD server.
 		filesystemConn.Close()
