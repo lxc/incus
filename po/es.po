@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lxd\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2026-11-24 19:52-0500\n"
+"POT-Creation-Date: 2026-11-25 16:40-0500\n"
 "PO-Revision-Date: 2026-08-29 22:36+0000\n"
 "Last-Translator: Kazantsev Mikhail <kazan417@mail.ru>\n"
 "Language-Team: Spanish <https://hosted.weblate.org/projects/incus/cli/es/>\n"
@@ -3669,7 +3669,7 @@ msgstr "No se peude leer desde stdin: %s"
 msgid "Failed to receive the command output: %w"
 msgstr "Acepta certificado"
 
-#: cmd/incus/copy.go:391
+#: cmd/incus/copy.go:392
 #, fuzzy, c-format
 msgid "Failed to refresh target instance '%s': %v"
 msgstr "Perfil para aplicar al nuevo contenedor"
@@ -7109,7 +7109,7 @@ msgstr ""
 msgid "Refresh images"
 msgstr ""
 
-#: cmd/incus/copy.go:436
+#: cmd/incus/copy.go:437
 #, fuzzy, c-format
 msgid "Refreshing instance: %s"
 msgstr "No se puede proveer el nombre del container a la lista"
@@ -9028,7 +9028,7 @@ msgstr ""
 msgid "Transferring image: %s"
 msgstr ""
 
-#: cmd/incus/copy.go:369 cmd/incus/move.go:312 cmd/incus/move_nearlive.go:147
+#: cmd/incus/copy.go:370 cmd/incus/move.go:312 cmd/incus/move_nearlive.go:147
 #, fuzzy, c-format
 msgid "Transferring instance: %s"
 msgstr "No se puede proveer el nombre del container a la lista"

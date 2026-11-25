@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: LXD\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2026-11-24 19:52-0500\n"
+"POT-Creation-Date: 2026-11-25 16:40-0500\n"
 "PO-Revision-Date: 2026-11-24 19:13+0000\n"
 "Last-Translator: Kazantsev Mikhail "
 "<kazan417@users.noreply.hosted.weblate.org>\n"
@@ -3786,7 +3786,7 @@ msgstr "Échec de la lecture à partir de l'entrée standard : %w"
 msgid "Failed to receive the command output: %w"
 msgstr "Échec du rendu de la configuration : %w"
 
-#: cmd/incus/copy.go:391
+#: cmd/incus/copy.go:392
 #, c-format
 msgid "Failed to refresh target instance '%s': %v"
 msgstr "Échec du rafraîchissement de l'instance cible '%s' : %v"
@@ -7463,7 +7463,7 @@ msgstr ""
 msgid "Refresh images"
 msgstr "Rafraîchir une image"
 
-#: cmd/incus/copy.go:436
+#: cmd/incus/copy.go:437
 #, c-format
 msgid "Refreshing instance: %s"
 msgstr "Rafraîchissement de l’instance « %s »"
@@ -9385,7 +9385,7 @@ msgstr "Mode de transfert (« pull », « push » ou « relay »)"
 msgid "Transferring image: %s"
 msgstr "Transfert de l'image : %s"
 
-#: cmd/incus/copy.go:369 cmd/incus/move.go:312 cmd/incus/move_nearlive.go:147
+#: cmd/incus/copy.go:370 cmd/incus/move.go:312 cmd/incus/move_nearlive.go:147
 #, c-format
 msgid "Transferring instance: %s"
 msgstr "Transfert de l’instance : %s"

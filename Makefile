@@ -358,11 +358,8 @@ update-po:
 .PHONY: update-pot
 # doc: Update POT file
 update-pot:
-ifeq "$(INCUS_OFFLINE)" ""
-	(cd / ; $(GO) install -v -x github.com/snapcore/snapd/i18n/xgettext-go@2.57.1)
-endif
-	xgettext-go -o po/$(DOMAIN).pot --add-comments-tag=TRANSLATORS: --sort-output --package-name=$(DOMAIN) --msgid-bugs-address=lxc-devel@lists.linuxcontainers.org --keyword=i18n.G --keyword-plural=i18n.NG cmd/incus/*.go cmd/incus/color/*.go cmd/incus/usage/*.go shared/cliconfig/*.go
-	sed -i s/CHARSET/UTF-8/ po/$(DOMAIN).pot
+	cd cmd/generate-pot && CGO_ENABLED=0 $(GO) build -o $(GOPATH)/bin/generate-pot
+	$(GOPATH)/bin/generate-pot -o po/$(DOMAIN).pot --package-name=$(DOMAIN) --msgid-bugs-address=lxc-devel@lists.linuxcontainers.org cmd/incus cmd/incus/color cmd/incus/usage shared/cliconfig
 
 .PHONY: build-mo
 # doc! Build MO files
