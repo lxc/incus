@@ -1865,7 +1865,11 @@ func isIPAvailable(ctx context.Context, address net.IP, parentInterface string) 
 		return false, err
 	}
 
-	conn, _, err := ndp.Listen(networkInterface, ndp.LinkLocal)
+	// Bind by interface index, the name to index cache of the net package can be stale for up to a minute.
+	indexedInterface := *networkInterface
+	indexedInterface.Name = strconv.Itoa(networkInterface.Index)
+
+	conn, _, err := ndp.Listen(&indexedInterface, ndp.LinkLocal)
 	if err != nil {
 		return false, err
 	}
