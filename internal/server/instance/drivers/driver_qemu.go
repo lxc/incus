@@ -10394,8 +10394,9 @@ func (d *qemu) createEphemeralSnapshot(diskName string, diskSize int64, snapshot
 }
 
 // sendMigrationSnapshot transfers the snapshot to the target.
-// If finalize is true, it performs cleanup after migration.
+// If finalize is true, it completes the transfer before returning.
 // Otherwise, it returns a finalize function that can be called later.
+// The snapshot itself is left attached, the caller merges it back with mergeEphemeralSnapshot.
 func (d *qemu) sendMigrationSnapshot(ctx context.Context, diskName string, filesystemConn io.ReadWriteCloser, finalize bool) (func() error, error) {
 	monitor, err := d.qmpConnect()
 	if err != nil {
@@ -10578,21 +10579,17 @@ func (d *qemu) sendMigrationSnapshot(ctx context.Context, diskName string, files
 	d.logger.Debug("Migration storage snapshot transfer finished")
 
 	finalizeFunc := func() error {
-		filesystemConn.Close()
-		_ = g.Wait()
-
 		// Complete the migration snapshot sync process (the guest OS will remain paused).
+		// Keep the NBD connection up until the mirror job is gone, or its last I/O and flush fail.
 		d.logger.Debug("Migration storage snapshot transfer commit started")
-		err = monitor.BlockJobCancel(snapshotDiskName)
+		err = monitor.BlockJobCancelWait(snapshotDiskName)
 		if err != nil {
 			return fmt.Errorf("Failed cancelling block job: %w", err)
 		}
 
 		d.logger.Debug("Migration storage snapshot transfer commit finished")
 
-		time.Sleep(time.Second) // Wait for it to be released.
-
-		// Remove the NBD client disk.
+		// Remove the NBD client disk, which flushes it and closes QEMU's NBD connection.
 		err = monitor.RemoveBlockDevice(targetDiskName)
 		if err != nil {
 			d.logger.Warn("Failed removing NBD storage target device", logger.Ctx{"err": err})
@@ -10600,17 +10597,11 @@ func (d *qemu) sendMigrationSnapshot(ctx context.Context, diskName string, files
 
 		d.logger.Debug("Removed NBD storage target device")
 
-		// Merge snapshot back to the source disk so we don't lose the writes.
-		err = monitor.BlockCommit(snapshotDiskName, "", "")
-		if err != nil {
-			return fmt.Errorf("Failed merging migration storage snapshot: %w", err)
-		}
+		// Only now end the transfer, which lets the target stop its NBD server.
+		filesystemConn.Close()
+		_ = g.Wait()
 
-		err = monitor.RemoveBlockDevice(snapshotDiskName)
-		if err != nil {
-			return fmt.Errorf("Failed removing temporary snapshot disk device: %w", err)
-		}
-
+		// The caller merges the snapshot back once the guest runs again, to keep the pause short.
 		return nil
 	}
 
@@ -10667,6 +10658,9 @@ func (d *qemu) migrateSendLive(ctx context.Context, pool storagePools.Pool, clus
 	defer reverter.Fail()
 
 	rootTransferDone := false
+
+	// Ephemeral snapshots taken for the storage transfer, merged back once the guest runs again.
+	var snapshotOverlays []string
 
 	parameters := map[string]any{
 		"cpu-throttle-initial":       50,
@@ -10766,12 +10760,9 @@ func (d *qemu) migrateSendLive(ctx context.Context, pool storagePools.Pool, clus
 				return fmt.Errorf("Failed creating migration snapshot: %w", err)
 			}
 
-			// The snapshot is gone once its transfer has been finalized.
-			reverter.Add(func() {
-				if !rootTransferDone {
-					cleanup()
-				}
-			})
+			// The snapshot is only merged back after the hand-over, so merge it on any failure.
+			reverter.Add(cleanup)
+			snapshotOverlays = append(snapshotOverlays, ephemeralSnapshotName(rootDiskName))
 		}
 
 		for _, vol := range volSourceArgs.DependentVolumes {
@@ -10785,6 +10776,7 @@ func (d *qemu) migrateSendLive(ctx context.Context, pool storagePools.Pool, clus
 			}
 
 			reverter.Add(cleanup)
+			snapshotOverlays = append(snapshotOverlays, ephemeralSnapshotName(diskName))
 		}
 
 		d.logger.Debug("Setup temporary migration storage snapshot")
@@ -11007,6 +10999,18 @@ func (d *qemu) migrateSendLive(ctx context.Context, pool storagePools.Pool, clus
 				return fmt.Errorf("Failed transferring snapshot disk: %w", err)
 			}
 		}
+
+		// A cluster move stops the source at the hand-over, so merge the snapshots back now to keep its disk whole.
+		if clusterMoveSourceName != "" {
+			for _, overlay := range snapshotOverlays {
+				err = d.mergeEphemeralSnapshot(monitor, overlay)
+				if err != nil {
+					return fmt.Errorf("Failed merging migration storage snapshot: %w", err)
+				}
+			}
+
+			snapshotOverlays = nil
+		}
 	}
 
 	// With the guest paused, flush any pending config volume writes (TPM state, UEFI
@@ -11075,6 +11079,14 @@ func (d *qemu) migrateSendLive(ctx context.Context, pool storagePools.Pool, clus
 
 		d.resyncAgentClock()
 		d.logger.Debug("Resumed instance")
+
+		// Merge the snapshots back only now, as QEMU gives the disks back to the source on resume.
+		for _, overlay := range snapshotOverlays {
+			err = d.mergeEphemeralSnapshot(monitor, overlay)
+			if err != nil {
+				d.logger.Warn("Failed merging migration snapshot after hand-over", logger.Ctx{"overlay": overlay, "err": err})
+			}
+		}
 
 		err = monitor.SetAction(map[string]string{"shutdown": "poweroff"})
 		if err != nil {
