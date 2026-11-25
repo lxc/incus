@@ -10294,13 +10294,14 @@ func (d *qemu) prepareEphemeralSnapshot(monitor *qmp.Monitor, diskName string, d
 }
 
 // resumeGuest resumes a paused guest, leaving a guest that shut down to its stop hook.
+// A guest finishing a migration is left alone too as QEMU refuses to resume it.
 func (d *qemu) resumeGuest(monitor *qmp.Monitor) error {
 	status, err := monitor.Status()
 	if err != nil {
 		return err
 	}
 
-	if status == "shutdown" {
+	if status == "shutdown" || status == "finish-migrate" {
 		return nil
 	}
 
