@@ -47,6 +47,18 @@ client:
 	$(GO) install -v -tags "$(TAG_SQLITE3)" $(DEBUG) ./cmd/incus
 	@echo "Incus client built successfully"
 
+.PHONY: client-static
+# doc: Build a static Incus client with the translation catalogs embedded
+client-static: catalogs
+	CGO_ENABLED=0 $(GO) install -v -tags netgo ./cmd/incus
+	@echo "Incus static client built successfully"
+
+.PHONY: catalogs
+# doc: Generate the translation catalogs embedded in builds without gettext
+catalogs:
+	cd cmd/generate-catalogs && CGO_ENABLED=0 $(GO) build -o $(GOPATH)/bin/generate-catalogs
+	$(GOPATH)/bin/generate-catalogs po po/catalogs
+
 .PHONY: incus-agent
 # doc: Build the Incus agent
 incus-agent:
