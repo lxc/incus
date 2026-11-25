@@ -104,22 +104,25 @@ incus cat u1 /etc/hosts
 ## Built-in `shell` alias
 
 Incus comes with the `shell` built-in command alias. That alias is based on the
-[`incus exec`](incus_exec.md) command, executing `exec @ARGS@ -- su -l`.
+[`incus exec`](incus_exec.md) command, executing `exec @ARGS@ -- @LOGIN@`.
 
 ```
 $ incus alias list
-┌───────┬──────────────────────┐
-│ ALIAS │        TARGET        │
-├───────┼──────────────────────┤
-│ shell │ exec @ARGS@ -- su -l │
-└───────┴──────────────────────┘
+┌───────┬────────────────────────┐
+│ ALIAS │         TARGET         │
+├───────┼────────────────────────┤
+│ shell │ exec @ARGS@ -- @LOGIN@ │
+└───────┴────────────────────────┘
 ```
 
-If you run `incus shell myinstance`, this command alias will expand into `incus exec myinstance -- su -l`.
+The special string `@LOGIN@` is handled by `incus exec` when it runs through an alias.
+It stands for a login shell suited to the instance's operating system: `su -l` for Linux instances and `cmd.exe` for Windows virtual machines (detected through the `image.os` configuration key).
+It can be used in your own aliases as well, for example `incus alias add login "exec @ARGS@ -- @LOGIN@"`.
 
-The `--` construct is a command-line artifact that instructs the Incus command-line client to stop processing further parameters, like the `-l` that follows.
-Without `--`, the expanded command `incus exec mycontainer su -l` would fail,
-because the Incus command-line client would try to parse the `-l` flag. In this particular case, it would fail with an error because there is no `-l` parameter for `incus shell`.
+If you run `incus shell myinstance`, this command alias will expand into `incus exec myinstance -- @LOGIN@`, which runs `su -l` in a Linux instance.
+
+The `--` construct is a command-line artifact that instructs the Incus command-line client to stop processing further parameters.
+Everything after it is passed to the instance unchanged, even when it looks like a flag such as `-l`.
 
 The `su -l` command is synonymous to `su -` or `su --login`.
 It launches a login shell in the instance as the `root` user.
