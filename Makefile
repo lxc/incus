@@ -156,7 +156,7 @@ endif
 	$(GO) get -t -v -u ./...
 	# Pin pflag to v1.0.10
 	$(GO) get github.com/spf13/pflag@v1.0.10
-	$(GO) mod tidy --go=1.26.9
+	$(GO) mod tidy --go=1.26.10
 	$(GO) get toolchain@none
 
 	@echo "Dependencies updated"
