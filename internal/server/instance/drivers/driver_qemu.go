@@ -553,8 +553,8 @@ func (d *qemu) getMonitorEventHandler() func(event string, data map[string]any) 
 	return func(event string, data map[string]any) {
 		if event == qmp.EventDeviceDeleted {
 			devID, ok := data["device"].(string)
-			if !ok || !strings.HasPrefix(devID, "cpu") {
-				return // Only vCPU removals are tracked.
+			if !ok || (!strings.HasPrefix(devID, "cpu") && !strings.HasPrefix(devID, qemuDeviceIDPrefix)) {
+				return // Only vCPU and instance device removals are tracked.
 			}
 		} else if !slices.Contains([]string{qmp.EventVMShutdown, qmp.EventVMReset, qmp.EventAgentStarted, qmp.EventAgentStopped, qmp.EventAgentTemplated, qmp.EventRTCChange}, event) {
 			return // Don't bother loading the instance from DB if we aren't going to handle the event.
@@ -587,9 +587,19 @@ func (d *qemu) getMonitorEventHandler() func(event string, data map[string]any) 
 
 		switch event {
 		case qmp.EventDeviceDeleted:
-			// The guest may release a vCPU long after its removal was requested.
+			// The guest may release a vCPU or a device long after its removal was requested.
 			monitor, err := d.qmpConnect()
 			if err != nil {
+				break
+			}
+
+			devID, ok := data["device"].(string)
+			if ok && strings.HasPrefix(devID, qemuDeviceIDPrefix) {
+				err = d.savePCIPorts(monitor)
+				if err != nil {
+					d.logger.Warn("Failed recording PCIe ports", logger.Ctx{"err": err})
+				}
+
 				break
 			}
 
@@ -1846,6 +1856,12 @@ func (d *qemu) saveState(monitor *qmp.Monitor) error {
 
 	// The restore needs the exact vCPUs the state is taken with.
 	err := d.saveCPUCount(monitor)
+	if err != nil {
+		return err
+	}
+
+	// The same goes for the PCIe ports the devices sit on.
+	err = d.savePCIPorts(monitor)
 	if err != nil {
 		return err
 	}
@@ -3734,6 +3750,16 @@ func (d *qemu) deviceStart(dev device.Device, instanceRunning bool) (*deviceConf
 			if err != nil {
 				return nil, err
 			}
+
+			// Record the port the device was plugged into, the device itself is in place by now.
+			monitor, err := d.qmpConnect()
+			if err == nil {
+				err = d.savePCIPorts(monitor)
+			}
+
+			if err != nil {
+				l.Warn("Failed recording PCIe ports", logger.Ctx{"err": err})
+			}
 		}
 	}
 
@@ -4174,6 +4200,16 @@ func (d *qemu) deviceStop(dev device.Device, instanceRunning bool, _ string) err
 			if err != nil {
 				return err
 			}
+		}
+
+		// Record the port the device was unplugged from, the device itself is gone by now.
+		monitor, err := d.qmpConnect()
+		if err == nil {
+			err = d.savePCIPorts(monitor)
+		}
+
+		if err != nil {
+			l.Warn("Failed recording PCIe ports", logger.Ctx{"err": err})
 		}
 	}
 
@@ -5537,6 +5573,12 @@ func (d *qemu) generateQemuConfig(bs *qemuBootState, mountInfo *storagePools.Mou
 	// Record the mounts we are going to do inside the VM using the agent.
 	agentMounts := []instancetype.VMAgentMount{}
 
+	// Put the devices back on the ports the guest knows them on.
+	err = bus.restore(bs.PCIHotplug, bs.PCIVacated)
+	if err != nil {
+		return nil, err
+	}
+
 	// Size the NIC queues from the boot topology so a stateful restore matches the source.
 	cpuCount := bs.CPUTopology.Sockets * bs.CPUTopology.Cores * bs.CPUTopology.Threads
 
@@ -5570,7 +5612,7 @@ func (d *qemu) generateQemuConfig(bs *qemuBootState, mountInfo *storagePools.Mou
 						functionGroup = busFunctionGroup9p
 					}
 
-					devBus, devAddr, multi := bus.allocate(functionGroup)
+					devBus, devAddr, multi := bus.allocateDevice(drive.DevName, functionGroup)
 
 					// Populate the qemu device with port info.
 					qemuDev["bus"] = devBus
@@ -5610,9 +5652,17 @@ func (d *qemu) generateQemuConfig(bs *qemuBootState, mountInfo *storagePools.Mou
 			} else if slices.Contains([]string{"pcie", "pci"}, busName) {
 				// Allocate a PCI(e) port and write it to the config file so QMP can "hotplug" the
 				// NIC into it later. If we have a failover NIC, it needs to be handled first.
+				var devName string
+				for _, nicItem := range runConf.NetworkInterface {
+					if nicItem.Key == "devName" {
+						devName = nicItem.Value
+						break
+					}
+				}
+
 				if len(runConf.FailoverNetworkInterface) > 0 {
 					failoverDev := make(map[string]any)
-					failoverBus, failoverAddr, failoverMulti := bus.allocate(busFunctionGroupNone)
+					failoverBus, failoverAddr, failoverMulti := bus.allocateDevice(devName, busFunctionGroupNone)
 					failoverDev["bus"] = failoverBus
 					failoverDev["addr"] = failoverAddr
 					if failoverMulti {
@@ -5627,7 +5677,7 @@ func (d *qemu) generateQemuConfig(bs *qemuBootState, mountInfo *storagePools.Mou
 					monHooks = append(monHooks, monHook)
 				}
 
-				devBus, devAddr, multi := bus.allocate(busFunctionGroupNone)
+				devBus, devAddr, multi := bus.allocateDevice(devName, busFunctionGroupNone)
 				// Populate the qemu device with port info.
 				qemuDev["bus"] = devBus
 				qemuDev["addr"] = devAddr
@@ -5692,10 +5742,8 @@ func (d *qemu) generateQemuConfig(bs *qemuBootState, mountInfo *storagePools.Mou
 		pxe: util.IsTrue(d.localConfig["boot.pxe"]),
 	})...)
 
-	// Allocate 8 PCI slots for hotplug devices.
-	for range 8 {
-		bus.allocate(busFunctionGroupNone)
-	}
+	// Allocate the PCI slots for hotplug devices.
+	bus.reserve()
 
 	if !isWindows {
 		// Write the agent mount config.
