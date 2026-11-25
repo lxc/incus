@@ -11,6 +11,7 @@ const (
 	busFunctionGroupGeneric = "generic"   // Add multi-function port to generic group (used for internal devices).
 	busFunctionGroup9p      = "9p"        // Add multi-function port to 9p group (used for 9p shares).
 	busDevicePortPrefix     = "qemu_pcie" // Prefix used for name of PCIe ports.
+	busSparePorts           = 8           // Number of empty PCIe ports kept for hotplug.
 )
 
 type qemuBusEntry struct {
@@ -31,6 +32,9 @@ type qemuBus struct {
 	rootPort *qemuBusEntry // Current root port.
 
 	entries map[string]*qemuBusEntry // Map of qemuBusEntry for a particular shared device.
+
+	hotplug map[string][]int // Ports of the devices plugged since boot.
+	vacated map[int]bool     // Ports of the devices unplugged since boot.
 }
 
 func (a *qemuBus) allocateRoot() *qemuBusEntry {
@@ -71,6 +75,12 @@ func (a *qemuBus) allocateDirect() (string, string, bool) {
 func (a *qemuBus) allocateInternal(multiFunctionGroup string, hotplug bool) (string, string, bool) {
 	if a.name == "ccw" {
 		return "", "", false
+	}
+
+	// Leave the ports of unplugged devices empty, each pass skips one as several may follow each other.
+	for hotplug && a.vacated[a.portNum] {
+		delete(a.vacated, a.portNum)
+		a.allocateInternal(busFunctionGroupNone, true)
 	}
 
 	// Find a device multi-function group if specified.
@@ -150,6 +160,70 @@ func (a *qemuBus) allocateInternal(multiFunctionGroup string, hotplug bool) (str
 	}
 
 	return "", "", false
+}
+
+// allocateDevice() works like allocate() but puts a device plugged since boot back on its port.
+func (a *qemuBus) allocateDevice(devName string, multiFunctionGroup string) (string, string, bool) {
+	ports := a.hotplug[devName]
+	if multiFunctionGroup != busFunctionGroupNone || len(ports) == 0 {
+		return a.allocate(multiFunctionGroup)
+	}
+
+	a.hotplug[devName] = ports[1:]
+
+	return fmt.Sprintf("%s%d", busDevicePortPrefix, ports[0]), "00.0", false
+}
+
+// reserve() adds the remaining ports of unplugged devices followed by the spare ones.
+func (a *qemuBus) reserve() {
+	last := -1
+	for port := range a.vacated {
+		last = max(last, port)
+	}
+
+	for a.portNum <= last {
+		delete(a.vacated, a.portNum)
+		a.allocate(busFunctionGroupNone)
+	}
+
+	for range busSparePorts {
+		a.allocate(busFunctionGroupNone)
+	}
+}
+
+// restore() makes the instance devices use the ports they had before a stateful stop or migration.
+// The guest keeps the ACPI tables it booted with, so any change to the port layout sends hot-unplugs to the wrong device.
+// It must be called once the built-in devices have been allocated.
+func (a *qemuBus) restore(hotplug map[string][]int, vacated []int) error {
+	if a.name != "pcie" {
+		return nil
+	}
+
+	a.hotplug = map[string][]int{}
+	a.vacated = map[int]bool{}
+
+	for name, ports := range hotplug {
+		for _, port := range ports {
+			if port < 0 || port > 255 {
+				return fmt.Errorf("Invalid PCIe port %d for device %q in the boot state", port, name)
+			}
+		}
+
+		a.hotplug[name] = ports
+	}
+
+	for _, port := range vacated {
+		if port < 0 || port > 255 {
+			return fmt.Errorf("Invalid PCIe port %d in the boot state", port)
+		}
+
+		// The ports of the built-in devices are always set up.
+		if port >= a.portNum {
+			a.vacated[port] = true
+		}
+	}
+
+	return nil
 }
 
 // qemuNewBus instantiates a new qemu bus allocator. Accepts the type name of the bus and the qemu config builder
