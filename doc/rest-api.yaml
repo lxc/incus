@@ -10727,6 +10727,11 @@ paths:
                   in: query
                   name: all-projects
                   type: boolean
+                - description: Cluster member
+                  in: query
+                  name: target
+                  type: string
+                  x-example: default
             produces:
                 - application/json
             responses:

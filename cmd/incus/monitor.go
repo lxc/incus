@@ -26,6 +26,7 @@ type cmdMonitor struct {
 	flagLogLevel    string
 	flagAllProjects bool
 	flagFormat      string
+	flagTarget      string
 }
 
 var cmdMonitorUsage = u.Usage{u.RemoteColonOpt}
@@ -47,7 +48,10 @@ incus monitor --pretty --type=logging --loglevel=info
     Show a pretty log of messages with info level or higher.
 
 incus monitor --type=lifecycle
-    Only show lifecycle events.`,
+    Only show lifecycle events.
+
+incus monitor --target=server01 --type=logging
+    Only show log messages from a specific cluster member.`,
 	))
 	cmd.Hidden = true
 
@@ -57,6 +61,7 @@ incus monitor --type=lifecycle
 	cli.AddStringArrayFlag(cmd.Flags(), &c.flagType, "type|t", i18n.G("Event type to listen for (may be passed multiple times)"))
 	cli.AddStringFlag(cmd.Flags(), &c.flagLogLevel, "loglevel", "", "", i18n.G("Minimum level for log messages (only available when using pretty format)"))
 	cli.AddStringFlag(cmd.Flags(), &c.flagFormat, "format|f", "yaml", "", i18n.G("Format (json|pretty|yaml)"))
+	cli.AddStringFlag(cmd.Flags(), &c.flagTarget, "target", "", "", i18n.G("Cluster member name"))
 
 	return cmd
 }
@@ -80,6 +85,19 @@ func (c *cmdMonitor) run(cmd *cobra.Command, args []string) error {
 
 	if c.flagFormat != "pretty" && c.flagLogLevel != "" {
 		return errors.New(i18n.G("Log level filtering can only be used with pretty formatting"))
+	}
+
+	// Targeting
+	if c.flagTarget != "" {
+		if !d.IsClustered() {
+			return errors.New(i18n.G("To use --target, the destination remote must be a cluster"))
+		}
+
+		if !d.HasExtension("events_target") {
+			return errors.New(i18n.G("The server doesn't implement monitoring a specific cluster member"))
+		}
+
+		d = d.UseTarget(c.flagTarget)
 	}
 
 	var listener *incus.EventListener

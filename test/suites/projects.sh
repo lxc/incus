@@ -23,6 +23,9 @@ test_projects_crud() {
     # Trying to create a project with the same name fails
     ! incus project create foo || false
 
+    # Monitoring a missing project fails with a clear error
+    incus monitor --project bar 2>&1 | grep -xF "Error: Project not found"
+
     # Trying to create a project containing an underscore fails
     ! incus project create foo_banned || false
 

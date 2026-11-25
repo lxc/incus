@@ -40,7 +40,7 @@ func TestEndpoints_LocalSocketBasedActivation(t *testing.T) {
 	endpoints, config, cleanup := newEndpoints(t)
 	defer cleanup()
 
-	setupSocketBasedActivation(endpoints, file)
+	setupSocketBasedActivation(t, endpoints, file)
 
 	require.NoError(t, endpoints.Up(config))
 

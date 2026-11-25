@@ -1,5 +1,5 @@
 test_storage_volume_import() {
-    truncate -s 25MiB foo.iso
+    head -c 25M /dev/urandom > foo.iso
     truncate -s 25MiB foo.img
 
     ensure_import_testimage
@@ -37,6 +37,10 @@ test_storage_volume_import() {
     incus storage volume copy "incustest-$(basename "${INCUS_DIR}")"/foo "incustest-$(basename "${INCUS_DIR}")"/bar
     incus storage volume show "incustest-$(basename "${INCUS_DIR}")" bar | grep -q 'content_type: iso'
 
+    # the copy holds the same data
+    incus storage volume export "incustest-$(basename "${INCUS_DIR}")" bar bar.new.iso
+    cmp -s foo.iso bar.new.iso || false
+
     # cannot refresh copy
     ! incus storage volume copy "incustest-$(basename "${INCUS_DIR}")"/foo "incustest-$(basename "${INCUS_DIR}")"/bar --refresh || false
 
@@ -50,5 +54,5 @@ test_storage_volume_import() {
     incus storage volume delete "incustest-$(basename "${INCUS_DIR}")" bar
     incus storage volume delete "incustest-$(basename "${INCUS_DIR}")" foobar
 
-    rm -f foo.iso foo.img
+    rm -f foo.iso foo.img foo.new.iso bar.new.iso
 }
