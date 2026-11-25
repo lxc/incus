@@ -90,6 +90,7 @@ before:
     - git clone --depth=1 https://github.com/cowsql/raft vendor/raft
     - sh -c "cd vendor/raft && git show-ref HEAD | cut -d' ' -f1 > .gitref"
     - rm -Rf vendor/raft/.git
+    - go run ./cmd/generate-catalogs po po/catalogs
     - make doc
 
 builds:
