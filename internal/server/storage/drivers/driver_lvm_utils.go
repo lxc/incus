@@ -643,8 +643,8 @@ func (d *lvm) createLogicalVolume(vgName, thinPoolName string, vol Volume, makeT
 		}
 
 		logCtx["fs"] = vol.ConfigBlockFilesystem()
-	} else if !d.usesThinpool() {
-		// Make sure we get an empty LV.
+	} else if !d.usesThinpool() && !IsQcow2Block(vol) {
+		// Make sure we get an empty LV, qcow2 only exposes the clusters it wrote itself.
 		err := linux.ClearBlock(volDevPath, 0)
 		if err != nil {
 			return err

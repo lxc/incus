@@ -942,8 +942,8 @@ func (d *lvm) SetVolumeQuota(vol Volume, size string, allowUnsafeResize bool, op
 			return err
 		}
 
-		// On thick pools, discard the blocks in the additional space when the volume is grown.
-		if !d.usesThinpool() && oldSizeBytes < sizeBytes {
+		// On thick pools, discard the blocks in the additional space when a raw volume is grown.
+		if !d.usesThinpool() && !IsQcow2Block(vol) && oldSizeBytes < sizeBytes {
 			// Activate the volume for discarding.
 			activated, err := d.activateVolume(vol)
 			if err != nil {
