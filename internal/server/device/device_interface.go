@@ -82,6 +82,14 @@ type device interface {
 	validateConfig(instance.ConfigReader, bool) error
 }
 
+// MigrationHandOver provides the ability for a device to release host resources that attract the
+// instance's traffic once a live migration has handed the instance over to its target, and to restore
+// them when the target then fails to take the instance over.
+type MigrationHandOver interface {
+	MigrationHandedOver() error
+	MigrationHandOverReverted() error
+}
+
 // NICState provides the ability to access NIC state.
 type NICState interface {
 	State() (*api.InstanceStateNetwork, error)
