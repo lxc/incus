@@ -3,6 +3,9 @@ package catalog
 
 import (
 	"bufio"
+	"fmt"
+	"io"
+	"maps"
 	"slices"
 	"strings"
 )
@@ -72,4 +75,27 @@ func unquote(s string) string {
 	s = strings.ReplaceAll(s, `\t`, "\t")
 
 	return strings.ReplaceAll(s, "\x00", `\`)
+}
+
+// Write writes the translations as a minimal catalog, sorted by msgid.
+func Write(w io.Writer, translations map[string]string) error {
+	b := bufio.NewWriter(w)
+	for _, msgid := range slices.Sorted(maps.Keys(translations)) {
+		_, err := fmt.Fprintf(b, "msgid %s\nmsgstr %s\n\n", quote(msgid), quote(translations[msgid]))
+		if err != nil {
+			return err
+		}
+	}
+
+	return b.Flush()
+}
+
+// quote encodes the escapes of a string and surrounds it with quotes.
+func quote(s string) string {
+	s = strings.ReplaceAll(s, `\`, `\\`)
+	s = strings.ReplaceAll(s, `"`, `\"`)
+	s = strings.ReplaceAll(s, "\n", `\n`)
+	s = strings.ReplaceAll(s, "\t", `\t`)
+
+	return `"` + s + `"`
 }
