@@ -270,6 +270,51 @@ func NetworkProjectForName(c *db.Cluster, projectName string, networkName string
 	return effectiveProjectName, p, nil
 }
 
+// NetworkChildren returns the OVN networks of every project whose parent resolves to the given network.
+// The result maps project names to their child networks keyed by network ID.
+func NetworkChildren(ctx context.Context, tx *db.ClusterTx, networkProjectName string, networkName string) (map[string]map[int64]api.Network, error) {
+	projectNetworks, err := tx.GetCreatedNetworks(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	dbProjects, err := cluster.GetProjects(ctx, tx.Tx())
+	if err != nil {
+		return nil, err
+	}
+
+	children := map[string]map[int64]api.Network{}
+	for _, dbProject := range dbProjects {
+		networks := projectNetworks[dbProject.Name]
+		if len(networks) == 0 {
+			continue
+		}
+
+		p, err := dbProject.ToAPI(ctx, tx.Tx())
+		if err != nil {
+			return nil, err
+		}
+
+		if NetworkProjectForNameFromRecord(p, networkName) != networkProjectName {
+			continue
+		}
+
+		for networkID, network := range networks {
+			if network.Type != "ovn" || network.Config["parent"] != networkName {
+				continue
+			}
+
+			if children[dbProject.Name] == nil {
+				children[dbProject.Name] = map[int64]api.Network{}
+			}
+
+			children[dbProject.Name][networkID] = network
+		}
+	}
+
+	return children, nil
+}
+
 // NetworkAllowed returns whether access is allowed to a particular network based on projectConfig.
 func NetworkAllowed(reqProjectConfig map[string]string, networkName string, isManaged bool) bool {
 	// If project is not restricted, then access to network is allowed.

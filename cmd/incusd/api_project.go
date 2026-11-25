@@ -857,7 +857,25 @@ func projectChange(ctx context.Context, s *state.State, project *api.Project, re
 			}
 		}
 
-		err := projecthelpers.AllowProjectUpdate(tx, project.Name, req.Config, configChanged)
+		// Keep the shared parents of the project's OVN networks available.
+		projectNetworks, err := tx.GetCreatedNetworksByProject(ctx, project.Name)
+		if err != nil {
+			return err
+		}
+
+		newProject := api.Project{Name: project.Name, ProjectPut: req}
+		for _, network := range projectNetworks {
+			parent := network.Config["parent"]
+			if network.Type != "ovn" || parent == "" || !projecthelpers.NetworkSharedFromDefault(project, parent) {
+				continue
+			}
+
+			if !projecthelpers.NetworkSharedFromDefault(&newProject, parent) {
+				return api.StatusErrorf(http.StatusBadRequest, "Network %q uses %q as parent, which would no longer be shared with the project", network.Name, parent)
+			}
+		}
+
+		err = projecthelpers.AllowProjectUpdate(tx, project.Name, req.Config, configChanged)
 		if err != nil {
 			return err
 		}
@@ -2031,7 +2049,8 @@ func projectValidateConfig(s *state.State, config map[string]string) error {
 		//
 		// In restricted projects with {config:option}`project-features:features.networks` enabled,
 		// the listed networks from the default project are shared into the project and their names
-		// can't be used for the project's own networks.
+		// can't be used for the project's own networks. A shared OVN network can be the `parent` of
+		// the project's own OVN networks.
 		//
 		// Note that this setting depends on the {config:option}`project-restricted:restricted.devices.nic` setting.
 		// ---

@@ -606,6 +606,7 @@ var APIExtensions = []string{
 	"nic_bridged_vlan_ingress",
 	"network_dns_domain_none",
 	"events_target",
+	"network_ovn_parent_shared",
 }
 
 // APIExtensionsCount returns the number of available API extensions.

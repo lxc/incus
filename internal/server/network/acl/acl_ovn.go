@@ -15,6 +15,7 @@ import (
 	"github.com/lxc/incus/v7/internal/server/db/cluster"
 	"github.com/lxc/incus/v7/internal/server/instance"
 	"github.com/lxc/incus/v7/internal/server/network/ovn"
+	"github.com/lxc/incus/v7/internal/server/project"
 	"github.com/lxc/incus/v7/internal/server/state"
 	"github.com/lxc/incus/v7/shared/api"
 	"github.com/lxc/incus/v7/shared/logger"
@@ -256,9 +257,6 @@ func OVNEnsureACLs(s *state.State, l logger.Logger, client *ovn.NB, aclProjectNa
 			return fmt.Errorf("Failed getting created networks for project %q: %w", aclProjectName, err)
 		}
 
-		// The targets may be in other projects, so cache the created networks of each project.
-		projectNetworks := map[string]map[int64]api.Network{aclProjectName: networks}
-
 		for netID, network := range networks {
 			// Filter for OVN networks in Go.
 			if network.Type != "ovn" {
@@ -291,18 +289,13 @@ func OVNEnsureACLs(s *state.State, l logger.Logger, client *ovn.NB, aclProjectNa
 					return fmt.Errorf("Failed getting target network of peer %q: %w", dbPeer.Name, err)
 				}
 
-				targetNetworks, found := projectNetworks[targetProjectName]
-				if !found {
-					targetNetworks, err = tx.GetCreatedNetworksByProject(ctx, targetProjectName)
-					if err != nil {
-						return fmt.Errorf("Failed getting created networks for project %q: %w", targetProjectName, err)
-					}
-
-					projectNetworks[targetProjectName] = targetNetworks
+				projectChildren, err := project.NetworkChildren(ctx, tx, targetProjectName, targetNetName)
+				if err != nil {
+					return fmt.Errorf("Failed getting the child networks of %q: %w", targetNetName, err)
 				}
 
-				for childNetID, childNetwork := range targetNetworks {
-					if childNetwork.Type == "ovn" && childNetwork.Config["parent"] == targetNetName {
+				for _, childNetworks := range projectChildren {
+					for childNetID := range childNetworks {
 						peerTargetNetIDs[peerKey] = append(peerTargetNetIDs[peerKey], childNetID)
 					}
 				}
