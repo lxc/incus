@@ -644,7 +644,7 @@ func (d *nicSRIOV) setupFailover() (string, error) {
 		"vlan":   d.config["vlan"],
 	}
 
-	_, err = networkCreateTap(hostName, bridge)
+	_, err = networkCreateTap(hostName, nil, bridge)
 	if err != nil {
 		return "", err
 	}
