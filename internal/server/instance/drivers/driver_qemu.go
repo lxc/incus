@@ -10641,6 +10641,18 @@ func (d *qemu) migrateSendLive(ctx context.Context, pool storagePools.Pool, clus
 		parameters["max-bandwidth"] = bwlimitBytes
 	}
 
+	// Keep the final pause short. QEMU's default of 300ms is a lot of lost
+	// traffic, and routed NICs are used where every bit of it counts.
+	downtimeLimit := 100
+	for _, dev := range d.expandedDevices {
+		if dev["type"] == "nic" && dev["nictype"] == "routed" {
+			downtimeLimit = 50
+			break
+		}
+	}
+
+	parameters["downtime-limit"] = downtimeLimit
+
 	// Non-shared storage snapshot setup.
 	if !sameSharedStorage || dependentVolumeMove {
 		// Setup migration capabilities.
