@@ -642,6 +642,10 @@ func (d *common) validateFirewallUsage(config *api.NetworkACLPut) error {
 		}
 
 		if aclNet.DeviceName != "" {
+			if aclNet.InstanceName == "" {
+				return fmt.Errorf("ACL is used by device %q of profile %q: %w", aclNet.DeviceName, aclNet.Name, firewallErr)
+			}
+
 			return fmt.Errorf("ACL is used by device %q of instance %q: %w", aclNet.DeviceName, aclNet.InstanceName, firewallErr)
 		}
 
@@ -707,6 +711,7 @@ func (d *common) Update(config *api.NetworkACLPut, clientType request.ClientType
 	// applied to the bridge interface, not the network.
 	aclOVNNets := map[string]NetworkACLUsage{}
 	aclBridgeNICs := map[string]NetworkACLUsage{}
+	aclRoutedNICs := map[string]NetworkACLUsage{}
 	for k, v := range aclNets {
 		if v.Type == "ovn" {
 			delete(aclNets, k)
@@ -714,6 +719,9 @@ func (d *common) Update(config *api.NetworkACLPut, clientType request.ClientType
 		} else if v.Type == "bridge" && v.DeviceName != "" {
 			delete(aclNets, k)
 			aclBridgeNICs[k] = v
+		} else if v.Type == "routed" {
+			delete(aclNets, k)
+			aclRoutedNICs[k] = v
 		} else if v.Type != "bridge" {
 			return fmt.Errorf("Unsupported network ACL type %q", v.Type)
 		}
@@ -746,6 +754,19 @@ func (d *common) Update(config *api.NetworkACLPut, clientType request.ClientType
 		err := BridgeUpdateACLs(d.state, d.logger, d.projectName, aclBridgeNICs)
 		if err != nil {
 			return fmt.Errorf("Failed updating bridge NIC ACL: %w", err)
+		}
+	}
+
+	// If there are affected routed NICs, apply the ACL changes to their filters in the inet table.
+	if len(aclRoutedNICs) > 0 {
+		err = addressset.FirewallApplyAddressSetsForACLRules(d.state, "inet", d.projectName, []string{d.info.Name})
+		if err != nil {
+			return err
+		}
+
+		err := BridgeUpdateACLs(d.state, d.logger, d.projectName, aclRoutedNICs)
+		if err != nil {
+			return fmt.Errorf("Failed updating routed NIC ACL: %w", err)
 		}
 	}
 
@@ -806,8 +827,8 @@ func (d *common) Update(config *api.NetworkACLPut, clientType request.ClientType
 		}
 	}
 
-	// Apply ACL changes to non-OVN networks and to bridged NICs on cluster members.
-	if clientType == request.ClientTypeNormal && (len(aclNets) > 0 || len(aclBridgeNICs) > 0) {
+	// Apply ACL changes to non-OVN networks and to bridged and routed NICs on cluster members.
+	if clientType == request.ClientTypeNormal && (len(aclNets) > 0 || len(aclBridgeNICs) > 0 || len(aclRoutedNICs) > 0) {
 		// Notify all other nodes to update the network if no target specified.
 		notifier, err := cluster.NewNotifier(d.state, d.state.Endpoints.NetworkCert(), d.state.ServerCert(), cluster.NotifyAll)
 		if err != nil {

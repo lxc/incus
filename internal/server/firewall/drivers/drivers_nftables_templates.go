@@ -386,6 +386,82 @@ chain out{{.chainSeparator}}{{.deviceLabel}} {
 {{ end }}
 `))
 
+// nftablesRoutedFilterChains are the chains of a routed NIC's filter, see nftablesInstanceRoutedFilter.
+var nftablesRoutedFilterChains = []string{"routedin", "routedout", "routedfwd"}
+
+// nftablesInstanceRoutedFilter defines the rules that apply network ACLs to a routed NIC.
+var nftablesInstanceRoutedFilter = template.Must(template.New("nftablesInstanceRoutedFilter").Parse(`
+chain routedin{{.chainSeparator}}{{.deviceLabel}} {
+	type filter hook input priority filter; policy accept;
+
+	{{.inMatch}} "{{.hostName}}" ct state established,related accept
+
+	# Basic connectivity to the host side of the link.
+	{{.inMatch}} "{{.hostName}}" icmp type {3, 11, 12} accept
+	{{.inMatch}} "{{.hostName}}" icmpv6 type {1, 2, 3, 4, 133, 135, 136, 143} accept
+
+	# Network ACLs
+	{{ range .aclEgressDropRules }}
+	{{.}}
+	{{ end }}
+	{{ range .aclEgressRejectRules }}
+	{{.}}
+	{{ end }}
+	{{ range .aclEgressAcceptRules }}
+	{{.}}
+	{{ end }}
+
+	{{.aclEgressDefaultRule}}
+}
+
+chain routedout{{.chainSeparator}}{{.deviceLabel}} {
+	type filter hook output priority filter; policy accept;
+
+	oifname "{{.hostName}}" ct state established,related accept
+
+	# Basic connectivity from the host side of the link.
+	oifname "{{.hostName}}" icmp type {3, 11, 12} accept
+	oifname "{{.hostName}}" icmpv6 type {1, 2, 3, 4, 135, 136, 143} accept
+
+	# Network ACLs
+	{{ range .aclIngressDropRules }}
+	{{.}}
+	{{ end }}
+	{{ range .aclIngressAcceptRules }}
+	{{.}}
+	{{ end }}
+
+	{{.aclIngressDefaultRule}}
+}
+
+chain routedfwd{{.chainSeparator}}{{.deviceLabel}} {
+	type filter hook forward priority filter; policy accept;
+
+	{{.inMatch}} "{{.hostName}}" ct state established,related accept
+	oifname "{{.hostName}}" ct state established,related accept
+
+	# Network ACLs
+	{{ range .aclEgressDropRules }}
+	{{.}}
+	{{ end }}
+	{{ range .aclEgressRejectRules }}
+	{{.}}
+	{{ end }}
+	{{ range .aclIngressDropRules }}
+	{{.}}
+	{{ end }}
+	{{ range .aclEgressAcceptRules }}
+	{{.}}
+	{{ end }}
+	{{ range .aclIngressAcceptRules }}
+	{{.}}
+	{{ end }}
+
+	{{.aclEgressDefaultRule}}
+	{{.aclIngressDefaultRule}}
+}
+`))
+
 // nftablesInstanceRPFilter defines the rules to perform reverse path filtering.
 var nftablesInstanceRPFilter = template.Must(template.New("nftablesInstanceRPFilter").Parse(`
 chain prert{{.chainSeparator}}{{.deviceLabel}} {

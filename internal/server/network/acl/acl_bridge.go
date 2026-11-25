@@ -8,10 +8,15 @@ import (
 	"github.com/lxc/incus/v7/shared/logger"
 )
 
-// BridgeUpdateACLs forces the update of all NIC devices who have the changed ACL applied.
+// BridgeUpdateACLs reloads the bridged and routed NIC devices that have the changed ACL applied.
 func BridgeUpdateACLs(s *state.State, l logger.Logger, aclProjectName string, aclNetDevices map[string]NetworkACLUsage) error {
 	// Update of the bridge NICs affected by the ACL change
 	for _, aclNetDevice := range aclNetDevices {
+		// Profile devices are applied through the instances using the profile.
+		if aclNetDevice.InstanceName == "" {
+			continue
+		}
+
 		// Handle instances in a different project than their ACL.
 		instProject := aclNetDevice.InstanceProject
 		if instProject == "" {
