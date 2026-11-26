@@ -9756,6 +9756,21 @@ func (d *qemu) Export(metaWriter io.Writer, rootfsWriter io.Writer, properties m
 		}
 	}
 
+	// Include the files used for direct kernel boot.
+	for _, name := range []string{"kernel.img", "initrd.img", "kernel.cmdline", "kernel.uki"} {
+		fnam = filepath.Join(cDir, name)
+		fi, err := os.Lstat(fnam)
+		if err != nil {
+			continue
+		}
+
+		err = writeToMetaTar(fnam, fi, nil)
+		if err != nil {
+			d.logger.Error("Failed exporting instance", ctxMap)
+			return nil, err
+		}
+	}
+
 	err = metaTarWriter.Close()
 	if err != nil {
 		d.logger.Error("Failed exporting instance", ctxMap)
