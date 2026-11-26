@@ -3336,6 +3336,12 @@ func (d *lxc) start(stateful bool, op *operationlock.InstanceOperation) error {
 	// Run any post start hooks.
 	err = d.runHooks(postStartHooks)
 	if err != nil {
+		// Hooks can fail if init process exited.
+		initPID := d.InitPID()
+		if initPID < 1 || !util.PathExists(fmt.Sprintf("/proc/%d", initPID)) {
+			err = fmt.Errorf("Instance init process exited during startup: %w", err)
+		}
+
 		op.Done(err) // Must come before Stop() otherwise stop will not proceed.
 
 		// Attempt to stop container.
