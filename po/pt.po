@@ -8,11 +8,11 @@ msgstr ""
 "Project-Id-Version: incus\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
 "POT-Creation-Date: 2026-11-26 11:56-0500\n"
-"PO-Revision-Date: 2026-11-26 08:54+0000\n"
+"PO-Revision-Date: 2026-11-26 21:40+0000\n"
 "Last-Translator: Américo Monteiro <a-"
 "monteiro@users.noreply.hosted.weblate.org>\n"
-"Language-Team: Portuguese <https://hosted.weblate.org/projects/incus/cli/pt/"
-">\n"
+"Language-Team: Portuguese <https://hosted.weblate.org/projects/incus/cli/pt/>"
+"\n"
 "Language: pt\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -4682,9 +4682,8 @@ msgid "Import custom storage volumes"
 msgstr "Importa volumes de armazenamento personalizados"
 
 #: cmd/incus/storage_volume.go:1282
-#, fuzzy
 msgid "Import custom storage volumes from a URL"
-msgstr "Importa volumes de armazenamento personalizados"
+msgstr "Importar volumes de armazenamento personalizados a partir de um URL"
 
 #: cmd/incus/storage_volume.go:1283
 msgid ""
@@ -4692,6 +4691,10 @@ msgid ""
 "\n"
 "The server downloads the backup directly, no data goes through the client."
 msgstr ""
+"Importar volumes de armazenamento personalizados a partir de um URL.\n"
+"\n"
+"O servidor descarrega a salvaguarda diretamente, nenhuns dados passam pelo "
+"cliente."
 
 #: cmd/incus/storage_volume.go:2479
 msgid "Import custom storage volumes."
@@ -11389,14 +11392,15 @@ msgstr ""
 "usar como imagem de CD-ROM"
 
 #: cmd/incus/storage_volume.go:1286
-#, fuzzy
 msgid ""
 "incus storage volume import-url default https://example.com/backup0.tar.gz "
 "myvol\n"
 "    Create a new custom volume by having the server download backup0.tar.gz"
 msgstr ""
-"incus storage bucket import default backup0.tar.gz\n"
-"\t\tCria um novo bucket de armazenamento usando backup0.tar.gz como fonte."
+"incus storage volume import-url default https://example.com/backup0.tar.gz "
+"myvol\n"
+"    Cria um novo volume personalizado fazendo o servidor descarregar "
+"backup0.tar.gz"
 
 #: cmd/incus/storage_volume.go:1368
 msgid ""
