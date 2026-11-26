@@ -1044,9 +1044,9 @@ func doStoragePoolUpdate(s *state.State, pool storagePools.Pool, req api.Storage
 		return response.BadRequest(err)
 	}
 
-	// Notify the other nodes, unless this is itself a notification.
+	// Notify the online members, the others apply the new config when mounting the pool on startup.
 	if clustered && clientType != clusterRequest.ClientTypeNotifier && targetNode == "" {
-		notifier, err := cluster.NewNotifier(s, s.Endpoints.NetworkCert(), s.ServerCert(), cluster.NotifyAll)
+		notifier, err := cluster.NewNotifier(s, s.Endpoints.NetworkCert(), s.ServerCert(), cluster.NotifyAlive)
 		if err != nil {
 			return response.SmartError(err)
 		}
