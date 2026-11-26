@@ -11,6 +11,8 @@ import (
 	"strings"
 	"time"
 
+	"golang.org/x/sys/unix"
+
 	deviceConfig "github.com/lxc/incus/v7/internal/server/device/config"
 	"github.com/lxc/incus/v7/internal/server/instance"
 	"github.com/lxc/incus/v7/internal/server/instance/instancetype"
@@ -835,9 +837,10 @@ func (d *nicRouted) Start() (*deviceConfig.RunConfig, error) {
 	// Perform instance NIC configuration.
 	runConf := deviceConfig.RunConfig{}
 
-	// The host routes attract traffic, so a VM only gets them once it runs (after a live migration's hand-over).
+	// The host routes attract traffic, so a VM only gets them once it runs (after a live migration's hand-over),
+	// and as soon as it does.
 	if d.inst.Type() == instancetype.VM {
-		runConf.PostHooks = []func() error{d.setupHostRoutes}
+		runConf.RunningHooks = []func() error{d.setupHostRoutes}
 	} else {
 		err = d.setupHostRoutes()
 		if err != nil {
@@ -922,8 +925,18 @@ func (d *nicRouted) hostTables(keyPrefix string) []string {
 	return []string{"254"}
 }
 
-// setupHostRoutes adds the host routes for the instance's addresses and its static routes.
-func (d *nicRouted) setupHostRoutes() error {
+// nicRoutedHostRoute is a route the host sends to the instance through its host-side interface.
+type nicRoutedHostRoute struct {
+	route  *net.IPNet
+	via    net.IP
+	family ip.Family
+	tables []string
+}
+
+// hostRoutes returns the host routes for the configured addresses and routes.
+func (d *nicRouted) hostRoutes() ([]nicRoutedHostRoute, error) {
+	routes := []nicRoutedHostRoute{}
+
 	for _, keyPrefix := range []string{"ipv4", "ipv6"} {
 		subnetSize := 32
 		ipFamilyArg := ip.FamilyV4
@@ -938,18 +951,14 @@ func (d *nicRouted) setupHostRoutes() error {
 		for _, addrStr := range addresses {
 			address := net.ParseIP(addrStr)
 			if address == nil {
-				return fmt.Errorf("Invalid address %q", addrStr)
+				return nil, fmt.Errorf("Invalid address %q", addrStr)
 			}
 
-			route := &net.IPNet{
-				IP:   address,
-				Mask: net.CIDRMask(subnetSize, subnetSize),
-			}
-
-			err := d.addHostRoute(route, nil, ipFamilyArg, tables)
-			if err != nil {
-				return err
-			}
+			routes = append(routes, nicRoutedHostRoute{
+				route:  &net.IPNet{IP: address, Mask: net.CIDRMask(subnetSize, subnetSize)},
+				family: ipFamilyArg,
+				tables: tables,
+			})
 		}
 
 		if d.config[fmt.Sprintf("%s.routes", keyPrefix)] == "" {
@@ -957,28 +966,87 @@ func (d *nicRouted) setupHostRoutes() error {
 		}
 
 		if len(addresses) == 0 {
-			return fmt.Errorf("%s.routes requires %s.address to be set", keyPrefix, keyPrefix)
+			return nil, fmt.Errorf("%s.routes requires %s.address to be set", keyPrefix, keyPrefix)
 		}
 
 		viaAddress := net.ParseIP(addresses[0])
 		if viaAddress == nil {
-			return fmt.Errorf("Invalid address %q", addresses[0])
+			return nil, fmt.Errorf("Invalid address %q", addresses[0])
 		}
 
 		for _, routeStr := range util.SplitNTrimSpace(d.config[fmt.Sprintf("%s.routes", keyPrefix)], ",", -1, true) {
 			route, err := ip.ParseIPNet(routeStr)
 			if err != nil {
-				return fmt.Errorf("Invalid route %q: %w", routeStr, err)
+				return nil, fmt.Errorf("Invalid route %q: %w", routeStr, err)
 			}
 
-			err = d.addHostRoute(route, viaAddress, ipFamilyArg, tables)
-			if err != nil {
-				return err
-			}
+			routes = append(routes, nicRoutedHostRoute{
+				route:  route,
+				via:    viaAddress,
+				family: ipFamilyArg,
+				tables: tables,
+			})
+		}
+	}
+
+	return routes, nil
+}
+
+// setupHostRoutes adds the host routes for the instance's addresses and its static routes.
+func (d *nicRouted) setupHostRoutes() error {
+	routes, err := d.hostRoutes()
+	if err != nil {
+		return err
+	}
+
+	for _, r := range routes {
+		err := d.addHostRoute(r.route, r.via, r.family, r.tables)
+		if err != nil {
+			return err
 		}
 	}
 
 	return nil
+}
+
+// MigrationHandOverReverted restores the host routes when the target of a live migration failed to
+// take the instance over and it resumes here.
+func (d *nicRouted) MigrationHandOverReverted() error {
+	networkVethFillFromVolatile(d.config, d.volatileGet())
+
+	return d.setupHostRoutes()
+}
+
+// MigrationHandedOver removes the host routes once a live migration has handed the instance over to
+// its target, so this host stops attracting the instance's traffic while the target takes over.
+func (d *nicRouted) MigrationHandedOver() error {
+	networkVethFillFromVolatile(d.config, d.volatileGet())
+
+	routes, err := d.hostRoutes()
+	if err != nil {
+		return err
+	}
+
+	errs := []error{}
+	for _, r := range routes {
+		targets := make([]ip.Route, 0, len(r.tables)+1)
+		if d.config["vrf"] != "" {
+			targets = append(targets, ip.Route{DevName: d.config["host_name"], Route: r.route, Family: r.family, Via: r.via, VRF: d.config["vrf"]})
+		}
+
+		for _, tbl := range r.tables {
+			targets = append(targets, ip.Route{DevName: d.config["host_name"], Route: r.route, Table: tbl, Family: r.family, Via: r.via})
+		}
+
+		for _, target := range targets {
+			err := target.Delete()
+			if err != nil && !errors.Is(err, unix.ESRCH) {
+				errs = append(errs, err)
+			}
+		}
+	}
+
+	return errors.Join(errs...)
 }
 
 // addHostRoute adds a route through the host interface to the VRF and to every requested table.
