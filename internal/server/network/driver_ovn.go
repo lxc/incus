@@ -7734,8 +7734,8 @@ func (n *ovn) ForwardCreate(forward api.NetworkForwardsPost, clientType request.
 			_ = n.ovnnb.DeleteLogicalRouterRoute(context.TODO(), n.getRouterName(), *listenAddressNet)
 		})
 
-		// Notify all other members to refresh their BGP prefixes.
-		notifier, err := cluster.NewNotifier(n.state, n.state.Endpoints.NetworkCert(), n.state.ServerCert(), cluster.NotifyAll)
+		// Notify online members to refresh their BGP prefixes, offline members rebuild them on startup.
+		notifier, err := cluster.NewNotifier(n.state, n.state.Endpoints.NetworkCert(), n.state.ServerCert(), cluster.NotifyAlive)
 		if err != nil {
 			return err
 		}
@@ -7873,8 +7873,8 @@ func (n *ovn) ForwardUpdate(listenAddress string, req api.NetworkForwardPut, cli
 			})
 		})
 
-		// Notify all other members to refresh their BGP prefixes.
-		notifier, err := cluster.NewNotifier(n.state, n.state.Endpoints.NetworkCert(), n.state.ServerCert(), cluster.NotifyAll)
+		// Notify online members to refresh their BGP prefixes, offline members rebuild them on startup.
+		notifier, err := cluster.NewNotifier(n.state, n.state.Endpoints.NetworkCert(), n.state.ServerCert(), cluster.NotifyAlive)
 		if err != nil {
 			return err
 		}
@@ -7951,8 +7951,8 @@ func (n *ovn) ForwardDelete(listenAddress string, clientType request.ClientType)
 			return err
 		}
 
-		// Notify all other members to refresh their BGP prefixes.
-		notifier, err := cluster.NewNotifier(n.state, n.state.Endpoints.NetworkCert(), n.state.ServerCert(), cluster.NotifyAll)
+		// Notify online members to refresh their BGP prefixes, offline members rebuild them on startup.
+		notifier, err := cluster.NewNotifier(n.state, n.state.Endpoints.NetworkCert(), n.state.ServerCert(), cluster.NotifyAlive)
 		if err != nil {
 			return err
 		}
@@ -8584,8 +8584,8 @@ func (n *ovn) LoadBalancerCreate(loadBalancer api.NetworkLoadBalancersPost, clie
 			_ = n.ovnnb.DeleteLogicalRouterRoute(context.TODO(), n.getRouterName(), *listenAddressNet)
 		})
 
-		// Notify all other members to refresh their BGP prefixes.
-		notifier, err := cluster.NewNotifier(n.state, n.state.Endpoints.NetworkCert(), n.state.ServerCert(), cluster.NotifyAll)
+		// Notify online members to refresh their BGP prefixes, offline members rebuild them on startup.
+		notifier, err := cluster.NewNotifier(n.state, n.state.Endpoints.NetworkCert(), n.state.ServerCert(), cluster.NotifyAlive)
 		if err != nil {
 			return err
 		}
@@ -8736,8 +8736,8 @@ func (n *ovn) LoadBalancerUpdate(listenAddress string, req api.NetworkLoadBalanc
 			})
 		})
 
-		// Notify all other members to refresh their BGP prefixes.
-		notifier, err := cluster.NewNotifier(n.state, n.state.Endpoints.NetworkCert(), n.state.ServerCert(), cluster.NotifyAll)
+		// Notify online members to refresh their BGP prefixes, offline members rebuild them on startup.
+		notifier, err := cluster.NewNotifier(n.state, n.state.Endpoints.NetworkCert(), n.state.ServerCert(), cluster.NotifyAlive)
 		if err != nil {
 			return err
 		}
@@ -8865,8 +8865,8 @@ func (n *ovn) LoadBalancerDelete(listenAddress string, clientType request.Client
 			return err
 		}
 
-		// Notify all other members to refresh their BGP prefixes.
-		notifier, err := cluster.NewNotifier(n.state, n.state.Endpoints.NetworkCert(), n.state.ServerCert(), cluster.NotifyAll)
+		// Notify online members to refresh their BGP prefixes, offline members rebuild them on startup.
+		notifier, err := cluster.NewNotifier(n.state, n.state.Endpoints.NetworkCert(), n.state.ServerCert(), cluster.NotifyAlive)
 		if err != nil {
 			return err
 		}
