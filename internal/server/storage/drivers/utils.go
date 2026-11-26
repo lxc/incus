@@ -712,12 +712,18 @@ func regenerateFilesystemXFSUUID(devPath string) error {
 
 // copyDevice copies one device path to another using dd running at low priority.
 // It expects outputPath to exist already, so will not create it.
-func copyDevice(inputPath string, outputPath string) error {
+// A sparse copy skips zero blocks, only use it on a block device known to be empty.
+func copyDevice(inputPath string, outputPath string, sparse bool) error {
+	conv := "conv=nocreat"
+	if sparse {
+		conv += ",sparse"
+	}
+
 	cmd := []string{
 		"nice", "-n19", // Run dd with low priority to reduce CPU impact on other processes.
 		"dd", fmt.Sprintf("if=%s", inputPath), fmt.Sprintf("of=%s", outputPath),
-		"bs=16M",              // Use large buffer to reduce syscalls and speed up copy.
-		"conv=nocreat,sparse", // Don't create output file if missing (expect caller to have created output file), also attempt to make a sparse file.
+		"bs=16M", // Use large buffer to reduce syscalls and speed up copy.
+		conv,     // Don't create output file if missing (expect caller to have created output file).
 	}
 
 	// Check for Direct I/O support.
@@ -1215,7 +1221,8 @@ func BackupVolume(d Driver, v Volume, writer instancewriter.InstanceWriter, moun
 }
 
 // UnpackVolume unpack a volume from a backup tarball file.
-func UnpackVolume(d Driver, vol Volume, r io.ReadSeeker, tarArgs []string, unpacker []string, srcPrefix string, mountPath string, targetPath string) error {
+// A cleared target is one that is known to be empty, sparing it from being reset again.
+func UnpackVolume(d Driver, vol Volume, r io.ReadSeeker, tarArgs []string, unpacker []string, srcPrefix string, mountPath string, targetPath string, cleared bool) error {
 	volTypeName := "container"
 	if vol.IsVMBlock() {
 		volTypeName = "virtual machine"
@@ -1299,9 +1306,11 @@ func UnpackVolume(d Driver, vol Volume, r io.ReadSeeker, tarArgs []string, unpac
 			var allowUnsafeResize bool
 
 			// Reset the disk.
-			err = linux.ClearBlock(targetPath, 0)
-			if err != nil {
-				return err
+			if !cleared {
+				err = linux.ClearBlock(targetPath, 0)
+				if err != nil {
+					return err
+				}
 			}
 
 			// Open block file (use O_CREATE to support drivers that use image files).
