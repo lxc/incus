@@ -346,8 +346,8 @@ func (d *zone) Update(config *api.NetworkZonePut, clientType request.ClientType)
 			d.init(d.state, d.id, d.projectName, d.info)
 		})
 
-		// Notify all other nodes to update the network zone if no target specified.
-		notifier, err := cluster.NewNotifier(d.state, d.state.Endpoints.NetworkCert(), d.state.ServerCert(), cluster.NotifyAll)
+		// Notify the online members, the others reload the TSIG entries on startup.
+		notifier, err := cluster.NewNotifier(d.state, d.state.Endpoints.NetworkCert(), d.state.ServerCert(), cluster.NotifyAlive)
 		if err != nil {
 			return err
 		}
