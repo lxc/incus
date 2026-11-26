@@ -5193,7 +5193,13 @@ func (n *ovn) Update(newNetwork api.NetworkPut, targetNode string, clientType re
 	// pending, then don't apply the new settings to the node, just to the database record (ready for the
 	// actual global create request to be initiated).
 	if n.Status() == api.NetworkStatusPending || n.LocalStatus() == api.NetworkStatusPending {
-		return n.update(newNetwork, targetNode, clientType)
+		return n.update(newNetwork, targetNode, clientType, cluster.NotifyAll)
+	}
+
+	// Ensure that tunnels and uplink changes use NotifyAll, other changes can proceed with online members.
+	notifyPolicy := cluster.NotifyAlive
+	if slices.Contains(changedKeys, "network") || len(n.getTunnelsFromChangedKeys(changedKeys)) > 0 {
+		notifyPolicy = cluster.NotifyAll
 	}
 
 	reverter := revert.New()
@@ -5222,7 +5228,7 @@ func (n *ovn) Update(newNetwork api.NetworkPut, targetNode string, clientType re
 		}
 
 		// Reset changes to all nodes and database.
-		_ = n.update(oldNetwork, targetNode, clientType)
+		_ = n.update(oldNetwork, targetNode, clientType, notifyPolicy)
 
 		// Refresh the policies of the logical router we joined so any leftover references are removed.
 		if parentNewNet != nil {
@@ -5326,7 +5332,7 @@ func (n *ovn) Update(newNetwork api.NetworkPut, targetNode string, clientType re
 	}
 
 	// Apply changes to all nodes and database.
-	err = n.update(newNetwork, targetNode, clientType)
+	err = n.update(newNetwork, targetNode, clientType, notifyPolicy)
 	if err != nil {
 		return err
 	}
