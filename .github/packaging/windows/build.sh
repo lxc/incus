@@ -8,6 +8,7 @@ out="installers"
 
 mkdir -p "${out}"
 bash "${here}/make-license-rtf.sh" COPYING "${out}/license.rtf"
+go run ./cmd/generate-catalogs po po/catalogs
 
 build_one() {
     goarch="$1"

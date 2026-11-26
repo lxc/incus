@@ -11,6 +11,7 @@ res="pkgresources"
 mkdir -p "${out}" "${root}/usr/local/bin" "${res}"
 cp COPYING "${res}/LICENSE.txt"
 
+go run ./cmd/generate-catalogs po po/catalogs
 CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 go build -o incus.amd64 ./cmd/incus
 CGO_ENABLED=0 GOOS=darwin GOARCH=arm64 go build -o incus.arm64 ./cmd/incus
 lipo -create -output "${root}/usr/local/bin/incus" incus.amd64 incus.arm64
