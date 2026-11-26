@@ -3081,8 +3081,8 @@ func imageDelete(d *Daemon, r *http.Request) response.Response {
 				return nil
 			}
 
-			// Notify the other nodes about the removed image so they can remove it from disk too.
-			notifier, err := cluster.NewNotifier(s, s.Endpoints.NetworkCert(), s.ServerCert(), cluster.NotifyAll)
+			// Have the online members remove the image from disk, the others prune it on startup.
+			notifier, err := cluster.NewNotifier(s, s.Endpoints.NetworkCert(), s.ServerCert(), cluster.NotifyAlive)
 			if err != nil {
 				return err
 			}
