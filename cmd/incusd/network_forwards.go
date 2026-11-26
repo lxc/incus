@@ -738,19 +738,13 @@ func networkForwardPut(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
-	// Decode the request.
-	req := api.NetworkForwardPut{}
-	err = json.NewDecoder(r.Body).Decode(&req)
-	if err != nil {
-		return response.BadRequest(err)
-	}
-
 	targetMember := request.QueryParam(r, "target")
 	memberSpecific := targetMember != ""
 
-	if r.Method == http.MethodPatch {
-		var forward *api.NetworkForward
+	// Get the existing forward, for an unconditional PUT local forward is chosen.
+	var forward *api.NetworkForward
 
+	if r.Method == http.MethodPatch || r.Header.Get("If-Match") != "" {
 		err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
 			networkID := n.ID()
 			dbRecords, err := dbCluster.GetNetworkForwards(ctx, tx.Tx(), dbCluster.NetworkForwardFilter{
@@ -790,6 +784,21 @@ func networkForwardPut(d *Daemon, r *http.Request) response.Response {
 			return response.SmartError(err)
 		}
 
+		// Validate ETag.
+		err = localUtil.EtagCheck(r, forward.Etag())
+		if err != nil {
+			return response.PreconditionFailed(err)
+		}
+	}
+
+	// Decode the request.
+	req := api.NetworkForwardPut{}
+	err = json.NewDecoder(r.Body).Decode(&req)
+	if err != nil {
+		return response.BadRequest(err)
+	}
+
+	if r.Method == http.MethodPatch {
 		// If config being updated via "patch" method, then merge all existing config with the keys that
 		// are present in the request config.
 		for k, v := range forward.Config {
