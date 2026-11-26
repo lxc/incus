@@ -4,10 +4,15 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"maps"
 	"regexp"
+	"slices"
+	"strconv"
 	"strings"
 
+	"github.com/lxc/incus/v7/internal/linux"
 	"github.com/lxc/incus/v7/internal/server/instance/drivers/qemudefault"
+	"github.com/lxc/incus/v7/internal/server/instance/drivers/qmp"
 	"github.com/lxc/incus/v7/shared/util"
 )
 
@@ -32,6 +37,12 @@ type qemuBootState struct {
 	MemoryTopology *qemuMemoryTopology `json:"memory_topology"`
 
 	IOThreads int `json:"io_threads,omitempty"`
+
+	// PCIHotplug holds the PCIe ports of the devices plugged since boot.
+	PCIHotplug map[string][]int `json:"pci_hotplug,omitempty"`
+
+	// PCIVacated holds the PCIe ports of the devices unplugged since boot.
+	PCIVacated []int `json:"pci_vacated,omitempty"`
 }
 
 var qemuBootStateVersion = 1
@@ -176,4 +187,133 @@ func (d *qemu) saveBootState(bs qemuBootState) error {
 
 	// Save the changes.
 	return d.VolatileSet(volatileSet)
+}
+
+// savePCIPorts records how the PCIe ports differ from what a regular start sets up.
+func (d *qemu) savePCIPorts(monitor *qmp.Monitor) error {
+	if d.localConfig["volatile.vm.boot_state"] == "" {
+		return nil
+	}
+
+	bs, err := d.getBootState()
+	if err != nil {
+		return err
+	}
+
+	devices, err := monitor.QueryPCI()
+	if err != nil {
+		return err
+	}
+
+	// Get the devices sitting on each port.
+	ports := map[int][]string{}
+	for _, dev := range devices {
+		index, ok := strings.CutPrefix(dev.DevID, busDevicePortPrefix)
+		if !ok {
+			continue
+		}
+
+		port, err := strconv.Atoi(index)
+		if err != nil {
+			continue
+		}
+
+		ports[port] = []string{}
+		for _, child := range dev.Bridge.Devices {
+			ports[port] = append(ports[port], child.DevID)
+		}
+	}
+
+	// Find the failover NICs whose VF is still hidden.
+	visible := map[string]bool{}
+	standby := map[string]int{}
+	for port, ids := range ports {
+		for _, id := range ids {
+			name, ok := strings.CutPrefix(id, qemuDeviceIDPrefix)
+			if !ok {
+				continue
+			}
+
+			name = linux.PathNameDecode(name)
+			visible[name] = true
+
+			primary, failover := strings.CutSuffix(name, "/failover")
+			if failover {
+				standby[primary] = port
+			}
+		}
+	}
+
+	// QEMU only plugs the VF once the guest negotiates the standby feature.
+	// Until then, its port looks empty, so give it the one it got, the first empty port after the standby NIC.
+	for _, name := range slices.SortedFunc(maps.Keys(standby), func(a string, b string) int { return standby[a] - standby[b] }) {
+		if visible[name] {
+			continue
+		}
+
+		port := -1
+		recorded := bs.PCIHotplug[name]
+		if len(recorded) == 2 && recorded[0] == standby[name] {
+			ids, ok := ports[recorded[1]]
+			if ok && len(ids) == 0 {
+				port = recorded[1]
+			}
+		}
+
+		if port < 0 {
+			for _, p := range slices.Sorted(maps.Keys(ports)) {
+				if p > standby[name] && len(ports[p]) == 0 {
+					port = p
+					break
+				}
+			}
+		}
+
+		if port >= 0 {
+			ports[port] = []string{qemuDeviceIDPrefix + linux.PathNameEncode(name)}
+		}
+	}
+
+	// The last ports are the spare ones, an empty one below those lost its device.
+	spare := len(ports) - busSparePorts
+	vacated := slices.Clone(bs.PCIVacated)
+	for port, ids := range ports {
+		if port < spare && len(ids) == 0 && !slices.Contains(vacated, port) {
+			vacated = append(vacated, port)
+		}
+	}
+
+	slices.Sort(vacated)
+
+	// A device on a spare or vacated port was plugged since boot.
+	hotplug := map[string][]int{}
+	for _, port := range slices.Sorted(maps.Keys(ports)) {
+		if port < spare && !slices.Contains(vacated, port) {
+			continue
+		}
+
+		for _, id := range ports[port] {
+			name, ok := strings.CutPrefix(id, qemuDeviceIDPrefix)
+			if !ok {
+				continue
+			}
+
+			// The failover NIC comes first, as on a regular start.
+			name, failover := strings.CutSuffix(linux.PathNameDecode(name), "/failover")
+			if failover {
+				hotplug[name] = append([]int{port}, hotplug[name]...)
+			} else {
+				hotplug[name] = append(hotplug[name], port)
+			}
+		}
+	}
+
+	if slices.Equal(vacated, bs.PCIVacated) && maps.EqualFunc(hotplug, bs.PCIHotplug, slices.Equal[[]int]) {
+		return nil
+	}
+
+	bs.PCIHotplug = hotplug
+	bs.PCIVacated = vacated
+
+	return d.saveBootState(*bs)
 }

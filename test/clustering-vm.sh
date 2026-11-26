@@ -386,11 +386,17 @@ if section_enabled moves; then
     check_following_volume "$(member 1)"
 
     log "Live migrate the shared storage VM across the members"
+    incus config device add "${REMOTE}:v2" eth9 nic nictype=p2p
     for i in $(seq 2 "${MEMBERS}") 1; do
         incus move "${REMOTE}:v2" "${REMOTE}:v2" --target "$(member "${i}")"
         check_vm v2 "$(member "${i}")"
         check_volumes
     done
+
+    # Unplugging the NIC added after boot must leave the boot time one alone.
+    incus config device remove "${REMOTE}:v2" eth9
+    incus exec "${REMOTE}:v2" -- test -e /sys/class/net/enp5s0
+    ! incus exec "${REMOTE}:v2" -- test -e /sys/class/net/enp6s0 || false
 
     log "Check the storage locks of the shared storage VM"
     incus storage volume create "${REMOTE}:shared" vol4 --type=block size=64MiB
