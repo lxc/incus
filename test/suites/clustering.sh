@@ -2924,12 +2924,12 @@ test_clustering_image_refresh() {
 
     if [ "${poolDriver}" != "dir" ]; then
         incus admin sql global 'select name from storage_volumes'
-        # Check image storage volume records actually removed from relevant members and replaced with new fingerprint.
+        # The old image volumes stay while project foo still uses the image.
         if [ "${poolDriver}" = "ceph" ] || [ "${poolDriver}" = "linstor" ]; then
-            incus admin sql global 'select name from storage_volumes' | grep -Fc "${old_fingerprint}" | grep -Fx 0
+            incus admin sql global 'select name from storage_volumes' | grep -Fc "${old_fingerprint}" | grep -Fx 1
             incus admin sql global 'select name from storage_volumes' | grep -Fc "${new_fingerprint}" | grep -Fx 1
         else
-            incus admin sql global 'select name from storage_volumes' | grep -Fc "${old_fingerprint}" | grep -Fx 1
+            incus admin sql global 'select name from storage_volumes' | grep -Fc "${old_fingerprint}" | grep -Fx 3
             incus admin sql global 'select name from storage_volumes' | grep -Fc "${new_fingerprint}" | grep -Fx 2
         fi
     fi
