@@ -1658,6 +1658,14 @@ test_network_ovn_cluster_retry() {
     ovs-vsctl --if-exists del-br "incusovn${uplink_id}" -- add-br "incusovn${uplink_id}"
     INCUS_DIR="${INCUS_ONE_DIR}" incus network create "${ovnnet}" --type=ovn network="${uplink}" ipv4.address=10.10.11.1/24 ipv4.nat=true ipv6.address=none
 
+    # Create a second parent and a child network so we can test reparenting when a member is down.
+    parent2="${prefix}p2"
+    child="${prefix}ch"
+    INCUS_DIR="${INCUS_ONE_DIR}" incus network create "${parent2}" --type=ovn network="${uplink}" ipv4.address=10.10.12.1/24 ipv4.nat=true ipv6.address=none
+    INCUS_DIR="${INCUS_ONE_DIR}" incus network create "${child}" --type=ovn parent="${ovnnet}" ipv4.address=198.51.100.129/25 ipv4.nat=false ipv6.address=none
+    parent2_id=$(INCUS_DIR="${INCUS_ONE_DIR}" incus admin sql global "SELECT id FROM networks WHERE name='${parent2}'" --format=csv)
+    child_id=$(INCUS_DIR="${INCUS_ONE_DIR}" incus admin sql global "SELECT id FROM networks WHERE name='${child}'" --format=csv)
+
     # Shutdown the third member and wait for it to be detected as offline.
     INCUS_DIR="${INCUS_ONE_DIR}" incus config set cluster.offline_threshold 11
     INCUS_DIR="${INCUS_THREE_DIR}" incus admin shutdown
@@ -1677,6 +1685,14 @@ test_network_ovn_cluster_retry() {
     ovn-nbctl --bare --columns=vips list load_balancer | tr -d '"' | grep -xF "198.51.100.1=10.10.11.3"
     ovn-nbctl --bare --columns=vips list load_balancer | tr -d '"' | grep -xF "198.51.100.3:80=10.10.11.2:80"
 
+    # OVN network updates but uplink settings work when a member is down.
+    INCUS_DIR="${INCUS_ONE_DIR}" incus network set "${ovnnet}" dns.domain=offline.test
+    ovn-nbctl --bare --columns=options list dhcp_options | grep -F 'domain_name="offline.test"'
+    INCUS_DIR="${INCUS_ONE_DIR}" incus network set "${ovnnet}" network=none 2>&1 | grep -q "is down"
+    INCUS_DIR="${INCUS_ONE_DIR}" incus network get "${ovnnet}" network | grep -xF "${uplink}"
+    INCUS_DIR="${INCUS_ONE_DIR}" incus network set "${child}" parent="${parent2}"
+    [ "$(ovn-nbctl --bare --columns=name list logical_router_port | grep -E "lrp-int-net${child_id}$")" = "incus-net${parent2_id}-lr-lrp-int-net${child_id}" ]
+
     # Creation fails while a member is offline and leaves the network errored.
     net="${bridge}-ovn"
     INCUS_DIR="${INCUS_ONE_DIR}" incus network create "${net}" --type=ovn network=none bridge.mtu=1442 ipv4.address=192.0.2.1/24 ipv4.nat=false ipv6.address=none 2>&1 | grep -q "is down"
@@ -1693,10 +1709,14 @@ test_network_ovn_cluster_retry() {
     respawn_incus_cluster_member "${ns3}" "${INCUS_THREE_DIR}"
     INCUS_DIR="${INCUS_THREE_DIR}" incus network forward get "${ovnnet}" 198.51.100.1 target_address | grep -xF "10.10.11.3"
     INCUS_DIR="${INCUS_THREE_DIR}" incus network load-balancer show "${ovnnet}" 198.51.100.3 | grep -F "target_address: 10.10.11.2"
+    INCUS_DIR="${INCUS_THREE_DIR}" incus network get "${ovnnet}" dns.domain | grep -xF "offline.test"
+    INCUS_DIR="${INCUS_THREE_DIR}" incus network get "${child}" parent | grep -xF "${parent2}"
 
     # Ensure the online member refresh BGP prefixes when notified, and down member rebuilt them on startup.
+    nexthop=$(INCUS_DIR="${INCUS_ONE_DIR}" incus network get "${parent2}" volatile.network.ipv4.address)
     for dir in "${INCUS_TWO_DIR}" "${INCUS_THREE_DIR}"; do
         INCUS_DIR="${dir}" incus query /internal/debug/bgp | jq -e '[.prefixes[].prefix] | index("198.51.100.1/32") and index("198.51.100.3/32") and (index("198.51.100.2/32") | not) and (index("198.51.100.4/32") | not)'
+        INCUS_DIR="${dir}" incus query /internal/debug/bgp | jq -e --arg nexthop "${nexthop}" '[.prefixes[] | select(.prefix == "198.51.100.128/25")] | length == 1 and .[0].nexthop == $nexthop'
     done
 
     INCUS_DIR="${INCUS_ONE_DIR}" incus network create "${net}" --type=ovn
@@ -1715,6 +1735,8 @@ test_network_ovn_cluster_retry() {
     INCUS_DIR="${INCUS_ONE_DIR}" incus network delete "${net}"
     INCUS_DIR="${INCUS_ONE_DIR}" incus network forward delete "${ovnnet}" 198.51.100.1
     INCUS_DIR="${INCUS_ONE_DIR}" incus network load-balancer delete "${ovnnet}" 198.51.100.3
+    INCUS_DIR="${INCUS_ONE_DIR}" incus network delete "${child}"
+    INCUS_DIR="${INCUS_ONE_DIR}" incus network delete "${parent2}"
     INCUS_DIR="${INCUS_ONE_DIR}" incus network delete "${ovnnet}"
     INCUS_DIR="${INCUS_ONE_DIR}" incus network delete "${uplink}"
     ovs-vsctl --if-exists del-br "incusovn${uplink_id}"
