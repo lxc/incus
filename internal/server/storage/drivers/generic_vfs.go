@@ -833,6 +833,9 @@ func genericVFSCopyVolume(d Driver, initVolume func(vol Volume) (revert.Hook, er
 		return err
 	}
 
+	// Only a new volume is empty, and a new qcow2 volume isn't cleared.
+	targetEmpty := !refresh && !IsQcow2Block(vol)
+
 	// Define function to send a block volume.
 	sendBlockVol := func(srcVol Volume, targetVol Volume) error {
 		srcDevPath, err := d.GetVolumeDiskPath(srcVol)
@@ -845,8 +848,23 @@ func genericVFSCopyVolume(d Driver, initVolume func(vol Volume) (revert.Hook, er
 			return err
 		}
 
-		d.Logger().Debug("Copying block volume", logger.Ctx{"srcDevPath": srcDevPath, "targetPath": targetDevPath})
-		err = copyDevice(srcDevPath, targetDevPath)
+		// A sparse copy skips zeroes, so needs an empty target.
+		sparse := true
+		if !targetEmpty {
+			if d.Info().ZeroUnpack {
+				sparse = false
+			} else {
+				err = linux.ClearBlock(targetDevPath, 0)
+				if err != nil {
+					return err
+				}
+			}
+		}
+
+		targetEmpty = false
+
+		d.Logger().Debug("Copying block volume", logger.Ctx{"srcDevPath": srcDevPath, "targetPath": targetDevPath, "sparse": sparse})
+		err = copyDevice(srcDevPath, targetDevPath, sparse)
 		if err != nil {
 			return err
 		}
