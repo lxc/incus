@@ -416,7 +416,7 @@ func (d *zone) Content() (*strings.Builder, error) {
 	// Get all managed networks across all projects.
 	var projectNetworks map[string]map[int64]api.Network
 	var zoneProjects map[string]string
-	instProjects := []string{d.projectName}
+	inheritingProjects := []string{}
 
 	err = d.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
 		projectNetworks, err = tx.GetCreatedNetworks(ctx)
@@ -424,22 +424,24 @@ func (d *zone) Content() (*strings.Builder, error) {
 			return fmt.Errorf("Failed to load all networks: %w", err)
 		}
 
-		if d.projectName == api.ProjectDefaultName {
-			// Get all projects that don't have the network zone feature enabled.
-			projects, err := dbCluster.GetProjects(ctx, tx.Tx())
-			if err != nil {
-				return fmt.Errorf("Failed to load all projects: %w", err)
+		// Get the projects without the network zone feature, they use the zones of the default project.
+		projects, err := dbCluster.GetProjects(ctx, tx.Tx())
+		if err != nil {
+			return fmt.Errorf("Failed to load all projects: %w", err)
+		}
+
+		for _, dbProject := range projects {
+			if dbProject.Name == api.ProjectDefaultName {
+				continue
 			}
 
-			for _, dbProject := range projects {
-				apiProject, err := dbProject.ToAPI(ctx, tx.Tx())
-				if err != nil {
-					return fmt.Errorf("Failed to load project %q: %w", dbProject.Name, err)
-				}
+			apiProject, err := dbProject.ToAPI(ctx, tx.Tx())
+			if err != nil {
+				return fmt.Errorf("Failed to load project %q: %w", dbProject.Name, err)
+			}
 
-				if !util.IsTrue(apiProject.Config["features.networks.zones"]) {
-					instProjects = append(instProjects, apiProject.Name)
-				}
+			if !util.IsTrue(apiProject.Config["features.networks.zones"]) {
+				inheritingProjects = append(inheritingProjects, apiProject.Name)
 			}
 		}
 
@@ -458,6 +460,15 @@ func (d *zone) Content() (*strings.Builder, error) {
 	})
 	if err != nil {
 		return nil, err
+	}
+
+	// zoneProjectInstances returns the projects whose instances a forward zone covers.
+	zoneProjectInstances := func(zoneProjectName string) []string {
+		if zoneProjectName == api.ProjectDefaultName {
+			return append([]string{zoneProjectName}, inheritingProjects...)
+		}
+
+		return []string{zoneProjectName}
 	}
 
 	for netProjectName, networks := range projectNetworks {
@@ -529,15 +540,16 @@ func (d *zone) Content() (*strings.Builder, error) {
 				return record
 			}
 
-			for _, instProjectName := range instProjects {
-				if isReverse {
-					// Load network leases in correct project context for each forward zone referenced.
-					for _, forwardZoneName := range util.SplitNTrimSpace(n.Config()["dns.zone.forward"], ",", -1, true) {
-						if !slices.Contains(instProjects, zoneProjects[forwardZoneName]) {
-							continue
-						}
+			if isReverse {
+				// A reverse zone holds the PTR of every record the network's forward zones publish.
+				for _, forwardZoneName := range util.SplitNTrimSpace(netConfig["dns.zone.forward"], ",", -1, true) {
+					forwardZoneProjectName, found := zoneProjects[forwardZoneName]
+					if !found {
+						continue
+					}
 
-						// Load the leases for the forward zone project.
+					for _, instProjectName := range zoneProjectInstances(forwardZoneProjectName) {
+						// Load the leases of the project.
 						leases, err := n.Leases(instProjectName, request.ClientTypeNormal)
 						if err != nil {
 							return nil, err
@@ -556,8 +568,10 @@ func (d *zone) Content() (*strings.Builder, error) {
 							records = append(records, record)
 						}
 					}
-				} else {
-					// Load the leases in the forward zone's project.
+				}
+			} else {
+				for _, instProjectName := range zoneProjectInstances(d.projectName) {
+					// Load the leases of the project.
 					leases, err := n.Leases(instProjectName, request.ClientTypeNormal)
 					if err != nil {
 						return nil, err
