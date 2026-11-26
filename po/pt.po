@@ -8,11 +8,11 @@ msgstr ""
 "Project-Id-Version: incus\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
 "POT-Creation-Date: 2026-11-25 19:40-0500\n"
-"PO-Revision-Date: 2026-11-25 18:25+0000\n"
+"PO-Revision-Date: 2026-11-26 08:54+0000\n"
 "Last-Translator: Américo Monteiro <a-"
 "monteiro@users.noreply.hosted.weblate.org>\n"
-"Language-Team: Portuguese <https://hosted.weblate.org/projects/incus/cli/pt/"
-">\n"
+"Language-Team: Portuguese <https://hosted.weblate.org/projects/incus/cli/pt/>"
+"\n"
 "Language: pt\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -6009,9 +6009,8 @@ msgid "Model: %v"
 msgstr "Modelo: %v"
 
 #: cmd/incus/utils_sftp.go:606
-#, fuzzy
 msgid "Modification date"
-msgstr "Data de expiração"
+msgstr "Data de modificação"
 
 #: cmd/incus/monitor.go:37
 msgid "Monitor a local or remote server"
