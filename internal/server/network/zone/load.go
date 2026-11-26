@@ -166,8 +166,8 @@ func Create(s *state.State, projectName string, zoneInfo *api.NetworkZonesPost) 
 		return err
 	}
 
-	// Have the other cluster members refresh their TSIG entries too.
-	notifier, err := serverCluster.NewNotifier(s, s.Endpoints.NetworkCert(), s.ServerCert(), serverCluster.NotifyAll)
+	// Have the online members refresh their TSIG entries too, the others reload them on startup.
+	notifier, err := serverCluster.NewNotifier(s, s.Endpoints.NetworkCert(), s.ServerCert(), serverCluster.NotifyAlive)
 	if err != nil {
 		return err
 	}
