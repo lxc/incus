@@ -1308,6 +1308,26 @@ func (d *lvm) UnmountVolume(vol Volume, keepBlockDev bool, op *operations.Operat
 				return false, ErrInUse
 			}
 
+			// The config volume may be active without being mounted, e.g. after a failed live move.
+			if vol.IsVMBlock() {
+				fsVol := vol.NewVMBlockFilesystemVolume()
+
+				// The config volume can be mounted on its own, e.g. by backup file updates.
+				unlockFs, err := fsVol.MountLock()
+				if err != nil {
+					return false, err
+				}
+
+				if !fsVol.MountInUse() && !linux.IsMountPoint(fsVol.MountPath()) {
+					_, err = d.deactivateVolume(fsVol)
+				}
+
+				unlockFs()
+				if err != nil {
+					return false, err
+				}
+			}
+
 			_, err = d.deactivateVolume(vol)
 			if err != nil {
 				return false, err
@@ -1419,6 +1439,11 @@ func (d *lvm) RenameVolume(vol Volume, newVolName string, op *operations.Operati
 func (d *lvm) SetVolumeAccessMode(vol Volume, mode VolumeAccessMode) error {
 	// Custom block volumes get switched both ways when their dependent setting changes.
 	if !d.clustered || vol.IsSnapshot() || (vol.volType != VolumeTypeVM && !vol.IsCustomBlock()) {
+		return nil
+	}
+
+	// The caller's devices may be stale, the volume config tells whether it's still dependent.
+	if mode == VolumeAccessModeExclusive && !d.exclusiveVolume(vol) {
 		return nil
 	}
 
