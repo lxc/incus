@@ -1644,11 +1644,38 @@ test_network_ovn_cluster_retry() {
     ns3="${prefix}3"
     spawn_incus_and_join_cluster "${ns3}" "${bridge}" "${cert}" 3 1 "${INCUS_THREE_DIR}" "${INCUS_ONE_DIR}"
 
+    # New OVN network and uplink for load balancers and forwards.
+    uplink="${prefix}up"
+    ovnnet="${prefix}lst"
+    for member in node1 node2 node3; do
+        INCUS_DIR="${INCUS_ONE_DIR}" incus network create "${uplink}" --type=bridge --target="${member}"
+    done
+
+    INCUS_DIR="${INCUS_ONE_DIR}" incus network create "${uplink}" --type=bridge ipv4.address=10.10.10.1/24 ipv4.nat=false ipv4.dhcp.ranges=10.10.10.2-10.10.10.199 ipv4.ovn.ranges=10.10.10.200-10.10.10.254 ipv4.routes=198.51.100.0/24 ipv6.address=none
+
+    # Have their sysfs member can't see a new uplink OVS bridge appear in host: create it for them.
+    uplink_id=$(INCUS_DIR="${INCUS_ONE_DIR}" incus admin sql global "SELECT id FROM networks WHERE name='${uplink}'" --format=csv)
+    ovs-vsctl --if-exists del-br "incusovn${uplink_id}" -- add-br "incusovn${uplink_id}"
+    INCUS_DIR="${INCUS_ONE_DIR}" incus network create "${ovnnet}" --type=ovn network="${uplink}" ipv4.address=10.10.11.1/24 ipv4.nat=true ipv6.address=none
+
     # Shutdown the third member and wait for it to be detected as offline.
     INCUS_DIR="${INCUS_ONE_DIR}" incus config set cluster.offline_threshold 11
     INCUS_DIR="${INCUS_THREE_DIR}" incus admin shutdown
     sleep 12
     INCUS_DIR="${INCUS_ONE_DIR}" incus cluster show node3 | grep -q "status: Offline"
+
+    # Creation, Deletion and Update for forwards and load balancers work while a member is offline.
+    INCUS_DIR="${INCUS_ONE_DIR}" incus network forward create "${ovnnet}" 198.51.100.1 target_address=10.10.11.2
+    INCUS_DIR="${INCUS_ONE_DIR}" incus network forward set "${ovnnet}" 198.51.100.1 target_address=10.10.11.3
+    INCUS_DIR="${INCUS_ONE_DIR}" incus network forward create "${ovnnet}" 198.51.100.2
+    INCUS_DIR="${INCUS_ONE_DIR}" incus network forward delete "${ovnnet}" 198.51.100.2
+    INCUS_DIR="${INCUS_ONE_DIR}" incus network load-balancer create "${ovnnet}" 198.51.100.3
+    INCUS_DIR="${INCUS_ONE_DIR}" incus network load-balancer backend add "${ovnnet}" 198.51.100.3 b1 10.10.11.2
+    INCUS_DIR="${INCUS_ONE_DIR}" incus network load-balancer port add "${ovnnet}" 198.51.100.3 tcp 80 b1
+    INCUS_DIR="${INCUS_ONE_DIR}" incus network load-balancer create "${ovnnet}" 198.51.100.4
+    INCUS_DIR="${INCUS_ONE_DIR}" incus network load-balancer delete "${ovnnet}" 198.51.100.4
+    ovn-nbctl --bare --columns=vips list load_balancer | tr -d '"' | grep -xF "198.51.100.1=10.10.11.3"
+    ovn-nbctl --bare --columns=vips list load_balancer | tr -d '"' | grep -xF "198.51.100.3:80=10.10.11.2:80"
 
     # Creation fails while a member is offline and leaves the network errored.
     net="${bridge}-ovn"
@@ -1664,6 +1691,14 @@ test_network_ovn_cluster_retry() {
 
     # Once the member is back, retrying completes the creation with the stored config.
     respawn_incus_cluster_member "${ns3}" "${INCUS_THREE_DIR}"
+    INCUS_DIR="${INCUS_THREE_DIR}" incus network forward get "${ovnnet}" 198.51.100.1 target_address | grep -xF "10.10.11.3"
+    INCUS_DIR="${INCUS_THREE_DIR}" incus network load-balancer show "${ovnnet}" 198.51.100.3 | grep -F "target_address: 10.10.11.2"
+
+    # Ensure the online member refresh BGP prefixes when notified, and down member rebuilt them on startup.
+    for dir in "${INCUS_TWO_DIR}" "${INCUS_THREE_DIR}"; do
+        INCUS_DIR="${dir}" incus query /internal/debug/bgp | jq -e '[.prefixes[].prefix] | index("198.51.100.1/32") and index("198.51.100.3/32") and (index("198.51.100.2/32") | not) and (index("198.51.100.4/32") | not)'
+    done
+
     INCUS_DIR="${INCUS_ONE_DIR}" incus network create "${net}" --type=ovn
     INCUS_DIR="${INCUS_ONE_DIR}" incus network show "${net}" | grep -xF "status: Created"
     INCUS_DIR="${INCUS_THREE_DIR}" incus network show "${net}" | grep -xF "status: Created"
@@ -1678,6 +1713,11 @@ test_network_ovn_cluster_retry() {
     INCUS_DIR="${INCUS_ONE_DIR}" incus network create "${net}" --type=ovn network=none bridge.mtu=1442 ipv4.address=192.0.3.1/24 ipv4.nat=false ipv6.address=none
     INCUS_DIR="${INCUS_ONE_DIR}" incus network show "${net}" | grep -xF "status: Created"
     INCUS_DIR="${INCUS_ONE_DIR}" incus network delete "${net}"
+    INCUS_DIR="${INCUS_ONE_DIR}" incus network forward delete "${ovnnet}" 198.51.100.1
+    INCUS_DIR="${INCUS_ONE_DIR}" incus network load-balancer delete "${ovnnet}" 198.51.100.3
+    INCUS_DIR="${INCUS_ONE_DIR}" incus network delete "${ovnnet}"
+    INCUS_DIR="${INCUS_ONE_DIR}" incus network delete "${uplink}"
+    ovs-vsctl --if-exists del-br "incusovn${uplink_id}"
 
     INCUS_DIR="${INCUS_THREE_DIR}" incus admin shutdown
     INCUS_DIR="${INCUS_TWO_DIR}" incus admin shutdown
