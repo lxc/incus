@@ -3548,9 +3548,9 @@ func (n *bridge) Leases(projectName string, clientType request.ClientType) ([]ap
 		}
 	}
 
-	// Collect leases from other servers.
+	// Collect leases from the online members.
 	if clientType == request.ClientTypeNormal {
-		notifier, err := cluster.NewNotifier(n.state, n.state.Endpoints.NetworkCert(), n.state.ServerCert(), cluster.NotifyAll)
+		notifier, err := cluster.NewNotifier(n.state, n.state.Endpoints.NetworkCert(), n.state.ServerCert(), cluster.NotifyAlive)
 		if err != nil {
 			return nil, err
 		}
