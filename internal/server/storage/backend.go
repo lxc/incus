@@ -10647,7 +10647,7 @@ func (b *backend) qcow2UnpackVolume(vol drivers.Volume, snapshots []string, srcD
 				return err
 			}
 
-			err = drivers.UnpackVolume(b.driver, vol, srcData, tarArgs, unpacker, backupSnapshotPrefix, mountPath, diskPath)
+			err = drivers.UnpackVolume(b.driver, vol, srcData, tarArgs, unpacker, backupSnapshotPrefix, mountPath, diskPath, false)
 			if err != nil {
 				cleanup()
 				return err
@@ -10711,7 +10711,7 @@ func (b *backend) qcow2UnpackVolume(vol drivers.Volume, snapshots []string, srcD
 		return nil, nil, err
 	}
 
-	err = drivers.UnpackVolume(b.driver, vol, srcData, tarArgs, unpacker, filepath.Join(basePrefix, drivers.BackupPrefix(vol)), mountPath, diskPath)
+	err = drivers.UnpackVolume(b.driver, vol, srcData, tarArgs, unpacker, filepath.Join(basePrefix, drivers.BackupPrefix(vol)), mountPath, diskPath, false)
 	if err != nil {
 		cleanupNBD()
 		return nil, nil, err

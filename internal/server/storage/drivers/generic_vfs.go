@@ -359,6 +359,9 @@ func genericVFSCreateVolumeFromMigration(d Driver, initVolume func(vol Volume) (
 	// Block volumes are compressed if negotiated with the source.
 	compress := slices.Contains(volTargetArgs.MigrationType.Features, migration.BlockFeatureCompress)
 
+	// A volume created empty and about to be fully written doesn't need another reset.
+	cleared := !volTargetArgs.Refresh && (preFiller == nil || preFiller.Fill == nil) && d.Info().ZeroUnpack && !IsQcow2Block(vol)
+
 	recvBlockVol := func(volName string, conn io.ReadWriteCloser, path string) error {
 		var wrapper *ioprogress.ProgressTracker
 		if volTargetArgs.TrackProgress {
@@ -378,10 +381,14 @@ func genericVFSCreateVolumeFromMigration(d Driver, initVolume func(vol Volume) (
 		}
 
 		// Reset the disk.
-		err := linux.ClearBlock(path, 0)
-		if err != nil {
-			return err
+		if !cleared {
+			err := linux.ClearBlock(path, 0)
+			if err != nil {
+				return err
+			}
 		}
+
+		cleared = false
 
 		to, err := os.OpenFile(path, os.O_WRONLY|os.O_TRUNC, 0)
 		if err != nil {
@@ -677,6 +684,9 @@ func genericVFSBackupUnpack(d Driver, sysOS *sys.OS, vol Volume, snapshots []str
 
 	reverter.Add(func() { _ = d.DeleteVolume(vol, op) })
 
+	// A volume created empty and about to be fully written doesn't need another reset.
+	cleared := d.Info().ZeroUnpack && !IsQcow2Block(vol)
+
 	getDiskPath := func(v Volume) (string, error) {
 		if v.contentType != ContentTypeBlock && v.contentType != ContentTypeISO {
 			return "", nil
@@ -711,11 +721,13 @@ func genericVFSBackupUnpack(d Driver, sysOS *sys.OS, vol Volume, snapshots []str
 				return err
 			}
 
-			return UnpackVolume(d, vol, srcData, tarArgs, unpacker, backupSnapshotPrefix, mountPath, diskPath)
+			return UnpackVolume(d, vol, srcData, tarArgs, unpacker, backupSnapshotPrefix, mountPath, diskPath, cleared)
 		}, op)
 		if err != nil {
 			return nil, nil, err
 		}
+
+		cleared = false
 
 		snapVol, err := vol.NewSnapshot(snapName)
 		if err != nil {
@@ -753,7 +765,7 @@ func genericVFSBackupUnpack(d Driver, sysOS *sys.OS, vol Volume, snapshots []str
 		return nil, nil, err
 	}
 
-	err = UnpackVolume(d, vol, srcData, tarArgs, unpacker, filepath.Join(basePrefix, BackupPrefix(vol)), mountPath, diskPath)
+	err = UnpackVolume(d, vol, srcData, tarArgs, unpacker, filepath.Join(basePrefix, BackupPrefix(vol)), mountPath, diskPath, cleared)
 	if err != nil {
 		return nil, nil, err
 	}
