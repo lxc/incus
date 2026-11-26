@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: LXD\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2026-11-25 16:40-0500\n"
+"POT-Creation-Date: 2026-11-25 19:40-0500\n"
 "PO-Revision-Date: 2026-11-24 19:13+0000\n"
 "Last-Translator: Kazantsev Mikhail "
 "<kazan417@users.noreply.hosted.weblate.org>\n"
@@ -675,7 +675,7 @@ msgstr "%s (%s) (%d disponible)"
 msgid "%s (backend=%q, source=%q)"
 msgstr "%s (backend=%q, source=%q)"
 
-#: cmd/incus/file.go:718 cmd/incus/storage_volume_file.go:841
+#: cmd/incus/file.go:718 cmd/incus/storage_volume_file.go:822
 #: cmd/incus/utils_copy.go:102 cmd/incus/utils_sftp.go:550
 #, c-format
 msgid "%s is not a directory"
@@ -895,7 +895,7 @@ msgstr ""
 msgid "A client certificate is already present"
 msgstr "Un certificat client est déjà présent"
 
-#: cmd/incus/file.go:767 cmd/incus/storage_volume_file.go:879
+#: cmd/incus/file.go:767 cmd/incus/storage_volume_file.go:860
 msgid ""
 "A target file name must be specified when pushing from stdin; the target is "
 "a directory"
@@ -1230,11 +1230,11 @@ msgid "Alternative certificate name"
 msgstr "Nom alternatif du certificat"
 
 #: cmd/incus/file.go:445 cmd/incus/file.go:675
-#: cmd/incus/storage_volume_file.go:600 cmd/incus/storage_volume_file.go:797
+#: cmd/incus/storage_volume_file.go:581 cmd/incus/storage_volume_file.go:778
 msgid "Always follow symbolic links in source path"
 msgstr "Toujours suivre les liens symboliques source"
 
-#: cmd/incus/file.go:1042
+#: cmd/incus/file.go:1023
 #, c-format
 msgid "An instance path is required for %s"
 msgstr "Un chemin d’instance est requis pour %s"
@@ -1856,7 +1856,6 @@ msgstr "Nom du membre du cluster"
 msgid "Clustering enabled"
 msgstr "Clustering activé"
 
-#: cmd/incus/file.go:925 cmd/incus/storage_volume_file.go:359
 #: cmd/incus/utils_list.go:113 cmd/incus/utils_list.go:135
 msgid "Columns"
 msgstr "Colonnes"
@@ -2208,8 +2207,8 @@ msgid "Create and start instances from images"
 msgstr "Créer et démarrer des instances à partir d’images"
 
 #: cmd/incus/file.go:114 cmd/incus/file.go:440 cmd/incus/file.go:667
-#: cmd/incus/storage_volume_file.go:110 cmd/incus/storage_volume_file.go:595
-#: cmd/incus/storage_volume_file.go:789
+#: cmd/incus/storage_volume_file.go:110 cmd/incus/storage_volume_file.go:576
+#: cmd/incus/storage_volume_file.go:770
 msgid "Create any directories necessary"
 msgstr "Créer tous les répertoires nécessaires"
 
@@ -2716,20 +2715,20 @@ msgstr "Le serveur n’a pas retourné de nom pour ce nouvel instantané"
 msgid "Directory import is not available on this platform"
 msgstr "L'importation de répertoire n'est pas disponible sur cette plateforme"
 
-#: cmd/incus/exec.go:72
+#: cmd/incus/exec.go:73
 msgid "Directory to run the command in (default /root)"
 msgstr "Dossier dans lequel exécuter la commande (/root par défaut)"
 
-#: cmd/incus/file.go:990 cmd/incus/storage_volume_file.go:422
+#: cmd/incus/file.go:971 cmd/incus/storage_volume_file.go:403
 msgid "Disable authentication when using SSH SFTP listener"
 msgstr ""
 "Désactivez l'authentification lorsque vous utilisez SSH SFTP en mode écoute"
 
-#: cmd/incus/exec.go:68
+#: cmd/incus/exec.go:69
 msgid "Disable pseudo-terminal allocation"
 msgstr "Désactiver l'allocation pseudo-terminal"
 
-#: cmd/incus/exec.go:69
+#: cmd/incus/exec.go:70
 msgid "Disable stdin (reads from /dev/null)"
 msgstr "Désactiver stdin (lecture à partir de /dev/null)"
 
@@ -2889,7 +2888,7 @@ msgstr "Éditer la configuration des membres du cluster en YAML"
 msgid "Edit files in instances"
 msgstr "Éditer un fichier dans une instance"
 
-#: cmd/incus/storage_volume_file.go:510 cmd/incus/storage_volume_file.go:511
+#: cmd/incus/storage_volume_file.go:491 cmd/incus/storage_volume_file.go:492
 msgid "Edit files in storage volumes"
 msgstr "Éditer un fichier dans un volume de stockage"
 
@@ -2996,12 +2995,6 @@ msgstr "Modifier les configurations de confiance au format YAML"
 msgid "Empty column entry (redundant, leading or trailing comma) in '%s'"
 msgstr "Entrée de colonne vide (virgule redondante ou mal placée) dans « %s »"
 
-#: cmd/incus/utils_sftp.go:620
-#, fuzzy, c-format
-msgid "Empty column entry (redundant, leading or trailing command) in '%s'"
-msgstr ""
-"Entrée en colonne vide (commande redondante, de tête ou de queue ) dans '%s '"
-
 #: cmd/incus/image.go:1096
 #, c-format
 msgid "Empty property name in '%s'"
@@ -3066,7 +3059,7 @@ msgstr "Entrées"
 msgid "Entry TTL"
 msgstr "Entrée TTL"
 
-#: cmd/incus/exec.go:65
+#: cmd/incus/exec.go:66
 msgid ""
 "Environment variable to set (e.g. HOME=/home/foo) (may be passed multiple "
 "times)"
@@ -3250,11 +3243,11 @@ msgstr ""
 "mode local\n"
 "et cluster."
 
-#: cmd/incus/exec.go:45
+#: cmd/incus/exec.go:46
 msgid "Execute commands in instances"
 msgstr "Exécuter les commandes dans les instances"
 
-#: cmd/incus/exec.go:46
+#: cmd/incus/exec.go:47
 msgid ""
 "Execute commands in instances\n"
 "\n"
@@ -3448,8 +3441,8 @@ msgstr "Échec de la vérification de l'existence de l'instance \"%s\" : %w"
 msgid "Failed connecting to instance SFTP for client %q: %v"
 msgstr "Échec de la connexion au SFTP de l'instance pour le client %q : %v"
 
-#: cmd/incus/file.go:1060 cmd/incus/storage_volume_file.go:479
-#: cmd/incus/storage_volume_file.go:661 cmd/incus/storage_volume_file.go:828
+#: cmd/incus/file.go:1041 cmd/incus/storage_volume_file.go:460
+#: cmd/incus/storage_volume_file.go:642 cmd/incus/storage_volume_file.go:809
 #, c-format
 msgid "Failed connecting to instance SFTP: %w"
 msgstr "Échec de la connexion au SFTP de l'instance : %w"
@@ -3736,7 +3729,7 @@ msgstr "Échec du chargement de la configuration : %s"
 msgid "Failed to open input file %q: %w"
 msgstr "Impossible d’ouvrir le fichier d’entrée %q : %w"
 
-#: cmd/incus/file.go:793 cmd/incus/storage_volume_file.go:904
+#: cmd/incus/file.go:793 cmd/incus/storage_volume_file.go:885
 #: cmd/incus/utils_sftp.go:438
 #, c-format
 msgid "Failed to open source file %q: %v"
@@ -3781,7 +3774,7 @@ msgstr "Impossible de lire le fichier : %w"
 msgid "Failed to read from stdin: %w"
 msgstr "Échec de la lecture à partir de l'entrée standard : %w"
 
-#: cmd/incus/exec.go:237
+#: cmd/incus/exec.go:252
 #, fuzzy, c-format
 msgid "Failed to receive the command output: %w"
 msgstr "Échec du rendu de la configuration : %w"
@@ -3943,7 +3936,7 @@ msgid "Flags"
 msgstr "Drapeaux"
 
 #: cmd/incus/file.go:444 cmd/incus/file.go:674
-#: cmd/incus/storage_volume_file.go:599 cmd/incus/storage_volume_file.go:796
+#: cmd/incus/storage_volume_file.go:580 cmd/incus/storage_volume_file.go:777
 msgid "Follow command-line symbolic links in source path"
 msgstr "Suivre les liens symboliques source"
 
@@ -3985,7 +3978,7 @@ msgstr "Forcer la réécriture du fichier PEM existant"
 msgid "Force overwriting existing backup file"
 msgstr "Forcer l’écrasement d’un fichier de sauvegarde existant"
 
-#: cmd/incus/exec.go:67
+#: cmd/incus/exec.go:68
 msgid "Force pseudo-terminal allocation"
 msgstr "Forcer l'allocation d'un pseudo-terminal"
 
@@ -4057,8 +4050,7 @@ msgstr ""
 msgid "Format (base64|binary|efivarfs|hex|json|yaml)"
 msgstr "Format (base64|binary|efivarfs|hex|json|yaml)"
 
-#: cmd/incus/admin_sql.go:58 cmd/incus/file.go:926 cmd/incus/project.go:892
-#: cmd/incus/storage_volume_file.go:360
+#: cmd/incus/admin_sql.go:58 cmd/incus/project.go:892
 msgid ""
 "Format (csv|json|table|yaml|compact|markdown), use suffix \",noheader\" to "
 "disable headers and \",header\" to enable it if missing, e.g. csv,header"
@@ -4169,7 +4161,7 @@ msgstr "Fréquence : %vMhz"
 msgid "Frequency: %vMhz (min: %vMhz, max: %vMhz)"
 msgstr "Fréquence : %vMhz (min : %vMhz, max : %vMhz)"
 
-#: cmd/incus/utils_sftp.go:613
+#: cmd/incus/utils_sftp.go:605
 msgid "GID"
 msgstr "GID"
 
@@ -4473,7 +4465,7 @@ msgstr "Granularité"
 msgid "Granularity of the dirty bitmap in bytes"
 msgstr "Granularité de la bitmap de blocs modifiés en octets"
 
-#: cmd/incus/exec.go:71
+#: cmd/incus/exec.go:72
 msgid "Group ID to run the command as (default 0)"
 msgstr ""
 "ID du groupe avec lequel la commande doit être exécutée (valeur par défaut : "
@@ -4836,7 +4828,7 @@ msgstr "Instance déconnectée pour le client %q"
 msgid "Instance name is: %s"
 msgstr "Le nom de l’instance est : %s"
 
-#: cmd/incus/file.go:1047
+#: cmd/incus/file.go:1028
 msgid "Instance path cannot be used in SSH SFTP listener mode"
 msgstr ""
 "Le chemin d'accès à l'instance ne peut pas être utilisé en mode écouteur SSH "
@@ -5258,93 +5250,15 @@ msgstr "Liste les pools de stockage disponibles"
 msgid "List background operations"
 msgstr "Liste les opérations en arrière-plan"
 
-#: cmd/incus/storage_volume_file.go:335
+#: cmd/incus/storage_volume_file.go:333 cmd/incus/storage_volume_file.go:334
 #, fuzzy
 msgid "List files in custom volumes"
 msgstr "Pousser des fichiers dans un volume de stockage personnalisé"
 
-#: cmd/incus/storage_volume_file.go:336
-#, fuzzy
-msgid ""
-"List files in custom volumes\n"
-"\n"
-"Default column layout: ntsmugM\n"
-"\n"
-"== Columns ==\n"
-"The -c option takes a comma separated list of arguments that control\n"
-"which file attributes to output when displaying in table or csv format.\n"
-"\n"
-"Commas between consecutive shorthand chars are optional.\n"
-"\n"
-"Pre-defined column shorthand chars:\n"
-"  n - Name\n"
-"  t - Type\n"
-"  s - Size\n"
-"  m - Mode\n"
-"  u - UID\n"
-"  g - GID\n"
-"  M - Modified"
-msgstr ""
-"Liste les pools de stockage disponibles\n"
-"\n"
-"Disposition des colonnes par défaut : nDdus\n"
-"\n"
-"== Colonnes ==\n"
-"L’option -c prend une liste d’arguments séparés par des virgules "
-"(optionnelles) contrôlant quels attributs de pool de stockage afficher "
-"lorsque l’affichage est demandé dans un format tabulaire.\n"
-"\n"
-"Les arguments valides pour cette option sont les caractères suivants :\n"
-" – n : nom\n"
-" – D : driver\n"
-" – d : description\n"
-" – S : source\n"
-" – u : références\n"
-" – s : état"
-
-#: cmd/incus/file.go:901
+#: cmd/incus/file.go:899 cmd/incus/file.go:900
 #, fuzzy
 msgid "List files in instances"
 msgstr "Éditer un fichier dans une instance"
-
-#: cmd/incus/file.go:902
-#, fuzzy
-msgid ""
-"List files in instances\n"
-"\n"
-"Default column layout: ntsmugM\n"
-"\n"
-"== Columns ==\n"
-"The -c option takes a comma separated list of arguments that control\n"
-"which file attributes to output when displaying in table or csv format.\n"
-"\n"
-"Commas between consecutive shorthand chars are optional.\n"
-"\n"
-"Pre-defined column shorthand chars:\n"
-"  n - Name\n"
-"  t - Type\n"
-"  s - Size\n"
-"  m - Mode\n"
-"  u - UID\n"
-"  g - GID\n"
-"  M - Modified"
-msgstr ""
-"Liste les pools de stockage disponibles\n"
-"\n"
-"Disposition des colonnes par défaut : nDdus\n"
-"\n"
-"== Colonnes ==\n"
-"L’option -c prend une liste d’arguments séparés par des virgules "
-"(optionnelles) contrôlant quels attributs de pool de stockage afficher "
-"lorsque l’affichage est demandé dans un format tabulaire.\n"
-"\n"
-"Les arguments valides pour cette option sont les caractères suivants :\n"
-" – n : nom\n"
-" – D : driver\n"
-" – d : description\n"
-" – S : source\n"
-" – u : références\n"
-" – s : état"
 
 #: cmd/incus/image_alias.go:177
 msgid "List image aliases"
@@ -5789,11 +5703,11 @@ msgstr "Fréquence MII"
 msgid "MII state"
 msgstr "État MII"
 
-#: cmd/incus/utils_sftp.go:611
+#: cmd/incus/utils_sftp.go:603
 msgid "MODE"
 msgstr "MODE"
 
-#: cmd/incus/utils_sftp.go:614
+#: cmd/incus/utils_sftp.go:606
 msgid "MODIFIED"
 msgstr "DATE MODIF"
 
@@ -6162,7 +6076,7 @@ msgstr "La taille minimum est de 1 GiB"
 msgid "Missing target directory"
 msgstr "Répertoire cible manquant"
 
-#: cmd/incus/network.go:946
+#: cmd/incus/network.go:946 cmd/incus/utils_sftp.go:603
 msgid "Mode"
 msgstr "Mode"
 
@@ -6175,6 +6089,11 @@ msgstr "Modèle : %s"
 #, c-format
 msgid "Model: %v"
 msgstr "Modèle : %v"
+
+#: cmd/incus/utils_sftp.go:606
+#, fuzzy
+msgid "Modification date"
+msgstr "Date d’expiration"
 
 #: cmd/incus/monitor.go:37
 msgid "Monitor a local or remote server"
@@ -6209,11 +6128,11 @@ msgstr ""
 "Plus d’une variable a été donnée, mais le serveur ne supporte pas "
 "l’extension d’API « instance_nvram_bulk_update » requise"
 
-#: cmd/incus/storage_volume_file.go:410
+#: cmd/incus/storage_volume_file.go:391
 msgid "Mount files from custom storage volumes"
 msgstr "Monter des fichiers depuis un volume de stockage personnalisé"
 
-#: cmd/incus/storage_volume_file.go:411
+#: cmd/incus/storage_volume_file.go:392
 msgid ""
 "Mount files from custom storage volumes.\n"
 "If no target path is provided, start an SSH SFTP listener instead."
@@ -6221,11 +6140,11 @@ msgstr ""
 "Monter des fichiers depuis un volume de stockage personnalisé\n"
 "Si aucun chemin cible n’est donné, démarre un serveur SSH SFTP."
 
-#: cmd/incus/file.go:976
+#: cmd/incus/file.go:957
 msgid "Mount files from instances"
 msgstr "Monter des fichiers depuis une instance"
 
-#: cmd/incus/file.go:977
+#: cmd/incus/file.go:958
 msgid ""
 "Mount files from instances.\n"
 "If no target path is provided, start an SSH SFTP listener instead."
@@ -6316,7 +6235,7 @@ msgstr "L’import de répertoire doit se faire en tant que root"
 #: cmd/incus/storage_bucket.go:757 cmd/incus/storage_volume.go:1508
 #: cmd/incus/storage_volume_bitmap.go:212
 #: cmd/incus/storage_volume_snapshot.go:320 cmd/incus/top.go:44
-#: cmd/incus/utils_sftp.go:608
+#: cmd/incus/utils_sftp.go:600
 msgid "NAME"
 msgstr "NOM"
 
@@ -6424,6 +6343,7 @@ msgstr "Version NVRM : %v"
 #: cmd/incus/storage_volume.go:1464 cmd/incus/storage_volume.go:1508
 #: cmd/incus/storage_volume_bitmap.go:212
 #: cmd/incus/storage_volume_snapshot.go:320 cmd/incus/top.go:44
+#: cmd/incus/utils_sftp.go:600
 msgid "Name"
 msgstr "Nom"
 
@@ -6655,7 +6575,7 @@ msgid "Network zone record %s deleted"
 msgstr "L’enregistrement de zone réseau « %s » a été supprimé"
 
 #: cmd/incus/file.go:443 cmd/incus/file.go:673
-#: cmd/incus/storage_volume_file.go:598 cmd/incus/storage_volume_file.go:795
+#: cmd/incus/storage_volume_file.go:579 cmd/incus/storage_volume_file.go:776
 msgid "Never follow symbolic links in source path"
 msgstr "Ne jamais suivre les liens symboliques source"
 
@@ -6890,7 +6810,7 @@ msgstr "Stockage Optimisé"
 msgid "Override the source project"
 msgstr "impossible de supprimer le serveur distant par défaut"
 
-#: cmd/incus/exec.go:66
+#: cmd/incus/exec.go:67
 msgid "Override the terminal mode (auto, interactive or non-interactive)"
 msgstr "Surcharger le mode terminal (auto, interactif ou non-interactif)"
 
@@ -7098,7 +7018,7 @@ msgstr ""
 "standard"
 
 #: cmd/incus/file.go:441 cmd/incus/file.go:671
-#: cmd/incus/storage_volume_file.go:596 cmd/incus/storage_volume_file.go:793
+#: cmd/incus/storage_volume_file.go:577 cmd/incus/storage_volume_file.go:774
 msgid "Preserve ownership, timestamps and mode (implies --recursive)"
 msgstr ""
 "Conserver la propriété, les timestamps et le mode (implique --recursive)"
@@ -7336,7 +7256,7 @@ msgstr "Publier une instance en tant qu’image"
 msgid "Publishing instance: %s"
 msgstr "Publication de l’instance « %s »"
 
-#: cmd/incus/storage_volume_file.go:585 cmd/incus/storage_volume_file.go:586
+#: cmd/incus/storage_volume_file.go:566 cmd/incus/storage_volume_file.go:567
 msgid "Pull files from custom volumes"
 msgstr "Tirer des fichiers depuis un volume de stockage personnalisé"
 
@@ -7344,13 +7264,13 @@ msgstr "Tirer des fichiers depuis un volume de stockage personnalisé"
 msgid "Pull files from instances"
 msgstr "Tirer des fichiers depuis une instance"
 
-#: cmd/incus/file.go:573 cmd/incus/storage_volume_file.go:706
+#: cmd/incus/file.go:573 cmd/incus/storage_volume_file.go:687
 #: cmd/incus/utils_sftp.go:310
 #, c-format
 msgid "Pulling %s from %s: %%s"
 msgstr "Récupération de « %s » depuis « %s » : %%s"
 
-#: cmd/incus/storage_volume_file.go:779 cmd/incus/storage_volume_file.go:780
+#: cmd/incus/storage_volume_file.go:760 cmd/incus/storage_volume_file.go:761
 msgid "Push files into custom volumes"
 msgstr "Pousser des fichiers dans un volume de stockage personnalisé"
 
@@ -7358,7 +7278,7 @@ msgstr "Pousser des fichiers dans un volume de stockage personnalisé"
 msgid "Push files into instances"
 msgstr "Pousser des fichiers dans une instance"
 
-#: cmd/incus/file.go:826 cmd/incus/storage_volume_file.go:937
+#: cmd/incus/file.go:826 cmd/incus/storage_volume_file.go:918
 #: cmd/incus/utils_sftp.go:449
 #, c-format
 msgid "Pushing %s to %s: %%s"
@@ -7446,7 +7366,7 @@ msgid ""
 msgstr ""
 
 #: cmd/incus/file.go:442 cmd/incus/file.go:672
-#: cmd/incus/storage_volume_file.go:597 cmd/incus/storage_volume_file.go:794
+#: cmd/incus/storage_volume_file.go:578 cmd/incus/storage_volume_file.go:775
 msgid "Recursively transfer files"
 msgstr "Transférer les fichiers récursivement"
 
@@ -7861,7 +7781,7 @@ msgstr "Lancer sur tous les projets"
 msgid "SEVERITY"
 msgstr "GRAVITÉ"
 
-#: cmd/incus/image.go:1069 cmd/incus/utils_sftp.go:610
+#: cmd/incus/image.go:1069 cmd/incus/utils_sftp.go:602
 msgid "SIZE"
 msgstr "TAILLE"
 
@@ -8035,7 +7955,7 @@ msgstr "Définir un délai de maintien de connexion pour un serveur distant"
 msgid "Set a metadata property (key=value, may be passed multiple times)"
 msgstr "Nouvel alias à définir sur la cible (peut être utilisé plusieurs fois)"
 
-#: cmd/incus/file.go:991 cmd/incus/storage_volume_file.go:423
+#: cmd/incus/file.go:972 cmd/incus/storage_volume_file.go:404
 msgid "Set authentication user when using SSH SFTP listener"
 msgstr ""
 
@@ -8142,7 +8062,7 @@ msgstr "Définir l’URL (ou les URL) du serveur distant"
 msgid "Set the file's gid on create"
 msgstr "Définir le GID du fichier à sa création"
 
-#: cmd/incus/storage_volume_file.go:791
+#: cmd/incus/storage_volume_file.go:772
 msgid "Set the file's gid on push"
 msgstr "Définir le gid du fichier lors de l'envoi"
 
@@ -8150,7 +8070,7 @@ msgstr "Définir le gid du fichier lors de l'envoi"
 msgid "Set the file's perms on create"
 msgstr "Définir les permissions du fichier à sa création"
 
-#: cmd/incus/storage_volume_file.go:792
+#: cmd/incus/storage_volume_file.go:773
 msgid "Set the file's perms on push"
 msgstr "Définir les permissions du fichier lors de l'envoi"
 
@@ -8166,7 +8086,7 @@ msgstr ""
 msgid "Set the file's uid on create"
 msgstr "Définir l’UID du fichier à sa création"
 
-#: cmd/incus/storage_volume_file.go:790
+#: cmd/incus/storage_volume_file.go:771
 msgid "Set the file's uid on push"
 msgstr "Définir l'uid du fichier lors de l'envoi"
 
@@ -8271,7 +8191,7 @@ msgstr "Définir les valeurs de variables UEFI"
 msgid "Set values for UEFI variables."
 msgstr "Définir les valeurs de variables UEFI."
 
-#: cmd/incus/file.go:989 cmd/incus/storage_volume_file.go:421
+#: cmd/incus/file.go:970 cmd/incus/storage_volume_file.go:402
 msgid "Setup SSH SFTP listener on address:port instead of mounting"
 msgstr ""
 "Utiliser un serveur SFTP sur <adresse>:<port> plutôt qu’un point de montage"
@@ -8537,7 +8457,7 @@ msgstr "Afficher un avertissement"
 msgid "Signature type"
 msgstr "Type de signature"
 
-#: cmd/incus/image.go:1069
+#: cmd/incus/image.go:1069 cmd/incus/utils_sftp.go:602
 msgid "Size"
 msgstr "Taille"
 
@@ -8876,7 +8796,7 @@ msgstr "Périphériques TPM :"
 #: cmd/incus/network.go:1156 cmd/incus/network_allocations.go:51
 #: cmd/incus/network_integration.go:391 cmd/incus/network_peer.go:91
 #: cmd/incus/operation.go:123 cmd/incus/storage_volume.go:1507
-#: cmd/incus/utils_sftp.go:609 cmd/incus/warning.go:77
+#: cmd/incus/utils_sftp.go:601 cmd/incus/warning.go:77
 msgid "TYPE"
 msgstr "TYPE"
 
@@ -8898,11 +8818,11 @@ msgstr "La cible n’est pas dans un cluster"
 msgid "Target path %q already exists"
 msgstr "Le chemin cible %q existe déjà"
 
-#: cmd/incus/file.go:1037 cmd/incus/storage_volume_file.go:473
+#: cmd/incus/file.go:1018 cmd/incus/storage_volume_file.go:454
 msgid "Target path and --listen flag cannot be used together"
 msgstr ""
 
-#: cmd/incus/file.go:1031 cmd/incus/storage_volume_file.go:468
+#: cmd/incus/file.go:1012 cmd/incus/storage_volume_file.go:449
 msgid "Target path must be a directory"
 msgstr "Le chemin cible doit être un répertoire"
 
@@ -9409,7 +9329,8 @@ msgstr "`incus info --show-log %s%s` peut afficher plus d’informations"
 #: cmd/incus/network.go:1033 cmd/incus/network.go:1156
 #: cmd/incus/network_allocations.go:51 cmd/incus/network_integration.go:391
 #: cmd/incus/network_peer.go:91 cmd/incus/operation.go:123
-#: cmd/incus/storage_volume.go:1507 cmd/incus/warning.go:77
+#: cmd/incus/storage_volume.go:1507 cmd/incus/utils_sftp.go:601
+#: cmd/incus/warning.go:77
 msgid "Type"
 msgstr "Type"
 
@@ -9446,7 +9367,7 @@ msgstr "Variable UEFI %s:%s supprimée sur %s"
 msgid "UEFI variables %s deleted on %s\n"
 msgstr "Variables UEFI %s supprimées dans %s\n"
 
-#: cmd/incus/utils_sftp.go:612
+#: cmd/incus/utils_sftp.go:604
 msgid "UID"
 msgstr "UID"
 
@@ -9498,7 +9419,7 @@ msgstr ""
 "Impossible de se connecter au moindre membre du cluster spécifié dans le "
 "jeton d’association"
 
-#: cmd/incus/file.go:389 cmd/incus/storage_volume_file.go:542
+#: cmd/incus/file.go:389 cmd/incus/storage_volume_file.go:523
 #, c-format
 msgid "Unable to create a temporary file: %v"
 msgstr "Impossible de créer un fichier temporaire : %v"
@@ -9582,7 +9503,7 @@ msgstr ""
 "Caractère %c inconnu dans %s ; un caractère parmi « u », « g », « o », "
 "« a », « - », « + » ou « = » était attendu"
 
-#: cmd/incus/utils_list.go:196 cmd/incus/utils_sftp.go:626
+#: cmd/incus/utils_list.go:196
 #, c-format
 msgid "Unknown column shorthand char '%c' in '%s'"
 msgstr "Identifiant de colonne « %c » inconnu dans « %s »"
@@ -9899,7 +9820,7 @@ msgstr "Utiliser avec help ou --help pour voir les sous-commandes"
 msgid "Used: %v"
 msgstr "Utilisé : %v"
 
-#: cmd/incus/exec.go:70
+#: cmd/incus/exec.go:71
 msgid "User ID to run the command as (default 0)"
 msgstr "UID avec lequel lancer la commande (par défaut, 0)"
 
@@ -10263,11 +10184,11 @@ msgstr "OUI"
 msgid "You are currently missing the following:"
 msgstr ""
 
-#: cmd/incus/exec.go:113
+#: cmd/incus/exec.go:128
 msgid "You can't pass -t and -T at the same time"
 msgstr "Il est impossible de passer -t et -T simultanément"
 
-#: cmd/incus/exec.go:117
+#: cmd/incus/exec.go:132
 #, fuzzy
 msgid "You can't pass -t or -T at the same time as --mode"
 msgstr "impossible de copier vers le même nom de conteneur"
@@ -10559,7 +10480,7 @@ msgid ""
 "    Create and start a virtual machine, overriding the disk size and bus"
 msgstr ""
 
-#: cmd/incus/exec.go:58
+#: cmd/incus/exec.go:59
 msgid ""
 "incus exec c1 bash\n"
 "\tRun the \"bash\" command in instance \"c1\"\n"
@@ -10586,13 +10507,13 @@ msgid ""
 "   To create a symlink /bar in instance foo whose target is baz."
 msgstr ""
 
-#: cmd/incus/file.go:920
+#: cmd/incus/file.go:901
 msgid ""
 "incus file list foo/etc\n"
 "    List the files in the /etc directory of instance \"foo\"."
 msgstr ""
 
-#: cmd/incus/file.go:981
+#: cmd/incus/file.go:962
 msgid ""
 "incus file mount foo/root fooroot\n"
 "   To mount /root from the instance foo onto the local fooroot directory.\n"
@@ -11106,13 +11027,13 @@ msgid ""
 "target is baz."
 msgstr ""
 
-#: cmd/incus/storage_volume_file.go:354
+#: cmd/incus/storage_volume_file.go:335
 msgid ""
 "incus storage volume file list default vol1/data\n"
 "    List the files in the data directory of custom volume \"vol1\"."
 msgstr ""
 
-#: cmd/incus/storage_volume_file.go:415
+#: cmd/incus/storage_volume_file.go:396
 msgid ""
 "incus storage volume file mount mypool myvolume localdir\n"
 "   To mount the storage volume myvolume from pool mypool onto the local "
@@ -11123,7 +11044,7 @@ msgid ""
 "mypool."
 msgstr ""
 
-#: cmd/incus/storage_volume_file.go:587
+#: cmd/incus/storage_volume_file.go:568
 msgid ""
 "incus storage volume file pull local v1/etc/hosts .\n"
 "   To pull /etc/hosts from the custom volume \"v1\" and write it to the "
@@ -11134,7 +11055,7 @@ msgid ""
 "standard output."
 msgstr ""
 
-#: cmd/incus/storage_volume_file.go:781
+#: cmd/incus/storage_volume_file.go:762
 msgid ""
 "incus storage volume file push /etc/hosts local v1/etc/hosts\n"
 "   To push /etc/hosts into the custom volume \"v1\".\n"
@@ -11504,6 +11425,88 @@ msgstr "zone"
 #, c-format
 msgid "“%s”"
 msgstr "« %s »"
+
+#, fuzzy, c-format
+#~ msgid "Empty column entry (redundant, leading or trailing command) in '%s'"
+#~ msgstr ""
+#~ "Entrée en colonne vide (commande redondante, de tête ou de queue ) dans "
+#~ "'%s '"
+
+#, fuzzy
+#~ msgid ""
+#~ "List files in custom volumes\n"
+#~ "\n"
+#~ "Default column layout: ntsmugM\n"
+#~ "\n"
+#~ "== Columns ==\n"
+#~ "The -c option takes a comma separated list of arguments that control\n"
+#~ "which file attributes to output when displaying in table or csv format.\n"
+#~ "\n"
+#~ "Commas between consecutive shorthand chars are optional.\n"
+#~ "\n"
+#~ "Pre-defined column shorthand chars:\n"
+#~ "  n - Name\n"
+#~ "  t - Type\n"
+#~ "  s - Size\n"
+#~ "  m - Mode\n"
+#~ "  u - UID\n"
+#~ "  g - GID\n"
+#~ "  M - Modified"
+#~ msgstr ""
+#~ "Liste les pools de stockage disponibles\n"
+#~ "\n"
+#~ "Disposition des colonnes par défaut : nDdus\n"
+#~ "\n"
+#~ "== Colonnes ==\n"
+#~ "L’option -c prend une liste d’arguments séparés par des virgules "
+#~ "(optionnelles) contrôlant quels attributs de pool de stockage afficher "
+#~ "lorsque l’affichage est demandé dans un format tabulaire.\n"
+#~ "\n"
+#~ "Les arguments valides pour cette option sont les caractères suivants :\n"
+#~ " – n : nom\n"
+#~ " – D : driver\n"
+#~ " – d : description\n"
+#~ " – S : source\n"
+#~ " – u : références\n"
+#~ " – s : état"
+
+#, fuzzy
+#~ msgid ""
+#~ "List files in instances\n"
+#~ "\n"
+#~ "Default column layout: ntsmugM\n"
+#~ "\n"
+#~ "== Columns ==\n"
+#~ "The -c option takes a comma separated list of arguments that control\n"
+#~ "which file attributes to output when displaying in table or csv format.\n"
+#~ "\n"
+#~ "Commas between consecutive shorthand chars are optional.\n"
+#~ "\n"
+#~ "Pre-defined column shorthand chars:\n"
+#~ "  n - Name\n"
+#~ "  t - Type\n"
+#~ "  s - Size\n"
+#~ "  m - Mode\n"
+#~ "  u - UID\n"
+#~ "  g - GID\n"
+#~ "  M - Modified"
+#~ msgstr ""
+#~ "Liste les pools de stockage disponibles\n"
+#~ "\n"
+#~ "Disposition des colonnes par défaut : nDdus\n"
+#~ "\n"
+#~ "== Colonnes ==\n"
+#~ "L’option -c prend une liste d’arguments séparés par des virgules "
+#~ "(optionnelles) contrôlant quels attributs de pool de stockage afficher "
+#~ "lorsque l’affichage est demandé dans un format tabulaire.\n"
+#~ "\n"
+#~ "Les arguments valides pour cette option sont les caractères suivants :\n"
+#~ " – n : nom\n"
+#~ " – D : driver\n"
+#~ " – d : description\n"
+#~ " – S : source\n"
+#~ " – u : références\n"
+#~ " – s : état"
 
 #~ msgid "CPU TIME(s)"
 #~ msgstr "TEMPS CPU (s)"
