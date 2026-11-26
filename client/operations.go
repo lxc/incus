@@ -245,7 +245,7 @@ func (op *operation) WaitContext(ctx context.Context) error {
 
 	select {
 	case <-ctx.Done():
-		// Tear down the listener, cancel the server-side operation and unblock the monitor.
+		// Tear down the listener and unblock the monitor, the operation keeps running on the server.
 		op.handlerLock.Lock()
 		if op.listener != nil {
 			op.listener.Disconnect()
@@ -254,7 +254,6 @@ func (op *operation) WaitContext(ctx context.Context) error {
 
 		op.handlerLock.Unlock()
 
-		_ = op.Cancel()
 		op.closeChActive()
 
 		return ctx.Err()
