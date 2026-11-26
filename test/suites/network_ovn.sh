@@ -1629,20 +1629,20 @@ test_network_ovn_cluster_retry() {
     INCUS_ONE_DIR=$(mktemp -d -p "${TEST_DIR}" XXX)
     chmod +x "${INCUS_ONE_DIR}"
     ns1="${prefix}1"
-    spawn_incus_and_bootstrap_cluster "${ns1}" "${bridge}" "${INCUS_ONE_DIR}"
+    spawn_incus_and_bootstrap_cluster "${ns1}" "${bridge}" "${INCUS_ONE_DIR}" "${INCUS_BACKEND}"
     cert=$(sed ':a;N;$!ba;s/\n/\n\n/g' "${INCUS_ONE_DIR}/cluster.crt")
 
     setup_clustering_netns 2
     INCUS_TWO_DIR=$(mktemp -d -p "${TEST_DIR}" XXX)
     chmod +x "${INCUS_TWO_DIR}"
     ns2="${prefix}2"
-    spawn_incus_and_join_cluster "${ns2}" "${bridge}" "${cert}" 2 1 "${INCUS_TWO_DIR}" "${INCUS_ONE_DIR}"
+    spawn_incus_and_join_cluster "${ns2}" "${bridge}" "${cert}" 2 1 "${INCUS_TWO_DIR}" "${INCUS_ONE_DIR}" "${INCUS_BACKEND}"
 
     setup_clustering_netns 3
     INCUS_THREE_DIR=$(mktemp -d -p "${TEST_DIR}" XXX)
     chmod +x "${INCUS_THREE_DIR}"
     ns3="${prefix}3"
-    spawn_incus_and_join_cluster "${ns3}" "${bridge}" "${cert}" 3 1 "${INCUS_THREE_DIR}" "${INCUS_ONE_DIR}"
+    spawn_incus_and_join_cluster "${ns3}" "${bridge}" "${cert}" 3 1 "${INCUS_THREE_DIR}" "${INCUS_ONE_DIR}" "${INCUS_BACKEND}"
 
     # New OVN network and uplink for load balancers and forwards.
     uplink="${prefix}up"
@@ -1665,6 +1665,14 @@ test_network_ovn_cluster_retry() {
     INCUS_DIR="${INCUS_ONE_DIR}" incus network create "${child}" --type=ovn parent="${ovnnet}" ipv4.address=198.51.100.129/25 ipv4.nat=false ipv6.address=none
     parent2_id=$(INCUS_DIR="${INCUS_ONE_DIR}" incus admin sql global "SELECT id FROM networks WHERE name='${parent2}'" --format=csv)
     child_id=$(INCUS_DIR="${INCUS_ONE_DIR}" incus admin sql global "SELECT id FROM networks WHERE name='${child}'" --format=csv)
+
+    # Unpack the test image on the third member, its image volume is left behind while offline.
+    INCUS_DIR="${INCUS_ONE_DIR}" ensure_import_testimage
+    INCUS_DIR="${INCUS_ONE_DIR}" incus init testimage c-img --target node3 --no-profiles -s data
+    INCUS_DIR="${INCUS_ONE_DIR}" incus delete c-img
+    if [ "${INCUS_BACKEND}" != "dir" ]; then
+        INCUS_DIR="${INCUS_ONE_DIR}" incus storage volume list data type=image -c tnL --format csv | grep -c ",node3$" | grep -xF 1
+    fi
 
     # Shutdown the third member and wait for it to be detected as offline.
     INCUS_DIR="${INCUS_ONE_DIR}" incus config set cluster.offline_threshold 11
@@ -1693,6 +1701,13 @@ test_network_ovn_cluster_retry() {
     INCUS_DIR="${INCUS_ONE_DIR}" incus network set "${child}" parent="${parent2}"
     [ "$(ovn-nbctl --bare --columns=name list logical_router_port | grep -E "lrp-int-net${child_id}$")" = "incus-net${parent2_id}-lr-lrp-int-net${child_id}" ]
 
+    # Image deletion and lease or ACL log collection skip the offline member.
+    INCUS_DIR="${INCUS_ONE_DIR}" incus image delete testimage
+    INCUS_DIR="${INCUS_ONE_DIR}" incus network list-leases "${uplink}"
+    INCUS_DIR="${INCUS_ONE_DIR}" incus network acl create "${prefix}acl"
+    INCUS_DIR="${INCUS_ONE_DIR}" incus network acl show-log "${prefix}acl"
+    INCUS_DIR="${INCUS_ONE_DIR}" incus network acl delete "${prefix}acl"
+
     # Creation fails while a member is offline and leaves the network errored.
     net="${bridge}-ovn"
     INCUS_DIR="${INCUS_ONE_DIR}" incus network create "${net}" --type=ovn network=none bridge.mtu=1442 ipv4.address=192.0.2.1/24 ipv4.nat=false ipv6.address=none 2>&1 | grep -q "is down"
@@ -1707,6 +1722,17 @@ test_network_ovn_cluster_retry() {
 
     # Once the member is back, retrying completes the creation with the stored config.
     respawn_incus_cluster_member "${ns3}" "${INCUS_THREE_DIR}"
+
+    # The restarted member prunes the image volume of the deleted image.
+    for _ in $(seq 30); do
+        if [ "$(INCUS_DIR="${INCUS_THREE_DIR}" incus storage volume list data type=image -c tnL --format csv | grep -c ",node3$")" = "0" ]; then
+            break
+        fi
+
+        sleep 1
+    done
+
+    INCUS_DIR="${INCUS_THREE_DIR}" incus storage volume list data type=image -c tnL --format csv | grep -c ",node3$" | grep -xF 0
     INCUS_DIR="${INCUS_THREE_DIR}" incus network forward get "${ovnnet}" 198.51.100.1 target_address | grep -xF "10.10.11.3"
     INCUS_DIR="${INCUS_THREE_DIR}" incus network load-balancer show "${ovnnet}" 198.51.100.3 | grep -F "target_address: 10.10.11.2"
     INCUS_DIR="${INCUS_THREE_DIR}" incus network get "${ovnnet}" dns.domain | grep -xF "offline.test"

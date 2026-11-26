@@ -2638,9 +2638,46 @@ func pruneExpiredImagesTask(d *Daemon) (task.Func, task.Schedule) {
 
 func pruneLeftoverImages(s *state.State) {
 	opRun := func(op *operations.Operation) error {
+		// Remove the image volumes of images deleted while this member was offline.
+		var allImages map[string][]string
+		var volumes []db.StorageVolumeArgs
+		err := s.DB.Cluster.Transaction(s.ShutdownCtx, func(ctx context.Context, tx *db.ClusterTx) error {
+			var err error
+			allImages, err = tx.GetImages(ctx)
+			if err != nil {
+				return err
+			}
+
+			volumes, err = tx.GetStoragePoolVolumesWithType(ctx, db.StoragePoolVolumeTypeImage, true)
+			return err
+		})
+		if err != nil {
+			return fmt.Errorf("Unable to retrieve the list of image volumes: %w", err)
+		}
+
+		for _, vol := range volumes {
+			// Volumes on remote pools are handled by the member deleting the image.
+			_, found := allImages[vol.Name]
+			if found || vol.NodeID == -1 {
+				continue
+			}
+
+			pool, err := storagePools.LoadByName(s, vol.PoolName)
+			if err != nil {
+				return fmt.Errorf("Unable to load storage pool %q: %w", vol.PoolName, err)
+			}
+
+			err = pool.DeleteImage(vol.Name, op)
+			if err != nil {
+				return fmt.Errorf("Unable to remove leftover image volume %q: %w", vol.Name, err)
+			}
+
+			logger.Debug("Removed leftover image volume", logger.Ctx{"pool": vol.PoolName, "fingerprint": vol.Name})
+		}
+
 		// Check if dealing with shared image storage.
 		var storageImages string
-		err := s.DB.Node.Transaction(s.ShutdownCtx, func(ctx context.Context, tx *db.NodeTx) error {
+		err = s.DB.Node.Transaction(s.ShutdownCtx, func(ctx context.Context, tx *db.NodeTx) error {
 			nodeConfig, err := node.ConfigLoad(ctx, tx)
 			if err != nil {
 				return err
@@ -3044,8 +3081,8 @@ func imageDelete(d *Daemon, r *http.Request) response.Response {
 				return nil
 			}
 
-			// Notify the other nodes about the removed image so they can remove it from disk too.
-			notifier, err := cluster.NewNotifier(s, s.Endpoints.NetworkCert(), s.ServerCert(), cluster.NotifyAll)
+			// Have the online members remove the image from disk, the others prune it on startup.
+			notifier, err := cluster.NewNotifier(s, s.Endpoints.NetworkCert(), s.ServerCert(), cluster.NotifyAlive)
 			if err != nil {
 				return err
 			}

@@ -280,6 +280,17 @@ test_clustering_membership() {
     INCUS_DIR="${INCUS_TWO_DIR}" incus query /1.0/metrics | grep -Fx 'incus_cluster_member_group{group="default",member="node1"} 1'
     INCUS_DIR="${INCUS_TWO_DIR}" incus query /1.0/metrics | grep -F 'incus_cluster_member{architecture="' | grep -F 'failure_domain="default",member="node1"} 1'
 
+    # Operations that only need the online members keep working.
+    INCUS_DIR="${INCUS_ONE_DIR}" ensure_import_testimage
+    INCUS_DIR="${INCUS_TWO_DIR}" incus image delete testimage
+    INCUS_DIR="${INCUS_ONE_DIR}" incus network zone create "${prefix}.test"
+    INCUS_DIR="${INCUS_ONE_DIR}" incus network zone set "${prefix}.test" dns.nameservers="ns.${prefix}.test"
+    INCUS_DIR="${INCUS_TWO_DIR}" incus network zone get "${prefix}.test" dns.nameservers | grep -xF "ns.${prefix}.test"
+    INCUS_DIR="${INCUS_ONE_DIR}" incus network zone delete "${prefix}.test"
+    INCUS_DIR="${INCUS_ONE_DIR}" incus storage set data rsync.bwlimit=10
+    INCUS_DIR="${INCUS_TWO_DIR}" incus storage get data rsync.bwlimit | grep -xF 10
+    INCUS_DIR="${INCUS_ONE_DIR}" incus storage unset data rsync.bwlimit
+
     # Gracefully remove a node and check trust certificate is removed.
     INCUS_DIR="${INCUS_ONE_DIR}" incus cluster list | grep node4
     INCUS_DIR="${INCUS_ONE_DIR}" incus admin sql global 'SELECT name FROM certificates WHERE type = 2' | grep node4
