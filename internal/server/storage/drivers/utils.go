@@ -1221,7 +1221,8 @@ func BackupVolume(d Driver, v Volume, writer instancewriter.InstanceWriter, moun
 }
 
 // UnpackVolume unpack a volume from a backup tarball file.
-func UnpackVolume(d Driver, vol Volume, r io.ReadSeeker, tarArgs []string, unpacker []string, srcPrefix string, mountPath string, targetPath string) error {
+// A cleared target is one that is known to be empty, sparing it from being reset again.
+func UnpackVolume(d Driver, vol Volume, r io.ReadSeeker, tarArgs []string, unpacker []string, srcPrefix string, mountPath string, targetPath string, cleared bool) error {
 	volTypeName := "container"
 	if vol.IsVMBlock() {
 		volTypeName = "virtual machine"
@@ -1305,9 +1306,11 @@ func UnpackVolume(d Driver, vol Volume, r io.ReadSeeker, tarArgs []string, unpac
 			var allowUnsafeResize bool
 
 			// Reset the disk.
-			err = linux.ClearBlock(targetPath, 0)
-			if err != nil {
-				return err
+			if !cleared {
+				err = linux.ClearBlock(targetPath, 0)
+				if err != nil {
+					return err
+				}
 			}
 
 			// Open block file (use O_CREATE to support drivers that use image files).
