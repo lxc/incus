@@ -1677,6 +1677,12 @@ test_network_ovn_cluster_retry() {
     ovn-nbctl --bare --columns=vips list load_balancer | tr -d '"' | grep -xF "198.51.100.1=10.10.11.3"
     ovn-nbctl --bare --columns=vips list load_balancer | tr -d '"' | grep -xF "198.51.100.3:80=10.10.11.2:80"
 
+    # OVN network updates but uplink settings work when a member is down.
+    INCUS_DIR="${INCUS_ONE_DIR}" incus network set "${ovnnet}" dns.domain=offline.test
+    ovn-nbctl --bare --columns=options list dhcp_options | grep -F 'domain_name="offline.test"'
+    INCUS_DIR="${INCUS_ONE_DIR}" incus network set "${ovnnet}" network=none 2>&1 | grep -q "is down"
+    INCUS_DIR="${INCUS_ONE_DIR}" incus network get "${ovnnet}" network | grep -xF "${uplink}"
+
     # Creation fails while a member is offline and leaves the network errored.
     net="${bridge}-ovn"
     INCUS_DIR="${INCUS_ONE_DIR}" incus network create "${net}" --type=ovn network=none bridge.mtu=1442 ipv4.address=192.0.2.1/24 ipv4.nat=false ipv6.address=none 2>&1 | grep -q "is down"
@@ -1693,6 +1699,7 @@ test_network_ovn_cluster_retry() {
     respawn_incus_cluster_member "${ns3}" "${INCUS_THREE_DIR}"
     INCUS_DIR="${INCUS_THREE_DIR}" incus network forward get "${ovnnet}" 198.51.100.1 target_address | grep -xF "10.10.11.3"
     INCUS_DIR="${INCUS_THREE_DIR}" incus network load-balancer show "${ovnnet}" 198.51.100.3 | grep -F "target_address: 10.10.11.2"
+    INCUS_DIR="${INCUS_THREE_DIR}" incus network get "${ovnnet}" dns.domain | grep -xF "offline.test"
 
     # Ensure the online member refresh BGP prefixes when notified, and down member rebuilt them on startup.
     for dir in "${INCUS_TWO_DIR}" "${INCUS_THREE_DIR}"; do
