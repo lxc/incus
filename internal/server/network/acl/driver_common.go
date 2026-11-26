@@ -940,10 +940,9 @@ func (d *common) GetLog(clientType request.ClientType) (string, error) {
 		return "", fmt.Errorf("Failed to read OVN log file: %w", err)
 	}
 
-	// Aggregates the entries from the rest of the cluster.
+	// Aggregates the entries from the online members.
 	if clientType == request.ClientTypeNormal {
-		// Setup notifier to reach the rest of the cluster.
-		notifier, err := cluster.NewNotifier(d.state, d.state.Endpoints.NetworkCert(), d.state.ServerCert(), cluster.NotifyAll)
+		notifier, err := cluster.NewNotifier(d.state, d.state.Endpoints.NetworkCert(), d.state.ServerCert(), cluster.NotifyAlive)
 		if err != nil {
 			return "", err
 		}
