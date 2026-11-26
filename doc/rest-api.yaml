@@ -38,6 +38,21 @@ definitions:
         title: ApplicationAction defines a generic struct that can be used when triggering an application-specific action.
         type: object
         x-go-package: github.com/lxc/incus-os/incus-osd/api
+    BackupSource:
+        properties:
+            type:
+                description: Source type
+                example: url
+                type: string
+                x-go-name: Type
+            url:
+                description: URL of the backup tarball (for url)
+                example: https://storage.googleapis.com/my-bucket/backup.tar.gz?X-Goog-Signature=abcd
+                type: string
+                x-go-name: URL
+        title: BackupSource represents a remote backup to import.
+        type: object
+        x-go-package: github.com/lxc/incus/v7/shared/api
     BackupTarget:
         properties:
             access_key:
@@ -7677,6 +7692,8 @@ definitions:
     StorageVolumeSource:
         description: StorageVolumeSource represents the creation source for a new storage volume
         properties:
+            backup:
+                $ref: '#/definitions/BackupSource'
             certificate:
                 description: |-
                     Certificate (for migration)
@@ -7755,7 +7772,7 @@ definitions:
                 type: object
                 x-go-name: Websockets
             type:
-                description: Source type (copy or migration)
+                description: Source type (copy, migration or backup)
                 example: copy
                 type: string
                 x-go-name: Type
@@ -21446,7 +21463,7 @@ paths:
                 - application/json
             description: |-
                 Creates a new storage volume.
-                Will return an empty sync response on simple volume creation but an operation on copy or migration.
+                Will return an empty sync response on simple volume creation but an operation on copy, migration or backup import.
             operationId: storage_pool_volumes_post
             parameters:
                 - description: Storage pool name
@@ -21562,7 +21579,7 @@ paths:
                 - application/json
             description: |-
                 Creates a new storage volume (type specific endpoint).
-                Will return an empty sync response on simple volume creation but an operation on copy or migration.
+                Will return an empty sync response on simple volume creation but an operation on copy, migration or backup import.
             operationId: storage_pool_volumes_type_post
             parameters:
                 - description: Storage pool name

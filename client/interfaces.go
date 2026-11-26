@@ -622,6 +622,10 @@ type StorageVolumeBackupArgs struct {
 
 	// Name to import backup as
 	Name string
+
+	// Remote backup to import instead of BackupFile
+	// API extension: storage_volume_backup_import
+	Source *api.BackupSource
 }
 
 // The InstanceBackupArgs struct is used when creating a instance from a backup.

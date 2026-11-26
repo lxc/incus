@@ -610,6 +610,7 @@ var APIExtensions = []string{
 	"instance_migration_keep_paused",
 	"nic_routed_acls",
 	"kernel_boot",
+	"storage_volume_backup_import",
 }
 
 // APIExtensionsCount returns the number of available API extensions.
