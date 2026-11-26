@@ -2254,7 +2254,7 @@ func (n *bridge) Update(newNetwork api.NetworkPut, targetNode string, clientType
 	// pending, then don't apply the new settings to the node, just to the database record (ready for the
 	// actual global create request to be initiated).
 	if n.Status() == api.NetworkStatusPending || n.LocalStatus() == api.NetworkStatusPending {
-		return n.update(newNetwork, targetNode, clientType)
+		return n.update(newNetwork, targetNode, clientType, cluster.NotifyAll)
 	}
 
 	reverter := revert.New()
@@ -2265,7 +2265,7 @@ func (n *bridge) Update(newNetwork api.NetworkPut, targetNode string, clientType
 		// Define a function which reverts everything.
 		reverter.Add(func() {
 			// Reset changes to all nodes and database.
-			_ = n.update(oldNetwork, targetNode, clientType)
+			_ = n.update(oldNetwork, targetNode, clientType, cluster.NotifyAll)
 
 			// Reset any change that was made to local bridge.
 			_ = n.setup(newNetwork.Config)
@@ -2322,7 +2322,7 @@ func (n *bridge) Update(newNetwork api.NetworkPut, targetNode string, clientType
 	}
 
 	// Apply changes to all nodes and database.
-	err = n.update(newNetwork, targetNode, clientType)
+	err = n.update(newNetwork, targetNode, clientType, cluster.NotifyAll)
 	if err != nil {
 		return err
 	}

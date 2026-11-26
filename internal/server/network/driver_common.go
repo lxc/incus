@@ -379,8 +379,8 @@ func (n *common) DHCPv6Ranges() []iprange.Range {
 	return dhcpRanges
 }
 
-// update the internal config variables, and if not cluster notification, notifies all nodes and updates database.
-func (n *common) update(applyNetwork api.NetworkPut, targetNode string, clientType request.ClientType) error {
+// update the internal config variables, and if not cluster notification, notifies nodes following policy and updates database.
+func (n *common) update(applyNetwork api.NetworkPut, targetNode string, clientType request.ClientType, notifyPolicy cluster.NotifierPolicy) error {
 	// Update internal config before database has been updated (so that if update is a notification we apply
 	// the config being supplied and not that in the database).
 	n.description = applyNetwork.Description
@@ -390,8 +390,8 @@ func (n *common) update(applyNetwork api.NetworkPut, targetNode string, clientTy
 	// update the database.
 	if clientType != request.ClientTypeNotifier {
 		if targetNode == "" {
-			// Notify all other nodes to update the network if no target specified.
-			notifier, err := cluster.NewNotifier(n.state, n.state.Endpoints.NetworkCert(), n.state.ServerCert(), cluster.NotifyAll)
+			// Notify nodes to update the network if no target specified.
+			notifier, err := cluster.NewNotifier(n.state, n.state.Endpoints.NetworkCert(), n.state.ServerCert(), notifyPolicy)
 			if err != nil {
 				return err
 			}

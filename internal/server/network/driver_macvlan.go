@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"slices"
 
+	"github.com/lxc/incus/v7/internal/server/cluster"
 	"github.com/lxc/incus/v7/internal/server/cluster/request"
 	"github.com/lxc/incus/v7/internal/server/db"
 	"github.com/lxc/incus/v7/internal/server/ip"
@@ -160,7 +161,7 @@ func (n *macvlan) Update(newNetwork api.NetworkPut, targetNode string, clientTyp
 	// pending, then don't apply the new settings to the node, just to the database record (ready for the
 	// actual global create request to be initiated).
 	if n.Status() == api.NetworkStatusPending || n.LocalStatus() == api.NetworkStatusPending {
-		return n.update(newNetwork, targetNode, clientType)
+		return n.update(newNetwork, targetNode, clientType, cluster.NotifyAll)
 	}
 
 	reverter := revert.New()
@@ -169,7 +170,7 @@ func (n *macvlan) Update(newNetwork api.NetworkPut, targetNode string, clientTyp
 	// Define a function which reverts everything.
 	reverter.Add(func() {
 		// Reset changes to all nodes and database.
-		_ = n.update(oldNetwork, targetNode, clientType)
+		_ = n.update(oldNetwork, targetNode, clientType, cluster.NotifyAll)
 	})
 
 	if slices.Contains(changedKeys, "parent") {
@@ -180,7 +181,7 @@ func (n *macvlan) Update(newNetwork api.NetworkPut, targetNode string, clientTyp
 	}
 
 	// Apply changes to all nodes and database.
-	err = n.update(newNetwork, targetNode, clientType)
+	err = n.update(newNetwork, targetNode, clientType, cluster.NotifyAll)
 	if err != nil {
 		return err
 	}
