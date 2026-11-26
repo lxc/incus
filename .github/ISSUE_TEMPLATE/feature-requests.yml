@@ -1,6 +1,6 @@
 name: Feature request
 description: File a feature request.
-type: feature
+type: Feature
 body:
 - type: checkboxes
   attributes:
