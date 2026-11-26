@@ -25,6 +25,7 @@ templates/
 ```
 
 For both instance types, the `templates/` directory is optional.
+VM images can also include a kernel to boot directly, see {ref}`image_format_kernel`.
 
 ### Metadata
 
@@ -128,6 +129,18 @@ They always receive the following context:
 For convenience, the following functions are exported to the Pongo2 templates:
 
 - `config_get("user.foo", "bar")` - Returns the value of `user.foo`, or `"bar"` if not set.
+
+(image_format_kernel)=
+### Kernel (optional)
+
+A VM image can ship a kernel that Incus boots directly, bypassing the boot loader of the root disk.
+The files are placed next to `metadata.yaml` and end up at the root of the configuration volume of the instance:
+
+- `kernel.img` is a kernel booted without UEFI firmware. It can be accompanied by an `initrd.img` file and by a `kernel.cmdline` file holding the kernel command line.
+- `kernel.uki` is a Unified Kernel Image booted by the UEFI firmware. It must be signed with a key trusted by the firmware unless `security.secureboot` is disabled, and it cannot be combined with `kernel.img`, `initrd.img` or `kernel.cmdline`.
+
+In both cases, the `boot.kernel.cmdline` instance configuration key overrides the kernel command line.
+Publishing an instance that boots this way includes those files in the resulting image.
 
 ## Image tarballs
 
