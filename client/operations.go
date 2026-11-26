@@ -182,18 +182,39 @@ func (op *operation) Wait() error {
 // WaitContext lets you wait until the operation reaches a final state with context.Context.
 func (op *operation) WaitContext(ctx context.Context) error {
 	if op.skipListener {
+		// Round the timeout up so the wait context ends the wait rather than the server.
 		timeout := -1
 		deadline, ok := ctx.Deadline()
 		if ok {
-			timeout = int(time.Until(deadline).Seconds())
+			timeout = int((time.Until(deadline) + time.Second - 1) / time.Second)
 		}
 
-		opAPI, _, err := op.r.GetOperationWait(op.ID, timeout)
+		// Abort the request when either the wait or the client context ends.
+		reqCtx, cancel := context.WithCancel(op.r.ctx)
+		defer cancel()
+
+		stop := context.AfterFunc(ctx, cancel)
+		defer stop()
+
+		opAPI, _, err := op.r.WithContext(reqCtx).GetOperationWait(op.ID, timeout)
 		if err != nil {
+			if ctx.Err() != nil {
+				return ctx.Err()
+			}
+
 			return err
 		}
 
 		op.applyUpdate(*opAPI)
+
+		// The server returns the current state once its own timeout is reached.
+		if !opAPI.StatusCode.IsFinal() {
+			if ctx.Err() != nil {
+				return ctx.Err()
+			}
+
+			return fmt.Errorf("Operation still %s after the wait timed out", opAPI.Status)
+		}
 
 		if opAPI.Err != "" {
 			return errors.New(opAPI.Err)
@@ -224,7 +245,7 @@ func (op *operation) WaitContext(ctx context.Context) error {
 
 	select {
 	case <-ctx.Done():
-		// Tear down the listener, cancel the server-side operation and unblock the monitor.
+		// Tear down the listener and unblock the monitor, the operation keeps running on the server.
 		op.handlerLock.Lock()
 		if op.listener != nil {
 			op.listener.Disconnect()
@@ -233,7 +254,6 @@ func (op *operation) WaitContext(ctx context.Context) error {
 
 		op.handlerLock.Unlock()
 
-		_ = op.Cancel()
 		op.closeChActive()
 
 		return ctx.Err()
