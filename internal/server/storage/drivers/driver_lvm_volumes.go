@@ -2230,7 +2230,8 @@ func (d *lvm) RestoreVolume(vol Volume, snapshotName string, op *operations.Oper
 				}
 
 				d.Logger().Debug("Copying block volume", logger.Ctx{"srcDevPath": srcDevPath, "targetPath": targetDevPath})
-				err = copyDevice(srcDevPath, targetDevPath)
+				// The target holds data, so zeroes must be written too.
+				err = copyDevice(srcDevPath, targetDevPath, false)
 				if err != nil {
 					return err
 				}

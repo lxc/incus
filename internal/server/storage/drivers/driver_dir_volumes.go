@@ -595,7 +595,7 @@ func (d *dir) CreateVolumeSnapshot(snapVol Volume, op *operations.Operation) err
 			return err
 		}
 
-		err = copyDevice(srcDevPath, targetDevPath)
+		err = copyDevice(srcDevPath, targetDevPath, true)
 		if err != nil {
 			return err
 		}
@@ -735,7 +735,7 @@ func (d *dir) RestoreVolume(vol Volume, snapshotName string, op *operations.Oper
 			return err
 		}
 
-		err = copyDevice(srcDevPath, targetDevPath)
+		err = copyDevice(srcDevPath, targetDevPath, true)
 		if err != nil {
 			return err
 		}
