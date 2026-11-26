@@ -1220,6 +1220,15 @@ var InstanceConfigKeysContainer = map[string]func(value string) error{
 
 // InstanceConfigKeysVM is a map of config key to validator. (keys applying to VM only).
 var InstanceConfigKeysVM = map[string]func(value string) error{
+	// gendoc:generate(entity=instance, group=boot, key=boot.kernel.cmdline)
+	// This overrides the command line passed to a kernel booted directly from the configuration volume.
+	// ---
+	//  type: string
+	//  liveupdate: no
+	//  condition: virtual machine
+	//  shortdesc: Command-line arguments to pass to the kernel
+	"boot.kernel.cmdline": validate.IsAny,
+
 	// gendoc:generate(entity=instance, group=boot, key=boot.pxe)
 	// This controls IPv4 and IPv6 PXE support in the UEFI firmware of the virtual machine.
 	//

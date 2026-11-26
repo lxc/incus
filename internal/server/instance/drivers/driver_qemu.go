@@ -2096,14 +2096,14 @@ func (d *qemu) startupHook(monitor *qmp.Monitor, stage string) error {
 }
 
 // start starts the instance and can use an existing InstanceOperation lock.
-func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
+func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) (err error) {
 	d.logger.Debug("Start started", logger.Ctx{"stateful": stateful})
 	defer d.logger.Debug("Start finished", logger.Ctx{"stateful": stateful})
 
 	// Check that we are startable before creating an operation lock.
 	// Must happen before creating operation Start lock to avoid the status check returning Stopped due to the
 	// existence of a Start operation lock.
-	err := d.validateStartup(stateful, d.statusCode())
+	err = d.validateStartup(stateful, d.statusCode())
 	if err != nil {
 		return err
 	}
@@ -2121,7 +2121,7 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 		}
 	}
 
-	defer op.Done(err)
+	defer func() { op.Done(err) }()
 
 	// Record (or load) boot state.
 	bs := &qemuBootState{
@@ -2144,7 +2144,6 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 	// Ensure the correct vhost_vsock kernel module is loaded before establishing the vsock.
 	err = linux.LoadModule("vhost_vsock")
 	if err != nil {
-		op.Done(err)
 		return err
 	}
 
@@ -2153,9 +2152,8 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 
 	// Assign NUMA node(s) if needed.
 	if d.expandedConfig["limits.cpu.nodes"] == "balanced" {
-		err := d.balanceNUMANodes()
+		err = d.balanceNUMANodes()
 		if err != nil {
-			op.Done(err)
 			return err
 		}
 
@@ -2166,7 +2164,6 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 	stalePID := d.findQemuPID()
 	if stalePID > 0 {
 		err = fmt.Errorf("QEMU process %d is still running for this instance", stalePID)
-		op.Done(err)
 		return err
 	}
 
@@ -2174,9 +2171,8 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 	for _, logfile := range []string{d.LogFilePath(), d.ConsoleBufferLogPath(), d.QMPLogFilePath()} {
 		if util.PathExists(logfile) {
 			_ = os.Remove(logfile + ".old")
-			err := os.Rename(logfile, logfile+".old")
+			err = os.Rename(logfile, logfile+".old")
 			if err != nil && !errors.Is(err, fs.ErrNotExist) {
-				op.Done(err)
 				return err
 			}
 		}
@@ -2186,7 +2182,6 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 	if util.PathExists(d.pidFilePath()) {
 		err = os.Remove(d.pidFilePath())
 		if err != nil {
-			op.Done(err)
 			return fmt.Errorf("Failed removing old PID file %q: %w", d.pidFilePath(), err)
 		}
 	}
@@ -2197,9 +2192,9 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 	}
 
 	// Mount the instance's config volume.
-	mountInfo, err := d.mount()
+	var mountInfo *storagePools.MountInfo
+	mountInfo, err = d.mount()
 	if err != nil {
-		op.Done(err)
 		return err
 	}
 
@@ -2216,7 +2211,9 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 	}()
 
 	// New or existing vsock ID from volatile.
-	vsockID, vsockF, err := d.nextVsockID()
+	var vsockID uint32
+	var vsockF *os.File
+	vsockID, vsockF, err = d.nextVsockID()
 	if err != nil {
 		return err
 	}
@@ -2258,7 +2255,6 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 	if d.migrationReceiveStateful == nil {
 		err = d.generateConfigShare()
 		if err != nil {
-			op.Done(err)
 			return err
 		}
 	}
@@ -2266,32 +2262,29 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 	// Create all needed paths.
 	err = os.MkdirAll(d.LogPath(), 0o700)
 	if err != nil {
-		op.Done(err)
 		return err
 	}
 
 	err = os.MkdirAll(d.RunPath(), 0o700)
 	if err != nil {
-		op.Done(err)
 		return err
 	}
 
 	err = os.MkdirAll(d.DevicesPath(), 0o711)
 	if err != nil {
-		op.Done(err)
 		return err
 	}
 
 	err = os.MkdirAll(d.ShmountsPath(), 0o711)
 	if err != nil {
-		op.Done(err)
 		return err
 	}
 
 	// Copy EDK2 settings firmware to nvram file if needed.
 	// Set up EDK2 NVRAM when on EFI.
 	if d.architectureSupportsUEFI(d.architecture) {
-		fi, err := os.Lstat(d.nvramPath())
+		var fi os.FileInfo
+		fi, err = os.Lstat(d.nvramPath())
 		if err != nil && !errors.Is(err, fs.ErrNotExist) {
 			return err
 		}
@@ -2304,7 +2297,6 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 		if util.IsTrue(d.localConfig["volatile.apply_nvram"]) || fi == nil || fi.Mode()&os.ModeSymlink != os.ModeSymlink || dangling {
 			err = d.setupNvram()
 			if err != nil {
-				op.Done(err)
 				return err
 			}
 		}
@@ -2319,7 +2311,6 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 	if d.architectureSupportsUEFI(d.architecture) {
 		err = d.startNvramMirror(true)
 		if err != nil {
-			op.Done(err)
 			return err
 		}
 
@@ -2330,7 +2321,6 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 	err = d.VolatileSet(volatileSet)
 	if err != nil {
 		err = fmt.Errorf("Failed setting volatile keys: %w", err)
-		op.Done(err)
 		return err
 	}
 
@@ -2344,21 +2334,20 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 	// Load devices in sorted order, this ensures that device mounts are added in path order.
 	// Loading all devices first means that validation of all devices occurs before starting any of them.
 	for _, entry := range sortedDevices {
-		dev, err := d.deviceLoad(d, entry.Name, entry.Config, false)
+		var dev device.Device
+		dev, err = d.deviceLoad(d, entry.Name, entry.Config, false)
 		if err != nil {
 			if errors.Is(err, device.ErrUnsupportedDevType) {
 				continue // Skip unsupported device (allows for mixed instance type profiles).
 			}
 
 			err = fmt.Errorf("Failed start validation for device %q: %w", entry.Name, err)
-			op.Done(err)
 			return err
 		}
 
 		// Run pre-start of check all devices before starting any device to avoid expensive revert.
 		err = dev.PreStartCheck()
 		if err != nil {
-			op.Done(err)
 			return fmt.Errorf("Failed pre-start check for device %q: %w", dev.Name(), err)
 		}
 
@@ -2370,10 +2359,10 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 		dev := startDevices[i] // Local var for revert.
 
 		// Start the device.
-		runConf, err := d.deviceStart(dev, false)
+		var runConf *deviceConfig.RunConfig
+		runConf, err = d.deviceStart(dev, false)
 		if err != nil {
 			err = fmt.Errorf("Failed to start device %q: %w", dev.Name(), err)
-			op.Done(err)
 			return err
 		}
 
@@ -2407,14 +2396,12 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 	err = d.configDriveMountPathClear()
 	if err != nil {
 		err = fmt.Errorf("Failed cleaning config drive mount path %q: %w", configMntPath, err)
-		op.Done(err)
 		return err
 	}
 
 	err = os.Mkdir(configMntPath, 0o700)
 	if err != nil {
 		err = fmt.Errorf("Failed creating device mount path %q for config drive: %w", configMntPath, err)
-		op.Done(err)
 		return err
 	}
 
@@ -2426,38 +2413,38 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 	err = device.DiskMount(configSrcPath, configMntPath, false, "", []string{"ro"}, "none")
 	if err != nil {
 		err = fmt.Errorf("Failed mounting device mount path %q for config drive: %w", configMntPath, err)
-		op.Done(err)
 		return err
 	}
 
 	// Get qemu configuration and check qemu is installed.
-	qemuPath, qemuBus, err := d.QemuArchConfig()
+	var qemuPath, qemuBus string
+	qemuPath, qemuBus, err = d.QemuArchConfig()
 	if err != nil {
-		op.Done(err)
 		return err
 	}
 
 	// Snapshot if needed.
-	snapName, expiry, err := d.getStartupSnapNameAndExpiry(d)
+	var snapName string
+	var expiry *time.Time
+	snapName, expiry, err = d.getStartupSnapNameAndExpiry(d)
 	if err != nil {
 		err = fmt.Errorf("Failed getting startup snapshot info: %w", err)
-		op.Done(err)
 		return err
 	}
 
 	if snapName != "" && expiry != nil {
-		err := d.snapshot(snapName, *expiry, false)
+		err = d.snapshot(snapName, *expiry, false)
 		if err != nil {
 			err = fmt.Errorf("Failed taking startup snapshot: %w", err)
-			op.Done(err)
 			return err
 		}
 	}
 
 	// Setup the CPU.
+	var cpuTopology *qemuCPUTopology
 	if bs.CPUTopology == nil {
 		// Get the CPU topology.
-		cpuTopology, err := d.cpuTopology()
+		cpuTopology, err = d.cpuTopology()
 		if err != nil {
 			return err
 		}
@@ -2466,7 +2453,7 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 	} else if !bs.CPUTopology.Explicit {
 		// Re-compute the topology if the current configuration uses CPU pinning.
 		// The pins are host-specific so may have changed, but the topology must keep the same shape.
-		cpuTopology, err := d.cpuTopology()
+		cpuTopology, err = d.cpuTopology()
 		if err != nil {
 			return err
 		}
@@ -2474,7 +2461,6 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 		if cpuTopology.VCPUs != nil {
 			if cpuTopology.Sockets != bs.CPUTopology.Sockets || cpuTopology.Cores != bs.CPUTopology.Cores || cpuTopology.Threads != bs.CPUTopology.Threads {
 				err = errors.New("Current CPU topology doesn't match the topology the instance was started with")
-				op.Done(err)
 				return err
 			}
 
@@ -2483,7 +2469,8 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 	}
 
 	if bs.CPUType == "" {
-		cpuType, err := d.cpuType(bs)
+		var cpuType string
+		cpuType, err = d.cpuType(bs)
 		if err != nil {
 			return err
 		}
@@ -2492,7 +2479,8 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 	}
 
 	if bs.MaxCPUs == 0 {
-		maxCPUs, err := d.maxCPUs(bs.CPUTopology)
+		var maxCPUs int
+		maxCPUs, err = d.maxCPUs(bs.CPUTopology)
 		if err != nil {
 			return err
 		}
@@ -2503,7 +2491,8 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 	// Setup the memory.
 	if bs.MemoryTopology == nil {
 		// Get the memory topology.
-		memoryTopology, err := d.memoryTopology(bs)
+		var memoryTopology *qemuMemoryTopology
+		memoryTopology, err = d.memoryTopology(bs)
 		if err != nil {
 			return err
 		}
@@ -2515,18 +2504,84 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 	}
 
 	// Ensure SELinux context is generated and persisted.
-	contextIsNew, err := d.selinuxEnsureContext()
+	var contextIsNew bool
+	contextIsNew, err = d.selinuxEnsureContext()
 	if err != nil {
-		op.Done(err)
 		return err
 	}
 
 	seCtx := d.localConfig["volatile.selinux.context"]
 
+	var biosSet, kernelSet, isUKI bool
+	var kernelPath, initrdPath string
+	var kernel, initrd *os.File
+	// First, look for a kernel.img file.
+	kernel, err = os.Open(filepath.Join(d.Path(), "kernel.img"))
+	if err == nil {
+		// Make sure no kernel.uki file is there.
+		_, err = os.Stat(filepath.Join(d.Path(), "kernel.uki"))
+		if !errors.Is(err, fs.ErrNotExist) {
+			if err == nil {
+				err = errors.New("kernel.img and kernel.uki must not be present at the same time")
+			} else {
+				err = fmt.Errorf("Could not check for kernel UKI: %w", err)
+			}
+
+			return err
+		}
+
+		kernelSet = true
+		kernelPath = fmt.Sprintf("/proc/self/fd/%d", d.addFileDescriptor(&fdFiles, kernel))
+		initrd, err = os.Open(filepath.Join(d.Path(), "initrd.img"))
+		if err == nil {
+			initrdPath = fmt.Sprintf("/proc/self/fd/%d", d.addFileDescriptor(&fdFiles, initrd))
+		} else if !errors.Is(err, fs.ErrNotExist) {
+			err = fmt.Errorf("Failed to open initrd image: %w", err)
+			return err
+		}
+	} else if errors.Is(err, fs.ErrNotExist) {
+		// Else fallback to kernel.uki.
+		kernel, err = os.Open(filepath.Join(d.Path(), "kernel.uki"))
+		if err == nil {
+			// Make sure no initrd.img is there.
+			_, err = os.Stat(filepath.Join(d.Path(), "initrd.img"))
+			if !errors.Is(err, fs.ErrNotExist) {
+				if err == nil {
+					err = errors.New("initrd.img and kernel.uki must not be present at the same time")
+				} else {
+					err = fmt.Errorf("Could not check for initrd image: %w", err)
+				}
+
+				return err
+			}
+
+			kernelSet = true
+			kernelPath = fmt.Sprintf("/proc/self/fd/%d", d.addFileDescriptor(&fdFiles, kernel))
+			isUKI = true
+		} else if !errors.Is(err, fs.ErrNotExist) {
+			err = fmt.Errorf("Failed to open kernel UKI: %w", err)
+			return err
+		}
+	} else {
+		err = fmt.Errorf("Failed to open kernel image: %w", err)
+		return err
+	}
+
+	var qemuArgsOverrides []string
+	if d.expandedConfig["raw.qemu"] != "" {
+		qemuArgsOverrides, err = shellquote.Split(d.expandedConfig["raw.qemu"])
+		if err != nil {
+			return err
+		}
+
+		biosSet = slices.Contains(qemuArgsOverrides, "-bios")
+		kernelSet = kernelSet || slices.Contains(qemuArgsOverrides, "-kernel")
+	}
+
 	// Generate the QEMU configuration.
-	monHooks, err := d.generateQemuConfig(bs, mountInfo, qemuBus, vsockFD, devConfs, &fdFiles)
+	var monHooks []monitorHook
+	monHooks, err = d.generateQemuConfig(bs, mountInfo, qemuBus, vsockFD, devConfs, &fdFiles, biosSet, kernelSet, isUKI)
 	if err != nil {
-		op.Done(err)
 		return err
 	}
 
@@ -2546,6 +2601,46 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 		"-readconfig", confFile,
 		"-pidfile", d.pidFilePath(),
 		"-D", d.LogFilePath(),
+	}
+
+	if kernelPath != "" {
+		qemuArgs = append(qemuArgs, "-kernel", kernelPath)
+		if initrdPath != "" {
+			qemuArgs = append(qemuArgs, "-initrd", initrdPath)
+		}
+
+		var cmdline []byte
+		var cmdlineF *os.File
+		cmdlineF, err = os.Open(filepath.Join(d.Path(), "kernel.cmdline"))
+		if err == nil {
+			if isUKI {
+				_ = cmdlineF.Close()
+				err = errors.New("kernel.cmdline and kernel.uki must not be present at the same time")
+				return err
+			}
+
+			// Accept up to 4096 characters, fail if the file is bigger.
+			cmdline, err = io.ReadAll(io.LimitReader(cmdlineF, 4097))
+			_ = cmdlineF.Close()
+			if err != nil {
+				err = fmt.Errorf("Could not read kernel command-line arguments file: %w", err)
+				return err
+			}
+
+			if len(cmdline) > 4096 {
+				err = errors.New("kernel.cmdline exceeds 4096 bytes")
+				return err
+			}
+		} else if !errors.Is(err, fs.ErrNotExist) {
+			err = fmt.Errorf("Could not open kernel command-line arguments file: %w", err)
+			return err
+		}
+
+		if d.expandedConfig["boot.kernel.cmdline"] != "" {
+			qemuArgs = append(qemuArgs, "-append", d.expandedConfig["boot.kernel.cmdline"])
+		} else if cmdline != nil {
+			qemuArgs = append(qemuArgs, "-append", strings.TrimSpace(string(cmdline)))
+		}
 	}
 
 	// When a GPU is using virtio-gpu DRM native context, the guest needs a host-backed
@@ -2571,9 +2666,8 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 		}
 	} else if d.stateful {
 		// Stateless start requested but state is present, delete it.
-		err := os.Remove(d.StatePath())
+		err = os.Remove(d.StatePath())
 		if err != nil && !errors.Is(err, fs.ErrNotExist) {
-			op.Done(err)
 			return err
 		}
 
@@ -2582,7 +2676,6 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 			return tx.UpdateInstanceStatefulFlag(ctx, d.id, false)
 		})
 		if err != nil {
-			op.Done(err)
 			return fmt.Errorf("Error updating instance stateful flag: %w", err)
 		}
 	}
@@ -2597,13 +2690,11 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 
 		err = os.RemoveAll(smbios11)
 		if err != nil {
-			op.Done(err)
 			return err
 		}
 
 		err = os.Mkdir(smbios11, 0o700)
 		if err != nil {
-			op.Done(err)
 			return err
 		}
 
@@ -2619,9 +2710,11 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 			} else if strings.HasPrefix(k, "systemd.credential-binary.") {
 				configPrefix = "systemd.credential-binary."
 				smbiosPrefix = "io.systemd.credential.binary:"
-				data, err := base64.RawStdEncoding.DecodeString(strings.TrimRight(v, "="))
+				var data []byte
+				data, err = base64.RawStdEncoding.DecodeString(strings.TrimRight(v, "="))
 				if err != nil {
-					return fmt.Errorf("Invalid base64 value for %q: %q", k, v)
+					err = fmt.Errorf("Invalid base64 value for %q: %q", k, v)
+					return err
 				}
 
 				v = base64.StdEncoding.EncodeToString(data)
@@ -2634,7 +2727,6 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 			content := fmt.Sprintf("%s%s=%s", smbiosPrefix, strings.TrimPrefix(k, configPrefix), v)
 			err = os.WriteFile(smbios11File, []byte(content), 0o400)
 			if err != nil {
-				op.Done(err)
 				return err
 			}
 
@@ -2670,13 +2762,11 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 			// file for writing.
 			err = os.Chown(nvRAMPath, qemuUID, -1)
 			if err != nil {
-				op.Done(err)
 				return err
 			}
 
 			err = os.Chmod(nvRAMPath, 0o600)
 			if err != nil {
-				op.Done(err)
 				return err
 			}
 		}
@@ -2684,8 +2774,8 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 		// Change ownership of main instance directory.
 		err = os.Chown(d.Path(), qemuUID, -1)
 		if err != nil {
-			op.Done(err)
-			return fmt.Errorf("Failed to chown instance path: %w", err)
+			err = fmt.Errorf("Failed to chown instance path: %w", err)
+			return err
 		}
 
 		// Change ownership of config directory files so they are accessible to the
@@ -2695,7 +2785,7 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 		// to the VM. In order to ensure that non-root users in the VM cannot access these
 		// files be sure to mount the 9P share in the VM with the "access=0" option to allow
 		// only root user in VM to access the mounted share.
-		err := filepath.Walk(filepath.Join(d.Path(), "config"),
+		err = filepath.Walk(filepath.Join(d.Path(), "config"),
 			func(path string, info os.FileInfo, err error) error {
 				if err != nil {
 					return err
@@ -2709,19 +2799,8 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 				return nil
 			})
 		if err != nil {
-			op.Done(err)
 			return err
 		}
-	}
-
-	if d.expandedConfig["raw.qemu"] != "" {
-		fields, err := shellquote.Split(d.expandedConfig["raw.qemu"])
-		if err != nil {
-			op.Done(err)
-			return err
-		}
-
-		qemuArgs = append(qemuArgs, fields...)
 	}
 
 	// Apply the RTC configuration.
@@ -2745,14 +2824,14 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 		})
 	}
 
-	d.cmdArgs = qemuArgs
+	d.cmdArgs = append(qemuArgs, qemuArgsOverrides...)
 
 	// Precompile the QEMU scriptlet
 	src, ok := d.expandedConfig["raw.qemu.scriptlet"]
 	if ok {
 		instanceName := d.Name()
 
-		err := scriptletLoad.QEMUSet(src, instanceName)
+		err = scriptletLoad.QEMUSet(src, instanceName)
 		if err != nil {
 			err = fmt.Errorf("Failed loading QEMU scriptlet: %w", err)
 			return err
@@ -2762,21 +2841,18 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 	// Config startup hook.
 	err = d.runStartupScriptlet(nil, "config")
 	if err != nil {
-		op.Done(err)
 		return err
 	}
 
 	// Write the config file.
 	err = d.writeQemuConfigFile(confFile)
 	if err != nil {
-		op.Done(err)
 		return err
 	}
 
 	// Label the files QEMU needs before it's started.
 	err = d.selinuxLabelFiles(contextIsNew)
 	if err != nil {
-		op.Done(err)
 		return err
 	}
 
@@ -2817,16 +2893,15 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 	d.logger.Debug("Starting QEMU", logger.Ctx{"command": fullCmd})
 
 	// Setup background process.
-	p, err := subprocess.NewProcess(d.state.OS.ExecPath, fullCmd, d.EarlyLogFilePath(), d.EarlyLogFilePath())
+	var p *subprocess.Process
+	p, err = subprocess.NewProcess(d.state.OS.ExecPath, fullCmd, d.EarlyLogFilePath(), d.EarlyLogFilePath())
 	if err != nil {
-		op.Done(err)
 		return err
 	}
 
 	// Load the AppArmor profile
 	err = apparmor.InstanceLoad(d.state.OS, d, []string{qemuPath})
 	if err != nil {
-		op.Done(err)
 		return err
 	}
 
@@ -2838,13 +2913,11 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 	err = d.UpdateBackupFile()
 	if err != nil {
 		err = fmt.Errorf("Failed updating backup file: %w", err)
-		op.Done(err)
 		return err
 	}
 
 	err = p.StartWithFiles(context.Background(), fdFiles)
 	if err != nil {
-		op.Done(err)
 		return err
 	}
 
@@ -2852,14 +2925,13 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 	if err != nil {
 		stderr, _ := os.ReadFile(d.EarlyLogFilePath())
 		err = fmt.Errorf("Failed to run: %s: %s: %w", strings.Join(p.Args, " "), string(stderr), err)
-		op.Done(err)
 		return err
 	}
 
-	pid, err := d.pid()
+	var pid int
+	pid, err = d.pid()
 	if err != nil || pid <= 0 {
 		d.logger.Error("Failed to get VM process ID", logger.Ctx{"err": err, "pid": pid})
-		op.Done(err)
 		return err
 	}
 
@@ -2868,18 +2940,18 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 	})
 
 	// Start QMP monitoring.
-	monitor, err := d.qmpConnect()
+	var monitor *qmp.Monitor
+	monitor, err = d.qmpConnect()
 	if err != nil {
-		op.Done(err)
 		return err
 	}
 
 	// Record the QEMU machine definition.
 	// NOTE: We can't use CanLiveMigrate during instance startup as the boot state hasn't yet been recorded.
 	if !stateful && util.IsTrue(d.expandedConfig["migration.stateful"]) {
-		definition, err := monitor.MachineDefinition()
+		var definition string
+		definition, err = monitor.MachineDefinition()
 		if err != nil {
-			op.Done(err)
 			return err
 		}
 
@@ -2893,7 +2965,6 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 	// Early startup hook
 	err = d.startupHook(monitor, "early")
 	if err != nil {
-		op.Done(err)
 		return err
 	}
 
@@ -2906,25 +2977,23 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 				count = bs.CPUCount
 			}
 
-			err := d.setCPUs(monitor, count)
+			err = d.setCPUs(monitor, count)
 			if err != nil {
 				err = fmt.Errorf("Failed to add CPUs: %w", err)
-				op.Done(err)
 				return err
 			}
 		}
 	} else {
 		// Get the list of PIDs from the VM.
-		pids, err := monitor.GetCPUs()
+		var pids []int
+		pids, err = monitor.GetCPUs()
 		if err != nil {
-			op.Done(err)
 			return err
 		}
 
 		// Confirm nothing weird is going on.
 		if len(bs.CPUTopology.VCPUs) != len(pids) {
 			err = errors.New("QEMU has less vCPUs than configured")
-			op.Done(err)
 			return err
 		}
 
@@ -2934,9 +3003,8 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 			set.Set(int(bs.CPUTopology.VCPUs[uint64(i)]))
 
 			// Apply the pin.
-			err := unix.SchedSetaffinity(pid, &set)
+			err = unix.SchedSetaffinity(pid, &set)
 			if err != nil {
-				op.Done(err)
 				return err
 			}
 		}
@@ -2945,7 +3013,6 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 		err = d.setCoreSched(pids)
 		if err != nil {
 			err = fmt.Errorf("Failed to allocate new core scheduling domain for vCPU threads: %w", err)
-			op.Done(err)
 			return err
 		}
 	}
@@ -2954,7 +3021,6 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 	if len(startupCPUs) > 0 {
 		err = d.resetSupportThreadsAffinity(monitor, pid)
 		if err != nil {
-			op.Done(err)
 			return err
 		}
 	}
@@ -2963,7 +3029,6 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 	for _, monHook := range monHooks {
 		err = monHook(monitor)
 		if err != nil {
-			op.Done(err)
 			return fmt.Errorf("Failed setting up device via monitor: %w", err)
 		}
 	}
@@ -2971,7 +3036,6 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 	// Pre-start startup hook
 	err = d.startupHook(monitor, "pre-start")
 	if err != nil {
-		op.Done(err)
 		return err
 	}
 
@@ -2982,8 +3046,8 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 	// action below after this call.
 	err = monitor.Reset()
 	if err != nil {
-		op.Done(err)
-		return fmt.Errorf("Failed resetting VM: %w", err)
+		err = fmt.Errorf("Failed resetting VM: %w", err)
+		return err
 	}
 
 	// Set our default actions. Those can still be overridden in the event handler when Incus is running.
@@ -2995,8 +3059,8 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 
 	err = monitor.SetAction(actions)
 	if err != nil {
-		op.Done(err)
-		return fmt.Errorf("Failed setting reboot action: %w", err)
+		err = fmt.Errorf("Failed setting reboot action: %w", err)
+		return err
 	}
 
 	// Restore the state.
@@ -3004,7 +3068,7 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 		// Add back any memory hotplug slot.
 		if bs.MemoryTopology != nil {
 			for _, memSize := range bs.MemoryTopology.Extra {
-				err := d.hotplugMemory(monitor, memSize)
+				err = d.hotplugMemory(monitor, memSize)
 				if err != nil {
 					return err
 				}
@@ -3014,7 +3078,6 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 		// Receive the state.
 		err = d.restoreState(monitor)
 		if err != nil {
-			op.Done(err)
 			return err
 		}
 	}
@@ -3023,7 +3086,6 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 	err = monitor.Start()
 	if err != nil {
 		err = fmt.Errorf("Failed starting VM: %w", err)
-		op.Done(err)
 		return err
 	}
 
@@ -3051,15 +3113,14 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 			return tx.UpdateInstanceStatefulFlag(ctx, d.id, false)
 		})
 		if err != nil {
-			op.Done(err)
-			return fmt.Errorf("Error updating instance stateful flag: %w", err)
+			err = fmt.Errorf("Error updating instance stateful flag: %w", err)
+			return err
 		}
 	}
 
 	// Record last start state.
 	err = d.recordLastState()
 	if err != nil {
-		op.Done(err)
 		return err
 	}
 
@@ -3068,7 +3129,7 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 	// Post-start startup hook
 	err = d.startupHook(monitor, "post-start")
 	if err != nil {
-		op.Done(err)
+		op.Done(err) // Must come before Stop() otherwise stop will not proceed.
 
 		// Shut down the VM if the post-start commands fail.
 		_ = d.Stop(false)
@@ -3105,12 +3166,7 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 	op.Done(nil)
 
 	// Record the final boot state data.
-	err = d.saveBootState(*bs)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return d.saveBootState(*bs)
 }
 
 func (d *qemu) setupSEV(fdFiles *[]*os.File) (*qemuSevOpts, error) {
@@ -5168,7 +5224,7 @@ func (d *qemu) gpuNativeContextConfig(devConfs []*deviceConfig.RunConfig) (bool,
 }
 
 // generateQemuConfig generates the QEMU configuration.
-func (d *qemu) generateQemuConfig(bs *qemuBootState, mountInfo *storagePools.MountInfo, busName string, vsockFD int, devConfs []*deviceConfig.RunConfig, fdFiles *[]*os.File) ([]monitorHook, error) {
+func (d *qemu) generateQemuConfig(bs *qemuBootState, mountInfo *storagePools.MountInfo, busName string, vsockFD int, devConfs []*deviceConfig.RunConfig, fdFiles *[]*os.File, biosSet bool, kernelSet bool, isUKI bool) ([]monitorHook, error) {
 	var monHooks []monitorHook
 
 	guestOS := d.GuestOS()
@@ -5187,18 +5243,11 @@ func (d *qemu) generateQemuConfig(bs *qemuBootState, mountInfo *storagePools.Mou
 		return nil, err
 	}
 
-	// Parse raw.qemu.
-	rawOptions := []string{}
-	if d.expandedConfig["raw.qemu"] != "" {
-		rawOptions, err = shellquote.Split(d.expandedConfig["raw.qemu"])
-		if err != nil {
-			return nil, err
-		}
-	}
-
 	// Allow disabling the UEFI firmware.
-	if slices.Contains(rawOptions, "-bios") || slices.Contains(rawOptions, "-kernel") {
-		d.logger.Warn("Starting VM without default firmware (-bios or -kernel in raw.qemu)")
+	if biosSet {
+		d.logger.Warn("Starting VM without default firmware (BIOS overridden)")
+	} else if kernelSet && !isUKI {
+		d.logger.Info("Starting VM without default firmware (booting a non-UEFI kernel)")
 	} else if d.architectureSupportsUEFI(d.architecture) {
 		// Determine expected firmware.
 		firmware, err := d.selectedFirmware()
@@ -5525,7 +5574,7 @@ func (d *qemu) generateQemuConfig(bs *qemuBootState, mountInfo *storagePools.Mou
 
 	// Dynamic devices.
 	base := 0
-	if slices.Contains(rawOptions, "-kernel") {
+	if kernelSet {
 		base = 1
 	}
 
@@ -5714,7 +5763,7 @@ func (d *qemu) generateQemuConfig(bs *qemuBootState, mountInfo *storagePools.Mou
 	// process any user-specified overrides
 	confOverride, ok := d.expandedConfig["raw.qemu.conf"]
 	if ok {
-		d.conf, err = qemuRawCfgOverride(conf, confOverride)
+		d.conf, err = qemuRawCfgOverride(conf, confOverride, biosSet, kernelSet)
 		if err != nil {
 			return nil, err
 		}
@@ -9716,6 +9765,21 @@ func (d *qemu) Export(metaWriter io.Writer, rootfsWriter io.Writer, properties m
 	fnam = d.TemplatesPath()
 	if util.PathExists(fnam) {
 		err = filepath.Walk(fnam, writeToMetaTar)
+		if err != nil {
+			d.logger.Error("Failed exporting instance", ctxMap)
+			return nil, err
+		}
+	}
+
+	// Include the files used for direct kernel boot.
+	for _, name := range []string{"kernel.img", "initrd.img", "kernel.cmdline", "kernel.uki"} {
+		fnam = filepath.Join(cDir, name)
+		fi, err := os.Lstat(fnam)
+		if err != nil {
+			continue
+		}
+
+		err = writeToMetaTar(fnam, fi, nil)
 		if err != nil {
 			d.logger.Error("Failed exporting instance", ctxMap)
 			return nil, err

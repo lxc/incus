@@ -3647,6 +3647,7 @@ Adds the `target` query parameter to `GET /1.0/events` to get the event stream o
 ## `network_ovn_parent_shared`
 
 The `parent` of an OVN network can now be a network of the default project shared into the network's project through `restricted.networks.access`.
+
 ## `instance_migration_keep_paused`
 
 Adds a `keep_paused` field to `POST /1.0/instances/{name}` for live migrations to another server.
@@ -3658,3 +3659,10 @@ This adds support for network ACLs on `routed` NICs, through the `security.acls`
 `security.acls.default.egress.action`, `security.acls.default.ingress.logged` and `security.acls.default.egress.logged`
 configuration keys. The ACLs are taken from the instance's effective network project, and applied by `nftables` on the
 host side of the NIC.
+
+## `kernel_boot`
+
+When a `kernel.uki` or a `kernel.img` file is present at the root of the configuration volume of a VM, the instance boots it through the Direct Linux Boot feature of QEMU.
+With `kernel.uki`, the UKI is booted by the UEFI firmware, so it must be signed with a key trusted by the firmware unless `security.secureboot` is disabled.
+With `kernel.img`, UEFI is disabled. An `initrd.img` file next to it is used as the `initrd` and the content of a `kernel.cmdline` file as the kernel command line.
+For both, the new `boot.kernel.cmdline` configuration key overrides the kernel command line.
