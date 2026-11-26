@@ -5153,14 +5153,17 @@ func (n *ovn) Update(newNetwork api.NetworkPut, targetNode string, clientType re
 	}
 
 	if clientType == request.ClientTypeNotifier {
+		//  We notify members before database updates so we should apply new config first.
+		n.config = newNetwork.Config
+
 		// The parent may have changed, so refresh from the incoming config.
-		err = n.refreshParent(newNetwork.Config)
+		err = n.refreshParent(n.config)
 		if err != nil {
 			n.logger.Warn("Failed refreshing parent network relationship", logger.Ctx{"err": err})
 		}
 
-		// Reload BGP on notifications.
-		err = n.bgpSetup(nil)
+		// Reload BGP on notifications, replace old config.
+		err = n.bgpSetup(oldNetwork.Config)
 		if err != nil {
 			return err
 		}
