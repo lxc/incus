@@ -1522,7 +1522,7 @@ test_network_ovn_peering() {
     ovn2IPv6="$(incus network get ovn2 volatile.network.ipv6.address --project=prj-ovn2)"
 
     ip a add "${ovn1NICIPv4}/32" dev incusbr0
-    ip a add "${ovn1NICIPv6}/128" dev incusbr0
+    ip a add "${ovn1NICIPv6}/128" dev incusbr0 nodad
     ip -4 r add "${ovn2NICIPv4}/32" via "${ovn2IPv4}" dev incusbr0 src "${ovn1NICIPv4}"
     ip -6 r add "${ovn2NICIPv6}/128" via "${ovn2IPv6}" dev incusbr0 src "${ovn1NICIPv6}"
 
