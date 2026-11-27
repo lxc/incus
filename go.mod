@@ -5,12 +5,12 @@ go 1.26.10
 require (
 	github.com/FuturFusion/vsock v0.0.0-20260219213046-d78a7104f821
 	github.com/LINBIT/golinstor v0.65.4
-	github.com/adhocore/gronx v1.20.9
+	github.com/adhocore/gronx v1.20.10
 	github.com/apex/log v1.9.0
-	github.com/aws/aws-sdk-go-v2 v1.48.0
-	github.com/aws/aws-sdk-go-v2/credentials v1.21.3
-	github.com/aws/aws-sdk-go-v2/feature/s3/transfermanager v0.5.12
-	github.com/aws/aws-sdk-go-v2/service/s3 v1.116.0
+	github.com/aws/aws-sdk-go-v2 v1.48.1
+	github.com/aws/aws-sdk-go-v2/credentials v1.21.4
+	github.com/aws/aws-sdk-go-v2/feature/s3/transfermanager v0.5.13
+	github.com/aws/aws-sdk-go-v2/service/s3 v1.116.1
 	github.com/aws/smithy-go v1.28.10
 	github.com/cenkalti/backoff/v7 v7.0.3
 	github.com/checkpoint-restore/go-criu/v8 v8.5.0
@@ -36,7 +36,7 @@ require (
 	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51
 	github.com/klauspost/pgzip v1.3.0
 	github.com/lxc/go-lxc v0.0.0-20260316180011-3af4ce000ed7
-	github.com/lxc/incus-os/incus-osd v0.0.0-20261124140914-3ae58cf9f90f
+	github.com/lxc/incus-os/incus-osd v0.0.0-20261125202137-9b650146373b
 	github.com/mattn/go-colorable v0.1.16
 	github.com/mattn/go-runewidth v0.0.31
 	github.com/mattn/go-sqlite3 v1.14.53
@@ -89,14 +89,14 @@ require (
 	github.com/AdaLogics/go-fuzz-headers v0.0.0-20240806141605-e8a1dd7889d6 // indirect
 	github.com/FuturFusion/openfga-sync v0.0.0-20261116230700-666b1d67c54a // indirect
 	github.com/Rican7/retry v0.3.1 // indirect
-	github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream v1.7.27 // indirect
-	github.com/aws/aws-sdk-go-v2/internal/configsources v1.5.12 // indirect
-	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.8.12 // indirect
-	github.com/aws/aws-sdk-go-v2/internal/v4a v1.5.12 // indirect
-	github.com/aws/aws-sdk-go-v2/service/internal/accept-encoding v1.13.25 // indirect
-	github.com/aws/aws-sdk-go-v2/service/internal/checksum v1.11.13 // indirect
-	github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.14.12 // indirect
-	github.com/aws/aws-sdk-go-v2/service/internal/s3shared v1.20.12 // indirect
+	github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream v1.7.28 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/configsources v1.5.13 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.8.13 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/v4a v1.5.13 // indirect
+	github.com/aws/aws-sdk-go-v2/service/internal/accept-encoding v1.13.26 // indirect
+	github.com/aws/aws-sdk-go-v2/service/internal/checksum v1.11.14 // indirect
+	github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.14.13 // indirect
+	github.com/aws/aws-sdk-go-v2/service/internal/s3shared v1.20.13 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/blang/semver/v4 v4.0.0 // indirect
 	github.com/bmatcuk/doublestar/v4 v4.10.7 // indirect
