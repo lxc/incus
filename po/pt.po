@@ -8,11 +8,11 @@ msgstr ""
 "Project-Id-Version: incus\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
 "POT-Creation-Date: 2026-11-26 17:53-0500\n"
-"PO-Revision-Date: 2026-11-26 21:40+0000\n"
+"PO-Revision-Date: 2026-11-27 08:26+0000\n"
 "Last-Translator: Américo Monteiro <a-"
 "monteiro@users.noreply.hosted.weblate.org>\n"
-"Language-Team: Portuguese <https://hosted.weblate.org/projects/incus/cli/pt/"
-">\n"
+"Language-Team: Portuguese <https://hosted.weblate.org/projects/incus/cli/pt/>"
+"\n"
 "Language: pt\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -4925,9 +4925,9 @@ msgid "Invalid format: %s"
 msgstr "Formato inválido: %s"
 
 #: cmd/incus/image.go:572
-#, fuzzy, c-format
+#, c-format
 msgid "Invalid image fingerprint %q"
-msgstr "Imagem de impressão digital base (longa)"
+msgstr "Imagem de impressão digital inválida %q"
 
 #: cmd/incus/top.go:226
 msgid "Invalid input, please enter a positive number"
@@ -6551,6 +6551,8 @@ msgstr "Nenhum testemunho de adesão a agrupamento para membro %s em remoto: %s"
 #: cmd/incus/utils.go:967
 msgid "No configuration directory available, an address must be specified"
 msgstr ""
+"Nenhum diretório de configuração disponível, tem de ser especificado um "
+"endereço"
 
 #: cmd/incus/network.go:553
 msgid "No device found for this network"
