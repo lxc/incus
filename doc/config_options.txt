@@ -3582,6 +3582,12 @@ The original MAC that was used when moving a physical device into an instance.
 Comma-separated list of the last used IP addresses of the network device.
 ```
 
+```{config:option} volatile.<name>.last_state.kind instance-volatile
+:shortdesc: "Network device original kind"
+:type: "string"
+The kind of physical device that was moved into an instance.
+```
+
 ```{config:option} volatile.<name>.last_state.migratable instance-volatile
 :shortdesc: "NIC original migratable capability"
 :type: "string"
@@ -5468,6 +5474,8 @@ Possible values are `allow`, `block`, or `managed`.
 - When set to `block`, this option prevents using all network devices.
 - When set to `managed`, this option allows using network devices only if `network=` is set.
 - When set to `allow`, there is no restriction on which network devices can be used.
+
+Unless set to `allow`, the `host_name` option of network devices can't be set.
 ```
 
 ```{config:option} restricted.devices.pci project-restricted
@@ -5557,6 +5565,7 @@ Specify a comma-delimited list of network integrations that can be used by netwo
 :type: "string"
 Specify a comma-delimited list of network subnets from the uplink networks that are allocated for use in this project.
 Use the form `<uplink>:<subnet>`.
+Host-side routes on bridged NICs must fall within the subnets listed for their network.
 ```
 
 ```{config:option} restricted.networks.uplinks project-restricted

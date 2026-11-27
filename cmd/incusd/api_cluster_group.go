@@ -377,6 +377,8 @@ func clusterGroupGet(d *Daemon, r *http.Request) response.Response {
 			return err
 		}
 
+		apiGroup.UsedBy = project.FilterUsedBy(s.Authorizer, r, apiGroup.UsedBy)
+
 		return nil
 	})
 	if err != nil {

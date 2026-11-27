@@ -136,6 +136,11 @@ func HTTPClient(certificate string, proxy proxyFunc) (*http.Client, error) {
 
 	// Setup redirect policy
 	myhttp.CheckRedirect = func(req *http.Request, via []*http.Request) error {
+		// Keep the limit of the default policy.
+		if len(via) >= 10 {
+			return errors.New("Stopped after 10 redirects")
+		}
+
 		// Replicate the headers
 		req.Header = via[len(via)-1].Header
 

@@ -243,8 +243,7 @@ func storagePoolBucketBackupsGet(d *Daemon, r *http.Request) response.Response {
 	backups := make([]*backup.BucketBackup, len(bucketBackups))
 
 	for i, b := range bucketBackups {
-		_, backupName, _ := api.GetParentAndSnapshotName(b.Name)
-		backups[i] = backup.NewBucketBackup(s, projectName, poolName, bucketName, b.ID, backupName, b.CreationDate, b.ExpiryDate)
+		backups[i] = backup.NewBucketBackup(s, projectName, poolName, bucketName, b.ID, b.Name, b.CreationDate, b.ExpiryDate)
 	}
 
 	resultString := []string{}
@@ -408,6 +407,11 @@ func storagePoolBucketBackupsPost(d *Daemon, r *http.Request) response.Response 
 		return response.BadRequest(err)
 	}
 
+	err = db.CheckTime(req.ExpiresAt)
+	if err != nil {
+		return response.BadRequest(err)
+	}
+
 	direct := r.Header.Get("Accept") == "application/octet-stream"
 
 	var reader *io.PipeReader
@@ -459,8 +463,9 @@ func storagePoolBucketBackupsPost(d *Daemon, r *http.Request) response.Response 
 		}
 
 		// Validate the name.
-		if strings.Contains(req.Name, "/") {
-			return response.BadRequest(errors.New("Backup names may not contain slashes"))
+		err = validate.IsAPIName(req.Name, false)
+		if err != nil {
+			return response.BadRequest(fmt.Errorf("Invalid backup name: %w", err))
 		}
 
 		fullName = bucketName + internalInstance.SnapshotDelimiter + req.Name
@@ -1005,6 +1010,12 @@ func storagePoolBucketBackupExportGet(d *Daemon, r *http.Request) response.Respo
 		return response.SmartError(err)
 	}
 
+	// Resolve the backup in the database so a traversal name can't build a path outside the backup directory.
+	_, err = storagePoolBucketBackupLoadByName(r.Context(), s, projectName, poolName, fullName)
+	if err != nil {
+		return response.SmartError(err)
+	}
+
 	ent := response.FileResponseEntry{
 		Path: internalUtil.VarPath("backups", "buckets", poolName, project.StorageBucket(projectName, fullName)),
 	}
@@ -1026,8 +1037,9 @@ func storagePoolBucketBackupLoadByName(ctx context.Context, s *state.State, proj
 		return nil, err
 	}
 
-	bucketName, snapName, _ := api.GetParentAndSnapshotName(b.Name)
-	entry := backup.NewBucketBackup(s, projectName, poolName, bucketName, b.ID, snapName, b.CreationDate, b.ExpiryDate)
+	// The backup keeps its full <bucket>/<backup> name, its paths derive from it.
+	bucketName, _, _ := api.GetParentAndSnapshotName(b.Name)
+	entry := backup.NewBucketBackup(s, projectName, poolName, bucketName, b.ID, b.Name, b.CreationDate, b.ExpiryDate)
 
 	return entry, nil
 }

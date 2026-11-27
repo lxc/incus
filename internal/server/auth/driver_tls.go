@@ -7,7 +7,6 @@ import (
 	"slices"
 
 	"github.com/lxc/incus/v7/internal/server/certificate"
-	internalUtil "github.com/lxc/incus/v7/internal/util"
 	"github.com/lxc/incus/v7/shared/api"
 	"github.com/lxc/incus/v7/shared/util"
 )
@@ -15,7 +14,18 @@ import (
 // TLS represents a TLS authorizer.
 type TLS struct {
 	commonAuthorizer
-	certificates *certificate.Cache
+	certificates      *certificate.Cache
+	projectConfigFunc func(ctx context.Context, projectName string) (map[string]string, error)
+}
+
+// inheritedObjectFeatures maps the object types that can be inherited from the default project to the project feature controlling it.
+var inheritedObjectFeatures = map[ObjectType]string{
+	ObjectTypeImage:         "features.images",
+	ObjectTypeProfile:       "features.profiles",
+	ObjectTypeStorageVolume: "features.storage.volumes",
+	ObjectTypeStorageBucket: "features.storage.buckets",
+	ObjectTypeNetwork:       "features.networks",
+	ObjectTypeNetworkZone:   "features.networks.zones",
 }
 
 func (t *TLS) load(ctx context.Context, certificateCache *certificate.Cache, opts Opts) error {
@@ -24,7 +34,33 @@ func (t *TLS) load(ctx context.Context, certificateCache *certificate.Cache, opt
 	}
 
 	t.certificates = certificateCache
+	t.projectConfigFunc = opts.projectConfigFunc
 	return nil
+}
+
+// inheritsFromDefault returns whether any of the projects gets objects of the given type from the default project.
+func (t *TLS) inheritsFromDefault(ctx context.Context, projectNames []string, objectType ObjectType) bool {
+	feature, ok := inheritedObjectFeatures[objectType]
+	if !ok || t.projectConfigFunc == nil {
+		return false
+	}
+
+	for _, projectName := range projectNames {
+		if projectName == api.ProjectDefaultName {
+			return true
+		}
+
+		config, err := t.projectConfigFunc(ctx, projectName)
+		if err != nil {
+			continue
+		}
+
+		if util.IsFalseOrEmpty(config[feature]) {
+			return true
+		}
+	}
+
+	return false
 }
 
 // CheckPermission returns an error if the user does not have the given Entitlement on the given Object.
@@ -100,8 +136,8 @@ func (t *TLS) CheckPermission(ctx context.Context, r *http.Request, object Objec
 		return nil
 	}
 
-	// Also allow read-only access to inherited resources, but only when accessed through a project the certificate is trusted for.
-	if object.Project() == api.ProjectDefaultName && entitlement == EntitlementCanView && slices.Contains(projectNames, details.ProjectName) && slices.Contains([]ObjectType{ObjectTypeImage, ObjectTypeProfile, ObjectTypeStorageVolume, ObjectTypeStorageBucket, ObjectTypeNetwork, ObjectTypeNetworkZone}, object.Type()) {
+	// Also allow read-only access to inherited resources, but only through a trusted project that inherits them.
+	if object.Project() == api.ProjectDefaultName && entitlement == EntitlementCanView && slices.Contains(projectNames, details.ProjectName) && t.inheritsFromDefault(ctx, []string{details.ProjectName}, object.Type()) {
 		return nil
 	}
 
@@ -177,6 +213,16 @@ func (t *TLS) GetPermissionChecker(ctx context.Context, r *http.Request, entitle
 		return allowFunc(false), nil
 	}
 
+	// Objects from the default project are only visible when the relevant certificate projects inherit them.
+	inherited := false
+	if entitlement == EntitlementCanView {
+		if details.IsAllProjectsRequest {
+			inherited = t.inheritsFromDefault(ctx, projectNames, objectType)
+		} else if slices.Contains(projectNames, details.ProjectName) {
+			inherited = t.inheritsFromDefault(ctx, []string{details.ProjectName}, objectType)
+		}
+	}
+
 	// Filter objects by project.
 	return func(object Object) bool {
 		// Allow if the project is in the allowed set.
@@ -185,19 +231,7 @@ func (t *TLS) GetPermissionChecker(ctx context.Context, r *http.Request, entitle
 		}
 
 		// Also allow read-only access to inherited resources.
-		if object.Project() != api.ProjectDefaultName {
-			return false
-		}
-
-		if entitlement != EntitlementCanView {
-			return false
-		}
-
-		if !slices.Contains([]ObjectType{ObjectTypeImage, ObjectTypeProfile, ObjectTypeStorageVolume, ObjectTypeStorageBucket, ObjectTypeNetwork, ObjectTypeNetworkZone}, objectType) {
-			return false
-		}
-
-		return true
+		return inherited && object.Project() == api.ProjectDefaultName
 	}, nil
 }
 
@@ -228,12 +262,6 @@ func (t *TLS) certificateDetails(fingerprint string) (certificate.Type, bool, []
 		}
 
 		return certificate.TypeMetrics, false, projectNames, nil
-	}
-
-	// If we're in a CA environment, it's possible for a certificate to be trusted despite not being present in the trust store.
-	// We rely on the validation of the certificate (and its potential revocation) having been done in CheckTrustState.
-	if util.PathExists(internalUtil.VarPath("server.ca")) {
-		return certificate.TypeClient, true, nil, nil
 	}
 
 	return -1, false, nil, api.StatusErrorf(http.StatusForbidden, "Client certificate not found")

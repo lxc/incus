@@ -302,10 +302,24 @@ func instanceBackupsPost(d *Daemon, r *http.Request) response.Response {
 		return response.BadRequest(err)
 	}
 
+	err = db.CheckTime(req.ExpiresAt)
+	if err != nil {
+		return response.BadRequest(err)
+	}
+
 	direct := r.Header.Get("Accept") == "application/octet-stream"
 
 	if direct && req.Target != nil {
 		return response.BadRequest(errors.New("application/octet-stream is not a valid content type when a target is defined"))
+	}
+
+	if req.Target != nil {
+		err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
+			return project.AllowBackupTarget(tx, projectName)
+		})
+		if err != nil {
+			return response.SmartError(err)
+		}
 	}
 
 	if req.CompressionAlgorithm != "" {
@@ -363,8 +377,9 @@ func instanceBackupsPost(d *Daemon, r *http.Request) response.Response {
 		}
 
 		// Validate the name.
-		if strings.Contains(req.Name, "/") {
-			return response.BadRequest(errors.New("Backup names may not contain slashes"))
+		err = validate.IsAPIName(req.Name, false)
+		if err != nil {
+			return response.BadRequest(fmt.Errorf("Invalid backup name: %w", err))
 		}
 
 		fullName = name + internalInstance.SnapshotDelimiter + req.Name
@@ -625,9 +640,10 @@ func instanceBackupPost(d *Daemon, r *http.Request) response.Response {
 		return response.BadRequest(err)
 	}
 
-	// Validate the name
-	if strings.Contains(req.Name, "/") {
-		return response.BadRequest(errors.New("Backup names may not contain slashes"))
+	// Validate the name.
+	err = validate.IsAPIName(req.Name, false)
+	if err != nil {
+		return response.BadRequest(fmt.Errorf("Invalid backup name: %w", err))
 	}
 
 	oldName := name + internalInstance.SnapshotDelimiter + backupName

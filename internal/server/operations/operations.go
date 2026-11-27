@@ -318,11 +318,14 @@ func (op *Operation) Start() error {
 
 	op.status = api.Running
 
-	if op.onRun != nil {
+	// Capture the handler under the lock, done() clears it once the operation finishes.
+	onRun := op.onRun
+
+	if onRun != nil {
 		op.running = true
 
 		go func(op *Operation) {
-			err := op.onRun(op)
+			err := onRun(op)
 			if err != nil {
 				// A cancelled operation still records why its run ended.
 				op.lock.Lock()
@@ -558,7 +561,7 @@ func (op *Operation) mayCancel() bool {
 // secrets. They're returned to the operation's creator in the synchronous create
 // response but stripped from every other render, so they're never broadcast on the
 // event stream or exposed through operation queries.
-var connectSecretKeys = []string{api.SecretNameControl, api.SecretNameFilesystem, "fds"}
+var connectSecretKeys = []string{api.SecretNameControl, api.SecretNameFilesystem, api.SecretNameState, "fds"}
 
 // Render renders the operation for events and API queries, with any websocket
 // connection secrets removed.

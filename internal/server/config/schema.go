@@ -62,6 +62,7 @@ type Key struct {
 	Type       Type   // Type of the value. It defaults to String.
 	Default    string // If the key is not set in a Map, use this value instead.
 	Deprecated string // Optional message to set if this config value is deprecated.
+	Hidden     bool   // The value is a credential, only shown to those allowed to edit it.
 
 	// Optional function used to validate the values. It's called by Map
 	// all the times the value associated with this Key is going to be

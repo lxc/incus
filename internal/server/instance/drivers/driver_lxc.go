@@ -178,12 +178,6 @@ func lxcSetConfigItem(c *liblxc.Container, key string, value string) error {
 	return nil
 }
 
-// forklxcBlockedEnv returns whether an instance or image environment variable must be kept out of
-// the root forklxc process, as it would alter the behavior of the dynamic loader or of glibc.
-func forklxcBlockedEnv(name string) bool {
-	return strings.HasPrefix(name, "LD_") || slices.Contains([]string{"GCONV_PATH", "GLIBC_TUNABLES"}, name)
-}
-
 // isOCI returns whether the container was created from an OCI image.
 func (d *lxc) isOCI() bool {
 	return util.IsTrue(d.expandedConfig["volatile.container.oci"]) || d.localConfig["image.type"] == "oci"
@@ -781,7 +775,7 @@ func (d *lxc) initLXC(config bool) (*liblxc.Container, error) {
 
 	// Load the go-lxc struct
 	cname := project.Instance(d.Project().Name, d.Name())
-	cc, err := liblxc.NewContainer(cname, d.state.OS.LxcPath)
+	cc, err := instance.NewLXCContainer(cname, d.state.OS.LxcPath)
 	if err != nil {
 		return nil, err
 	}
@@ -959,8 +953,8 @@ func (d *lxc) initLXC(config bool) (*liblxc.Container, error) {
 		}
 	}
 
-	// Configure devices cgroup
-	if d.IsPrivileged() && !d.state.OS.RunningInUserNS {
+	// Configure the devices cgroup for all containers so smuggled device nodes can't be opened.
+	if !d.state.OS.RunningInUserNS {
 		err = lxcSetConfigItem(cc, "lxc.cgroup2.devices.deny", "a")
 		if err != nil {
 			return nil, err
@@ -1485,7 +1479,14 @@ func (d *lxc) IdmappedStorage(fspath string, fstype string) idmap.StorageType {
 		}
 	}
 
-	if idmap.CanIdmapMount(fspath, fstype) {
+	supported, err := idmap.CanIdmapMount(fspath, fstype)
+	if err != nil {
+		// Don't record an answer the probe couldn't give.
+		d.logger.Warn("Failed to probe for idmapped mount support", logger.Ctx{"path": fspath, "err": err})
+		return mode
+	}
+
+	if supported {
 		// Use idmapped mounts.
 		mode = idmap.StorageTypeIdmapped
 	}
@@ -1630,8 +1631,8 @@ func (d *lxc) deviceAddCgroupRules(cgroups []deviceConfig.RunConfigItem) error {
 	}
 
 	for _, rule := range cgroups {
-		// Only apply devices cgroup rules if container is running privileged and host has devices cgroup controller.
-		if strings.HasPrefix(rule.Key, "devices.") && (!d.isCurrentlyPrivileged() || d.state.OS.RunningInUserNS) {
+		// Devices cgroup rules need the host's devices cgroup controller.
+		if strings.HasPrefix(rule.Key, "devices.") && d.state.OS.RunningInUserNS {
 			continue
 		}
 
@@ -1750,7 +1751,7 @@ func (d *lxc) deviceDetachNIC(configCopy map[string]string, netIF []deviceConfig
 	if instanceRunning {
 		// For some reason, having network config confuses detach, so get our own go-lxc struct.
 		cname := project.Instance(d.Project().Name, d.Name())
-		cc, err := liblxc.NewContainer(cname, d.state.OS.LxcPath)
+		cc, err := instance.NewLXCContainer(cname, d.state.OS.LxcPath)
 		if err != nil {
 			return err
 		}
@@ -2451,7 +2452,7 @@ func (d *lxc) startCommon() (string, []func() error, error) {
 		// Pass any cgroups rules into LXC.
 		if len(runConf.CGroups) > 0 {
 			for _, rule := range runConf.CGroups {
-				if strings.HasPrefix(rule.Key, "devices.") && (!d.isCurrentlyPrivileged() || d.state.OS.RunningInUserNS) {
+				if strings.HasPrefix(rule.Key, "devices.") && d.state.OS.RunningInUserNS {
 					continue
 				}
 
@@ -3236,49 +3237,16 @@ func (d *lxc) start(stateful bool, op *operationlock.InstanceOperation) error {
 
 	name := project.Instance(d.Project().Name, d.name)
 
-	// Setup minimal environment for forklxc.
+	// Setup minimal environment for forklxc; instance and image variables go through lxc.environment.
 	envDict := map[string]string{
 		"container": "lxc",
-	}
-
-	for k, v := range d.expandedConfig {
-		after, ok := strings.CutPrefix(k, "environment.")
-		if ok && !forklxcBlockedEnv(after) {
-			envDict[after] = v
-		}
-	}
-
-	// Add the image environment of application containers.
-	if d.isOCI() {
-		spec, err := instance.OCISpec(d.Path())
-		if err != nil {
-			op.Done(err)
-			return err
-		}
-
-		ociEnv, err := instance.OCIEnvironment(spec)
-		if err != nil {
-			op.Done(err)
-			return err
-		}
-
-		for k, v := range ociEnv {
-			_, ok := envDict[k]
-			if !ok && !forklxcBlockedEnv(k) {
-				envDict[k] = v
-			}
-		}
+		"PATH":      os.Getenv("PATH"),
 	}
 
 	for _, keepEnv := range []string{"LD_LIBRARY_PATH", "INCUS_DIR", "INCUS_SOCKET"} {
 		if os.Getenv(keepEnv) != "" {
 			envDict[keepEnv] = os.Getenv(keepEnv)
 		}
-	}
-
-	_, ok := envDict["PATH"]
-	if !ok {
-		envDict["PATH"] = os.Getenv("PATH")
 	}
 
 	env := make([]string, 0, len(envDict))
@@ -3785,9 +3753,10 @@ func (d *lxc) Rebuild(img *api.Image, op *operations.Operation) error {
 // stopDHCPClient kills the forknet dhcp process if any and waits for it to
 // exit so the container's cgroup can be fully cleaned up.
 func (d *lxc) stopDHCPClient() {
-	pidPath := filepath.Join(d.Path(), "network", "dhcp.pid")
+	networkPath := filepath.Join(d.Path(), "network")
+	pidPath := filepath.Join(networkPath, "dhcp.pid")
 
-	dhcpPIDStr, err := os.ReadFile(pidPath)
+	dhcpPIDStr, err := readRegularFileInRoot(networkPath, "dhcp.pid")
 	if err != nil {
 		return
 	}
@@ -3804,9 +3773,9 @@ func (d *lxc) stopDHCPClient() {
 
 	defer func() { _ = pidFd.Close() }()
 
-	// Guard against PID reuse.
+	// Guard against PID reuse and a planted PID file, the helper names the instance's network path.
 	cmdline, err := os.ReadFile(fmt.Sprintf("/proc/%d/cmdline", dhcpPID))
-	if err != nil || (!strings.HasPrefix(string(cmdline), "[incus dhcp]") && !strings.Contains(string(cmdline), "forknet\x00dhcp")) {
+	if err != nil || !strings.Contains(string(cmdline), networkPath) || (!strings.HasPrefix(string(cmdline), "[incus dhcp]") && !strings.Contains(string(cmdline), "forknet\x00dhcp")) {
 		return
 	}
 
@@ -4263,7 +4232,7 @@ func (d *lxc) Render() (any, any, error) {
 
 	instState.Description = d.description
 	instState.Architecture = architectureName
-	instState.Config = d.localConfig
+	instState.Config = maps.Clone(d.localConfig)
 	instState.CreatedAt = d.creationDate
 	instState.Devices = d.localDevices.CloneNative()
 	instState.Ephemeral = d.ephemeral
@@ -4470,6 +4439,11 @@ func (d *lxc) Snapshot(name string, expiry time.Time, stateful bool) error {
 
 // Restore restores a snapshot.
 func (d *lxc) Restore(sourceContainer instance.Instance, stateful bool, diskOnly bool) error {
+	// Check that migration.stateful is set for stateful actions.
+	if stateful && !d.CanLiveMigrate() {
+		return errors.New("Stateful restore requires that the instance migration.stateful be set to true")
+	}
+
 	var ctxMap logger.Ctx
 
 	op, err := operationlock.Create(d.Project().Name, d.Name(), d.op, operationlock.ActionRestore, false, false)
@@ -4926,6 +4900,14 @@ func (d *lxc) Rename(newName string, applyTemplateTrigger bool) error {
 		return errors.New("Renaming of running instance not allowed")
 	}
 
+	// Setup a new operation so a rename can't race another operation on the instance.
+	op, err := operationlock.CreateWaitGet(d.Project().Name, d.Name(), d.op, operationlock.ActionRename, nil, false, false)
+	if err != nil {
+		return fmt.Errorf("Failed to create instance rename operation: %w", err)
+	}
+
+	defer op.Done(nil)
+
 	// Clean things up.
 	d.cleanup()
 
@@ -5121,7 +5103,7 @@ func (d *lxc) CGroupSet(key string, value string) error {
 // Update applies updated config.
 func (d *lxc) Update(args db.InstanceArgs, userRequested bool) error {
 	// Setup a new operation
-	op, err := operationlock.CreateWaitGet(d.Project().Name, d.Name(), d.op, operationlock.ActionUpdate, []operationlock.Action{operationlock.ActionCreate, operationlock.ActionRestart, operationlock.ActionRestore}, false, false)
+	op, err := operationlock.CreateWaitGet(d.Project().Name, d.Name(), d.op, operationlock.ActionUpdate, []operationlock.Action{operationlock.ActionRestart, operationlock.ActionRestore}, false, false)
 	if err != nil {
 		return fmt.Errorf("Failed to create instance update operation: %w", err)
 	}
@@ -5421,7 +5403,7 @@ func (d *lxc) Update(args db.InstanceArgs, userRequested bool) error {
 	// If raw.lxc changed, re-validate the config.
 	if slices.Contains(changedConfig, "raw.lxc") && d.expandedConfig["raw.lxc"] != "" {
 		// Get a new liblxc instance.
-		cc, err := liblxc.NewContainer(d.name, d.state.OS.LxcPath)
+		cc, err := instance.NewLXCContainer(d.name, d.state.OS.LxcPath)
 		if err != nil {
 			return err
 		}
@@ -5859,7 +5841,13 @@ func (d *lxc) Update(args db.InstanceArgs, userRequested bool) error {
 			profileNames = append(profileNames, profile.Name)
 		}
 
-		return cluster.UpdateInstanceProfiles(ctx, tx.Tx(), object.ID, object.Project, profileNames)
+		err = cluster.UpdateInstanceProfiles(ctx, tx.Tx(), object.ID, object.Project, profileNames)
+		if err != nil {
+			return err
+		}
+
+		// Re-check the project limits with the new config recorded, concurrent updates each passed on the old one.
+		return project.CheckLimits(tx, d.project.Name)
 	})
 	if err != nil {
 		return fmt.Errorf("Failed to update database: %w", err)
@@ -6194,13 +6182,13 @@ func (d *lxc) Export(metaWriter io.Writer, rootfsWriter io.Writer, properties ma
 	// Include all the rootfs files.
 	fnam = d.RootfsPath()
 	if rootfsWriter == nil {
-		err = filepath.Walk(fnam, writeToMetaTar)
+		err = instancewriter.Walk(fnam, writeToMetaTar)
 		if err != nil {
 			d.logger.Error("Failed exporting instance", ctxMap)
 			return nil, err
 		}
 	} else {
-		err = filepath.Walk(fnam, writeToRootfsTar)
+		err = instancewriter.Walk(fnam, writeToRootfsTar)
 		if err != nil {
 			d.logger.Error("Failed exporting instance", ctxMap)
 			return nil, err
@@ -6210,7 +6198,7 @@ func (d *lxc) Export(metaWriter io.Writer, rootfsWriter io.Writer, properties ma
 	// Include all the templates.
 	fnam = d.TemplatesPath()
 	if util.PathExists(fnam) {
-		err = filepath.Walk(fnam, writeToMetaTar)
+		err = instancewriter.Walk(fnam, writeToMetaTar)
 		if err != nil {
 			d.logger.Error("Failed exporting instance", ctxMap)
 			return nil, err
@@ -6540,7 +6528,7 @@ func (d *lxc) MigrateSend(args instance.MigrateSendArgs) error {
 
 	// Only send the snapshots that the target requests when refreshing.
 	if respHeader.GetRefresh() {
-		volSourceArgs.Snapshots = respHeader.GetSnapshotNames()
+		volSourceArgs.Snapshots = localMigration.RequestedSnapshots(offerHeader.SnapshotNames, respHeader.GetSnapshotNames())
 		allSnapshots := volSourceArgs.Info.Config.VolumeSnapshots
 
 		// Ensure that only the requested snapshots are included in the migration index header.
@@ -7340,6 +7328,14 @@ func (d *lxc) MigrateReceive(args instance.MigrateReceiveArgs) error {
 		// A zero length Snapshots slice indicates volume only migration in
 		// VolumeTargetArgs. So if VolumeOnly was requested, do not populate them.
 		if args.Snapshots {
+			// Snapshots may not be allowed in the project.
+			if len(snapshots) > 0 && args.ClusterMoveSourceName != d.name {
+				err := project.AllowSnapshotCreation(&d.project)
+				if err != nil {
+					return err
+				}
+			}
+
 			volTargetArgs.Snapshots = make([]*migration.Snapshot, 0, len(snapshots))
 			for _, snap := range snapshots {
 				volTargetArgs.Snapshots = append(volTargetArgs.Snapshots, &migration.Snapshot{Name: snap.Name})
@@ -7361,6 +7357,14 @@ func (d *lxc) MigrateReceive(args instance.MigrateReceiveArgs) error {
 						if snapLocalRootDiskDeviceKey != "" {
 							snapArgs.Devices[snapLocalRootDiskDeviceKey]["pool"] = parentStoragePool
 						}
+					}
+
+					// The snapshot config comes from the source, check it against the project.
+					err = d.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+						return project.AllowSnapshotImport(tx, d.project.Name, *snapArgs)
+					})
+					if err != nil {
+						return err
 					}
 
 					// Create the snapshot instance.
@@ -7456,7 +7460,7 @@ func (d *lxc) MigrateReceive(args instance.MigrateReceiveArgs) error {
 					d.logger.Debug("Waiting to receive pre-dump rsync")
 
 					// Transfer a CRIU pre-dump.
-					err = rsync.Recv(internalUtil.AddSlash(imagesDir), stateConn, nil, rsyncFeatures)
+					err = rsync.Recv(internalUtil.AddSlash(imagesDir), stateConn, nil, rsyncFeatures, true)
 					if err != nil {
 						return fmt.Errorf("Failed receiving pre-dump rsync: %w", err)
 					}
@@ -7486,7 +7490,7 @@ func (d *lxc) MigrateReceive(args instance.MigrateReceiveArgs) error {
 
 			// Final CRIU dump.
 			d.logger.Debug("About to receive final dump rsync")
-			err = rsync.Recv(internalUtil.AddSlash(imagesDir), stateConn, nil, rsyncFeatures)
+			err = rsync.Recv(internalUtil.AddSlash(imagesDir), stateConn, nil, rsyncFeatures, true)
 			if err != nil {
 				return fmt.Errorf("Failed receiving final dump rsync: %w", err)
 			}
@@ -7811,7 +7815,7 @@ func (d *lxc) templateApplyNow(trigger instance.TemplateTrigger) error {
 	}
 
 	// Parse the metadata
-	content, err := os.ReadFile(fname)
+	content, err := readRegularFileInRoot(d.Path(), "metadata.yaml")
 	if err != nil {
 		return fmt.Errorf("Failed to read metadata: %w", err)
 	}
@@ -7877,6 +7881,10 @@ func (d *lxc) templateApplyNow(trigger instance.TemplateTrigger) error {
 	// Go through the templates.
 	for tplPath, tpl := range metadata.Templates {
 		err = func(tplPath string, tpl *api.ImageMetadataTemplate) error {
+			if tpl == nil {
+				return fmt.Errorf("Template %q has no definition", tplPath)
+			}
+
 			var w *os.File
 
 			// Check if the template should be applied now
@@ -7907,8 +7915,8 @@ func (d *lxc) templateApplyNow(trigger instance.TemplateTrigger) error {
 				return fmt.Errorf("Couldn't access template file: %w", err)
 			}
 
-			if tplFileStat.Mode()&os.ModeSymlink == os.ModeSymlink {
-				return errors.New("Template file is a symlink")
+			if !tplFileStat.Mode().IsRegular() {
+				return errors.New("Template file isn't a regular file")
 			}
 
 			// Create the directory hierarchy, this has to be done
@@ -8250,6 +8258,8 @@ func (d *lxc) FileSFTPConn() (net.Conn, error) {
 		pidFile := filepath.Join(d.RunPath(), "forkfile.pid")
 		err = os.WriteFile(pidFile, fmt.Appendf(nil, "%d\n", forkfile.Process.Pid), 0o600)
 		if err != nil {
+			_ = forkfile.Process.Kill()
+			_ = forkfile.Wait()
 			chReady <- fmt.Errorf("Failed to write forkfile PID: %w", err)
 			return
 		}
@@ -8333,17 +8343,33 @@ func (d *lxc) PortForwardConn(address string, port int) (net.Conn, error) {
 	childFile := os.NewFile(uintptr(fds[1]), "forknet-child")
 	defer func() { _ = childFile.Close() }()
 
+	// The pidfd pins the namespace to the current init, a reused PID would otherwise be followed.
+	pidFd, err := d.InitPidFd()
+	if err != nil {
+		return nil, err
+	}
+
+	defer logger.WarnOnError(pidFd.Close, "Failed to close PID fd")
+
 	// Spawn forknet to establish the connection from within the network namespace.
 	var stderr bytes.Buffer
 
 	forknet := exec.Cmd{
 		Path:       d.state.OS.ExecPath,
-		Args:       []string{d.state.OS.ExecPath, "forknet", "connect", "--", fmt.Sprintf("/proc/%d/ns/net", d.InitPID()), address, strconv.Itoa(port)},
-		ExtraFiles: []*os.File{childFile},
+		Args:       []string{d.state.OS.ExecPath, "forknet", "connect", "--", strconv.Itoa(d.InitPID()), "4", address, strconv.Itoa(port)},
+		ExtraFiles: []*os.File{childFile, pidFd},
 		Stderr:     &stderr,
 	}
 
-	err = forknet.Run()
+	err = forknet.Start()
+	if err != nil {
+		return nil, fmt.Errorf("Failed to run forknet connect: %w: %s", err, strings.TrimSpace(stderr.String()))
+	}
+
+	// The guest decides how long the dial takes, don't let it keep the helper around.
+	killTimer := time.AfterFunc(time.Minute, func() { _ = forknet.Process.Kill() })
+	err = forknet.Wait()
+	killTimer.Stop()
 	if err != nil {
 		return nil, fmt.Errorf("Failed to run forknet connect: %w: %s", err, strings.TrimSpace(stderr.String()))
 	}
@@ -8369,10 +8395,30 @@ func (d *lxc) PortForwardConn(address string, port int) (net.Conn, error) {
 
 // stopForkFile attempts to send SIGTERM (if force is true) or SIGINT to forkfile then waits for it to exit.
 func (d *lxc) stopForkfile(force bool) {
+	var pid int64
+
 	// Make sure that when the function exits, no forkfile is running by acquiring the lock (which indicates
 	// that forkfile isn't running and holding the lock) and then releasing it.
 	defer func() {
-		unlock, err := locking.Lock(context.TODO(), d.forkfileRunningLockName())
+		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+		defer cancel()
+
+		unlock, err := locking.Lock(ctx, d.forkfileRunningLockName())
+		if err == nil {
+			unlock()
+			return
+		}
+
+		// Its clients decide how long a graceful stop takes, don't let them hold things up forever.
+		if pid > 0 {
+			d.logger.Warn("Killing forkfile that didn't stop in time", logger.Ctx{"pid": pid})
+			_ = unix.Kill(int(pid), unix.SIGKILL)
+		}
+
+		ctx, cancel = context.WithTimeout(context.Background(), 30*time.Second)
+		defer cancel()
+
+		unlock, err = locking.Lock(ctx, d.forkfileRunningLockName())
 		if err != nil {
 			return
 		}
@@ -8385,7 +8431,7 @@ func (d *lxc) stopForkfile(force bool) {
 		return
 	}
 
-	pid, err := strconv.ParseInt(strings.TrimSpace(string(content)), 10, 64)
+	pid, err = strconv.ParseInt(strings.TrimSpace(string(content)), 10, 64)
 	if err != nil {
 		return
 	}
@@ -8507,11 +8553,16 @@ func (d *lxc) Exec(req api.InstanceExecPost, stdin *os.File, stdout *os.File, st
 		}
 	}
 
-	// Prepare the environment
-	envSlice := []string{}
-
+	// Prepare the environment, passed NUL separated over a pipe to keep it off the command line.
+	envBuf := []byte{}
 	for k, v := range req.Environment {
-		envSlice = append(envSlice, fmt.Sprintf("%s=%s", k, v))
+		entry := fmt.Sprintf("%s=%s", k, v)
+		if strings.ContainsRune(entry, 0) {
+			return nil, fmt.Errorf("Invalid environment variable %q", k)
+		}
+
+		envBuf = append(envBuf, entry...)
+		envBuf = append(envBuf, 0)
 	}
 
 	// Setup logfile
@@ -8537,10 +8588,6 @@ func (d *lxc) Exec(req api.InstanceExecPost, stdin *os.File, stdout *os.File, st
 	}
 
 	args = append(args, "0")
-
-	args = append(args, "--")
-	args = append(args, "env")
-	args = append(args, envSlice...)
 
 	args = append(args, "--")
 	args = append(args, "cmd")
@@ -8571,6 +8618,28 @@ func (d *lxc) Exec(req api.InstanceExecPost, stdin *os.File, stdout *os.File, st
 		cmd.Env = append(os.Environ(), "LXC_MEMFD_REXEC=1")
 	}
 
+	// Every stream needs an open file, forkexec attaches them by descriptor number.
+	if stdin == nil || stdout == nil || stderr == nil {
+		devNull, err := os.OpenFile("/dev/null", os.O_RDWR, 0)
+		if err != nil {
+			return nil, err
+		}
+
+		defer logger.WarnOnError(devNull.Close, "Failed to close /dev/null")
+
+		if stdin == nil {
+			stdin = devNull
+		}
+
+		if stdout == nil {
+			stdout = devNull
+		}
+
+		if stderr == nil {
+			stderr = devNull
+		}
+	}
+
 	// Setup communication PIPE
 	rStatus, wStatus, err := os.Pipe()
 	defer logger.WarnOnError(rStatus.Close, "Failed to close pipe")
@@ -8578,11 +8647,27 @@ func (d *lxc) Exec(req api.InstanceExecPost, stdin *os.File, stdout *os.File, st
 		return nil, err
 	}
 
-	cmd.ExtraFiles = []*os.File{stdin, stdout, stderr, wStatus}
-	err = cmd.Start()
-	_ = wStatus.Close()
+	// Setup the environment PIPE
+	rEnv, wEnv, err := os.Pipe()
 	if err != nil {
 		return nil, err
+	}
+
+	cmd.ExtraFiles = []*os.File{stdin, stdout, stderr, wStatus, rEnv}
+	err = cmd.Start()
+	_ = wStatus.Close()
+	_ = rEnv.Close()
+	if err != nil {
+		_ = wEnv.Close()
+		return nil, err
+	}
+
+	_, err = wEnv.Write(envBuf)
+	_ = wEnv.Close()
+	if err != nil {
+		_ = cmd.Process.Kill()
+		_ = cmd.Wait()
+		return nil, fmt.Errorf("Failed to pass the environment to forkexec: %w", err)
 	}
 
 	attachedPid := linux.ReadPid(rStatus)
@@ -9268,7 +9353,7 @@ func (d *lxc) FillNetworkDevice(name string, m deviceConfig.Device) (deviceConfi
 
 		// Attempt to include all existing interfaces
 		cname := project.Instance(d.Project().Name, d.Name())
-		cc, err := liblxc.NewContainer(cname, d.state.OS.LxcPath)
+		cc, err := instance.NewLXCContainer(cname, d.state.OS.LxcPath)
 		if err == nil {
 			defer logger.WarnOnError(cc.Release, "Failed to release container")
 
@@ -9411,19 +9496,6 @@ func (d *lxc) IsFrozen() bool {
 // IsNesting returns if instance is nested.
 func (d *lxc) IsNesting() bool {
 	return util.IsTrue(d.expandedConfig["security.nesting"])
-}
-
-func (d *lxc) isCurrentlyPrivileged() bool {
-	if !d.IsRunning() {
-		return d.IsPrivileged()
-	}
-
-	currentIdmap, err := d.CurrentIdmap()
-	if err != nil {
-		return d.IsPrivileged()
-	}
-
-	return currentIdmap == nil
 }
 
 // IsPrivileged returns if instance is privileged.

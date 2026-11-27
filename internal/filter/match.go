@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"reflect"
 	"regexp"
+	"regexp/syntax"
 	"strconv"
 	"strings"
 )
@@ -92,7 +93,39 @@ func DefaultParseRegexp(c Clause) (*regexp.Regexp, error) {
 		regexpValue = "^" + regexpValue + "$"
 	}
 
-	return regexp.Compile("(?i)" + regexpValue)
+	regexpValue = "(?i)" + regexpValue
+
+	// Counted repetitions expand at compile time, refuse large programs before compiling.
+	parsed, err := syntax.Parse(regexpValue, syntax.Perl)
+	if err != nil {
+		return nil, err
+	}
+
+	if regexpSize(parsed) > regexpMaxSize {
+		return nil, errors.New("Regular expression is too large")
+	}
+
+	return regexp.Compile(regexpValue)
+}
+
+// regexpMaxSize bounds the estimated program size of a filter regular expression.
+const regexpMaxSize = 4096
+
+// regexpSize estimates the compiled size of a parsed regular expression.
+func regexpSize(re *syntax.Regexp) int {
+	size := 1
+	for _, sub := range re.Sub {
+		size += regexpSize(sub)
+	}
+
+	switch re.Op {
+	case syntax.OpLiteral:
+		size = len(re.Rune)
+	case syntax.OpRepeat:
+		size *= max(re.Min, re.Max, 1)
+	}
+
+	return size
 }
 
 // DefaultParseStringSlice converts the value of the clause to a slice of string.

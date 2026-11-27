@@ -24,8 +24,22 @@ import (
 // RunWrapper is an optional function that's used to wrap rsync, useful for confinement like AppArmor.
 var RunWrapper func(cmd *exec.Cmd, output string, allowedCmds []string) (func(), error)
 
+// maxErrorOutput is how much of a command's error output is kept, the archive controls how much there is.
+const maxErrorOutput = 1024 * 1024
+
+// nullWriteCloser keeps the beginning of a command's error output and drops the rest.
 type nullWriteCloser struct {
-	*bytes.Buffer
+	buffer *bytes.Buffer
+}
+
+// Write keeps up to maxErrorOutput bytes.
+func (nwc *nullWriteCloser) Write(p []byte) (int, error) {
+	remaining := maxErrorOutput - nwc.buffer.Len()
+	if remaining > 0 {
+		nwc.buffer.Write(p[:min(len(p), remaining)])
+	}
+
+	return len(p), nil
 }
 
 // Close closes the writer.
@@ -78,7 +92,8 @@ func ExtractWithFds(cmdName string, args []string, allowedCmds []string, stdin i
 // This can be done before reading to the end of the tarball if desired.
 //
 // This uses RunWrapper if set.
-func CompressedTarReader(ctx context.Context, r io.ReadSeeker, unpacker []string, outputPath string) (*tar.Reader, context.CancelFunc, error) {
+// A non-negative maxSize bounds the decompressed data, reads fail with ErrDecompressedTooLarge past it.
+func CompressedTarReader(ctx context.Context, r io.ReadSeeker, unpacker []string, outputPath string, maxSize int64) (*tar.Reader, context.CancelFunc, error) {
 	_, cancelFunc := context.WithCancel(ctx)
 
 	_, err := r.Seek(0, io.SeekStart)
@@ -134,12 +149,36 @@ func CompressedTarReader(ctx context.Context, r io.ReadSeeker, unpacker []string
 			}
 		}
 
-		tr = tar.NewReader(pipeReader)
+		if maxSize >= 0 {
+			tr = tar.NewReader(&limitedReader{r: pipeReader, limit: maxSize})
+		} else {
+			tr = tar.NewReader(pipeReader)
+		}
 	} else {
 		tr = tar.NewReader(r)
 	}
 
 	return tr, cancelFunc, nil
+}
+
+// ErrDecompressedTooLarge is returned once a tarball decompresses past the allowed size.
+var ErrDecompressedTooLarge = errors.New("Decompressed data exceeds the allowed size")
+
+// limitedReader fails once more than limit bytes went through it.
+type limitedReader struct {
+	r     io.Reader
+	limit int64
+	read  int64
+}
+
+func (l *limitedReader) Read(p []byte) (int, error) {
+	n, err := l.r.Read(p)
+	l.read += int64(n)
+	if l.read > l.limit {
+		return n, ErrDecompressedTooLarge
+	}
+
+	return n, err
 }
 
 // Unpack extracts image from archive.
@@ -251,7 +290,7 @@ func Unpack(file string, path string, blockBackend bool, maxMemory int64, tracke
 			}
 
 			stdErr := runError.StdErr().String()
-			if stdErr == "" {
+			if stdErr == "" || len(stdErr) >= maxErrorOutput {
 				return err
 			}
 

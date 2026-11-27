@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"slices"
 	"strings"
+	"unicode"
 
 	deviceConfig "github.com/lxc/incus/v7/internal/server/device/config"
 	"github.com/lxc/incus/v7/internal/server/project"
@@ -25,33 +26,51 @@ type device interface {
 
 // forkproxyProfile generates the AppArmor profile template from the given network.
 func forkproxyProfile(sysOS *sys.OS, inst instance, dev device) (string, error) {
-	// Add any socket used by forkproxy.
+	// Add any socket used by forkproxy. Only the host side is a path on this host; resolve it there,
+	// and leave the instance side as configured since it's resolved in the instance's own namespace.
 	sockets := []string{}
 
-	fields := strings.SplitN(dev.Config()["listen"], ":", 2)
-	if fields[0] == "unix" && !strings.HasPrefix(fields[1], "@") {
-		sockets = append(sockets, fields[1])
+	hostField := dev.Config()["connect"]
+	instField := dev.Config()["listen"]
+	bindHost := dev.Config()["bind"] == "" || dev.Config()["bind"] == "host"
+	if bindHost {
+		hostField = dev.Config()["listen"]
+		instField = dev.Config()["connect"]
 	}
 
-	fields = strings.SplitN(dev.Config()["connect"], ":", 2)
-	if fields[0] == "unix" && !strings.HasPrefix(fields[1], "@") {
-		sockets = append(sockets, fields[1])
-	}
+	hostFields := strings.SplitN(hostField, ":", 2)
+	if len(hostFields) == 2 && hostFields[0] == "unix" && !strings.HasPrefix(hostFields[1], "@") {
+		if bindHost {
+			// forkproxy removes and re-binds a host listen socket, so a link at it is never followed; resolve only its directory.
+			dir, err := filepath.EvalSymlinks(filepath.Dir(hostFields[1]))
+			if err != nil {
+				return "", err
+			}
 
-	// AppArmor requires deref of all paths.
-	for k := range sockets {
-		// Skip non-existing because of the additional entry for the host side.
-		if !util.PathExists(sockets[k]) {
-			continue
-		}
+			sockets = append(sockets, filepath.Join(dir, filepath.Base(hostFields[1])))
+		} else if util.PathExists(hostFields[1]) {
+			v, err := filepath.EvalSymlinks(hostFields[1])
+			if err != nil {
+				return "", err
+			}
 
-		v, err := filepath.EvalSymlinks(sockets[k])
-		if err != nil {
-			return "", err
-		}
-
-		if !slices.Contains(sockets, v) {
 			sockets = append(sockets, v)
+		} else {
+			sockets = append(sockets, hostFields[1])
+		}
+	}
+
+	instFields := strings.SplitN(instField, ":", 2)
+	if len(instFields) == 2 && instFields[0] == "unix" && !strings.HasPrefix(instFields[1], "@") {
+		if !slices.Contains(sockets, instFields[1]) {
+			sockets = append(sockets, instFields[1])
+		}
+	}
+
+	// A path with AppArmor metacharacters would break out of its rule even when quoted.
+	for _, socket := range sockets {
+		if strings.ContainsFunc(socket, unicode.IsControl) || strings.ContainsAny(socket, "\"\\*?[]{}") {
+			return "", fmt.Errorf("Socket path %q can't be used in an AppArmor profile", socket)
 		}
 	}
 

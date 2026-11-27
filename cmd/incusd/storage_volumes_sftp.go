@@ -1,12 +1,14 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"net"
 	"net/http"
-	"slices"
 
+	incus "github.com/lxc/incus/v7/client"
 	"github.com/lxc/incus/v7/internal/server/cluster"
+	"github.com/lxc/incus/v7/internal/server/db"
 	"github.com/lxc/incus/v7/internal/server/project"
 	"github.com/lxc/incus/v7/internal/server/request"
 	"github.com/lxc/incus/v7/internal/server/response"
@@ -85,8 +87,8 @@ func storagePoolVolumeTypeSFTPHandler(d *Daemon, r *http.Request) response.Respo
 		return response.BadRequest(err)
 	}
 
-	// Check that the storage volume type is valid.
-	if !slices.Contains(supportedVolumeTypes, volumeType) {
+	// Only custom volumes are served, so the type must match the authorized object.
+	if volumeType != db.StoragePoolVolumeTypeCustom {
 		return response.BadRequest(fmt.Errorf("Invalid storage volume type %q", volumeTypeName))
 	}
 
@@ -95,13 +97,27 @@ func storagePoolVolumeTypeSFTPHandler(d *Daemon, r *http.Request) response.Respo
 		return response.SmartError(err)
 	}
 
-	// Redirect to correct server if needed.
-	var conn net.Conn
-
-	// Forward the request if the instance is remote.
-	client, err := cluster.ConnectIfVolumeIsRemote(s, poolName, volumeProjectName, volumeName, volumeType, s.Endpoints.NetworkCert(), s.ServerCert(), r)
+	err = storagePoolVolumeUsedByDaemon(s, volumeProjectName, poolName, volumeName)
 	if err != nil {
 		return response.SmartError(err)
+	}
+
+	// The permission was checked on the targeted member's volume, so only serve that one.
+	target := request.QueryParam(r, "target")
+	if target != "" && target != s.ServerName {
+		return response.BadRequest(errors.New("Targeting another cluster member isn't supported on this endpoint"))
+	}
+
+	// Redirect to correct server if needed.
+	var conn net.Conn
+	var client incus.InstanceServer
+
+	// Forward the request if the volume is remote.
+	if target == "" {
+		client, err = cluster.ConnectIfVolumeIsRemote(s, poolName, volumeProjectName, volumeName, volumeType, s.Endpoints.NetworkCert(), s.ServerCert(), r)
+		if err != nil {
+			return response.SmartError(err)
+		}
 	}
 
 	if client != nil {
@@ -118,6 +134,11 @@ func storagePoolVolumeTypeSFTPHandler(d *Daemon, r *http.Request) response.Respo
 		volumeDB, err := storagePools.VolumeDBGet(pool, volumeProjectName, volumeName, storageDrivers.VolumeTypeCustom)
 		if err != nil {
 			return response.SmartError(err)
+		}
+
+		// Only filesystem volumes have a file tree; the mount path of other content types holds the disk image.
+		if volumeDB.ContentType != db.StoragePoolVolumeContentTypeNameFS {
+			return response.SmartError(api.StatusErrorf(http.StatusBadRequest, "Only filesystem volumes support file access"))
 		}
 
 		diskVolName := project.StorageVolume(volumeProjectName, volumeName)

@@ -4,18 +4,21 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"maps"
 	"slices"
 	"strings"
 
 	internalInstance "github.com/lxc/incus/v7/internal/instance"
 	"github.com/lxc/incus/v7/internal/server/db"
 	"github.com/lxc/incus/v7/internal/server/db/cluster"
+	"github.com/lxc/incus/v7/internal/server/device"
 	deviceConfig "github.com/lxc/incus/v7/internal/server/device/config"
 	"github.com/lxc/incus/v7/internal/server/instance"
 	"github.com/lxc/incus/v7/internal/server/instance/instancetype"
 	"github.com/lxc/incus/v7/internal/server/project"
 	"github.com/lxc/incus/v7/internal/server/state"
 	"github.com/lxc/incus/v7/shared/api"
+	"github.com/lxc/incus/v7/shared/logger"
 )
 
 func doProfileUpdate(ctx context.Context, s *state.State, p api.Project, profileName string, profile *api.Profile, req api.ProfilePut) error {
@@ -88,8 +91,54 @@ func doProfileUpdate(ctx context.Context, s *state.State, p api.Project, profile
 		}
 	}
 
+	// Validate the changed devices against the local instances before saving, as a change an
+	// instance refuses would otherwise stay recorded without being applied.
+	for _, inst := range insts {
+		if inst.Node != "" && inst.Node != s.ServerName {
+			continue
+		}
+
+		newProfiles := make([]api.Profile, 0, len(inst.Profiles))
+		for _, profile := range inst.Profiles {
+			if profile.Name == profileName && profile.Project == p.Name {
+				profile.Config = req.Config
+				profile.Devices = req.Devices
+			}
+
+			newProfiles = append(newProfiles, profile)
+		}
+
+		oldDevices := db.ExpandInstanceDevices(inst.Devices, inst.Profiles)
+		newDevices := db.ExpandInstanceDevices(inst.Devices, newProfiles)
+
+		var loaded instance.Instance
+		for name, conf := range newDevices {
+			if maps.Equal(oldDevices[name], conf) {
+				continue
+			}
+
+			if loaded == nil {
+				loaded, err = instance.LoadByProjectAndName(s, inst.Project, inst.Name)
+				if err != nil {
+					return err
+				}
+			}
+
+			_, err = device.New(loaded, s, name, conf, false, func() map[string]string { return map[string]string{} }, func(map[string]string) error { return nil })
+			if err != nil {
+				return fmt.Errorf("Invalid device %q for instance %q: %w", name, inst.Name, err)
+			}
+		}
+	}
+
 	// Update the database.
 	err = s.DB.Cluster.Transaction(ctx, func(ctx context.Context, tx *db.ClusterTx) error {
+		// Re-check in the transaction doing the write, as the profile may have been renamed since.
+		err := project.AllowProfileUpdate(tx, p.Name, profileName, req)
+		if err != nil {
+			return err
+		}
+
 		devices, err := cluster.APIToDevices(req.Devices)
 		if err != nil {
 			return err
@@ -150,16 +199,34 @@ func doProfileUpdate(ctx context.Context, s *state.State, p api.Project, profile
 	}
 
 	if len(failures) != 0 {
-		var msg strings.Builder
-		msg.WriteString("The following instances failed to update (profile change still saved):\n")
-		for inst, err := range failures {
-			fmt.Fprintf(&msg, " - Project: %s, Instance: %s: %v\n", inst.Project, inst.Name, err)
-		}
-
-		return fmt.Errorf("%s", msg.String())
+		return profileUpdateError(p.Name, failures)
 	}
 
 	return nil
+}
+
+// profileUpdateError reports the instances a profile update couldn't be applied to.
+func profileUpdateError(projectName string, failures map[*db.InstanceArgs]error) error {
+	var msg strings.Builder
+	msg.WriteString("The following instances failed to update (profile change still saved):\n")
+
+	others := 0
+	for inst, err := range failures {
+		// Only name instances of the profile's own project, the caller may not be allowed to see the others.
+		if inst.Project != projectName {
+			logger.Warn("Failed to apply profile update to instance", logger.Ctx{"project": inst.Project, "instance": inst.Name, "err": err})
+			others++
+			continue
+		}
+
+		fmt.Fprintf(&msg, " - Project: %s, Instance: %s: %v\n", inst.Project, inst.Name, err)
+	}
+
+	if others > 0 {
+		fmt.Fprintf(&msg, " - %d instance(s) in other projects (see the server log)\n", others)
+	}
+
+	return errors.New(msg.String())
 }
 
 // Like doProfileUpdate but does not update the database, since it was already
@@ -196,13 +263,7 @@ func doProfileUpdateCluster(ctx context.Context, s *state.State, projectName str
 	}
 
 	if len(failures) != 0 {
-		var msg strings.Builder
-		msg.WriteString("The following instances failed to update (profile change still saved):\n")
-		for inst, err := range failures {
-			fmt.Fprintf(&msg, " - Project: %s, Instance: %s: %v\n", inst.Project, inst.Name, err)
-		}
-
-		return fmt.Errorf("%s", msg.String())
+		return profileUpdateError(projectName, failures)
 	}
 
 	return nil
@@ -228,6 +289,24 @@ func doProfileUpdateInstance(ctx context.Context, s *state.State, args db.Instan
 	if err != nil {
 		return err
 	}
+
+	// Serialise with instance PUT/PATCH and refresh the config and devices from the current record,
+	// so a concurrent instance update isn't reverted by writing back the copy listed earlier. The
+	// profile content stays as it was before the update, so Update still detects the change.
+	unlock, err := instanceOperationLock(s.ShutdownCtx, args.Project, args.Name)
+	if err != nil {
+		return err
+	}
+
+	defer unlock()
+
+	current, err := instance.LoadByProjectAndName(s, args.Project, args.Name)
+	if err != nil {
+		return err
+	}
+
+	args.Config = current.LocalConfig()
+	args.Devices = current.LocalDevices()
 
 	// Load the instance using the old profile config.
 	inst, err := instance.Load(s, args, p)

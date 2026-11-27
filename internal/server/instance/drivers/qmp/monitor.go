@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"maps"
 	"path/filepath"
 	"slices"
 	"strings"
@@ -24,6 +25,9 @@ var (
 
 // RingbufSize is the size of the agent serial ringbuffer in bytes.
 var RingbufSize = 1024 * 16
+
+// ConsoleRingbufSize is the size of the console ringbuffer in bytes.
+const ConsoleRingbufSize = 1024 * 1024
 
 // EventAgentStarted is the event sent once the agent has started.
 var EventAgentStarted = "AGENT-STARTED"
@@ -499,7 +503,16 @@ func (m *Monitor) GetInstanceState() *api.InstanceState {
 	m.stateMu.Lock()
 	defer m.stateMu.Unlock()
 
-	return m.instanceState
+	if m.instanceState == nil {
+		return nil
+	}
+
+	// Callers modify the state, so give each of them its own copy.
+	state := *m.instanceState
+	state.Disk = maps.Clone(state.Disk)
+	state.Network = maps.Clone(state.Network)
+
+	return &state
 }
 
 // SetInstanceState updates the recorded instance state.

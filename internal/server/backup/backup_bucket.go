@@ -3,6 +3,7 @@ package backup
 import (
 	"context"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/lxc/incus/v7/internal/server/db"
@@ -62,7 +63,7 @@ func (b *BucketBackup) Delete() error {
 
 	// Remove the database record.
 	err := b.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
-		return tx.DeleteStoragePoolBucketBackup(ctx, b.name)
+		return tx.DeleteStoragePoolBucketBackup(ctx, b.id)
 	})
 	if err != nil {
 		return err
@@ -114,7 +115,7 @@ func (b *BucketBackup) Rename(newName string) error {
 
 	// Rename the database record.
 	err = b.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
-		return tx.RenameBucketBackup(ctx, b.name, newName)
+		return tx.RenameBucketBackup(ctx, b.id, newName)
 	})
 	if err != nil {
 		return err
@@ -126,8 +127,15 @@ func (b *BucketBackup) Rename(newName string) error {
 
 // Render returns a BucketBackup struct of the backup.
 func (b *BucketBackup) Render() *api.StorageBucketBackup {
+	// The stored name is <bucket>/<backup>, the API shows the backup part.
+	name := b.name
+	parts := strings.SplitN(name, "/", 2)
+	if len(parts) == 2 {
+		name = parts[1]
+	}
+
 	return &api.StorageBucketBackup{
-		Name:      b.name,
+		Name:      name,
 		CreatedAt: b.creationDate,
 		ExpiresAt: b.expiryDate,
 	}

@@ -343,8 +343,8 @@ func storagePoolBucketsGet(d *Daemon, r *http.Request) response.Response {
 			location = bucket.Location
 		}
 
-		// In all-projects mode each bucket must be checked against its own project.
-		objectProjectName := requestProjectName
+		// Each bucket is checked against the project that holds it.
+		objectProjectName := bucketProjectName
 		if allProjects {
 			objectProjectName = bucket.Project
 		}
@@ -405,7 +405,7 @@ func storagePoolBucketsGet(d *Daemon, r *http.Request) response.Response {
 					location = filteredDBBuckets[i].Location
 				}
 
-				objectProjectName := requestProjectName
+				objectProjectName := bucketProjectName
 				if allProjects {
 					objectProjectName = filteredDBBuckets[i].Project
 				}
@@ -610,7 +610,7 @@ func storagePoolBucketGet(d *Daemon, r *http.Request) response.Response {
 
 		// S3 keys are only returned to callers allowed to edit the bucket.
 		var canEdit bool
-		err = s.Authorizer.CheckPermission(r.Context(), r, auth.ObjectStorageBucket(request.ProjectParam(r), poolName, bucketName, location), auth.EntitlementCanEdit)
+		err = s.Authorizer.CheckPermission(r.Context(), r, auth.ObjectStorageBucket(bucketProjectName, poolName, bucketName, location), auth.EntitlementCanEdit)
 		if err == nil {
 			canEdit = true
 		} else if !api.StatusErrorCheck(err, http.StatusForbidden) {
@@ -644,8 +644,7 @@ func getBucketFull(ctx context.Context, s *state.State, pool storagePools.Pool, 
 		}
 
 		for _, entry := range bucketBackups {
-			_, backupName, _ := api.GetParentAndSnapshotName(entry.Name)
-			resp.Backups = append(resp.Backups, *backup.NewBucketBackup(s, bucket.Project, pool.Name(), bucket.Name, entry.ID, backupName, entry.CreationDate, entry.ExpiryDate).Render())
+			resp.Backups = append(resp.Backups, *backup.NewBucketBackup(s, bucket.Project, pool.Name(), bucket.Name, entry.ID, entry.Name, entry.CreationDate, entry.ExpiryDate).Render())
 		}
 
 		return nil
@@ -743,13 +742,19 @@ func storagePoolBucketsPost(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
+	// Local buckets live on this member, so the project must be allowed to use it.
+	resp = storagePoolMemberAllowed(s, r, poolName, bucketProjectName)
+	if resp != nil {
+		return resp
+	}
+
 	if r.Header.Get("Content-Type") == "application/octet-stream" {
 		return createStoragePoolBucketFromBackup(s, r, request.ProjectParam(r), bucketProjectName, r.Body, poolName, r.Header.Get("X-Incus-name"))
 	}
 
-	// Parse the request into a record.
+	// Parse the request into a record, applying the usual size limit to the JSON body.
 	req := api.StorageBucketsPost{}
-	err = json.NewDecoder(r.Body).Decode(&req)
+	err = json.NewDecoder(http.MaxBytesReader(nil, r.Body, 1024*1024)).Decode(&req)
 	if err != nil {
 		return response.BadRequest(err)
 	}
@@ -1757,7 +1762,7 @@ func createStoragePoolBucketFromBackup(s *state.State, r *http.Request, requestP
 	}
 
 	logger.Debug("Reading backup file info")
-	bInfo, err := backup.GetInfo(backupFile, s.OS, backupFile.Name())
+	bInfo, err := backup.GetInfo(backupFile, s.OS, backupFile.Name(), budget)
 	if err != nil {
 		return response.BadRequest(err)
 	}

@@ -51,7 +51,7 @@ profile "{{ .name }}" flags=(attach_disconnected,mediate_deleted) {
   /{etc,lib,usr/lib}/os-release r,
 {{if .sockets -}}
 {{range $index, $element := .sockets}}
-  {{$element}} rw,
+  "{{$element}}" rw,
 {{- end }}
 {{- end }}
 

@@ -6,8 +6,10 @@ import (
 	"archive/tar"
 	"fmt"
 	"io"
+	"io/fs"
 	"os"
 	"strings"
+	"syscall"
 
 	"golang.org/x/sys/unix"
 
@@ -17,11 +19,18 @@ import (
 	"github.com/lxc/incus/v7/shared/util"
 )
 
+// linkMapMaxSize bounds the memory spent tracking hard links, past it links are stored as plain files.
+const linkMapMaxSize = 64 * 1024 * 1024
+
+// linkMapEntrySize is the estimated overhead of a link map entry beyond its name.
+const linkMapEntrySize = 64
+
 // InstanceTarWriter provides an InstanceWriter implementation that handles ID shifting and hardlink tracking.
 type InstanceTarWriter struct {
-	tarWriter *tar.Writer
-	idmapSet  *idmap.Set
-	linkMap   map[uint64]string
+	tarWriter   *tar.Writer
+	idmapSet    *idmap.Set
+	linkMap     map[uint64]string
+	linkMapSize int
 }
 
 // NewInstanceTarWriter returns an InstanceTarWriter for the provided target Writer and id map.
@@ -37,6 +46,7 @@ func NewInstanceTarWriter(writer io.Writer, idmapSet *idmap.Set) *InstanceTarWri
 // So that the hard link map doesn't work across different instances/snapshots.
 func (ctw *InstanceTarWriter) ResetHardLinkMap() {
 	ctw.linkMap = map[uint64]string{}
+	ctw.linkMapSize = 0
 }
 
 // WriteFile adds a file to the tarball with the specified name using the srcPath file as the contents of the file.
@@ -49,12 +59,37 @@ func (ctw *InstanceTarWriter) WriteFile(name string, srcPath string, fi os.FileI
 	var nlink int
 	var ino uint64
 
+	// Pin the entry so a path component swapped for a symlink mid-walk can't redirect the reads
+	// below into the rest of the host filesystem.
+	pathFd, err := unix.Open(srcPath, unix.O_PATH|unix.O_NOFOLLOW|unix.O_CLOEXEC, 0)
+	if err != nil {
+		return fmt.Errorf("Failed to open %q: %w", srcPath, err)
+	}
+
+	defer func() { _ = unix.Close(pathFd) }()
+
+	// Get file stat.
+	var stat unix.Stat_t
+	err = unix.Fstat(pathFd, &stat)
+	if err != nil {
+		return fmt.Errorf("Failed to get file stat: %w", err)
+	}
+
+	// Make sure we pinned the same inode the walk saw, not something swapped in since.
+	walkStat, ok := fi.Sys().(*syscall.Stat_t)
+	if !ok || uint64(walkStat.Dev) != uint64(stat.Dev) || walkStat.Ino != stat.Ino {
+		return fmt.Errorf("File %q was replaced during export: %w", srcPath, fs.ErrNotExist)
+	}
+
 	link := ""
 	if fi.Mode()&os.ModeSymlink == os.ModeSymlink {
-		link, err = os.Readlink(srcPath)
+		buf := make([]byte, unix.PathMax)
+		n, err := unix.Readlinkat(pathFd, "", buf)
 		if err != nil {
 			return fmt.Errorf("Failed to resolve symlink for %q: %w", srcPath, err)
 		}
+
+		link = string(buf[:n])
 	}
 
 	// Sockets cannot be stored in tarballs, just skip them (consistent with tar).
@@ -72,13 +107,6 @@ func (ctw *InstanceTarWriter) WriteFile(name string, srcPath string, fi os.FileI
 		hdr.Size = 0
 	} else {
 		hdr.Size = fi.Size()
-	}
-
-	// Get file stat.
-	var stat unix.Stat_t
-	err = unix.Lstat(srcPath, &stat)
-	if err != nil {
-		return fmt.Errorf("Failed to get file stat: %w", err)
 	}
 
 	hdr.Uid = int(stat.Uid)
@@ -111,14 +139,15 @@ func (ctw *InstanceTarWriter) WriteFile(name string, srcPath string, fi os.FileI
 			hdr.Typeflag = tar.TypeLink
 			hdr.Linkname = firstPath
 			hdr.Size = 0
-		} else {
+		} else if ctw.linkMapSize+len(hdr.Name)+linkMapEntrySize <= linkMapMaxSize {
 			ctw.linkMap[ino] = hdr.Name
+			ctw.linkMapSize += len(hdr.Name) + linkMapEntrySize
 		}
 	}
 
 	// Handle xattrs (for real files only).
 	if link == "" {
-		xattrs, err := linux.GetAllXattr(srcPath)
+		xattrs, err := linux.GetAllXattrFromFd(pathFd)
 		if err != nil {
 			return fmt.Errorf("Failed to read xattr for %q: %w", srcPath, err)
 		}
@@ -161,7 +190,7 @@ func (ctw *InstanceTarWriter) WriteFile(name string, srcPath string, fi os.FileI
 	}
 
 	if hdr.Typeflag == tar.TypeReg {
-		f, err := os.Open(srcPath)
+		f, err := os.Open(fmt.Sprintf("/proc/self/fd/%d", pathFd))
 		if err != nil {
 			return fmt.Errorf("Failed to open file %q: %w", srcPath, err)
 		}

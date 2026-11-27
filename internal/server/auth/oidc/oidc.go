@@ -2,6 +2,8 @@ package oidc
 
 import (
 	"context"
+	"encoding/base64"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -130,6 +132,12 @@ func (o *Verifier) Auth(ctx context.Context, w http.ResponseWriter, r *http.Requ
 		}
 
 		return username, claims.Claims, nil
+	}
+
+	// An address the provider marks as unverified may belong to someone else.
+	verified, ok := claims.Claims["email_verified"].(bool)
+	if ok && !verified {
+		return claims.Subject, claims.Claims, nil
 	}
 
 	user, ok := claims.Claims["email"]
@@ -320,16 +328,31 @@ func (o *Verifier) verifyTokens(ctx context.Context, r *http.Request, accessToke
 			return nil, errors.New("Opaque access tokens can't be used with a configured audience")
 		}
 
-		// The ID token is checked for issuer, signature, expiration and the configured client ID as audience.
-		idClaims, err := rp.VerifyIDToken[*oidc.IDTokenClaims](ctx, idToken, o.idTokenVerifier)
+		// The ID token is checked for issuer, signature, expiration and the configured client ID as
+		// audience, and bound to the access token through at_hash when the provider includes it.
+		idClaims, err := rp.VerifyTokens[*oidc.IDTokenClaims](ctx, accessToken, idToken, o.idTokenVerifier)
 		if err != nil {
 			return nil, err
 		}
 
 		claims = &oidc.AccessTokenClaims{TokenClaims: idClaims.TokenClaims, Claims: idClaims.Claims}
-	} else if o.audience != "" && !slices.Contains(claims.GetAudience(), o.audience) {
+	} else if isIDToken(accessToken, claims) {
+		// An ID token passes the access token checks but carries the user's login claims, not the access ones.
+		return nil, errors.New("Provided OIDC token is an ID token, not an access token")
+	} else if o.audience != "" {
 		// Check that the access token includes the configured audience.
-		return nil, errors.New("Provided OIDC token doesn't allow the configured audience")
+		if !slices.Contains(claims.GetAudience(), o.audience) {
+			return nil, errors.New("Provided OIDC token doesn't allow the configured audience")
+		}
+	} else if !slices.Contains(claims.GetAudience(), o.clientID) && claims.AuthorizedParty != o.clientID && claims.ClientID != o.clientID {
+		// Without a configured audience, only accept tokens issued for our own client ID.
+		return nil, errors.New("Provided OIDC token wasn't issued for the configured client ID")
+	}
+
+	// Provider-signed JWTs that don't identify a user can't be used to authenticate.
+	err = oidc.CheckSubject(claims)
+	if err != nil {
+		return nil, err
 	}
 
 	// Check if we have a subnet restriction.
@@ -339,6 +362,37 @@ func (o *Verifier) verifyTokens(ctx context.Context, r *http.Request, accessToke
 	}
 
 	return claims, nil
+}
+
+// isIDToken reports whether a verified JWT is an ID token rather than an access token.
+func isIDToken(token string, claims *oidc.AccessTokenClaims) bool {
+	// Only ID tokens carry the hash of the access token issued with them.
+	_, ok := claims.Claims["at_hash"]
+	if ok {
+		return true
+	}
+
+	// Some providers type the header instead.
+	parts := strings.Split(token, ".")
+	if len(parts) != 3 {
+		return false
+	}
+
+	rawHeader, err := base64.RawURLEncoding.DecodeString(parts[0])
+	if err != nil {
+		return false
+	}
+
+	header := struct {
+		Type string `json:"typ"`
+	}{}
+
+	err = json.Unmarshal(rawHeader, &header)
+	if err != nil {
+		return false
+	}
+
+	return header.Type == "ID"
 }
 
 func (o *Verifier) validateSubnet(r *http.Request, claim any) error {

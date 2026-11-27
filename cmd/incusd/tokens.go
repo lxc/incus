@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"slices"
 	"time"
 
 	"github.com/lxc/incus/v7/internal/server/db/operationtype"
@@ -16,7 +17,7 @@ func autoRemoveExpiredTokens(ctx context.Context, s *state.State) {
 
 	for _, op := range operations.Clone() {
 		// Only consider token operations
-		if op.Type() != operationtype.ClusterJoinToken && op.Type() != operationtype.CertificateAddToken {
+		if !slices.Contains([]operationtype.Type{operationtype.ClusterJoinToken, operationtype.CertificateAddToken, operationtype.ImageToken, operationtype.ImageUploadToken}, op.Type()) {
 			continue
 		}
 

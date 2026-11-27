@@ -1,6 +1,7 @@
 package drivers
 
 import (
+	"encoding/binary"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -166,6 +167,62 @@ func Qcow2Commit(path string) error {
 	}
 
 	return nil
+}
+
+// Qcow2IsStandalone reports whether a qcow2 file refers to no external file. It parses the header
+// itself rather than trusting qemu-img, which would already open an external data file.
+func Qcow2IsStandalone(path string) (bool, error) {
+	f, err := os.Open(path)
+	if err != nil {
+		return false, err
+	}
+
+	defer func() { _ = f.Close() }()
+
+	// Read the fixed part of the qcow2 v3 header.
+	hdr := make([]byte, 80)
+	_, err = io.ReadFull(f, hdr)
+	if err != nil {
+		return false, err
+	}
+
+	if string(hdr[0:4]) != "QFI\xfb" {
+		return false, fmt.Errorf("Not a qcow2 image: %q", path)
+	}
+
+	// A non-zero backing file offset means the image has a backing file.
+	if binary.BigEndian.Uint64(hdr[8:16]) != 0 {
+		return false, nil
+	}
+
+	// From version 3, incompatible feature bit 2 marks an external data file.
+	version := binary.BigEndian.Uint32(hdr[4:8])
+	if version >= 3 {
+		incompatibleFeatures := binary.BigEndian.Uint64(hdr[72:80])
+		if incompatibleFeatures&(1<<2) != 0 {
+			return false, nil
+		}
+	}
+
+	return true, nil
+}
+
+// RawInfo returns information about a volume read as raw. The format is forced, so that a
+// tenant-crafted header in the volume's own content can't make qemu-img follow a host path.
+func RawInfo(path string) (*ImageInfo, error) {
+	imgJSON, err := subprocess.RunCommand("qemu-img", "info", "-U", "--output=json", "-f", "raw", path)
+	if err != nil {
+		return nil, err
+	}
+
+	imgInfo := ImageInfo{}
+
+	err = json.Unmarshal([]byte(imgJSON), &imgInfo)
+	if err != nil {
+		return nil, fmt.Errorf("Failed unmarshalling image info %q: %w (%q)", path, err, imgJSON)
+	}
+
+	return &imgInfo, nil
 }
 
 // qcow2Format returns the format to pass to qemu-img, qcow2 only when the header carries its magic.

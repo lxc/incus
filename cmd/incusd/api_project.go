@@ -1045,6 +1045,12 @@ func projectPost(d *Daemon, r *http.Request) response.Response {
 		projectUpdateShares(s.ShutdownCtx, s, name, projectConfig, nil)
 		projectUpdateShares(s.ShutdownCtx, s, req.Name, nil, projectConfig)
 
+		// Restricted certificates are cached by project name.
+		err = certificateCacheProjectRemoved(s.ShutdownCtx, s, name)
+		if err != nil {
+			return err
+		}
+
 		requestor := request.CreateRequestor(r)
 		s.Events.SendLifecycle(req.Name, lifecycle.ProjectRenamed.Event(req.Name, requestor, logger.Ctx{"old_name": name}))
 
@@ -1447,6 +1453,12 @@ func projectDelete(d *Daemon, r *http.Request) response.Response {
 	}
 
 	projectUpdateShares(r.Context(), s, name, projectConfig, nil)
+
+	// Restricted certificates are cached by project name.
+	err = certificateCacheProjectRemoved(r.Context(), s, name)
+	if err != nil {
+		return response.SmartError(err)
+	}
 
 	requestor := request.CreateRequestor(r)
 	s.Events.SendLifecycle(name, lifecycle.ProjectDeleted.Event(name, requestor, nil))
@@ -2002,6 +2014,8 @@ func projectValidateConfig(s *state.State, config map[string]string) error {
 		// - When set to `block`, this option prevents using all network devices.
 		// - When set to `managed`, this option allows using network devices only if `network=` is set.
 		// - When set to `allow`, there is no restriction on which network devices can be used.
+		//
+		// Unless set to `allow`, the `host_name` option of network devices can't be set.
 		// ---
 		//  type: string
 		//  defaultdesc: `managed`
@@ -2083,6 +2097,7 @@ func projectValidateConfig(s *state.State, config map[string]string) error {
 		// gendoc:generate(entity=project, group=restricted, key=restricted.networks.subnets)
 		// Specify a comma-delimited list of network subnets from the uplink networks that are allocated for use in this project.
 		// Use the form `<uplink>:<subnet>`.
+		// Host-side routes on bridged NICs must fall within the subnets listed for their network.
 		// ---
 		//  type: string
 		//  defaultdesc: `block`

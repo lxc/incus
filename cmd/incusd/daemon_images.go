@@ -8,9 +8,9 @@ import (
 	"io"
 	"net/http"
 	"os"
-	"path/filepath"
 	"regexp"
 	"slices"
+	"sync/atomic"
 	"time"
 
 	incus "github.com/lxc/incus/v7/client"
@@ -30,6 +30,7 @@ import (
 	"github.com/lxc/incus/v7/shared/cancel"
 	"github.com/lxc/incus/v7/shared/ioprogress"
 	"github.com/lxc/incus/v7/shared/logger"
+	"github.com/lxc/incus/v7/shared/revert"
 	"github.com/lxc/incus/v7/shared/units"
 	"github.com/lxc/incus/v7/shared/util"
 	"github.com/lxc/incus/v7/shared/validate"
@@ -61,6 +62,49 @@ func imageOperationLock(ctx context.Context, fingerprint string) (locking.Unlock
 
 	return locking.Lock(ctx, fmt.Sprintf("ImageOperation_%s", fingerprint))
 }
+
+// imageDownloadLock acquires a lock for downloading an image into a project and returns the unlock function.
+func imageDownloadLock(ctx context.Context, projectName string, fingerprint string) (locking.UnlockFunc, error) {
+	return locking.Lock(ctx, fmt.Sprintf("ImageDownload_%s_%s", projectName, fingerprint))
+}
+
+// imageDownloadIdleTimeout is how long a download may go without data before it's cancelled.
+const imageDownloadIdleTimeout = time.Minute
+
+// activityFile records when a download last wrote to its file and how much it received.
+type activityFile struct {
+	io.ReadWriteSeeker
+	touch  func()
+	charge func(n int) error
+}
+
+// Write records the activity and writes to the file.
+func (f *activityFile) Write(p []byte) (int, error) {
+	f.touch()
+
+	err := f.charge(len(p))
+	if err != nil {
+		return 0, err
+	}
+
+	return f.ReadWriteSeeker.Write(p)
+}
+
+// activityReadCloser records when a download last received data.
+type activityReadCloser struct {
+	io.ReadCloser
+	touch func()
+}
+
+// Read records the activity and reads from the body.
+func (r *activityReadCloser) Read(p []byte) (int, error) {
+	r.touch()
+
+	return r.ReadCloser.Read(p)
+}
+
+// imageServerMaxResponseSize bounds the replies read from an image server, which the client chose.
+const imageServerMaxResponseSize = 64 * 1024 * 1024
 
 // imageDownload resolves the image fingerprint and if not in the database, downloads it or links it from another project.
 func imageDownload(ctx context.Context, r *http.Request, s *state.State, op *operations.Operation, args *imageDownloadArgs) (*api.Image, bool, error) {
@@ -99,14 +143,15 @@ func imageDownload(ctx context.Context, r *http.Request, s *state.State, op *ope
 	// Attempt to resolve the alias
 	if args.Server != "" && slices.Contains([]string{"incus", "lxd", "oci", "simplestreams"}, protocol) {
 		clientArgs := &incus.ConnectionArgs{
-			TLSServerCert: args.Certificate,
-			UserAgent:     version.UserAgent,
-			Proxy:         s.Proxy,
-			CachePath:     s.OS.CacheDir,
-			CacheExpiry:   time.Hour,
-			SkipGetEvents: true,
-			SkipGetServer: true,
-			TempPath:      internalUtil.VarPath("images"),
+			TLSServerCert:   args.Certificate,
+			UserAgent:       version.UserAgent,
+			Proxy:           s.Proxy,
+			CachePath:       s.OS.CacheDir,
+			CacheExpiry:     time.Hour,
+			SkipGetEvents:   true,
+			SkipGetServer:   true,
+			TempPath:        internalUtil.VarPath("images"),
+			MaxResponseSize: imageServerMaxResponseSize,
 		}
 
 		if slices.Contains([]string{"incus", "lxd"}, protocol) {
@@ -162,7 +207,21 @@ func imageDownload(ctx context.Context, r *http.Request, s *state.State, op *ope
 
 			fp = info.Fingerprint
 		}
+
+		// The remote's answer is looked up by prefix below, so only accept a full fingerprint.
+		err = validate.IsSHA256(fp)
+		if err != nil {
+			return nil, false, errors.New("Invalid image fingerprint")
+		}
 	}
+
+	// Only allow one download of this image in the project.
+	unlockDownload, err := imageDownloadLock(ctx, args.ProjectName, fp)
+	if err != nil {
+		return nil, false, err
+	}
+
+	defer unlockDownload()
 
 	// Ensure we are the only ones operating on this image.
 	unlock, err := imageOperationLock(ctx, fp)
@@ -170,7 +229,7 @@ func imageDownload(ctx context.Context, r *http.Request, s *state.State, op *ope
 		return nil, false, err
 	}
 
-	defer unlock()
+	defer func() { unlock() }()
 
 	// If auto-update is on and we're being given the image by
 	// alias, try to use a locally cached image matching the given
@@ -204,6 +263,15 @@ func imageDownload(ctx context.Context, r *http.Request, s *state.State, op *ope
 
 		return err
 	})
+
+	// A private image may only be reused by a caller allowed to view it.
+	if err == nil && r != nil && !imgInfo.Public && !imgInfo.Cached {
+		err = s.Authorizer.CheckPermission(ctx, r, auth.ObjectImage(args.ProjectName, imgInfo.Fingerprint), auth.EntitlementCanView)
+		if err != nil {
+			return nil, false, err
+		}
+	}
+
 	if err == nil {
 		var nodeAddress string
 
@@ -243,8 +311,9 @@ func imageDownload(ctx context.Context, r *http.Request, s *state.State, op *ope
 		if err == nil {
 			// Only reuse another project's image when the caller may see it,
 			// otherwise download it (proving access) and dedupe on disk.
-			reuse := otherImg.Public || r == nil
-			if !reuse {
+			// Internal callers have no request to check against, so they only reuse public images.
+			reuse := otherImg.Public
+			if !reuse && r != nil {
 				err = s.Authorizer.CheckPermission(ctx, r, auth.ObjectImage(otherImg.Project, otherImg.Fingerprint), auth.EntitlementCanView)
 				if err == nil {
 					reuse = true
@@ -306,7 +375,7 @@ func imageDownload(ctx context.Context, r *http.Request, s *state.State, op *ope
 			// Transfer image if needed (after database record has been created above).
 			if nodeAddress != "" {
 				// The image is available from another node, let's try to import it.
-				err = instanceImageTransfer(s, r, args.ProjectName, info.Fingerprint, nodeAddress)
+				err = instanceImageTransfer(s, r, args.ProjectName, imgInfo.Fingerprint, nodeAddress)
 				if err != nil {
 					return nil, false, fmt.Errorf("Failed transferring image: %w", err)
 				}
@@ -364,6 +433,11 @@ func imageDownload(ctx context.Context, r *http.Request, s *state.State, op *ope
 		return info, linked, nil
 	}
 
+	// Nothing to download from.
+	if args.Server == "" {
+		return nil, false, api.StatusErrorf(http.StatusNotFound, "Image not found")
+	}
+
 	// Begin downloading
 	if op == nil {
 		ctxMap = logger.Ctx{"alias": alias, "server": args.Server}
@@ -381,17 +455,32 @@ func imageDownload(ctx context.Context, r *http.Request, s *state.State, op *ope
 		return nil, false, errors.New("Invalid image fingerprint")
 	}
 
+	// The remote is chosen by the client, so don't hold up the image for other projects during the transfer.
+	unlock()
+	unlock = func() {}
+
 	// Download to a temporary name so an existing on-disk copy isn't overwritten.
-	destDir := internalUtil.VarPath("images")
-	destName := filepath.Join(destDir, fp+".download")
+	destFile, err := os.CreateTemp(internalUtil.VarPath("images"), fp+".*.download")
+	if err != nil {
+		return nil, false, err
+	}
+
+	destName := destFile.Name()
+	_ = destFile.Close()
 
 	failure := true
+	var storeRevert revert.Hook
 	cleanup := func() {
 		if failure {
 			_ = os.Remove(destName)
 			_ = os.Remove(destName + ".rootfs")
+
+			if storeRevert != nil {
+				storeRevert()
+			}
 		}
 	}
+
 	defer cleanup()
 
 	// Setup a progress handler
@@ -410,11 +499,50 @@ func imageDownload(ctx context.Context, r *http.Request, s *state.State, op *ope
 		}
 	}
 
-	var canceler *cancel.HTTPRequestCanceller
+	canceler := cancel.NewHTTPRequestCanceller()
 	if op != nil {
-		canceler = cancel.NewHTTPRequestCanceller()
 		op.SetCanceler(canceler)
 	}
+
+	// Give up on a remote that stops sending.
+	var lastActivity atomic.Int64
+	lastActivity.Store(time.Now().Unix())
+	touch := func() { lastActivity.Store(time.Now().Unix()) }
+
+	// The size is declared by the remote, so hold what is received to the budget.
+	var received atomic.Int64
+	charge := func(n int) error {
+		if protocol == "oci" || args.Budget < 0 {
+			return nil
+		}
+
+		if received.Add(int64(n)) > args.Budget {
+			return fmt.Errorf("Remote image exceeds allowed budget of %d", args.Budget)
+		}
+
+		return nil
+	}
+
+	watchdogDone := make(chan struct{})
+	defer close(watchdogDone)
+
+	go func() {
+		ticker := time.NewTicker(10 * time.Second)
+		defer ticker.Stop()
+
+		for {
+			select {
+			case <-watchdogDone:
+				return
+			case <-ticker.C:
+				if time.Now().Unix()-lastActivity.Load() > int64(imageDownloadIdleTimeout.Seconds()) {
+					logger.Warn("Cancelling stalled image download", logger.Ctx{"server": args.Server, "fingerprint": fp})
+					_ = canceler.Cancel()
+					return
+				}
+			}
+		}
+	}()
 
 	if slices.Contains([]string{"incus", "lxd", "oci", "simplestreams"}, protocol) {
 		// Create the target files
@@ -463,11 +591,27 @@ func imageDownload(ctx context.Context, r *http.Request, s *state.State, op *ope
 		// Download the image
 		var resp *incus.ImageFileResponse
 		request := incus.ImageFileRequest{
-			MetaFile:        io.ReadWriteSeeker(dest),
-			RootfsFile:      io.ReadWriteSeeker(destRootfs),
+			MetaFile:        &activityFile{ReadWriteSeeker: dest, touch: touch, charge: charge},
+			RootfsFile:      &activityFile{ReadWriteSeeker: destRootfs, touch: touch, charge: charge},
 			ProgressHandler: progress,
+			MaxUnpackedSize: args.Budget,
 			Canceler:        canceler,
 			DeltaSourceRetriever: func(fingerprint string, file string) string {
+				// The base name comes from the remote server; only offer an image the project already holds.
+				if validate.IsSHA256(fingerprint) != nil {
+					return ""
+				}
+
+				var exists bool
+				err := s.DB.Cluster.Transaction(ctx, func(ctx context.Context, tx *db.ClusterTx) error {
+					var err error
+					exists, err = tx.ImageExists(ctx, args.ProjectName, fingerprint)
+					return err
+				})
+				if err != nil || !exists {
+					return ""
+				}
+
 				path := internalUtil.VarPath("images", fmt.Sprintf("%s.%s", fingerprint, file))
 				if util.PathExists(path) {
 					return path
@@ -485,6 +629,16 @@ func imageDownload(ctx context.Context, r *http.Request, s *state.State, op *ope
 
 		if err != nil {
 			return nil, false, err
+		}
+
+		// The remote may skip the hash check by claiming an OCI image, so store what was received under its own hash.
+		if resp.Fingerprint != "" && resp.Fingerprint != fp {
+			if alias == fp {
+				alias = resp.Fingerprint
+			}
+
+			fp = resp.Fingerprint
+			info.Fingerprint = fp
 		}
 
 		// Truncate down to size
@@ -553,7 +707,7 @@ func imageDownload(ctx context.Context, r *http.Request, s *state.State, op *ope
 
 		// Progress handler
 		body := &ioprogress.ProgressReader{
-			ReadCloser: raw.Body,
+			ReadCloser: &activityReadCloser{ReadCloser: raw.Body, touch: touch},
 			Tracker: &ioprogress.ProgressTracker{
 				Length: raw.ContentLength,
 				Handler: func(percent int64, speed int64) {
@@ -615,6 +769,32 @@ func imageDownload(ctx context.Context, r *http.Request, s *state.State, op *ope
 		return nil, false, fmt.Errorf("Unsupported protocol: %v", protocol)
 	}
 
+	// Validate the fingerprint before recording it, as it is used as a file name and may have been
+	// replaced by the remote server's response.
+	err = validate.IsSHA256(fp)
+	if err != nil || info.Fingerprint != fp {
+		return nil, false, errors.New("Invalid image fingerprint")
+	}
+
+	// The image is verified by now, get exclusive access to record it.
+	unlock, err = imageOperationLock(ctx, fp)
+	if err != nil {
+		unlock = func() {}
+
+		return nil, false, err
+	}
+
+	// Store the files, reusing an identical on-disk copy if present.
+	rootfsName := ""
+	if util.PathExists(destName + ".rootfs") {
+		rootfsName = destName + ".rootfs"
+	}
+
+	storeRevert, err = imageStoreFiles(fp, destName, rootfsName)
+	if err != nil {
+		return nil, false, err
+	}
+
 	// Override visibility
 	info.Public = args.Public
 
@@ -647,32 +827,6 @@ func imageDownload(ctx context.Context, r *http.Request, s *state.State, op *ope
 
 	// Image is in the DB now, don't wipe on-disk files on failure
 	failure = false
-
-	// Re-validate the fingerprint as it may have been updated from the remote
-	// server's response, and it is used as a file name below.
-	err = validate.IsSHA256(fp)
-	if err != nil {
-		return nil, false, errors.New("Invalid image fingerprint")
-	}
-
-	// Reuse an existing on-disk copy if present, otherwise move ours into place.
-	newDestName := filepath.Join(destDir, fp)
-	if util.PathExists(newDestName) {
-		_ = os.Remove(destName)
-		_ = os.Remove(destName + ".rootfs")
-	} else {
-		err = internalUtil.FileMove(destName, newDestName)
-		if err != nil {
-			return nil, false, err
-		}
-
-		if util.PathExists(destName + ".rootfs") {
-			err = internalUtil.FileMove(destName+".rootfs", newDestName+".rootfs")
-			if err != nil {
-				return nil, false, err
-			}
-		}
-	}
 
 	// Record the image source
 	if alias != fp {

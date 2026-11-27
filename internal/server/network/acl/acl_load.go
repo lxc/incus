@@ -133,6 +133,7 @@ func UsedBy(s *state.State, aclProjectName string, usageFunc func(ctx context.Co
 
 	var profiles []cluster.Profile
 	profileDevices := map[int]map[string]cluster.Device{}
+	profileProjects := map[string]*api.Project{}
 
 	err := s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
 		// Find networks using the ACLs. Cheapest to do.
@@ -176,20 +177,19 @@ func UsedBy(s *state.State, aclProjectName string, usageFunc func(ctx context.Co
 			return err
 		}
 
-		// Resolve the effective network project of each profile.
+		// Load the projects to resolve the effective network project of each profile NIC.
 		projects, err := cluster.GetProjects(ctx, tx.Tx())
 		if err != nil {
 			return err
 		}
 
-		networkProjects := map[string]string{}
 		for _, p := range projects {
 			apiProject, err := p.ToAPI(ctx, tx.Tx())
 			if err != nil {
 				return err
 			}
 
-			networkProjects[p.Name] = project.NetworkProjectFromRecord(apiProject)
+			profileProjects[p.Name] = apiProject
 		}
 
 		// Get all the profile devices.
@@ -199,11 +199,6 @@ func UsedBy(s *state.State, aclProjectName string, usageFunc func(ctx context.Co
 		}
 
 		for _, profile := range allProfiles {
-			// Skip profiles whose effective network project doesn't match this Network ACL's project.
-			if networkProjects[profile.Project] != aclProjectName {
-				continue
-			}
-
 			devices := map[string]cluster.Device{}
 			for _, dev := range profileDevicesByID[profile.ID] {
 				devices[dev.Name] = dev
@@ -224,6 +219,11 @@ func UsedBy(s *state.State, aclProjectName string, usageFunc func(ctx context.Co
 		for devName, devConfig := range deviceConfig.NewDevices(cluster.DevicesToAPI(profileDevices[profile.ID])) {
 			matchedACLNames := isInUseByDevice(devConfig, matchACLNames...)
 			if len(matchedACLNames) > 0 {
+				// Skip NICs whose effective network project (accounting for shared networks) doesn't match this Network ACL's project.
+				if project.NetworkProjectForNameFromRecord(profileProjects[profile.Project], devConfig["network"]) != aclProjectName {
+					continue
+				}
+
 				// Call usageFunc with a list of matched ACLs and info about the instance NIC.
 				err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
 					return usageFunc(ctx, tx, matchedACLNames, profile, devName, devConfig)
@@ -280,20 +280,17 @@ func UsedBy(s *state.State, aclProjectName string, usageFunc func(ctx context.Co
 
 		// Find instances using the ACLs. Most expensive to do.
 		err = tx.InstanceList(ctx, func(inst db.InstanceArgs, p api.Project) error {
-			// Get the instance's effective network project name.
-			instNetworkProject := project.NetworkProjectFromRecord(&p)
-
-			// Skip instances who's effective network project doesn't match this Network ACL's project.
-			if instNetworkProject != aclProjectName {
-				return nil
-			}
-
 			devices := db.ExpandInstanceDevices(inst.Devices.Clone(), inst.Profiles)
 
 			// Iterate through each of the instance's devices, looking for NICs that are using any of the ACLs.
 			for devName, devConfig := range devices {
 				matchedACLNames := isInUseByDevice(devConfig, matchACLNames...)
 				if len(matchedACLNames) > 0 {
+					// Skip NICs whose effective network project (accounting for shared networks) doesn't match this Network ACL's project.
+					if project.NetworkProjectForNameFromRecord(&p, devConfig["network"]) != aclProjectName {
+						continue
+					}
+
 					// Call usageFunc with a list of matched ACLs and info about the instance NIC.
 					err := usageFunc(ctx, tx, matchedACLNames, inst, devName, devConfig)
 					if err != nil {
@@ -321,8 +318,8 @@ func UsedBy(s *state.State, aclProjectName string, usageFunc func(ctx context.Co
 func isInUseByDevice(d deviceConfig.Device, matchACLNames ...string) []string {
 	matchedACLNames := []string{}
 
-	// Only NICs linked to managed networks, and routed NICs, can use network ACLs.
-	if d["type"] != "nic" || (d["network"] == "" && !IsRoutedNIC(d)) {
+	// Only NICs linked to managed networks, routed NICs and bridged NICs can use network ACLs.
+	if d["type"] != "nic" || (d["network"] == "" && !IsRoutedNIC(d) && d["nictype"] != "bridged") {
 		return matchedACLNames
 	}
 
@@ -374,6 +371,11 @@ func NetworkUsage(s *state.State, aclProjectName string, aclNames []string, aclN
 				return nil
 			}
 
+			// Bridged NICs that aren't linked to a managed network are tracked through the instances using the profile.
+			if nicConfig["network"] == "" {
+				return nil
+			}
+
 			networkID, network, _, err := tx.GetNetworkInAnyState(ctx, aclProjectName, nicConfig["network"])
 			if err != nil {
 				return fmt.Errorf("Failed to load network %q: %w", nicConfig["network"], err)
@@ -400,6 +402,24 @@ func NetworkUsage(s *state.State, aclProjectName string, aclNames []string, aclN
 					InstanceProject: u.Project,
 					InstanceName:    u.Name,
 					DeviceName:      devName,
+				}
+
+				return nil
+			}
+
+			// Bridged NICs that aren't linked to a managed network have no network record, record the NIC usage only.
+			if nicConfig["network"] == "" {
+				key := fmt.Sprintf("%s/%s/%s/%s", nicConfig["parent"], u.Project, u.Name, devName)
+
+				_, found := aclNets[key]
+				if !found {
+					aclNets[key] = NetworkACLUsage{
+						Name:            nicConfig["parent"],
+						Type:            "bridge",
+						InstanceProject: u.Project,
+						InstanceName:    u.Name,
+						DeviceName:      devName,
+					}
 				}
 
 				return nil

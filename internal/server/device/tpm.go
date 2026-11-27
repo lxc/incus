@@ -208,7 +208,14 @@ func (d *tpm) validateConfig(instConf instance.ConfigReader, partialValidation b
 		//  default: -
 		//  required: for containers
 		//  shortdesc: Only for containers: path inside the instance (for example, `/dev/tpm0`)
-		rules["path"] = validate.IsNotEmpty
+		rules["path"] = func(value string) error {
+			err := validate.IsNotEmpty(value)
+			if err != nil {
+				return err
+			}
+
+			return validateInstancePath(value)
+		}
 
 		// gendoc:generate(entity=devices, group=tpm, key=pathrm)
 		//
@@ -217,7 +224,14 @@ func (d *tpm) validateConfig(instConf instance.ConfigReader, partialValidation b
 		//  default: -
 		//  required: for containers
 		//  shortdesc: Only for containers: resource manager path inside the instance (for example, `/dev/tpmrm0`)
-		rules["pathrm"] = validate.IsNotEmpty
+		rules["pathrm"] = func(value string) error {
+			err := validate.IsNotEmpty(value)
+			if err != nil {
+				return err
+			}
+
+			return validateInstancePath(value)
+		}
 	} else {
 		rules["path"] = validate.Optional(validate.IsNotEmpty)
 		rules["pathrm"] = validate.Optional(validate.IsNotEmpty)
@@ -383,9 +397,7 @@ func (d *tpm) startContainer() (*deviceConfig.RunConfig, error) {
 		return nil, fmt.Errorf("Failed to save swtpm state for device %q: %w", d.name, err)
 	}
 
-	const TPM_MINOR = 244
-	const TPM_NUM_DEVICES = 65536
-	var major, minor, minorRM int
+	reverter.Add(func() { _ = os.Remove(pidPath) })
 
 	// We need to capture the output of the TPM emulator since it contains the device path. To do
 	// that, we wait until something has been written to the log file (stdout redirect), and then
@@ -410,37 +422,47 @@ func (d *tpm) startContainer() (*deviceConfig.RunConfig, error) {
 
 	// The output will be something like:
 	//   New TPM device: /dev/tpm1 (major/minor = 253/1)
-	// We just need the major/minor numbers.
-	fields := strings.Split(string(line), " ")
-
+	// The device numbers come from sysfs as the resource manager has its own major.
+	fields := strings.Fields(string(line))
 	if len(fields) < 7 {
 		return nil, errors.New("Failed to get TPM device information")
 	}
 
+	var index int
+	_, err = fmt.Sscanf(fields[3], "/dev/tpm%d", &index)
+	if err != nil {
+		return nil, fmt.Errorf("Failed to retrieve TPM device index: %w", err)
+	}
+
+	var major, minor uint32
 	_, err = fmt.Sscanf(fields[6], "%d/%d)", &major, &minor)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to retrieve major/minor number: %w", err)
 	}
 
-	// Return error as we were unable to retrieve information regarding the TPM device.
-	if major == 0 && minor == 0 {
-		return nil, errors.New("Failed to get TPM device information")
+	sysMajor, sysMinor, err := tpmSysfsDevNum(fmt.Sprintf("/sys/class/tpm/tpm%d/dev", index))
+	if err != nil {
+		return nil, err
 	}
 
-	if minor == TPM_MINOR {
-		minorRM = TPM_NUM_DEVICES
-	} else {
-		minorRM = TPM_NUM_DEVICES + minor
+	// Make sure sysfs describes the device swtpm reported.
+	if sysMajor != major || sysMinor != minor {
+		return nil, fmt.Errorf("TPM device %d doesn't match the reported device numbers", index)
+	}
+
+	majorRM, minorRM, err := tpmSysfsDevNum(fmt.Sprintf("/sys/class/tpmrm/tpmrm%d/dev", index))
+	if err != nil {
+		return nil, err
 	}
 
 	runConf := deviceConfig.RunConfig{}
 
-	err = unixDeviceSetupCharNum(d.state, d.inst.DevicesPath(), "unix", d.name, d.config, uint32(major), uint32(minor), d.config["path"], false, &runConf)
+	err = unixDeviceSetupCharNum(d.state, d.inst.DevicesPath(), "unix", d.name, d.config, major, minor, d.config["path"], false, &runConf)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to setup unix device: %w", err)
 	}
 
-	err = unixDeviceSetupCharNum(d.state, d.inst.DevicesPath(), "unix", d.name, d.config, uint32(major), uint32(minorRM), d.config["pathrm"], false, &runConf)
+	err = unixDeviceSetupCharNum(d.state, d.inst.DevicesPath(), "unix", d.name, d.config, majorRM, minorRM, d.config["pathrm"], false, &runConf)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to setup unix device: %w", err)
 	}
@@ -448,6 +470,22 @@ func (d *tpm) startContainer() (*deviceConfig.RunConfig, error) {
 	reverter.Success()
 
 	return &runConf, nil
+}
+
+// tpmSysfsDevNum returns the device numbers from a sysfs dev file.
+func tpmSysfsDevNum(path string) (uint32, uint32, error) {
+	content, err := os.ReadFile(path)
+	if err != nil {
+		return 0, 0, fmt.Errorf("Failed to read %q: %w", path, err)
+	}
+
+	var major, minor uint32
+	_, err = fmt.Sscanf(strings.TrimSpace(string(content)), "%d:%d", &major, &minor)
+	if err != nil {
+		return 0, 0, fmt.Errorf("Failed to parse %q: %w", path, err)
+	}
+
+	return major, minor, nil
 }
 
 func (d *tpm) startVM() (*deviceConfig.RunConfig, error) {

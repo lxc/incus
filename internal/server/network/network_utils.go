@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"context"
 	cryptoRand "crypto/rand"
+	"crypto/sha256"
 	"encoding/hex"
 	"errors"
 	"fmt"
@@ -535,6 +536,12 @@ func UpdateDNSMasqStatic(s *state.State, networkName string) error {
 				continue
 			}
 
+			// Skip entries that would break the dnsmasq host file.
+			_, err = net.ParseMAC(d["hwaddr"])
+			if err != nil {
+				continue
+			}
+
 			// Treat "none" and static in-instance (CIDR) addresses as not set for DHCP purposes.
 			for _, key := range []string{"ipv4.address", "ipv6.address"} {
 				if d[key] == "none" || strings.Contains(d[key], "/") {
@@ -871,9 +878,10 @@ func GetHostDevice(parent string, vlan string) string {
 	// If no VLANs are configured, use the default pattern.
 	defaultVlan := fmt.Sprintf("%s.%s", parent, vlan)
 
-	// Handle long interface names.
+	// Handle long interface names, keeping the name unique per parent.
 	if len(defaultVlan) > 15 {
-		defaultVlan = fmt.Sprintf("incus-vlan-%s", vlan)
+		parentHash := sha256.Sum256([]byte(parent))
+		defaultVlan = fmt.Sprintf("iv%s-%s", hex.EncodeToString(parentHash[:])[:6], vlan)
 	}
 
 	if !util.PathExists("/proc/net/vlan/config") {
@@ -934,6 +942,32 @@ func GetNeighborAddresses(interfaceName string, hwaddr net.HardwareAddr, version
 		return nil, err
 	}
 
+	// The neighbor entries are written by the instance, only trust those within the interface's subnets.
+	iface, err := net.InterfaceByName(interfaceName)
+	if err != nil {
+		return nil, fmt.Errorf("Failed to get interface %q: %w", interfaceName, err)
+	}
+
+	ifaceAddrs, err := iface.Addrs()
+	if err != nil {
+		return nil, fmt.Errorf("Failed to get addresses of interface %q: %w", interfaceName, err)
+	}
+
+	onLink := func(addr net.IP) bool {
+		for _, ifaceAddr := range ifaceAddrs {
+			ipNet, ok := ifaceAddr.(*net.IPNet)
+			if !ok || ipNet.IP.Equal(addr) {
+				continue
+			}
+
+			if ipNet.Contains(addr) {
+				return true
+			}
+		}
+
+		return false
+	}
+
 	addresses := make([]net.IP, 0, len(neighIPs))
 	for _, neighIP := range neighIPs {
 		// Skip entries that don't represent a usable address.
@@ -952,6 +986,10 @@ func GetNeighborAddresses(interfaceName string, hwaddr net.HardwareAddr, version
 		}
 
 		if len(versions) > 0 && !slices.Contains(versions, ipVersion) {
+			continue
+		}
+
+		if !onLink(neighIP.Addr) {
 			continue
 		}
 
@@ -985,7 +1023,8 @@ func GetLeaseAddresses(networkName string, hwaddr string) ([]net.IP, error) {
 		mac := GetMACSlice(fields[1])
 		macStr := strings.Join(mac, ":")
 
-		if len(macStr) < 17 && fields[4] != "" {
+		// A short hardware address may be a DHCPv6 IAID, the MAC then ends the DUID.
+		if len(macStr) < 17 && len(fields[4]) >= 17 {
 			macStr = fields[4][len(fields[4])-17:]
 		}
 
@@ -1179,6 +1218,16 @@ func VLANInterfaceCreate(parent string, vlanDevice string, vlanID string, gvrp b
 	}
 
 	if InterfaceExists(vlanDevice) {
+		// Make sure the existing interface is the VLAN we'd have created.
+		linkInfo, err := ip.LinkByName(vlanDevice)
+		if err != nil {
+			return false, fmt.Errorf("Failed to get link info for %q: %w", vlanDevice, err)
+		}
+
+		if linkInfo.Kind != "vlan" || linkInfo.Parent != parent || strconv.Itoa(linkInfo.VlanID) != vlanID {
+			return false, fmt.Errorf("Interface %q isn't VLAN %q on %q", vlanDevice, vlanID, parent)
+		}
+
 		return false, nil
 	}
 
@@ -1415,11 +1464,19 @@ func ParsePortRange(r string) (int64, int64, error) {
 		return -1, -1, err
 	}
 
+	if base < 0 || base > 65535 {
+		return -1, -1, fmt.Errorf("Invalid port %q", entries[0])
+	}
+
 	size := int64(1)
 	if len(entries) > 1 {
 		size, err = strconv.ParseInt(entries[1], 10, 64)
 		if err != nil {
 			return -1, -1, err
+		}
+
+		if size > 65535 {
+			return -1, -1, fmt.Errorf("Invalid port %q", entries[1])
 		}
 
 		if size <= base {
@@ -1560,6 +1617,11 @@ func ProxyParseAddr(data string) (*deviceConfig.ProxyAddress, error) {
 		portFirst, portRange, err := ParsePortRange(p)
 		if err != nil {
 			return nil, err
+		}
+
+		// Repeated ranges would expand without limit.
+		if int64(len(newProxyAddr.Ports))+portRange > 65536 {
+			return nil, errors.New("Too many ports")
 		}
 
 		for i := range portRange {

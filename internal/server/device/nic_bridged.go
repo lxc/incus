@@ -550,6 +550,12 @@ func (d *nicBridged) validateConfig(instConf instance.ConfigReader, partialValid
 			return err
 		}
 
+		// Host-side routes are restricted to the project's allowed subnets.
+		err = nicCheckRestrictedRoutes(instConf.Project(), d.config, d.config["network"])
+		if err != nil {
+			return err
+		}
+
 		// Apply network settings to NIC.
 		netConfig := d.network.Config()
 
@@ -620,7 +626,7 @@ func (d *nicBridged) validateConfig(instConf instance.ConfigReader, partialValid
 		}
 
 		// The NIC's network may be a non-default project, so lookup project and get network's project name.
-		networkProjectName, _, err := project.NetworkProject(d.state.DB.Cluster, instConf.Project().Name)
+		networkProjectName, _, err := project.NetworkProjectForName(d.state.DB.Cluster, instConf.Project().Name, d.config["network"])
 		if err != nil {
 			return fmt.Errorf("Failed loading network project name: %w", err)
 		}
@@ -843,6 +849,19 @@ func (d *nicBridged) checkAddressConflict() error {
 		if sameLogicalInstance {
 			nicConfig = d.inst.ExpandedDevices()[nicName]
 			if !network.DeviceUsesNetwork(networkName, "bridge", nicConfig) {
+				return nil
+			}
+		}
+
+		// Another project's instance only holds its addresses while running, so a stopped one
+		// can't be used to block instances outside of its project.
+		if inst.Project != d.inst.Project().Name {
+			otherInst, err := instance.LoadByProjectAndName(d.state, inst.Project, inst.Name)
+			if err != nil {
+				return err
+			}
+
+			if !otherInst.IsRunning() {
 				return nil
 			}
 		}
@@ -1715,7 +1734,7 @@ func (d *nicBridged) setFilters(m deviceConfig.Device) (err error) {
 	if config["security.acls"] != "" {
 		aclNames = util.SplitNTrimSpace(config["security.acls"], ",", -1, false)
 
-		networkProjectName, _, err := project.NetworkProject(d.state.DB.Cluster, d.inst.Project().Name)
+		networkProjectName, _, err := project.NetworkProjectForName(d.state.DB.Cluster, d.inst.Project().Name, config["network"])
 		if err != nil {
 			return err
 		}

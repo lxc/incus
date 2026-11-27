@@ -252,17 +252,6 @@ func profilesGet(d *Daemon, r *http.Request) response.Response {
 
 				apiProfile.UsedBy = project.FilterUsedBy(s.Authorizer, r, apiProfile.UsedBy)
 
-				if clauses != nil && len(clauses.Clauses) > 0 {
-					match, err := filter.Match(*apiProfile, *clauses)
-					if err != nil {
-						return err
-					}
-
-					if !match {
-						continue
-					}
-				}
-
 				fullResults = append(fullResults, *apiProfile)
 				linkResults = append(linkResults, apiProfile.URL(version.APIVersion, profile.Project).String())
 			}
@@ -287,6 +276,28 @@ func profilesGet(d *Daemon, r *http.Request) response.Response {
 	})
 	if err != nil {
 		return response.SmartError(err)
+	}
+
+	// Match the filter outside the transaction, the client decides how expensive it is.
+	if mustLoadObjects && clauses != nil && len(clauses.Clauses) > 0 {
+		matched := make([]api.Profile, 0, len(fullResults))
+		linkResults = make([]string, 0, len(fullResults))
+
+		for _, apiProfile := range fullResults {
+			match, err := filter.Match(apiProfile, *clauses)
+			if err != nil {
+				return response.SmartError(err)
+			}
+
+			if !match {
+				continue
+			}
+
+			matched = append(matched, apiProfile)
+			linkResults = append(linkResults, apiProfile.URL(version.APIVersion, apiProfile.Project).String())
+		}
+
+		fullResults = matched
 	}
 
 	if recursion {
@@ -653,6 +664,11 @@ func profilePut(d *Daemon, r *http.Request) response.Response {
 		return response.BadRequest(err)
 	}
 
+	err = checkAttachedAccess(s, r, request.ProjectParam(r), nil, nil, req.Devices, profile.Devices)
+	if err != nil {
+		return response.SmartError(err)
+	}
+
 	err = doProfileUpdate(r.Context(), s, *p, name, profile, req)
 
 	if err == nil && !isClusterNotification(r) {
@@ -808,10 +824,33 @@ func profilePatch(d *Daemon, r *http.Request) response.Response {
 		}
 	}
 
+	err = checkAttachedAccess(s, r, request.ProjectParam(r), nil, nil, req.Devices, profile.Devices)
+	if err != nil {
+		return response.SmartError(err)
+	}
+
+	err = doProfileUpdate(r.Context(), s, *p, name, profile, req)
+	if err != nil {
+		return response.SmartError(err)
+	}
+
+	// Notify all other nodes. If a node is down, it will be ignored.
+	notifier, err := cluster.NewNotifier(s, s.Endpoints.NetworkCert(), s.ServerCert(), cluster.NotifyAlive)
+	if err != nil {
+		return response.SmartError(err)
+	}
+
+	err = notifier(func(client incus.InstanceServer) error {
+		return client.UseProject(p.Name).UpdateProfile(name, profile.ProfilePut, "")
+	})
+	if err != nil {
+		return response.SmartError(err)
+	}
+
 	requestor := request.CreateRequestor(r)
 	s.Events.SendLifecycle(p.Name, lifecycle.ProfileUpdated.Event(name, p.Name, requestor, nil))
 
-	return response.SmartError(doProfileUpdate(r.Context(), s, *p, name, profile, req))
+	return response.EmptySyncResponse
 }
 
 // swagger:operation POST /1.0/profiles/{name} profiles profile_post

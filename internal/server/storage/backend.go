@@ -641,7 +641,10 @@ func (b *backend) applyInstanceRootDiskInitialValues(inst instance.Instance, vol
 		}
 	}
 
-	return nil
+	// Check project restrictions against the resulting volume config.
+	return b.state.DB.Cluster.Transaction(b.state.ShutdownCtx, func(ctx context.Context, tx *db.ClusterTx) error {
+		return project.AllowVolumeConfig(tx, inst.Project().Name, b.name, volConfig)
+	})
 }
 
 // CreateInstance creates an empty instance.
@@ -750,6 +753,18 @@ func stripMetadata(instPath string) ([]string, error) {
 		// Don't descend into the guest's own root filesystem.
 		if path == rootfsPath && d.IsDir() {
 			return filepath.SkipDir
+		}
+
+		// Remove a top-level "config" or "partial" regular file, which liblxc would load as the
+		// container's configuration. VMs legitimately keep a "config" directory, which is kept below.
+		if d.Type().IsRegular() && (path == filepath.Join(instPath, "config") || path == filepath.Join(instPath, "partial")) {
+			err = os.Remove(path)
+			if err != nil {
+				return err
+			}
+
+			removed = append(removed, path)
+			return nil
 		}
 
 		// Keep directories and regular files.
@@ -866,6 +881,14 @@ func (b *backend) CreateInstanceFromBackup(srcBackup backup.Info, srcData io.Rea
 
 			volumeConfig["size"] = rootConfig["size"]
 		}
+	}
+
+	// Check project restrictions against the volume config from the backup.
+	err = b.state.DB.Cluster.Transaction(b.state.ShutdownCtx, func(ctx context.Context, tx *db.ClusterTx) error {
+		return project.AllowVolumeConfig(tx, srcBackup.Project, b.name, volumeConfig)
+	})
+	if err != nil {
+		return nil, nil, err
 	}
 
 	// Import dependent disks
@@ -1516,6 +1539,16 @@ func (b *backend) RefreshCustomVolume(projectName string, srcProjectName string,
 
 	if contentType != drivers.ContentTypeFS && contentType != drivers.ContentTypeBlock {
 		return fmt.Errorf("Volume of content type %q cannot be refreshed", contentType)
+	}
+
+	// A refresh must not change the target's content type, otherwise the two layouts get mixed.
+	dbVol, err := VolumeDBGet(b, projectName, volName, drivers.VolumeTypeCustom)
+	if err != nil && !response.IsNotFoundError(err) {
+		return err
+	}
+
+	if dbVol != nil && dbVol.ContentType != srcConfig.Volume.ContentType {
+		return fmt.Errorf("Volume of content type %q cannot be refreshed from a volume of content type %q", dbVol.ContentType, srcConfig.Volume.ContentType)
 	}
 
 	storagePoolSupported := slices.Contains(b.Driver().Info().VolumeTypes, drivers.VolumeTypeCustom)
@@ -2386,6 +2419,14 @@ func (b *backend) CreateInstanceFromMigration(inst instance.Instance, conn io.Re
 	} else if srcInfo != nil && srcInfo.Config != nil && srcInfo.Config.Volume != nil {
 		volumeConfig = srcInfo.Config.Volume.Config
 		volumeDescription = srcInfo.Config.Volume.Description
+
+		// Check project restrictions against the volume config from the source.
+		err = b.state.DB.Cluster.Transaction(b.state.ShutdownCtx, func(ctx context.Context, tx *db.ClusterTx) error {
+			return project.AllowVolumeConfig(tx, inst.Project().Name, b.name, volumeConfig)
+		})
+		if err != nil {
+			return err
+		}
 	} else {
 		volumeConfig = make(map[string]string)
 		volumeDescription = args.Description
@@ -2649,6 +2690,12 @@ func (b *backend) CreateInstanceFromMigration(inst instance.Instance, conn io.Re
 	// Strip unsafe symlinks from migrated data, skipping intra-cluster moves (no new data, may not be locally mountable).
 	if !isRemoteClusterMove {
 		err = b.stripInstanceMetadata(inst, op)
+		if err != nil {
+			return err
+		}
+
+		// The source's backup file isn't transferred, write our own.
+		err = b.UpdateInstanceBackupFile(inst, true, op)
 		if err != nil {
 			return err
 		}
@@ -3070,6 +3117,18 @@ func (b *backend) MigrateInstance(inst instance.Instance, conn io.ReadWriteClose
 		}
 	}
 
+	// Leave the pool config out of the backup file during the transfer, the peer may not be allowed to see it.
+	if !args.ClusterMove && !args.FinalSync {
+		err = b.writeInstanceBackupFile(inst, true, true, op)
+		if err != nil {
+			return err
+		}
+
+		defer func() {
+			_ = b.UpdateInstanceBackupFile(inst, true, nil)
+		}()
+	}
+
 	// Detect if source pool driver doesn't support cheap temporary snapshots that allow consistent copy when
 	// running, or if the negotiated protocol is VM non-optimized, meaning a complete raw copy of the active
 	// volume is being sent.
@@ -3231,8 +3290,8 @@ func (b *backend) BackupInstance(inst instance.Instance, tarWriter *instancewrit
 		return err
 	}
 
-	// Ensure the backup file reflects current config.
-	err = b.UpdateInstanceBackupFile(inst, snapshots, op)
+	// Refresh the backup file, leaving out the pool config as the exporter may not be allowed to see it.
+	err = b.writeInstanceBackupFile(inst, snapshots, true, op)
 	if err != nil {
 		return err
 	}
@@ -3504,6 +3563,7 @@ func (b *backend) MountInstance(inst instance.Instance, op *operations.Operation
 	mountInfo := &MountInfo{
 		DiskPath:    diskPath,
 		BackingPath: backingPaths,
+		Qcow2:       drivers.IsQcow2Block(vol),
 	}
 
 	reverter.Success() // From here on it is up to caller to call UnmountInstance() when done.
@@ -4597,6 +4657,7 @@ func (b *backend) MountInstanceSnapshot(inst instance.Instance, op *operations.O
 
 	mountInfo := &MountInfo{
 		DiskPath: diskPath,
+		Qcow2:    drivers.IsQcow2Block(vol),
 	}
 
 	return mountInfo, nil
@@ -5509,9 +5570,18 @@ func (b *backend) DeleteBucket(projectName string, bucketName string, op *operat
 		}
 	}
 
-	_ = BucketDBDelete(context.TODO(), b, bucket.ID)
+	err = BucketDBDelete(context.TODO(), b, bucket.ID)
 	if err != nil {
 		return err
+	}
+
+	// Remove the backups directory of the bucket.
+	backupsPath := internalUtil.VarPath("backups", "buckets", b.name, project.StorageBucket(projectName, bucketName))
+	if util.PathExists(backupsPath) {
+		err := os.RemoveAll(backupsPath)
+		if err != nil {
+			return fmt.Errorf("Failed removing bucket backups directory %q: %w", backupsPath, err)
+		}
 	}
 
 	return nil
@@ -5885,11 +5955,27 @@ func (b *backend) bucketServerCert() (*x509.Certificate, error) {
 	return b.state.Endpoints.NetworkCert().PublicKeyX509()
 }
 
+// lockCustomVolume takes the operation lock held while a custom volume's content is put in place,
+// so that access to the volume waits until it is ready.
+func (b *backend) lockCustomVolume(projectName string, volName string) (locking.UnlockFunc, error) {
+	volStorageName := project.StorageVolume(projectName, volName)
+	vol := b.GetVolume(drivers.VolumeTypeCustom, drivers.ContentTypeFS, volStorageName, nil)
+	return locking.Lock(context.TODO(), vol.OperationLockName())
+}
+
 // CreateCustomVolume creates an empty custom volume.
 func (b *backend) CreateCustomVolume(projectName string, volName string, desc string, config map[string]string, contentType drivers.ContentType, op *operations.Operation) error {
 	l := b.logger.AddContext(logger.Ctx{"project": projectName, "volName": volName, "desc": desc, "config": config, "contentType": contentType})
 	l.Debug("CreateCustomVolume started")
 	defer l.Debug("CreateCustomVolume finished")
+
+	// Hold the operation lock while the volume's content is put in place.
+	volOpUnlock, volOpErr := b.lockCustomVolume(projectName, volName)
+	if volOpErr != nil {
+		return volOpErr
+	}
+
+	defer volOpUnlock()
 
 	err := b.isStatusReady()
 	if err != nil {
@@ -6212,6 +6298,11 @@ func (b *backend) migrationIndexHeaderSend(l logger.Logger, indexHeaderVersion u
 
 	// Send migration index header frame to target if applicable and wait for receipt.
 	if indexHeaderVersion > 0 {
+		// Those allowed to migrate the instance may not be allowed to see the pool config.
+		if info.Config != nil {
+			info.Config.StripPoolConfig()
+		}
+
 		headerJSON, err := json.Marshal(info)
 		if err != nil {
 			return nil, fmt.Errorf("Failed encoding migration index header: %w", err)
@@ -6298,6 +6389,14 @@ func (b *backend) MigrateCustomVolume(projectName string, conn io.ReadWriteClose
 	l.Debug("MigrateCustomVolume started")
 	defer l.Debug("MigrateCustomVolume finished")
 
+	// The refresh target chooses which snapshots to send, so validate the names used as path segments.
+	for _, snapshot := range args.Snapshots {
+		err := validate.IsAPIName(snapshot, false)
+		if err != nil {
+			return fmt.Errorf("Invalid snapshot name: %w", err)
+		}
+	}
+
 	// Get the volume name on storage.
 	volStorageName := project.StorageVolume(projectName, args.Name)
 
@@ -6357,6 +6456,14 @@ func (b *backend) CreateCustomVolumeFromMigration(projectName string, conn io.Re
 	l.Debug("CreateCustomVolumeFromMigration started")
 	defer l.Debug("CreateCustomVolumeFromMigration finished")
 
+	// Validate the snapshot names as they're used as path segments.
+	for _, snapshot := range args.Snapshots {
+		err := validate.IsAPIName(snapshot.GetName(), false)
+		if err != nil {
+			return fmt.Errorf("Invalid snapshot name: %w", err)
+		}
+	}
+
 	err := b.isStatusReady()
 	if err != nil {
 		return err
@@ -6368,12 +6475,25 @@ func (b *backend) CreateCustomVolumeFromMigration(projectName string, conn io.Re
 		return errors.New("Storage pool does not support custom volume type")
 	}
 
+	// Hold the operation lock while the volume's content is put in place.
+	volOpUnlock, volOpErr := b.lockCustomVolume(projectName, args.Name)
+	if volOpErr != nil {
+		return volOpErr
+	}
+
+	defer volOpUnlock()
+
 	var volumeConfig map[string]string
 
 	// Check if the volume exists in database.
 	dbVol, err := VolumeDBGet(b, projectName, args.Name, drivers.VolumeTypeCustom)
 	if err != nil && !response.IsNotFoundError(err) {
 		return err
+	}
+
+	// A refresh must not change an existing volume's content type, otherwise the two layouts get mixed.
+	if dbVol != nil && dbVol.ContentType != args.ContentType {
+		return fmt.Errorf("Volume of content type %q cannot be refreshed from a volume of content type %q", dbVol.ContentType, args.ContentType)
 	}
 
 	// Prefer using existing volume config (to allow mounting existing volume correctly).
@@ -6517,6 +6637,14 @@ func (b *backend) RenameCustomVolume(projectName string, volName string, newVolN
 	l := b.logger.AddContext(logger.Ctx{"project": projectName, "volName": volName, "newVolName": newVolName})
 	l.Debug("RenameCustomVolume started")
 	defer l.Debug("RenameCustomVolume finished")
+
+	// Wait for any in-progress operation still putting this volume's content in place.
+	volOpUnlock, volOpErr := b.lockCustomVolume(projectName, volName)
+	if volOpErr != nil {
+		return volOpErr
+	}
+
+	volOpUnlock()
 
 	if internalInstance.IsSnapshot(volName) {
 		return errors.New("Volume name cannot be a snapshot")
@@ -6948,6 +7076,14 @@ func (b *backend) DeleteCustomVolume(projectName string, volName string, op *ope
 	l.Debug("DeleteCustomVolume started")
 	defer l.Debug("DeleteCustomVolume finished")
 
+	// Wait for any in-progress operation still putting this volume's content in place.
+	volOpUnlock, volOpErr := b.lockCustomVolume(projectName, volName)
+	if volOpErr != nil {
+		return volOpErr
+	}
+
+	volOpUnlock()
+
 	_, _, isSnap := api.GetParentAndSnapshotName(volName)
 	if isSnap {
 		return errors.New("Volume name cannot be a snapshot")
@@ -7043,6 +7179,14 @@ func (b *backend) RebuildCustomVolume(projectName string, volName string, op *op
 	l := b.logger.AddContext(logger.Ctx{"project": projectName, "volName": volName})
 	l.Debug("RebuildCustomVolume started")
 	defer l.Debug("RebuildCustomVolume finished")
+
+	// Hold the operation lock while the volume's content is put in place.
+	volOpUnlock, volOpErr := b.lockCustomVolume(projectName, volName)
+	if volOpErr != nil {
+		return volOpErr
+	}
+
+	defer volOpUnlock()
 
 	err := b.isStatusReady()
 	if err != nil {
@@ -7199,6 +7343,14 @@ func (b *backend) MountCustomVolume(projectName, volName string, op *operations.
 	l.Debug("MountCustomVolume started")
 	defer l.Debug("MountCustomVolume finished")
 
+	// Wait for any in-progress operation still putting this volume's content in place.
+	volOpUnlock, volOpErr := b.lockCustomVolume(projectName, volName)
+	if volOpErr != nil {
+		return nil, volOpErr
+	}
+
+	volOpUnlock()
+
 	err := b.isStatusReady()
 	if err != nil {
 		return nil, err
@@ -7214,7 +7366,7 @@ func (b *backend) MountCustomVolume(projectName, volName string, op *operations.
 	vol := b.GetVolume(drivers.VolumeTypeCustom, drivers.ContentType(volume.ContentType), volStorageName, volume.Config)
 
 	// Perform the mount.
-	mountInfo := &MountInfo{}
+	mountInfo := &MountInfo{Qcow2: drivers.IsQcow2Block(vol)}
 	err = b.driver.MountVolume(vol, op)
 	if err != nil {
 		return nil, err
@@ -7684,6 +7836,14 @@ func (b *backend) RestoreCustomVolume(projectName, volName string, snapshotName 
 	l.Debug("RestoreCustomVolume started")
 	defer l.Debug("RestoreCustomVolume finished")
 
+	// Hold the operation lock while the volume's content is put in place.
+	volOpUnlock, volOpErr := b.lockCustomVolume(projectName, volName)
+	if volOpErr != nil {
+		return volOpErr
+	}
+
+	defer volOpUnlock()
+
 	// Quick checks.
 	if internalInstance.IsSnapshot(volName) {
 		return errors.New("Volume cannot be snapshot")
@@ -8009,6 +8169,11 @@ func (b *backend) UpdateInstanceBackupFile(inst instance.Instance, snapshots boo
 	l.Debug("UpdateInstanceBackupFile started")
 	defer l.Debug("UpdateInstanceBackupFile finished")
 
+	return b.writeInstanceBackupFile(inst, snapshots, false, op)
+}
+
+// writeInstanceBackupFile writes the instance's backup.yaml file, optionally without the pool config.
+func (b *backend) writeInstanceBackupFile(inst instance.Instance, snapshots bool, stripPoolConfig bool, op *operations.Operation) error {
 	// We only write backup files out for actual instances.
 	if inst.IsSnapshot() {
 		return nil
@@ -8017,6 +8182,10 @@ func (b *backend) UpdateInstanceBackupFile(inst instance.Instance, snapshots boo
 	config, err := b.GenerateInstanceBackupConfig(inst, snapshots, true, op)
 	if err != nil {
 		return err
+	}
+
+	if stripPoolConfig {
+		config.StripPoolConfig()
 	}
 
 	data, err := yaml.Dump(config, yaml.WithV2Defaults())
@@ -8785,6 +8954,14 @@ func (b *backend) CreateCustomVolumeFromISO(projectName string, volName string, 
 	l.Debug("CreateCustomVolumeFromISO started")
 	defer l.Debug("CreateCustomVolumeFromISO finished")
 
+	// Hold the operation lock while the volume's content is put in place.
+	volOpUnlock, volOpErr := b.lockCustomVolume(projectName, volName)
+	if volOpErr != nil {
+		return volOpErr
+	}
+
+	defer volOpUnlock()
+
 	// Check whether we are allowed to create volumes.
 	req := api.StorageVolumesPost{
 		Name: volName,
@@ -8869,6 +9046,14 @@ func (b *backend) CreateCustomVolumeFromBackup(srcBackup backup.Info, srcData io
 	l := b.logger.AddContext(logger.Ctx{"project": srcBackup.Project, "volume": srcBackup.Name, "snapshots": srcBackup.Snapshots, "optimizedStorage": *srcBackup.OptimizedStorage})
 	l.Debug("CreateCustomVolumeFromBackup started")
 	defer l.Debug("CreateCustomVolumeFromBackup finished")
+
+	// Hold the operation lock while the volume's content is put in place.
+	volOpUnlock, volOpErr := b.lockCustomVolume(srcBackup.Project, srcBackup.Name)
+	if volOpErr != nil {
+		return volOpErr
+	}
+
+	defer volOpUnlock()
 
 	if srcBackup.Config == nil || srcBackup.Config.Volume == nil {
 		return errors.New("Valid volume config not found in index")
@@ -9974,6 +10159,11 @@ func (b *backend) qcow2MigrateVolume(s *state.State, vol drivers.Volume, project
 		return drivers.ErrNotSupported
 	}
 
+	// The instance backup file holds the pool config, the target writes its own.
+	if vol.Type() == drivers.VolumeTypeContainer || vol.Type() == drivers.VolumeTypeVM {
+		rsyncArgs = append(rsyncArgs, "--exclude", "/backup.yaml")
+	}
+
 	// Convert the volume type name to our internal integer representation.
 	volumeDbType, err := VolumeTypeToDBType(vol.Type())
 	if err != nil {
@@ -10263,7 +10453,8 @@ func (b *backend) qcow2CreateVolumeFromMigration(vol drivers.Volume, projectName
 		b.logger.Debug("Receiving filesystem volume started", logger.Ctx{"volName": volName, "path": path, "features": volTargetArgs.MigrationType.Features})
 		defer b.logger.Debug("Receiving filesystem volume stopped", logger.Ctx{"volName": volName, "path": path})
 
-		return rsync.Recv(path, conn, wrapper, volTargetArgs.MigrationType.Features)
+		// Keep the target directory's owner and mode for instance volumes, as the source controls them otherwise.
+		return rsync.Recv(path, conn, wrapper, volTargetArgs.MigrationType.Features, vol.Type() != drivers.VolumeTypeCustom)
 	}
 
 	// Block volumes are compressed if negotiated with the source.
@@ -10922,7 +11113,17 @@ func (b *backend) migrateDependentVolumes(inst instance.Instance, conn io.ReadWr
 
 		snapshotNames := []string{}
 		if !args.VolumeOnly {
+			offered := make([]string, 0, len(diskConfig.VolumeSnapshots))
+			for _, snap := range diskConfig.VolumeSnapshots {
+				offered = append(offered, snap.Name)
+			}
+
 			for _, snap := range dependentVol.Snapshots {
+				// The target can only pick from the snapshots the volume has.
+				if !slices.Contains(offered, snap.GetName()) {
+					continue
+				}
+
 				// During a refresh only the new snapshots should be transferred. The root
 				// volume's args.Snapshots list has already been reduced to the snapshots the
 				// target is missing, and dependent volume snapshots share the same names, so
@@ -11056,8 +11257,14 @@ func (b *backend) GetInstanceNBD(inst instance.Instance, writable bool) (net.Con
 		return nil, nil, err
 	}
 
+	// Load the volume config so the disk format comes from it rather than from the disk's own bytes.
+	dbVol, err := VolumeDBGet(b, inst.Project().Name, inst.Name(), drivers.VolumeTypeVM)
+	if err != nil {
+		return nil, nil, err
+	}
+
 	volStorageName := project.Instance(inst.Project().Name, inst.Name())
-	vol := b.GetVolume(drivers.VolumeTypeVM, drivers.ContentTypeBlock, volStorageName, nil)
+	vol := b.GetVolume(drivers.VolumeTypeVM, drivers.ContentTypeBlock, volStorageName, dbVol.Config)
 
 	unlock, err := nbdOperationLock(inst.Project().Name, inst.Name())
 	if err != nil {
@@ -11164,8 +11371,13 @@ func (b *backend) GetCustomVolumeNBD(projectName string, volName string, writabl
 		return nil, nil, err
 	}
 
+	// Only block volumes have a disk image; on a filesystem volume the path would be under user control.
+	if dbVol.ContentType == db.StoragePoolVolumeContentTypeNameFS {
+		return nil, nil, api.StatusErrorf(http.StatusBadRequest, "Only block volumes support NBD access")
+	}
+
 	volStorageName := project.StorageVolume(projectName, volName)
-	vol := b.GetVolume(drivers.VolumeTypeCustom, drivers.ContentTypeBlock, volStorageName, nil)
+	vol := b.GetVolume(drivers.VolumeTypeCustom, drivers.ContentTypeBlock, volStorageName, dbVol.Config)
 
 	// Convert the volume type name to our internal integer representation.
 	volumeDbType, err := VolumeTypeNameToDBType(dbVol.Type)
@@ -11223,6 +11435,14 @@ func (b *backend) connectOfflineNBD(vol drivers.Volume, writable bool) (net.Conn
 		cmd.Args = append(cmd.Args, "--read-only")
 	}
 
+	// Set the format from the volume config so qemu-nbd can't auto-detect a tenant-crafted header.
+	nbdFormat := "raw"
+	if drivers.IsQcow2Block(vol) {
+		nbdFormat = drivers.BlockVolumeTypeQcow2
+	}
+
+	cmd.Args = append(cmd.Args, fmt.Sprintf("--format=%s", nbdFormat))
+
 	// Share the qemu-nbd process safely between the worker and this goroutine.
 	var procMu sync.Mutex
 	var proc *os.Process
@@ -11238,12 +11458,13 @@ func (b *backend) connectOfflineNBD(vol drivers.Volume, writable bool) (net.Conn
 				return err
 			}
 
-			imgInfo, err := drivers.Qcow2Info(volDiskPath)
-			if err != nil {
-				return err
-			}
+			// Only probe for bitmaps on a volume the config says is qcow2.
+			if drivers.IsQcow2Block(vol) {
+				imgInfo, err := drivers.Qcow2Info(volDiskPath)
+				if err != nil {
+					return err
+				}
 
-			if imgInfo.Format == "qcow2" && len(imgInfo.FormatSpecific.Data.Bitmaps) > 0 {
 				for _, b := range imgInfo.FormatSpecific.Data.Bitmaps {
 					cmd.Args = append(cmd.Args, fmt.Sprintf("--bitmap=%s", b.Name))
 				}

@@ -267,6 +267,16 @@ func IsNetworkMAC(value string) error {
 	return nil
 }
 
+// IsHardwareAddress validates whether the string is a hardware address of any length.
+func IsHardwareAddress(value string) error {
+	_, err := net.ParseMAC(value)
+	if err != nil {
+		return errors.New("Invalid hardware address")
+	}
+
+	return nil
+}
+
 // IsMACPattern validates whether the string is a MAC address pattern.
 func IsMACPattern(value string) error {
 	match, _ := regexp.MatchString(`^(?:[0-9a-fA-FxX]{2}:){5}[0-9a-fA-FxX]{2}$`, value)
@@ -572,18 +582,18 @@ func IsNetworkPortRange(value string) error {
 func IsSecurityTagList(value string) error {
 	tagRegex := regexp.MustCompile(`^[a-z0-9]([a-z0-9._-]{0,62}[a-z0-9])?$`)
 
-	seen := []string{}
+	seen := map[string]bool{}
 	for tag := range strings.SplitSeq(value, ",") {
 		tag = strings.TrimSpace(tag)
 		if !tagRegex.MatchString(tag) {
 			return fmt.Errorf("Invalid security tag %q", tag)
 		}
 
-		if slices.Contains(seen, tag) {
+		if seen[tag] {
 			return fmt.Errorf("Duplicate security tag %q", tag)
 		}
 
-		seen = append(seen, tag)
+		seen[tag] = true
 	}
 
 	return nil
@@ -780,8 +790,12 @@ func IsCron(aliases []string) func(value string) error {
 
 		// Can be comma+space separated (just commas are valid cron pattern).
 		value = strings.ToLower(value)
-		triggers := strings.SplitSeq(value, ", ")
-		for trigger := range triggers {
+		triggers := strings.Split(value, ", ")
+		if len(triggers) > 64 {
+			return errors.New("Too many cron expressions, at most 64 are allowed")
+		}
+
+		for _, trigger := range triggers {
 			err := isValid(trigger)
 			if err != nil {
 				return err
@@ -958,6 +972,9 @@ func IsYAML(value string) error {
 	return nil
 }
 
+// maxCPUSetSize bounds the entries a CPU set may expand to.
+const maxCPUSetSize = 65536
+
 // IsValidCPUSet checks value is a valid CPU set.
 func IsValidCPUSet(value string) error {
 	// Validate the CPU set syntax.
@@ -979,6 +996,7 @@ func IsValidCPUSet(value string) error {
 	// Handle complex values.
 	cpus := make(map[int64]int)
 	chunks := strings.SplitSeq(value, ",")
+	count := int64(0)
 
 	for chunk := range chunks {
 		if strings.Contains(chunk, "-") {
@@ -995,6 +1013,12 @@ func IsValidCPUSet(value string) error {
 
 			high, err := strconv.ParseInt(fields[1], 10, 64)
 			if err != nil {
+				return fmt.Errorf("Invalid cpuset value: %s", value)
+			}
+
+			// Refuse what no system can have before expanding.
+			count += high - low + 1
+			if high >= maxCPUSetSize || count > maxCPUSetSize {
 				return fmt.Errorf("Invalid cpuset value: %s", value)
 			}
 

@@ -436,8 +436,15 @@ func instanceExecOutputsGet(d *Daemon, r *http.Request) response.Response {
 
 	defer logger.WarnOnError(func() error { return pool.UnmountInstance(inst, nil) }, "Failed to unmount instance")
 
-	// Confine access to the exec output directory to avoid following symlinks.
-	root, err := os.OpenRoot(inst.ExecOutputPath())
+	// Confine access to the exec output directory without following a symlinked directory.
+	instRoot, err := os.OpenRoot(inst.Path())
+	if err != nil {
+		return response.SmartError(err)
+	}
+
+	defer logger.WarnOnError(instRoot.Close, "Failed to close instance root")
+
+	root, err := instRoot.OpenRoot("exec-output")
 	if err != nil {
 		return response.SmartError(err)
 	}
@@ -560,8 +567,15 @@ func instanceExecOutputGet(d *Daemon, r *http.Request) response.Response {
 
 	reverter.Add(func() { _ = pool.UnmountInstance(inst, nil) })
 
-	// Confine access to the exec output directory to avoid following symlinks.
-	root, err := os.OpenRoot(inst.ExecOutputPath())
+	// Confine access to the exec output directory without following a symlinked directory.
+	instRoot, err := os.OpenRoot(inst.Path())
+	if err != nil {
+		return response.SmartError(err)
+	}
+
+	defer logger.WarnOnError(instRoot.Close, "Failed to close instance root")
+
+	root, err := instRoot.OpenRoot("exec-output")
 	if err != nil {
 		return response.SmartError(err)
 	}
@@ -689,8 +703,15 @@ func instanceExecOutputDelete(d *Daemon, r *http.Request) response.Response {
 
 	defer logger.WarnOnError(func() error { return pool.UnmountInstance(inst, nil) }, "Failed to unmount instance")
 
-	// Confine access to the exec output directory to avoid following symlinks.
-	root, err := os.OpenRoot(inst.ExecOutputPath())
+	// Confine access to the exec output directory without following a symlinked directory.
+	instRoot, err := os.OpenRoot(inst.Path())
+	if err != nil {
+		return response.SmartError(err)
+	}
+
+	defer logger.WarnOnError(instRoot.Close, "Failed to close instance root")
+
+	root, err := instRoot.OpenRoot("exec-output")
 	if err != nil {
 		return response.SmartError(err)
 	}

@@ -93,7 +93,8 @@ func instancePortForwardHandler(d *Daemon, r *http.Request) response.Response {
 		req.Address = "127.0.0.1"
 	}
 
-	if net.ParseIP(req.Address) == nil {
+	address := net.ParseIP(req.Address)
+	if address == nil {
 		return response.BadRequest(fmt.Errorf("Invalid address %q", req.Address))
 	}
 
@@ -120,6 +121,28 @@ func instancePortForwardHandler(d *Daemon, r *http.Request) response.Response {
 	inst, err := instance.LoadByProjectAndName(s, projectName, instName)
 	if err != nil {
 		return response.SmartError(err)
+	}
+
+	// The entitlement covers the instance, not whatever it can route to.
+	if !address.IsLoopback() {
+		state, err := inst.RenderState()
+		if err != nil {
+			return response.SmartError(err)
+		}
+
+		found := false
+		for _, network := range state.Network {
+			for _, entry := range network.Addresses {
+				if net.ParseIP(entry.Address).Equal(address) {
+					found = true
+					break
+				}
+			}
+		}
+
+		if !found {
+			return response.Forbidden(fmt.Errorf("Address %q isn't assigned to the instance", req.Address))
+		}
 	}
 
 	conn, err := inst.PortForwardConn(req.Address, req.Port)

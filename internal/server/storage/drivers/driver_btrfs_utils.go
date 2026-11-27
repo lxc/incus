@@ -548,6 +548,36 @@ func (h *BTRFSMetaDataHeader) validate() error {
 	return nil
 }
 
+// subvolumePath returns the location of a subvolume within a volume, refusing symlinks leading outside of it.
+func (d *btrfs) subvolumePath(volPath string, subVolPath string) (string, error) {
+	rel := strings.TrimPrefix(filepath.Clean(subVolPath), string(filepath.Separator))
+	if rel == "" || rel == "." {
+		return volPath, nil
+	}
+
+	root, err := os.OpenRoot(volPath)
+	if err != nil {
+		return "", err
+	}
+
+	defer func() { _ = root.Close() }()
+
+	parent, err := root.Open(filepath.Dir(rel))
+	if err != nil {
+		return "", fmt.Errorf("Invalid subvolume path %q: %w", subVolPath, err)
+	}
+
+	defer func() { _ = parent.Close() }()
+
+	// Get the symlink-free path of the parent directory.
+	parentPath, err := os.Readlink(fmt.Sprintf("/proc/self/fd/%d", parent.Fd()))
+	if err != nil {
+		return "", err
+	}
+
+	return filepath.Join(parentPath, filepath.Base(rel)), nil
+}
+
 // restorationHeader scans the volume and any specified snapshots, returning a header containing subvolume metadata
 // for use in restoring a volume and its snapshots onto another system. The metadata returned represents how the
 // subvolumes should be restored, not necessarily how they are on disk now. Most of the time this is the same,
@@ -595,7 +625,7 @@ func (d *btrfs) loadOptimizedBackupHeader(r io.ReadSeeker, mountPath string, bas
 	header := BTRFSMetaDataHeader{}
 
 	// Extract.
-	tr, cancelFunc, err := backup.TarReader(r, d.state.OS, mountPath)
+	tr, cancelFunc, err := backup.TarReader(r, d.state.OS, mountPath, -1)
 	if err != nil {
 		return nil, err
 	}

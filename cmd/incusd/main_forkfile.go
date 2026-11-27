@@ -6,6 +6,8 @@ package main
 #include <dirent.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <grp.h>
+#include <pwd.h>
 #include <sched.h>
 #include <stdbool.h>
 #include <stdio.h>
@@ -15,6 +17,9 @@ package main
 #include <sys/stat.h>
 #include <unistd.h>
 #include <limits.h>
+#ifdef __GLIBC__
+#include <nss.h>
+#endif
 
 #include "incus.h"
 #include "memory_utils.h"
@@ -56,6 +61,17 @@ void forkfile(void)
 		}
 	}
 
+	// Configure and prime NSS before entering the instance so glibc doesn't load nsswitch.conf or NSS modules from it.
+#ifdef __GLIBC__
+	if (__nss_configure_lookup("passwd", "files") < 0 || __nss_configure_lookup("group", "files") < 0) {
+		error("error: nss_configure_lookup");
+		_exit(1);
+	}
+#endif
+
+	(void)getpwuid(0);
+	(void)getgrgid(0);
+
 	// Attach to the container.
 	if (ns_fd >= 0) {
 		int setns_flags = CLONE_NEWNS;
@@ -91,6 +107,7 @@ void forkfile(void)
 import "C"
 
 import (
+	"errors"
 	"net"
 	"os"
 	"os/signal"
@@ -218,6 +235,12 @@ func (c *cmdForkfile) run(_ *cobra.Command, args []string) error {
 		// Accept new connection.
 		conn, err := listener.Accept()
 		if err != nil {
+			// The signal handler exits once the remaining connections are gone.
+			if errors.Is(err, net.ErrClosed) {
+				select {}
+			}
+
+			time.Sleep(100 * time.Millisecond)
 			continue
 		}
 
@@ -237,10 +260,7 @@ func (c *cmdForkfile) run(_ *cobra.Command, args []string) error {
 			mu.Unlock()
 
 			// Spawn the server.
-			server, err := sftp.NewServer(conn, sftp.WithAllocator(), sftp.WithMaxTxPacket(128*1024))
-			if err != nil {
-				return
-			}
+			server := sftp.NewRequestServer(conn, forkfileSFTPHandlers(), sftp.WithRSAllocator(), sftp.WithRSMaxTxPacket(128*1024))
 
 			_ = server.Serve()
 

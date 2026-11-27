@@ -13,6 +13,7 @@ import (
 
 	internalInstance "github.com/lxc/incus/v7/internal/instance"
 	"github.com/lxc/incus/v7/internal/jmap"
+	"github.com/lxc/incus/v7/internal/server/auth"
 	"github.com/lxc/incus/v7/internal/server/db"
 	"github.com/lxc/incus/v7/internal/server/db/cluster"
 	"github.com/lxc/incus/v7/internal/server/db/operationtype"
@@ -337,6 +338,11 @@ func instanceSnapshotsPost(d *Daemon, r *http.Request) response.Response {
 
 	var expiry time.Time
 	if req.ExpiresAt != nil {
+		err = db.CheckTime(*req.ExpiresAt)
+		if err != nil {
+			return response.BadRequest(err)
+		}
+
 		expiry = *req.ExpiresAt
 	} else {
 		duration := inst.ExpandedConfig()["snapshots.expiry.manual"]
@@ -553,6 +559,11 @@ func snapshotPut(s *state.State, r *http.Request, snapInst instance.Instance) re
 			return response.BadRequest(err)
 		}
 
+		err = db.CheckTime(configRaw.ExpiresAt)
+		if err != nil {
+			return response.BadRequest(err)
+		}
+
 		// Update instance configuration
 		do = func(op *operations.Operation) error {
 			snapInst.SetOperation(op)
@@ -745,9 +756,24 @@ func snapshotPost(s *state.State, r *http.Request, snapInst instance.Instance) r
 			return response.BadRequest(err)
 		}
 
+		// Migrating a snapshot exposes the instance content.
+		err = s.Authorizer.CheckPermission(r.Context(), r, auth.ObjectInstance(snapInst.Project().Name, parentName), auth.EntitlementCanEdit)
+		if err != nil {
+			return response.SmartError(err)
+		}
+
 		if reqNew.Live {
 			if parentName != reqNew.Name {
 				return response.BadRequest(fmt.Errorf("Instance name cannot be changed during stateful copy (%q to %q)", parentName, reqNew.Name))
+			}
+		}
+
+		if req.Target != nil {
+			err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
+				return project.AllowMigrationTarget(tx, snapInst.Project().Name)
+			})
+			if err != nil {
+				return response.SmartError(err)
 			}
 		}
 

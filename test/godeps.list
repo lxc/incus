@@ -20,6 +20,8 @@ github.com/opencontainers/image-spec/specs-go/v1
 github.com/opencontainers/runtime-spec/specs-go
 github.com/opencontainers/umoci
 github.com/opencontainers/umoci/oci/casext
+github.com/opencontainers/umoci/oci/casext/blobcompress
+github.com/opencontainers/umoci/oci/casext/mediatype
 github.com/opencontainers/umoci/oci/cas/dir
 github.com/opencontainers/umoci/oci/layer
 github.com/pkg/sftp

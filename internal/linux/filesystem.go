@@ -107,7 +107,9 @@ func hasMountEntry(name string) int {
 			return -1
 		}
 
-		cleanPath := filepath.Clean(tokens[4])
+		// The kernel escapes space, tab, newline and backslash in mount points.
+		mountPath := strings.NewReplacer(`\040`, " ", `\011`, "\t", `\012`, "\n", `\134`, `\`).Replace(tokens[4])
+		cleanPath := filepath.Clean(mountPath)
 		if cleanPath == actualPath {
 			return 1
 		}
@@ -277,6 +279,33 @@ func GetAllXattr(path string) (map[string]string, error) {
 	return xattrs, nil
 }
 
+// GetAllXattrFromFd returns all extended attributes of the inode referred to by fd, which should be
+// an O_PATH descriptor. Reading through /proc/self/fd avoids re-resolving the path.
+func GetAllXattrFromFd(fd int) (map[string]string, error) {
+	path := fmt.Sprintf("/proc/self/fd/%d", fd)
+
+	xattrNames, err := xattr.List(path)
+	if err != nil {
+		if errors.Is(err, unix.EOPNOTSUPP) {
+			return nil, nil
+		}
+
+		return nil, fmt.Errorf("Failed getting extended attributes: %w", err)
+	}
+
+	xattrs := make(map[string]string, len(xattrNames))
+	for _, xattrName := range xattrNames {
+		value, err := xattr.Get(path, xattrName)
+		if err != nil {
+			return nil, fmt.Errorf("Failed getting %q extended attribute: %w", xattrName, err)
+		}
+
+		xattrs[xattrName] = string(value)
+	}
+
+	return xattrs, nil
+}
+
 // IsBlockdev checks if the provided file is a block device.
 func IsBlockdev(fm os.FileMode) bool {
 	return ((fm&os.ModeDevice != 0) && (fm&os.ModeCharDevice == 0))
@@ -345,7 +374,7 @@ func MountNoSymlinkFollow(path string) (func() error, error) {
 
 	defer func() { _ = unix.Close(fd) }()
 
-	err = unix.MountSetattr(fd, "", unix.AT_EMPTY_PATH, &unix.MountAttr{Attr_set: unix.MOUNT_ATTR_NOSYMFOLLOW})
+	err = unix.MountSetattr(fd, "", unix.AT_EMPTY_PATH, &unix.MountAttr{Attr_set: unix.MOUNT_ATTR_NOSYMFOLLOW | unix.MOUNT_ATTR_NOSUID | unix.MOUNT_ATTR_NODEV})
 	if err != nil {
 		_ = unmount()
 		return nil, fmt.Errorf("Failed to set nosymfollow on %q: %w", path, err)

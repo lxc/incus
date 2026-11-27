@@ -260,6 +260,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 	"unsafe"
 
@@ -281,10 +282,18 @@ type cmdForkproxy struct {
 	global *cmdGlobal
 }
 
-// UDP session tracking (map "client tuple" to udp session).
+// Limits on what a single proxy device may hold open on the host.
+const (
+	forkproxyMaxConns    = 4096
+	forkproxyMaxSessions = 4096
+)
+
+// UDP session tracking (map "listener and client tuple" to udp session).
 var (
 	udpSessions     = map[string]*udpSession{}
 	udpSessionsLock sync.Mutex
+	activeConns     atomic.Int64
+	warnLast        atomic.Int64
 )
 
 type udpSession struct {
@@ -323,6 +332,39 @@ func rearmUDPFd(epFd C.int, connFd C.int) {
 	}
 }
 
+// proxyWarn prints a warning, at most one per second as the peer controls how often they occur.
+func proxyWarn(format string, args ...any) {
+	now := time.Now().UnixNano()
+	last := warnLast.Load()
+	if now-last < int64(time.Second) || !warnLast.CompareAndSwap(last, now) {
+		return
+	}
+
+	fmt.Printf("Warning: "+format+"\n", args...)
+}
+
+// drainUDPFd discards whatever datagram woke the listener so it doesn't wake it again.
+func drainUDPFd(connFd C.int) {
+	buf := make([]byte, 1)
+	_, _, _ = unix.Recvfrom(int(connFd), buf, unix.MSG_DONTWAIT|unix.MSG_TRUNC)
+}
+
+// relayConn runs a relay for one accepted connection, refusing it when too many are open.
+func relayConn(srcConn net.Conn, dstConn net.Conn, relay func(net.Conn, net.Conn)) {
+	if activeConns.Add(1) > forkproxyMaxConns {
+		activeConns.Add(-1)
+		_ = srcConn.Close()
+		_ = dstConn.Close()
+		proxyWarn("Too many open connections, refusing new ones")
+		return
+	}
+
+	go func() {
+		defer activeConns.Add(-1)
+		relay(srcConn, dstConn)
+	}()
+}
+
 func listenerInstance(epFd C.int, lAddr *deviceConfig.ProxyAddress, cAddr *deviceConfig.ProxyAddress, connFd C.int, lStruct *lStruct, proxy bool) error {
 	// Single or multiple port -> single port
 	connectAddr := cAddr.Address
@@ -341,14 +383,19 @@ func listenerInstance(epFd C.int, lAddr *deviceConfig.ProxyAddress, cAddr *devic
 		go func() {
 			srcConn, err := net.FileConn((*lStruct).f)
 			if err != nil {
-				fmt.Printf("Warning: Failed to re-assemble listener: %v\n", err)
+				proxyWarn("Failed to re-assemble listener: %v", err)
+				drainUDPFd(connFd)
+				time.Sleep(100 * time.Millisecond)
 				rearmUDPFd(epFd, connFd)
 				return
 			}
 
 			dstConn, err := net.Dial(cAddr.ConnType, connectAddr)
 			if err != nil {
-				fmt.Printf("Warning: Failed to connect to target: %v\n", err)
+				proxyWarn("Failed to connect to target: %v", err)
+				_ = srcConn.Close()
+				drainUDPFd(connFd)
+				time.Sleep(100 * time.Millisecond)
 				rearmUDPFd(epFd, connFd)
 				return
 			}
@@ -364,15 +411,15 @@ func listenerInstance(epFd C.int, lAddr *deviceConfig.ProxyAddress, cAddr *devic
 	listener := (*lStruct).lConn
 	srcConn, err := (*listener).Accept()
 	if err != nil {
-		fmt.Printf("Warning: Failed to accept new connection: %v\n", err)
-		return err
+		// The listener stays readable, don't spin on it.
+		time.Sleep(100 * time.Millisecond)
+		return fmt.Errorf("Failed to accept new connection: %w", err)
 	}
 
 	dstConn, err := net.Dial(cAddr.ConnType, connectAddr)
 	if err != nil {
 		_ = srcConn.Close()
-		fmt.Printf("Warning: Failed to connect to target: %v\n", err)
-		return err
+		return fmt.Errorf("Failed to connect to target: %w", err)
 	}
 
 	if proxy && cAddr.ConnType == "tcp" {
@@ -403,9 +450,9 @@ func listenerInstance(epFd C.int, lAddr *deviceConfig.ProxyAddress, cAddr *devic
 
 	if cAddr.ConnType == "unix" && lAddr.ConnType == "unix" {
 		// Handle OOB if both src and dst are using unix sockets
-		go unixRelay(srcConn, dstConn)
+		relayConn(srcConn, dstConn, unixRelay)
 	} else {
-		go genericRelay(srcConn, dstConn)
+		relayConn(srcConn, dstConn, genericRelay)
 	}
 
 	return nil
@@ -470,6 +517,16 @@ func (c *cmdForkproxy) run(cmd *cobra.Command, args []string) error {
 			if err != nil && !errors.Is(err, fs.ErrNotExist) {
 				return err
 			}
+
+			// Bind the socket with its final mode, so it's never briefly world-accessible and needs no chmod by path.
+			if args[8] != "" {
+				mode, err := strconv.ParseUint(args[8], 8, 0)
+				if err != nil {
+					return err
+				}
+
+				unix.Umask(int(^mode & 0o777))
+			}
 		}
 
 		var listenAddresses []string
@@ -524,24 +581,28 @@ func (c *cmdForkproxy) run(cmd *cobra.Command, args []string) error {
 			}
 
 			if listenAddrGID != -1 || listenAddrUID != -1 {
-				err = os.Chown(lAddr.Address, listenAddrUID, listenAddrGID)
-				if err != nil {
-					return err
-				}
-			}
-
-			var listenAddrMode os.FileMode
-			if args[8] != "" {
-				tmp, err := strconv.ParseUint(args[8], 8, 0)
+				// Chown the socket itself, never a path a local user may have swapped for a symlink.
+				fd, err := unix.Open(lAddr.Address, unix.O_PATH|unix.O_NOFOLLOW|unix.O_CLOEXEC, 0)
 				if err != nil {
 					return err
 				}
 
-				listenAddrMode = os.FileMode(tmp)
-				err = os.Chmod(lAddr.Address, listenAddrMode)
+				var st unix.Stat_t
+				err = unix.Fstat(fd, &st)
 				if err != nil {
+					_ = unix.Close(fd)
 					return err
 				}
+
+				if st.Mode&unix.S_IFMT == unix.S_IFSOCK {
+					err = unix.Fchownat(fd, "", listenAddrUID, listenAddrGID, unix.AT_EMPTY_PATH)
+					if err != nil {
+						_ = unix.Close(fd)
+						return err
+					}
+				}
+
+				_ = unix.Close(fd)
 			}
 		}
 
@@ -699,7 +760,7 @@ func (c *cmdForkproxy) run(cmd *cobra.Command, args []string) error {
 
 			err := listenerInstance(epFd, lAddr, cAddr, curFd, srcConn, args[11] == "true")
 			if err != nil {
-				fmt.Printf("Warning: Failed to prepare new listener instance: %v\n", err)
+				proxyWarn("Failed to prepare new listener instance: %v", err)
 			}
 		}
 	}
@@ -715,6 +776,11 @@ func proxyCopy(dst net.Conn, src net.Conn) error {
 	srcUDP, srcIsUDP := src.(*net.UDPConn)
 	dstUDP, dstIsUDP := dst.(*net.UDPConn)
 
+	// The listener relay dials a target per session, keep the original for that.
+	target := dst
+	var curSession *udpSession
+	var curKey string
+
 	buf := make([]byte, 32*1024)
 	for {
 	rAgain:
@@ -725,15 +791,24 @@ func proxyCopy(dst net.Conn, src net.Conn) error {
 			var addr net.Addr
 			nr, addr, er = srcUDP.ReadFrom(buf)
 			if er == nil {
-				// Look for existing UDP session
+				// Sessions are per listener, the same client may use several.
+				key := src.LocalAddr().String() + "|" + addr.String()
+
 				udpSessionsLock.Lock()
-				us, ok := udpSessions[addr.String()]
+				us, ok := udpSessions[key]
+				if !ok && len(udpSessions) >= forkproxyMaxSessions {
+					udpSessionsLock.Unlock()
+					proxyWarn("Too many UDP sessions, dropping datagram")
+					continue
+				}
+
 				udpSessionsLock.Unlock()
 
 				if !ok {
-					dc, err := net.Dial(dst.RemoteAddr().Network(), dst.RemoteAddr().String())
+					dc, err := net.Dial(target.RemoteAddr().Network(), target.RemoteAddr().String())
 					if err != nil {
-						return err
+						proxyWarn("Failed to connect to target: %v", err)
+						continue
 					}
 
 					us = &udpSession{
@@ -741,24 +816,41 @@ func proxyCopy(dst net.Conn, src net.Conn) error {
 						target: dc,
 					}
 
-					udpSessionsLock.Lock()
-					udpSessions[addr.String()] = us
-					udpSessionsLock.Unlock()
-
-					go func() { _ = proxyCopy(src, dc) }()
 					us.timer = time.AfterFunc(30*time.Minute, func() {
 						_ = us.target.Close()
 
 						udpSessionsLock.Lock()
-						delete(udpSessions, addr.String())
+						if udpSessions[key] == us {
+							delete(udpSessions, key)
+						}
+
 						udpSessionsLock.Unlock()
 					})
+
+					// Another datagram may have created the session meanwhile.
+					udpSessionsLock.Lock()
+					existing, exists := udpSessions[key]
+					if exists {
+						us.timer.Stop()
+						_ = dc.Close()
+						us = existing
+					} else {
+						udpSessions[key] = us
+					}
+
+					udpSessionsLock.Unlock()
+
+					if !exists {
+						go func() { _ = proxyCopy(src, dc) }()
+					}
 				}
 
 				us.timerLock.Lock()
 				us.timer.Reset(30 * time.Minute)
 				us.timerLock.Unlock()
 
+				curSession = us
+				curKey = key
 				dst = us.target
 				dstUDP, dstIsUDP = dst.(*net.UDPConn)
 			}
@@ -782,7 +874,7 @@ func proxyCopy(dst net.Conn, src net.Conn) error {
 
 				udpSessionsLock.Lock()
 				for _, v := range udpSessions {
-					if v.target.LocalAddr() == src.LocalAddr() {
+					if v.target.LocalAddr().String() == src.LocalAddr().String() {
 						us = v
 						break
 					}
@@ -808,13 +900,27 @@ func proxyCopy(dst net.Conn, src net.Conn) error {
 				goto wAgain
 			}
 
-			if ew != nil {
-				err = ew
-				break
-			}
+			if ew != nil || nr != nw {
+				if ew == nil {
+					ew = io.ErrShortWrite
+				}
 
-			if nr != nw {
-				err = io.ErrShortWrite
+				// One session failing mustn't take the listener down with it.
+				if srcIsUDP && srcUDP.RemoteAddr() == nil {
+					proxyWarn("Failed to relay to target: %v", ew)
+					curSession.timer.Stop()
+					_ = curSession.target.Close()
+
+					udpSessionsLock.Lock()
+					if udpSessions[curKey] == curSession {
+						delete(udpSessions, curKey)
+					}
+
+					udpSessionsLock.Unlock()
+					continue
+				}
+
+				err = ew
 				break
 			}
 		}
@@ -891,7 +997,14 @@ func unixRelayer(src *net.UnixConn, dst *net.UnixConn, ch chan error) {
 			return
 		}
 
+		// The received descriptors are ours to close whatever happens next.
 		var fds []int
+		closeFds := func() {
+			for _, fd := range fds {
+				_ = unix.Close(fd)
+			}
+		}
+
 		if sOob > 0 {
 			entries, err := unix.ParseSocketControlMessage(oobBuf[:sOob])
 			if err != nil {
@@ -900,11 +1013,14 @@ func unixRelayer(src *net.UnixConn, dst *net.UnixConn, ch chan error) {
 			}
 
 			for _, msg := range entries {
-				fds, err = unix.ParseUnixRights(&msg)
+				msgFds, err := unix.ParseUnixRights(&msg)
 				if err != nil {
+					closeFds()
 					ch <- err
 					return
 				}
+
+				fds = append(fds, msgFds...)
 			}
 		}
 
@@ -917,27 +1033,21 @@ func unixRelayer(src *net.UnixConn, dst *net.UnixConn, ch chan error) {
 				goto writeAgain
 			}
 
+			closeFds()
 			ch <- err
 			return
 		}
+
+		closeFds()
 
 		if sData != tData || sOob != tOob {
 			ch <- errors.New("Lost oob data during transfer")
 			return
 		}
-
-		// Close those fds we received
-		for _, fd := range fds {
-			err := unix.Close(fd)
-			if err != nil {
-				ch <- err
-				return
-			}
-		}
 	}
 }
 
-func unixRelay(dst io.ReadWriteCloser, src io.ReadWriteCloser) {
+func unixRelay(dst net.Conn, src net.Conn) {
 	chSend := make(chan error)
 	go unixRelayer(dst.(*net.UnixConn), src.(*net.UnixConn), chSend)
 

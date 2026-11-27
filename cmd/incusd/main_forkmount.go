@@ -11,6 +11,7 @@ package main
 #include <lxc/lxccontainer.h>
 #include <lxc/version.h>
 #include <sched.h>
+#include <signal.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -18,6 +19,7 @@ package main
 #include <sys/mount.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <sys/wait.h>
 #include <unistd.h>
 
 #include "incus.h"
@@ -366,6 +368,43 @@ static int make_dest_open(int fd_src, const char *dest)
 	return make_final_open(&st_src, dest);
 }
 
+// enter_locked_mntns joins a copy of the host mount table made under the container's user namespace,
+// where every mount's read-only flag is locked, so a clone taken here stays locked in the container.
+static int enter_locked_mntns(int ns_fd)
+{
+	__do_close int mnt_fd = -EBADF;
+	pid_t pid;
+	int status;
+
+	pid = fork();
+	if (pid < 0)
+		return -1;
+
+	if (pid == 0) {
+		attach_userns_fd(ns_fd);
+
+		if (unshare(CLONE_NEWNS) < 0)
+			_exit(EXIT_FAILURE);
+
+		raise(SIGSTOP);
+		_exit(EXIT_SUCCESS);
+	}
+
+	if (waitpid(pid, &status, WUNTRACED) != pid || !WIFSTOPPED(status)) {
+		kill(pid, SIGKILL);
+		waitpid(pid, NULL, 0);
+		return -1;
+	}
+
+	mnt_fd = preserve_ns(pid, -EBADF, "mnt");
+	kill(pid, SIGKILL);
+	waitpid(pid, NULL, 0);
+	if (mnt_fd < 0)
+		return -1;
+
+	return setns(mnt_fd, CLONE_NEWNS);
+}
+
 static void do_move_forkmount(int pidfd, int ns_fd)
 {
 	__do_close int fs_fd = -EBADF, mnt_fd = -EBADF, fd_userns = -EBADF,
@@ -373,6 +412,8 @@ static void do_move_forkmount(int pidfd, int ns_fd)
 	int ret;
 	char *fstype, *src, *dest, *idmapType, *flags;
 	unsigned int old_mntflags = 0, new_mntflags = 0;
+	unsigned int open_tree_flags = OPEN_TREE_CLOEXEC | OPEN_TREE_CLONE;
+	unsigned int setattr_flags = AT_EMPTY_PATH;
 
 	fstype = advance_arg(true);
 	src = advance_arg(true);
@@ -385,6 +426,12 @@ static void do_move_forkmount(int pidfd, int ns_fd)
 		die("parse mount flags");
 
 	mnt_attributes_new(old_mntflags, &new_mntflags);
+
+	// A recursive mount needs its submounts cloned and idmapped too, as liblxc does at start.
+	if (old_mntflags & MS_REC) {
+		open_tree_flags |= AT_RECURSIVE;
+		setattr_flags |= AT_RECURSIVE;
+	}
 
 	if (strcmp(fstype, "") && strcmp(fstype, "none")) {
 		fs_fd = incus_fsopen(fstype, FSOPEN_CLOEXEC);
@@ -403,7 +450,11 @@ static void do_move_forkmount(int pidfd, int ns_fd)
 		if (mnt_fd < 0)
 			die("fsmount");
 	} else {
-		mnt_fd = incus_open_tree(-EBADF, src, OPEN_TREE_CLOEXEC | OPEN_TREE_CLONE);
+		// Clone from a namespace where the source is locked, so the container can't remount it rw.
+		if (enter_locked_mntns(ns_fd) < 0)
+			die("enter locked mount namespace");
+
+		mnt_fd = incus_open_tree(-EBADF, src, open_tree_flags);
 		if (mnt_fd < 0)
 			die("open_tree");
 	}
@@ -419,7 +470,7 @@ static void do_move_forkmount(int pidfd, int ns_fd)
 
 		};
 
-		ret = incus_mount_setattr(mnt_fd, "", AT_EMPTY_PATH, &attr, sizeof(attr));
+		ret = incus_mount_setattr(mnt_fd, "", setattr_flags, &attr, sizeof(attr));
 		if (ret)
 			die("idmap mount");
 	}

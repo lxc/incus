@@ -134,6 +134,16 @@ func instancePut(d *Daemon, r *http.Request) response.Response {
 	var do func(*operations.Operation) error
 	var opType operationtype.Type
 	if configRaw.Restore == "" {
+		curProfiles := make([]string, 0, len(inst.Profiles()))
+		for _, profile := range inst.Profiles() {
+			curProfiles = append(curProfiles, profile.Name)
+		}
+
+		err = checkAttachedAccess(s, r, projectName, configRaw.Profiles, curProfiles, configRaw.Devices, inst.LocalDevices().CloneNative())
+		if err != nil {
+			return response.SmartError(err)
+		}
+
 		// Check project limits.
 		apiProfiles := make([]api.Profile, 0, len(configRaw.Profiles))
 		err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
@@ -222,6 +232,12 @@ func instanceSnapRestore(s *state.State, projectName string, name string, snap s
 	// normalize snapshot name
 	if !internalInstance.IsSnapshot(snap) {
 		snap = name + internalInstance.SnapshotDelimiter + snap
+	}
+
+	// Only the instance's own snapshots can be restored.
+	parentName, _, _ := api.GetParentAndSnapshotName(snap)
+	if parentName != name {
+		return fmt.Errorf("Snapshot %q doesn't belong to instance %q", snap, name)
 	}
 
 	inst, err := instance.LoadByProjectAndName(s, projectName, name)

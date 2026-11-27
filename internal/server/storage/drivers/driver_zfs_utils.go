@@ -479,6 +479,33 @@ func (d *zfs) sendDataset(dataset string, parent string, volSrcArgs *migration.V
 	return nil
 }
 
+// checkReceivedDataset returns an error if the dataset's type doesn't match the content type the
+// volume was declared with. The type of a received dataset comes from the stream, which the
+// sender controls, as do any properties it carries. Removing the dataset is left to the
+// caller's revert, so that an existing volume is never destroyed here.
+func (d *zfs) checkReceivedDataset(vol Volume) error {
+	// A snapshot receive lands in the holding dataset, which is what carries the type.
+	dataset, _, _ := strings.Cut(d.dataset(vol, false), "@")
+
+	expected := "filesystem"
+	if IsContentBlock(vol.ContentType()) || d.isBlockBacked(vol) {
+		expected = "volume"
+	}
+
+	// Read the property directly, as the cache predates the receive.
+	output, err := subprocess.RunCommand("zfs", "get", "-H", "-p", "-o", "value", "type", dataset)
+	if err != nil {
+		return err
+	}
+
+	current := strings.TrimSpace(output)
+	if current != expected {
+		return fmt.Errorf("Received dataset %q is a %s, not a %s", dataset, current, expected)
+	}
+
+	return nil
+}
+
 func (d *zfs) receiveDataset(vol Volume, r io.Reader, tracker *ioprogress.ProgressTracker) error {
 	// Assemble zfs receive command.
 	args := []string{"receive", "-x", "mountpoint", "-F", "-u", d.dataset(vol, false)}
@@ -500,7 +527,7 @@ func (d *zfs) receiveDataset(vol Volume, r io.Reader, tracker *ioprogress.Progre
 		return err
 	}
 
-	return nil
+	return d.checkReceivedDataset(vol)
 }
 
 // ValidateZfsBlocksize validates blocksize property value on the pool.

@@ -190,6 +190,11 @@ func genericVFSMigrateVolume(d Driver, s *state.State, vol Volume, conn io.ReadW
 		return ErrNotSupported
 	}
 
+	// The instance backup file holds the pool config, the target writes its own.
+	if vol.volType == VolumeTypeContainer || vol.volType == VolumeTypeVM {
+		rsyncArgs = append(rsyncArgs, "--exclude", "/backup.yaml")
+	}
+
 	// Define function to send a filesystem volume.
 	sendFSVol := func(vol Volume, conn io.ReadWriteCloser, mountPath string) error {
 		var wrapper *ioprogress.ProgressTracker
@@ -353,7 +358,8 @@ func genericVFSCreateVolumeFromMigration(d Driver, initVolume func(vol Volume) (
 		d.Logger().Debug("Receiving filesystem volume started", logger.Ctx{"volName": volName, "path": path, "features": volTargetArgs.MigrationType.Features})
 		defer d.Logger().Debug("Receiving filesystem volume stopped", logger.Ctx{"volName": volName, "path": path})
 
-		return rsync.Recv(path, conn, wrapper, volTargetArgs.MigrationType.Features)
+		// Keep the target directory's owner and mode for instance volumes, as the source controls them otherwise.
+		return rsync.Recv(path, conn, wrapper, volTargetArgs.MigrationType.Features, vol.Type() != VolumeTypeCustom)
 	}
 
 	// Block volumes are compressed if negotiated with the source.
@@ -567,7 +573,19 @@ func genericVFSGetVolumeDiskPath(vol Volume) (string, error) {
 		return "", ErrNotSupported
 	}
 
-	return filepath.Join(vol.MountPath(), genericVolumeDiskFile), nil
+	diskPath := filepath.Join(vol.MountPath(), genericVolumeDiskFile)
+
+	// The disk file gets opened by path as root, so never hand out something that leads outside the volume.
+	fi, err := os.Lstat(diskPath)
+	if err != nil && !errors.Is(err, fs.ErrNotExist) {
+		return "", err
+	}
+
+	if err == nil && !fi.Mode().IsRegular() {
+		return "", fmt.Errorf("Block volume file %q isn't a regular file", diskPath)
+	}
+
+	return diskPath, nil
 }
 
 // genericVFSBackupVolume is a generic BackupVolume implementation for VFS-only drivers.

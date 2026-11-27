@@ -261,6 +261,15 @@ static inline int bpf(int cmd, union bpf_attr *attr, size_t size)
 	return syscall(__NR_bpf, cmd, attr, size);
 }
 
+// seccomp_notify_id_valid reports whether the notification is still pending.
+static int seccomp_notify_id_valid(int notify_fd, __u64 id)
+{
+	if (ioctl(notify_fd, SECCOMP_IOCTL_NOTIF_ID_VALID, &id) < 0)
+		return -errno;
+
+	return 0;
+}
+
 static int handle_bpf_syscall(pid_t pid_target, int notify_fd, int mem_fd,
 			      int tgid, struct seccomp_notify_proxy_msg *msg,
 			      struct seccomp_notif *req, struct seccomp_notif_resp *resp,
@@ -1282,7 +1291,20 @@ type MknodArgs struct {
 	path  string
 }
 
+// NotifIDValid reports whether the seccomp notification is still pending, meaning the caller is
+// still blocked in its syscall and its PID can't have been recycled.
+func (siov *Iovec) NotifIDValid() bool {
+	ret, err := C.seccomp_notify_id_valid(C.int(siov.notifyFd), siov.req.id)
+	return ret == 0 && err == nil
+}
+
 func (srv *Server) doDeviceSyscall(c Instance, args *MknodArgs, siov *Iovec) int {
+	// The path was read from the caller's memory, which the guest can stall; make sure the caller
+	// is still the one blocked in the syscall before acting on its PID.
+	if !siov.NotifIDValid() {
+		return int(-C.EPERM)
+	}
+
 	dev := deviceConfig.Device{}
 	dev["type"] = "unix-char"
 	dev["mode"] = fmt.Sprintf("%#o", args.cMode)
@@ -1335,7 +1357,7 @@ func (srv *Server) HandleMknodSyscall(c Instance, siov *Iovec) int {
 		return 0
 	}
 
-	cPathBuf := [unix.PathMax]C.char{}
+	cPathBuf := [unix.PathMax + 1]C.char{}
 	_, err := C.pread(C.int(siov.memFd), unsafe.Pointer(&cPathBuf[0]), C.size_t(unix.PathMax), C.off_t(siov.req.data.args[0]))
 	if err != nil {
 		ctx["err"] = fmt.Sprintf("Failed to read memory for mknod syscall: %s", err)
@@ -1389,7 +1411,7 @@ func (srv *Server) HandleMknodatSyscall(c Instance, siov *Iovec) int {
 		return 0
 	}
 
-	cPathBuf := [unix.PathMax]C.char{}
+	cPathBuf := [unix.PathMax + 1]C.char{}
 	_, err := C.pread(C.int(siov.memFd), unsafe.Pointer(&cPathBuf[0]), C.size_t(unix.PathMax), C.off_t(siov.req.data.args[1]))
 	if err != nil {
 		ctx["err"] = "Failed to read memory for mknodat syscall: %s"
@@ -1472,7 +1494,7 @@ func (srv *Server) HandleSetxattrSyscall(c Instance, siov *Iovec) int {
 	args.nsfsuid, args.nsfsgid = idmapset.ShiftFromNS(fsuid, fsgid)
 
 	// const char *path
-	cBuf := [unix.PathMax]C.char{}
+	cBuf := [unix.PathMax + 1]C.char{}
 	_, err = C.pread(C.int(siov.memFd), unsafe.Pointer(&cBuf[0]), C.size_t(unix.PathMax), C.off_t(siov.req.data.args[0]))
 	if err != nil {
 		ctx["err"] = fmt.Sprintf("Failed to read memory for setxattr syscall: %s", err)
@@ -1499,6 +1521,13 @@ func (srv *Server) HandleSetxattrSyscall(c Instance, siov *Iovec) int {
 
 	// int flags
 	args.flags = C.int(siov.req.data.args[4])
+
+	// The policy only intercepts a one byte value.
+	if args.size != 1 {
+		ctx["syscall_continue"] = "true"
+		C.seccomp_notify_update_response(siov.resp, 0, C.uint32_t(seccompUserNotifFlagContinue))
+		return 0
+	}
 
 	buf := make([]byte, args.size)
 	_, err = C.pread(C.int(siov.memFd), unsafe.Pointer(&buf[0]), C.size_t(args.size), C.off_t(siov.req.data.args[2]))
@@ -2024,10 +2053,10 @@ func (srv *Server) HandleMountSyscall(c Instance, siov *Iovec) int {
 
 	defer logger.WarnOnError(pidFd.Close, "Failed to close pidfd")
 
-	mntSource := [unix.PathMax]C.char{}
-	mntTarget := [unix.PathMax]C.char{}
-	mntFs := [unix.PathMax]C.char{}
-	mntData := [unix.PathMax]C.char{}
+	mntSource := [unix.PathMax + 1]C.char{}
+	mntTarget := [unix.PathMax + 1]C.char{}
+	mntFs := [unix.PathMax + 1]C.char{}
+	mntData := [unix.PathMax + 1]C.char{}
 
 	// const char *source
 	if siov.req.data.args[0] != 0 {

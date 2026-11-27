@@ -1164,7 +1164,14 @@ func (m *Monitor) AddSecret(id string, secret string) error {
 		"format":   "base64",
 	}
 
-	err := m.Run("object-add", &args, nil)
+	// Keep the secret out of the QMP log, which is served to instance viewers.
+	reqID := m.IncreaseID()
+	request, err := json.Marshal(qmpCommand{ID: reqID, Execute: "object-add", Arguments: &args})
+	if err != nil {
+		return err
+	}
+
+	err = m.RunJSON(request, nil, false, reqID)
 	if err != nil && !strings.Contains(err.Error(), "attempt to add duplicate property") {
 		return fmt.Errorf("Failed adding object: %w", err)
 	}
@@ -1992,7 +1999,8 @@ func (m *Monitor) RingbufRead(device string) (string, error) {
 
 	var sb strings.Builder
 
-	for {
+	// Stop after a ring buffer's worth, the guest can refill it faster than it's drained.
+	for sb.Len() < ConsoleRingbufSize {
 		err := m.Run("ringbuf-read", args, &readResp)
 		if err != nil {
 			// The device may have been swapped to a socket since the check above, return what was read.
@@ -2069,7 +2077,7 @@ func (m *Monitor) ChardevChange(device string, info ChardevChangeInfo) error {
 
 		args.ID = device
 		args.Backend.Type = info.Type
-		args.Backend.Data.Size = 1048576
+		args.Backend.Data.Size = ConsoleRingbufSize
 
 		return m.Run("chardev-change", args, nil)
 	}

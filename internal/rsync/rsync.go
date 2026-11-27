@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"golang.org/x/sys/unix"
 
 	"github.com/lxc/incus/v7/internal/linux"
 	internalUtil "github.com/lxc/incus/v7/internal/util"
@@ -35,6 +36,34 @@ var Debug bool
 // RunWrapper is an optional function that's used to wrap rsync, useful for confinement like AppArmor.
 var RunWrapper func(cmd *exec.Cmd, source string, destination string) (func(), error)
 
+// maxOutput is how much of rsync's output is kept, the tree and the peer decide how much there is.
+const maxOutput = 64 * 1024
+
+// boundedBuffer keeps the beginning of a stream and drops the rest.
+type boundedBuffer struct {
+	// Not embedded, io.Copy would fill the buffer directly.
+	buf bytes.Buffer
+}
+
+// Write keeps up to maxOutput bytes.
+func (b *boundedBuffer) Write(p []byte) (int, error) {
+	remaining := maxOutput - b.buf.Len()
+	if remaining > 0 {
+		b.buf.Write(p[:min(len(p), remaining)])
+	}
+
+	return len(p), nil
+}
+
+// readOutput reads a stream to its end, keeping the beginning.
+func readOutput(r io.Reader) ([]byte, error) {
+	var b boundedBuffer
+
+	_, err := io.Copy(&b, r)
+
+	return b.buf.Bytes(), err
+}
+
 // rsync is a wrapper for the rsync command which will respect RunWrapper.
 func rsync(args ...string) (string, error) {
 	if len(args) < 2 {
@@ -43,9 +72,9 @@ func rsync(args ...string) (string, error) {
 
 	// Setup the command.
 	cmd := exec.Command("rsync", args...)
-	var stderr bytes.Buffer
+	var stderr boundedBuffer
 	cmd.Stderr = &stderr
-	var stdout bytes.Buffer
+	var stdout boundedBuffer
 	cmd.Stdout = &stdout
 
 	// Call the wrapper if defined.
@@ -64,10 +93,10 @@ func rsync(args ...string) (string, error) {
 	// Run the command.
 	err := cmd.Run()
 	if err != nil {
-		return stdout.String(), subprocess.NewRunError("rsync", args, err, &stdout, &stderr)
+		return stdout.buf.String(), subprocess.NewRunError("rsync", args, err, &stdout.buf, &stderr.buf)
 	}
 
-	return stdout.String(), nil
+	return stdout.buf.String(), nil
 }
 
 // LocalCopy copies a directory using rsync (with the --devices option).
@@ -217,7 +246,7 @@ func sendSetup(name string, path string, bwlimit string, execPath string, featur
 	chConn := make(chan *net.Conn, 1)
 
 	go func() {
-		conn, err := l.Accept()
+		conn, err := linux.AcceptSameUser(l)
 		if err != nil {
 			chConn <- nil
 			return
@@ -229,14 +258,14 @@ func sendSetup(name string, path string, bwlimit string, execPath string, featur
 	select {
 	case conn = <-chConn:
 		if conn == nil {
-			output, _ := io.ReadAll(stderr)
+			output, _ := readOutput(stderr)
 			_ = cmd.Process.Kill()
 			_ = cmd.Wait()
 			return nil, nil, nil, fmt.Errorf("Failed to connect to rsync socket (%s)", string(output))
 		}
 
 	case <-time.After(10 * time.Second):
-		output, _ := io.ReadAll(stderr)
+		output, _ := readOutput(stderr)
 		_ = cmd.Process.Kill()
 		_ = cmd.Wait()
 		return nil, nil, nil, fmt.Errorf("rsync failed to spawn after 10s (%s)", string(output))
@@ -282,7 +311,7 @@ func Send(name string, path string, conn io.ReadWriteCloser, tracker *ioprogress
 	}()
 
 	// Wait for rsync to complete.
-	output, err := io.ReadAll(stderr)
+	output, err := readOutput(stderr)
 	if err != nil {
 		_ = cmd.Process.Kill()
 		logger.Errorf("Rsync stderr read failed: %s: %v", path, err)
@@ -316,7 +345,7 @@ func Send(name string, path string, conn io.ReadWriteCloser, tracker *ioprogress
 // Recv sets up the receiving half of the websocket to rsync (the other
 // half set up by rsync.Send), putting the contents in the directory specified
 // by path.
-func Recv(path string, conn io.ReadWriteCloser, tracker *ioprogress.ProgressTracker, features []string) error {
+func Recv(path string, conn io.ReadWriteCloser, tracker *ioprogress.ProgressTracker, features []string, keepTarget bool) error {
 	args := []string{
 		"--server",
 		"-vlogDtpre.iLsfx",
@@ -334,6 +363,16 @@ func Recv(path string, conn io.ReadWriteCloser, tracker *ioprogress.ProgressTrac
 	}
 
 	args = append(args, []string{".", path}...)
+
+	// The target is the root of the transfer, so rsync applies the sender's owner and mode to it.
+	// Record them to restore afterwards, so the sender can't take ownership of the directory.
+	var target unix.Stat_t
+	if keepTarget {
+		err := unix.Stat(path, &target)
+		if err != nil {
+			return fmt.Errorf("Failed to stat %q: %w", path, err)
+		}
+	}
 
 	// Never follow symlinks under the target so the sender can't redirect writes outside of it.
 	unmount, err := linux.MountNoSymlinkFollow(path)
@@ -401,7 +440,7 @@ func Recv(path string, conn io.ReadWriteCloser, tracker *ioprogress.ProgressTrac
 		return err
 	}
 
-	output, err := io.ReadAll(stderr)
+	output, err := readOutput(stderr)
 	if err != nil {
 		logger.Errorf("Rsync stderr read failed: %s: %v", path, err)
 	}
@@ -421,6 +460,19 @@ func Recv(path string, conn io.ReadWriteCloser, tracker *ioprogress.ProgressTrac
 
 		if chCopySourceErr != nil {
 			errs = append(errs, chCopySourceErr)
+		}
+	}
+
+	// Restore the target's owner and mode before the mount goes away.
+	if keepTarget {
+		err = unix.Chown(path, int(target.Uid), int(target.Gid))
+		if err != nil {
+			errs = append(errs, fmt.Errorf("Failed to restore owner of %q: %w", path, err))
+		}
+
+		err = unix.Chmod(path, target.Mode&0o7777)
+		if err != nil {
+			errs = append(errs, fmt.Errorf("Failed to restore mode of %q: %w", path, err))
 		}
 	}
 

@@ -20,6 +20,9 @@ package main
 #include "memory_utils.h"
 #include "process_utils.h"
 
+extern int pidfd_nsfd(int pidfd, pid_t pid);
+extern bool change_namespaces(int pidfd, int nsfd, unsigned int flags);
+
 static int dosetns_file(char *file, char *nstype)
 {
 	__do_close int ns_fd = -EBADF;
@@ -63,9 +66,19 @@ static void forkdonetdetach(char *file) {
 	// Jump back to Go for the rest
 }
 
-static void forkdonetconnect(char *file) {
-	// Attach to the network namespace.
-	if (dosetns_file(file, "net") < 0) {
+static void forkdonetconnect(char *pidstr, char *pidfdstr) {
+	__do_close int ns_fd = -EBADF;
+	pid_t pid = atoi(pidstr);
+	int pidfd = atoi(pidfdstr);
+
+	// Enter the namespace through the pidfd so a recycled PID can't redirect us.
+	ns_fd = pidfd_nsfd(pidfd, pid);
+	if (ns_fd < 0) {
+		fprintf(stderr, "Failed to open the container namespaces: %s\n", strerror(-ns_fd));
+		_exit(1);
+	}
+
+	if (!change_namespaces(pidfd, ns_fd, CLONE_NEWNET)) {
 		fprintf(stderr, "Failed setns to container network namespace: %s\n", strerror(errno));
 		_exit(1);
 	}
@@ -212,7 +225,7 @@ void forknet(void)
 	if (strcmp(command, "detach") == 0)
 		forkdonetdetach(cur);
 	else if (strcmp(command, "connect") == 0)
-		forkdonetconnect(cur);
+		forkdonetconnect(cur, advance_arg(true));
 }
 */
 import "C"
@@ -232,6 +245,7 @@ import (
 	"strings"
 	"sync"
 	"time"
+	"unicode"
 
 	"github.com/insomniacslk/dhcp/dhcpv4"
 	"github.com/insomniacslk/dhcp/dhcpv4/nclient4"
@@ -297,8 +311,8 @@ func (c *cmdForknet) command() *cobra.Command {
 
 	// connect
 	cmdConnect := &cobra.Command{}
-	cmdConnect.Use = "connect <netns file> <address> <port>"
-	cmdConnect.Args = cobra.ExactArgs(3)
+	cmdConnect.Use = "connect <PID> <PIDFd> <address> <port>"
+	cmdConnect.Args = cobra.ExactArgs(4)
 	cmdConnect.RunE = c.runConnect
 	cmd.AddCommand(cmdConnect)
 
@@ -956,11 +970,23 @@ func (c *cmdForknet) dhcpRunV6(errorChannel chan error, ready func(), iface stri
 	}
 }
 
+// readFileLimited reads at most limit bytes of a file the instance may have planted.
+func readFileLimited(path string, limit int64) ([]byte, error) {
+	f, err := os.Open(path)
+	if err != nil {
+		return nil, err
+	}
+
+	defer func() { _ = f.Close() }()
+
+	return io.ReadAll(io.LimitReader(f, limit))
+}
+
 // Get a stable DUID, recording it on disk.
 func (c *cmdForknet) loadOrCreateDUID(ifaces []net.Interface) (dhcpv6.DUID, error) {
 	duidPath := filepath.Join(c.instNetworkPath, "dhcp6.duid")
 
-	bb, err := os.ReadFile(duidPath)
+	bb, err := readFileLimited(duidPath, 4096)
 	if err == nil {
 		duid, err := dhcpv6.DUIDFromBytes(bb)
 		if err == nil {
@@ -1058,6 +1084,16 @@ func appendUnique(list []string, value string) []string {
 	return append(list, value)
 }
 
+// appendUniqueDomain appends a DHCP-supplied domain name unless it would break the resolv.conf line.
+func appendUniqueDomain(list []string, value string) []string {
+	value = strings.TrimRight(value, "\x00")
+	if strings.ContainsFunc(value, func(r rune) bool { return unicode.IsSpace(r) || unicode.IsControl(r) }) {
+		return list
+	}
+
+	return appendUnique(list, value)
+}
+
 func (c *cmdForknet) dhcpApplyDNS(l *logrus.Logger) error {
 	nameservers := []string{}
 	searchLabels := []string{}
@@ -1110,7 +1146,7 @@ func (c *cmdForknet) dhcpApplyDNS(l *logrus.Logger) error {
 
 		// Domain name (option 15).
 		if c.initialDomain == "" {
-			domainNames = appendUnique(domainNames, lease.Offer.DomainName())
+			domainNames = appendUniqueDomain(domainNames, lease.Offer.DomainName())
 		}
 
 		// Domain search list (option 119).
@@ -1118,7 +1154,7 @@ func (c *cmdForknet) dhcpApplyDNS(l *logrus.Logger) error {
 			ds := lease.Offer.DomainSearch()
 			if ds != nil {
 				for _, s := range ds.Labels {
-					searchLabels = appendUnique(searchLabels, s)
+					searchLabels = appendUniqueDomain(searchLabels, s)
 				}
 			}
 		}
@@ -1143,7 +1179,7 @@ func (c *cmdForknet) dhcpApplyDNS(l *logrus.Logger) error {
 			dsl := reply.Options.DomainSearchList()
 			if dsl != nil {
 				for _, s := range dsl.Labels {
-					searchLabels = appendUnique(searchLabels, s)
+					searchLabels = appendUniqueDomain(searchLabels, s)
 				}
 			}
 		}
@@ -1369,10 +1405,10 @@ func (c *cmdForknet) runDetach(_ *cobra.Command, args []string) error {
 }
 
 func (c *cmdForknet) runConnect(_ *cobra.Command, args []string) error {
-	addr := net.JoinHostPort(args[1], args[2])
+	addr := net.JoinHostPort(args[2], args[3])
 
 	// Establish the connection (we're inside the instance's network namespace).
-	conn, err := net.Dial("tcp", addr)
+	conn, err := net.DialTimeout("tcp", addr, 30*time.Second)
 	if err != nil {
 		return fmt.Errorf("Failed connecting to %q: %w", addr, err)
 	}

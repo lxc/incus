@@ -5,10 +5,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"io/fs"
 	"os"
 	"path/filepath"
 	"slices"
+	"strconv"
 	"strings"
 	"time"
 
@@ -39,6 +41,7 @@ import (
 	"github.com/lxc/incus/v7/shared/archive"
 	"github.com/lxc/incus/v7/shared/ioprogress"
 	"github.com/lxc/incus/v7/shared/logger"
+	"github.com/lxc/incus/v7/shared/units"
 	"github.com/lxc/incus/v7/shared/util"
 	"github.com/lxc/incus/v7/shared/validate"
 )
@@ -509,7 +512,7 @@ func poolAndVolumeCommonRules(vol *drivers.Volume) map[string]func(string) error
 			return err
 		},
 		"snapshots.schedule": validate.Optional(validate.IsCron([]string{"@hourly", "@daily", "@midnight", "@weekly", "@monthly", "@annually", "@yearly"})),
-		"snapshots.pattern":  validate.IsAny,
+		"snapshots.pattern":  internalInstance.IsSnapshotPattern,
 	}
 
 	// Options relevant for custom filesystem volumes.
@@ -518,7 +521,15 @@ func poolAndVolumeCommonRules(vol *drivers.Volume) map[string]func(string) error
 		rules["security.unmapped"] = validate.Optional(validate.IsBool)
 		rules["initial.uid"] = validate.Optional(validate.IsInt64)
 		rules["initial.gid"] = validate.Optional(validate.IsInt64)
-		rules["initial.mode"] = validate.Optional(validate.IsInt64)
+		rules["initial.mode"] = validate.Optional(func(value string) error {
+			// Parsed as octal when the mount path is created, so reject what that would reject.
+			_, err := strconv.ParseUint(value, 8, 12)
+			if err != nil {
+				return fmt.Errorf("Invalid initial.mode: %w", err)
+			}
+
+			return nil
+		})
 	}
 
 	// security.shared is only relevant for custom block volumes.
@@ -610,6 +621,44 @@ func ImageVirtualSize(sysOS *sys.OS, imgPath string) (int64, error) {
 	return imgInfo.VirtualSize, nil
 }
 
+// tarballContentSize returns the total size of the entries in a possibly compressed tarball, giving up past maxSize.
+func tarballContentSize(path string, outputPath string, maxSize int64) (int64, error) {
+	f, err := os.Open(path)
+	if err != nil {
+		return -1, err
+	}
+
+	defer func() { _ = f.Close() }()
+
+	_, _, unpacker, err := archive.DetectCompressionFile(f)
+	if err != nil {
+		return -1, err
+	}
+
+	tr, cancelFunc, err := archive.CompressedTarReader(context.Background(), f, unpacker, outputPath, maxSize)
+	if err != nil {
+		return -1, err
+	}
+
+	defer cancelFunc()
+
+	var total int64
+	for {
+		hdr, err := tr.Next()
+		if errors.Is(err, io.EOF) {
+			break
+		}
+
+		if err != nil {
+			return -1, err
+		}
+
+		total += hdr.Size
+	}
+
+	return total, nil
+}
+
 // ImageUnpack unpacks a filesystem image into the destination path.
 // There are several formats that images can come in:
 // Container Format A: Separate metadata tarball and root squashfs file.
@@ -658,6 +707,16 @@ func ImageUnpack(imageFile string, vol drivers.Volume, destBlockFile string, sys
 
 		// Check for separate root file.
 		if util.PathExists(imageRootfsFile) {
+			// Reject rootfs content from the metadata tarball, which could redirect the rootfs unpack.
+			entries, err := os.ReadDir(rootfsPath)
+			if err != nil && !errors.Is(err, fs.ErrNotExist) {
+				return -1, err
+			}
+
+			if len(entries) > 0 {
+				return -1, fmt.Errorf("Image metadata tarball contains rootfs content: %s", imageFile)
+			}
+
 			err = os.MkdirAll(rootfsPath, 0o755)
 			if err != nil {
 				return -1, errors.New("Error creating rootfs directory")
@@ -673,6 +732,13 @@ func ImageUnpack(imageFile string, vol drivers.Volume, destBlockFile string, sys
 		rootfsInfo, err = os.Lstat(rootfsPath)
 		if err != nil || !rootfsInfo.IsDir() {
 			return -1, fmt.Errorf("Image is missing a rootfs: %s", imageFile)
+		}
+
+		// The image's "./" entry can change the owner of the volume's top directory; put it back so
+		// the instance directory stays root-owned and its setuid files aren't reachable by its owner.
+		err = os.Chown(destPath, 0, 0)
+		if err != nil {
+			return -1, err
 		}
 
 		// Done with this.
@@ -694,7 +760,40 @@ func ImageUnpack(imageFile string, vol drivers.Volume, destBlockFile string, sys
 
 	// convertBlockImage converts the qcow2 block image file into a raw block device. If needed it will attempt
 	// to enlarge the destination volume to accommodate the unpacked qcow2 image file.
+	// checkBlockImage refuses a root disk that qemu-img could follow to another file.
+	checkBlockImage := func(imgPath string) error {
+		// Reject a root disk symlink, which could point qemu-img at a host file.
+		imgStat, err := os.Lstat(imgPath)
+		if err != nil {
+			return err
+		}
+
+		if !imgStat.Mode().IsRegular() {
+			return fmt.Errorf("Image root disk isn't a regular file: %s", imageFile)
+		}
+
+		// The image must be self-contained, as qemu-img opens any backing or external data file it refers to.
+		standalone, err := drivers.Qcow2IsStandalone(imgPath)
+		if err != nil {
+			return fmt.Errorf("Failed reading image header %q: %w", imgPath, err)
+		}
+
+		if !standalone {
+			return errors.New("Image refers to a backing file or to an external data file")
+		}
+
+		return nil
+	}
+
 	convertBlockImage := func(v drivers.Volume, imgPath string, dstPath string, tracker *ioprogress.ProgressTracker) (int64, error) {
+		// The metadata stream may have replaced the block file inside the volume with a symlink.
+		if strings.HasPrefix(dstPath, internalUtil.AddSlash(destPath)) {
+			fi, err := os.Lstat(dstPath)
+			if err == nil && !fi.Mode().IsRegular() {
+				return -1, fmt.Errorf("Block volume file %q isn't a regular file", dstPath)
+			}
+		}
+
 		virtualSize, err := ImageVirtualSize(sysOS, imgPath)
 		if err != nil {
 			return -1, err
@@ -821,6 +920,11 @@ func ImageUnpack(imageFile string, vol drivers.Volume, destBlockFile string, sys
 		}
 
 		// Convert the qcow2 format to a raw block device.
+		err = checkBlockImage(imageRootfsFile)
+		if err != nil {
+			return -1, err
+		}
+
 		imgSize, err = convertBlockImage(vol, imageRootfsFile, destBlockFile, tracker)
 		if err != nil {
 			return -1, err
@@ -834,6 +938,23 @@ func ImageUnpack(imageFile string, vol drivers.Volume, destBlockFile string, sys
 
 		defer logger.WarnOnError(func() error { return os.RemoveAll(tempDir) }, "Failed to remove temporary directory")
 
+		// Only the compressed image was held to the project's budget, bound what gets unpacked.
+		if vol.ExpandedConfig("size") != "" {
+			sizeBytes, err := units.ParseByteSizeString(vol.ExpandedConfig("size"))
+			if err != nil {
+				return -1, err
+			}
+
+			contentSize, err := tarballContentSize(imageFile, tempDir, sizeBytes+(4*1024*1024))
+			if err != nil {
+				return -1, err
+			}
+
+			if sizeBytes > 0 && contentSize > sizeBytes+(4*1024*1024) {
+				return -1, fmt.Errorf("Image content size (%d) exceeds the volume size (%d)", contentSize, sizeBytes)
+			}
+		}
+
 		// Unpack the whole image.
 		err = archive.Unpack(imageFile, tempDir, vol.IsBlockBacked(), maxMemory, tracker)
 		if err != nil {
@@ -843,6 +964,11 @@ func ImageUnpack(imageFile string, vol drivers.Volume, destBlockFile string, sys
 		imgPath := filepath.Join(tempDir, "rootfs.img")
 
 		// Convert the qcow2 format to a raw block device.
+		err = checkBlockImage(imgPath)
+		if err != nil {
+			return -1, err
+		}
+
 		imgSize, err = convertBlockImage(vol, imgPath, destBlockFile, tracker)
 		if err != nil {
 			return -1, err

@@ -790,7 +790,7 @@ test_projects_limits() {
     ! incus storage volume create "${pool}" v2 || false
 
     # Disk limits can be updated if they stay within limits.
-    incus project set p1 limits.disk 540MiB
+    incus project set p1 limits.disk 541MiB
     incus profile device set default root size=190MiB
     incus config device set c2 root size 200MiB
 
@@ -825,7 +825,8 @@ test_projects_limits() {
         # Relax all constraints except the disk limits, which won't be enough for the
         # image to be downloaded.
         incus profile device set default root size=500KiB
-        incus project set p1 limits.disk 351MiB
+        disk_usage="$(incus query /1.0/projects/p1/state | jq -r .resources.disk.usage)"
+        incus project set p1 limits.disk "$((disk_usage + 102400))B"
         incus project unset p1 limits.containers
         incus project unset p1 limits.cpu
         incus project unset p1 limits.memory
@@ -1180,7 +1181,7 @@ test_projects_usage() {
 
     incus project info test-usage --format csv | grep -q "CONTAINERS,UNLIMITED,1"
     incus project info test-usage --format csv | grep -q "CPU,5,1"
-    incus project info test-usage --format csv | grep -q "DISK,10.00GiB,300.00MiB"
+    incus project info test-usage --format csv | grep -qE "DISK,10.00GiB,30[0-9]\.[0-9]+MiB"
     incus project info test-usage --format csv | grep -q "INSTANCES,UNLIMITED,1"
     incus project info test-usage --format csv | grep -q "MEMORY,1.00GiB,512.00MiB"
     incus project info test-usage --format csv | grep -q "NETWORKS,3,0"

@@ -3,9 +3,12 @@
 package incus
 
 import (
+	"archive/tar"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 
@@ -15,6 +18,8 @@ import (
 	"github.com/opencontainers/umoci"
 	"github.com/opencontainers/umoci/oci/cas/dir"
 	"github.com/opencontainers/umoci/oci/casext"
+	"github.com/opencontainers/umoci/oci/casext/blobcompress"
+	"github.com/opencontainers/umoci/oci/casext/mediatype"
 	"github.com/opencontainers/umoci/oci/layer"
 
 	"github.com/lxc/incus/v7/shared/logger"
@@ -53,7 +58,7 @@ func (h *umociLogHandler) HandleLog(e *log.Entry) error {
 	return nil
 }
 
-func (r *ProtocolOCI) unpackOCIImage(imagePath string, imageTag string, bundlePath string) error {
+func (r *ProtocolOCI) unpackOCIImage(imagePath string, imageTag string, bundlePath string, maxSize int64) error {
 	var unpackOptions layer.UnpackOptions
 	unpackOptions.KeepDirlinks = true
 
@@ -66,12 +71,106 @@ func (r *ProtocolOCI) unpackOCIImage(imagePath string, imageTag string, bundlePa
 	engineExt := casext.NewEngine(engine)
 	defer logger.WarnOnError(engine.Close, "Failed to close CAS engine")
 
+	// The layers decide how much gets written, check that before unpacking.
+	if maxSize > 0 {
+		err = r.checkUnpackedSize(engineExt, imageTag, maxSize)
+		if err != nil {
+			return err
+		}
+	}
+
 	err = umoci.Unpack(engineExt, imageTag, bundlePath, unpackOptions)
 	if err != nil {
 		return err
 	}
 
 	return r.stripVolumeMounts(engineExt, imageTag, bundlePath)
+}
+
+// checkUnpackedSize fails if the image's layers unpack to more than maxSize.
+func (r *ProtocolOCI) checkUnpackedSize(engineExt casext.Engine, imageTag string, maxSize int64) error {
+	ctx := context.Background()
+
+	descriptorPaths, err := engineExt.ResolveReference(ctx, imageTag)
+	if err != nil {
+		return fmt.Errorf("Resolve image reference: %w", err)
+	}
+
+	if len(descriptorPaths) != 1 {
+		return fmt.Errorf("Bad number of descriptors for tag %q: %d", imageTag, len(descriptorPaths))
+	}
+
+	manifestBlob, err := engineExt.FromDescriptor(ctx, descriptorPaths[0].Descriptor())
+	if err != nil {
+		return fmt.Errorf("Get image manifest: %w", err)
+	}
+
+	defer logger.WarnOnError(manifestBlob.Close, "Failed to close manifest blob")
+
+	manifest, ok := manifestBlob.Data.(ispec.Manifest)
+	if !ok {
+		return fmt.Errorf("Unexpected manifest media type %q", manifestBlob.Descriptor.MediaType)
+	}
+
+	var size int64
+	for _, descriptor := range manifest.Layers {
+		size, err = r.layerUnpackedSize(engineExt, descriptor, size, maxSize)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// layerUnpackedSize adds the unpacked size of a layer to size, failing once it passes maxSize.
+func (r *ProtocolOCI) layerUnpackedSize(engineExt casext.Engine, descriptor ispec.Descriptor, size int64, maxSize int64) (int64, error) {
+	layerBlob, err := engineExt.FromDescriptor(context.Background(), descriptor)
+	if err != nil {
+		return -1, fmt.Errorf("Get image layer: %w", err)
+	}
+
+	defer logger.WarnOnError(layerBlob.Close, "Failed to close layer blob")
+
+	layerData, ok := layerBlob.Data.(io.Reader)
+	if !ok {
+		return -1, fmt.Errorf("Unexpected layer media type %q", descriptor.MediaType)
+	}
+
+	// Decompress the layer the way umoci does.
+	_, compression := mediatype.SplitMediaTypeSuffix(descriptor.MediaType)
+
+	algorithm := blobcompress.GetAlgorithm(compression)
+	if algorithm == nil {
+		return -1, fmt.Errorf("Unsupported layer media type %q", descriptor.MediaType)
+	}
+
+	layerRaw, err := algorithm.Decompress(layerData)
+	if err != nil {
+		return -1, fmt.Errorf("Decompress image layer: %w", err)
+	}
+
+	defer logger.WarnOnError(layerRaw.Close, "Failed to close layer reader")
+
+	tr := tar.NewReader(layerRaw)
+	for {
+		hdr, err := tr.Next()
+		if errors.Is(err, io.EOF) {
+			break
+		}
+
+		if err != nil {
+			return -1, fmt.Errorf("Read image layer: %w", err)
+		}
+
+		// Count a block per entry so directories and empty files aren't free.
+		size += hdr.Size + 4096
+		if size > maxSize {
+			return -1, fmt.Errorf("Unpacked image size exceeds allowed budget of %d", maxSize)
+		}
+	}
+
+	return size, nil
 }
 
 // stripVolumeMounts removes the tmpfs mounts umoci synthesizes from the image's volumes so those paths stay on the instance root disk.

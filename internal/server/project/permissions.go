@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"math"
 	"net/http"
 	"net/url"
 	"path/filepath"
@@ -231,11 +232,35 @@ func AllowInstanceMigrationSource(tx *db.ClusterTx, projectName string, req api.
 	return checkMigrationSource(info.Project, req)
 }
 
-// checkMigrationSource refuses pull mode migration in restricted projects, as the server would connect
+// AllowMigrationTarget refuses push mode migration in restricted projects, as the server would connect
 // to an arbitrary remote URL.
+func AllowMigrationTarget(tx *db.ClusterTx, projectName string) error {
+	info, err := fetchProject(tx, projectName, true)
+	if err != nil {
+		return err
+	}
+
+	if info != nil && util.IsTrue(info.Project.Config["restricted"]) {
+		return errors.New("Restricted projects aren't allowed to use push mode migration")
+	}
+
+	return nil
+}
+
+// checkMigrationSource refuses pull mode migration in restricted projects, as the server would connect
+// to an arbitrary remote URL, and container live migration unless low-level options are allowed, as
+// CRIU would restore the runtime state supplied by the source as root.
 func checkMigrationSource(project api.Project, req api.InstancesPost) error {
-	if util.IsTrue(project.Config["restricted"]) && req.Source.Type == "migration" && req.Source.Mode == "pull" {
+	if !util.IsTrue(project.Config["restricted"]) || req.Source.Type != "migration" {
+		return nil
+	}
+
+	if req.Source.Mode == "pull" {
 		return errors.New("Restricted projects aren't allowed to use pull mode migration")
+	}
+
+	if req.Source.Live && req.Type != api.InstanceTypeVM && project.Config["restricted.containers.lowlevel"] != "allow" {
+		return errors.New("Restricted projects aren't allowed to use container live migration")
 	}
 
 	return nil
@@ -333,7 +358,7 @@ func isVolatileConfigRestricted(project api.Project, instanceType instancetype.T
 
 // isSafeVolatileKey returns whether a volatile.* key may be set in restricted projects.
 func isSafeVolatileKey(key string) bool {
-	if slices.Contains([]string{"volatile.apply_template", "volatile.base_image", "volatile.last_state.power", "volatile.selinux.context"}, key) {
+	if slices.Contains([]string{"volatile.apply_template", "volatile.base_image", "volatile.last_state.power"}, key) {
 		return true
 	}
 
@@ -342,7 +367,7 @@ func isSafeVolatileKey(key string) bool {
 			return true
 		}
 
-		if strings.HasSuffix(key, ".hwaddr") {
+		if strings.HasSuffix(key, ".hwaddr") && !strings.Contains(key, ".last_state.") {
 			return true
 		}
 	}
@@ -966,6 +991,11 @@ func checkRestrictions(project api.Project, instances []api.Instance, profiles [
 					}
 				}
 
+				// The host-side interface name is the host's to pick.
+				if restrictionValue != "allow" && device["host_name"] != "" {
+					return errors.New("Setting the host interface name is forbidden")
+				}
+
 				// Check if the NIC's parent/network setting is allowed based on the
 				// restricted.devices.nic and restricted.networks.access settings.
 				if device["network"] != "" {
@@ -1028,6 +1058,11 @@ func checkRestrictions(project api.Project, instances []api.Instance, profiles [
 					return fmt.Errorf("Storage pool %q is not accessible from this project", device["pool"])
 				}
 
+				// A dependent volume is deleted with the instance, so it can't be borrowed from another project.
+				if device["pool"] != "" && util.IsTrue(device["dependent"]) && StorageVolumeProjectFromRecord(&project, db.StoragePoolVolumeTypeCustom) != project.Name {
+					return errors.New("Dependent disks are forbidden when using the storage volumes of another project")
+				}
+
 				return nil
 			}
 
@@ -1067,6 +1102,11 @@ func checkRestrictions(project api.Project, instances []api.Instance, profiles [
 			return fmt.Errorf(`Non-isolated containers are forbidden on %s %q of project %q ("security.idmap.isolated" must be set to "true")`, entityTypeLabel, entityName, project.Name)
 		}
 
+		// Container runtime state is restored by CRIU as root and may come from a backup or migration.
+		if !allowContainerLowLevel && instType == instancetype.Container && util.IsTrue(config["migration.stateful"]) {
+			return fmt.Errorf(`Stateful containers are forbidden on %s %q of project %q ("migration.stateful" must not be set to "true")`, entityTypeLabel, entityName, project.Name)
+		}
+
 		for key, value := range config {
 			if ((isContainerOrProfile && !allowContainerLowLevel) || (isVMOrProfile && !allowVMLowLevel)) && key == "raw.idmap" {
 				// If the low-level raw.idmap is used check whether the raw.idmap host IDs
@@ -1080,6 +1120,12 @@ func checkRestrictions(project api.Project, instances []api.Instance, profiles [
 					if !entry.HostIDsCoveredBy(allowedIDMapHostUIDs, allowedIDMapHostGIDs) {
 						return fmt.Errorf(`Use of low-level "raw.idmap" element %d on %s %q of project %q is forbidden`, i, entityTypeLabel, entityName, project.Name)
 					}
+
+					// Container root must keep coming from the daemon's own allocation, otherwise a host
+					// user mapped onto it would own the instance directory and its on-disk root files.
+					if entry.NSID == 0 {
+						return fmt.Errorf(`Use of low-level "raw.idmap" element %d on %s %q of project %q is forbidden`, i, entityTypeLabel, entityName, project.Name)
+					}
 				}
 
 				// Skip the other checks.
@@ -1088,6 +1134,17 @@ func checkRestrictions(project api.Project, instances []api.Instance, profiles [
 
 			if isContainerOrProfile && !allowContainerLowLevel && isContainerLowLevelOptionForbidden(key) {
 				return fmt.Errorf("Use of low-level config %q on %s %q of project %q is forbidden", key, entityTypeLabel, entityName, project.Name)
+			}
+
+			// A percentage above 100 raises the CPU weight above every other instance's default.
+			if isContainerOrProfile && !allowContainerLowLevel && key == "limits.cpu.allowance" {
+				percent, isPercent := strings.CutSuffix(value, "%")
+				if isPercent {
+					n, err := strconv.Atoi(percent)
+					if err == nil && n > 100 {
+						return fmt.Errorf(`Use of "limits.cpu.allowance" above 100%% on %s %q of project %q is forbidden`, entityTypeLabel, entityName, project.Name)
+					}
+				}
 			}
 
 			if isVMOrProfile && !allowVMLowLevel && isVMLowLevelOptionForbidden(key) {
@@ -1331,6 +1388,11 @@ func allowInstanceUpdate(tx *db.ClusterTx, projectName, instanceName string, req
 		updatedInstance = &info.Instances[i]
 	}
 
+	// The instance may have been renamed or deleted since the caller loaded it.
+	if updatedInstance == nil {
+		return api.StatusErrorf(http.StatusNotFound, "Instance %q not found", instanceName)
+	}
+
 	instType, err := instancetype.New(updatedInstance.Type)
 	if err != nil {
 		return err
@@ -1384,7 +1446,7 @@ func checkRestrictedVolumeConfig(tx *db.ClusterTx, info *projectInfo, poolName s
 }
 
 // AllowVolumeConfig returns an error if any project-specific restriction is
-// violated by the effective config of a custom volume being created.
+// violated by the effective config of a volume being created.
 func AllowVolumeConfig(tx *db.ClusterTx, projectName string, poolName string, config map[string]string) error {
 	info, err := fetchProject(tx, projectName, true)
 	if err != nil {
@@ -1396,6 +1458,21 @@ func AllowVolumeConfig(tx *db.ClusterTx, projectName string, poolName string, co
 	}
 
 	return checkRestrictedVolumeConfig(tx, info, poolName, config, nil)
+}
+
+// hasDiskLimit returns whether the project sets limits.disk or a pool-specific disk limit.
+func hasDiskLimit(config map[string]string) bool {
+	if config["limits.disk"] != "" {
+		return true
+	}
+
+	for key := range config {
+		if strings.HasPrefix(key, projectLimitDiskPool) {
+			return true
+		}
+	}
+
+	return false
 }
 
 // AllowVolumeUpdate returns an error if any project-specific limit or
@@ -1415,8 +1492,8 @@ func AllowVolumeUpdate(tx *db.ClusterTx, projectName string, poolName string, vo
 		return err
 	}
 
-	// If "limits.disk" is not set, there's nothing to do.
-	if info.Project.Config["limits.disk"] == "" {
+	// Without a disk limit there's nothing to do.
+	if !hasDiskLimit(info.Project.Config) {
 		return nil
 	}
 
@@ -1476,6 +1553,7 @@ func AllowProfileUpdate(tx *db.ClusterTx, projectName, profileName string, req a
 	}
 
 	// Change the profile being updated.
+	found := false
 	for i, profile := range info.Profiles {
 		if profile.Name != profileName {
 			continue
@@ -1483,6 +1561,12 @@ func AllowProfileUpdate(tx *db.ClusterTx, projectName, profileName string, req a
 
 		info.Profiles[i].Config = req.Config
 		info.Profiles[i].Devices = req.Devices
+		found = true
+	}
+
+	// Refuse rather than pass an update we couldn't check (profile renamed or deleted meanwhile).
+	if !found {
+		return api.StatusErrorf(http.StatusNotFound, "Profile %q not found", profileName)
 	}
 
 	err = checkRestrictionsAndAggregateLimits(tx, info)
@@ -1689,10 +1773,11 @@ func projectHasLimitsOrRestrictions(project api.Project) bool {
 // Hold information associated with the project, such as profiles and
 // instances.
 type projectInfo struct {
-	Project   api.Project
-	Profiles  []api.Profile
-	Instances []api.Instance
-	Volumes   []db.StorageVolumeArgs
+	Project    api.Project
+	Profiles   []api.Profile
+	Instances  []api.Instance
+	Volumes    []db.StorageVolumeArgs
+	ImagesSize int64
 }
 
 // Fetch the given project from the database along with its profiles, instances
@@ -1801,6 +1886,21 @@ func fetchProject(tx *db.ClusterTx, projectName string, skipIfNoLimits bool) (*p
 		Volumes:   volumes,
 	}
 
+	// The project's own images count against its disk limit.
+	if projectName == api.ProjectDefaultName || util.IsTrue(project.Config["features.images"]) {
+		images, err := cluster.GetImages(ctx, tx.Tx(), cluster.ImageFilter{Project: &projectName})
+		if err != nil {
+			return nil, fmt.Errorf("Fetch project images from database: %w", err)
+		}
+
+		for _, image := range images {
+			info.ImagesSize, err = addLimit(info.ImagesSize, image.Size)
+			if err != nil {
+				return nil, fmt.Errorf("Invalid size for image %q in project %q: %w", image.Fingerprint, projectName, err)
+			}
+		}
+	}
+
 	return info, nil
 }
 
@@ -1831,6 +1931,15 @@ func expandInstancesConfigAndDevices(instances []api.Instance, profiles []api.Pr
 	return expandedInstances, nil
 }
 
+// addLimit adds a value to a running total, refusing an overflow.
+func addLimit(total int64, value int64) (int64, error) {
+	if value < 0 || total > math.MaxInt64-value {
+		return 0, errors.New("Value too large")
+	}
+
+	return total + value, nil
+}
+
 // Sum of the effective values for the given limits across all project
 // entities (instances and custom volumes).
 func getTotalsAcrossProjectEntities(info *projectInfo, keys []string, skipUnset bool) (map[string]int64, error) {
@@ -1838,6 +1947,10 @@ func getTotalsAcrossProjectEntities(info *projectInfo, keys []string, skipUnset 
 
 	for _, key := range keys {
 		totals[key] = 0
+		if key == "limits.disk" {
+			totals[key] = info.ImagesSize
+		}
+
 		if key == "limits.disk" || strings.HasPrefix(key, projectLimitDiskPool) {
 			poolName := ""
 			fields := strings.SplitN(key, projectLimitDiskPool, 2)
@@ -1851,7 +1964,7 @@ func getTotalsAcrossProjectEntities(info *projectInfo, keys []string, skipUnset 
 				}
 
 				value, ok := volume.Config["size"]
-				if !ok {
+				if !ok || value == "" {
 					if skipUnset {
 						continue
 					}
@@ -1864,7 +1977,19 @@ func getTotalsAcrossProjectEntities(info *projectInfo, keys []string, skipUnset 
 					return nil, fmt.Errorf(`Parse "size" for custom volume %q in project %q: %w`, volume.Name, info.Project.Name, err)
 				}
 
-				totals[key] += limit
+				// The storage layer treats a zero size as unset.
+				if limit == 0 {
+					if skipUnset {
+						continue
+					}
+
+					return nil, fmt.Errorf(`Custom volume %q in project %q has no "size" config set`, volume.Name, info.Project.Name)
+				}
+
+				totals[key], err = addLimit(totals[key], limit)
+				if err != nil {
+					return nil, fmt.Errorf(`Invalid "size" for custom volume %q in project %q: %w`, volume.Name, info.Project.Name, err)
+				}
 			}
 		}
 	}
@@ -1876,7 +2001,10 @@ func getTotalsAcrossProjectEntities(info *projectInfo, keys []string, skipUnset 
 		}
 
 		for _, key := range keys {
-			totals[key] += limits[key]
+			totals[key], err = addLimit(totals[key], limits[key])
+			if err != nil {
+				return nil, fmt.Errorf("Invalid %q for instance %q in project %q: %w", key, inst.Name, inst.Project, err)
+			}
 		}
 	}
 
@@ -1933,6 +2061,15 @@ func getInstanceLimits(inst api.Instance, keys []string, skipUnset bool) (map[st
 				return nil, fmt.Errorf("Failed parsing %q for instance %q in project %q", key, inst.Name, inst.Project)
 			}
 
+			// The storage layer treats a zero size as unset.
+			if limit == 0 {
+				if skipUnset {
+					continue
+				}
+
+				return nil, fmt.Errorf(`Instance %q in project %q has no "size" config set on the root device either directly or via a profile`, inst.Name, inst.Project)
+			}
+
 			// Add size.state accounting for VM root disks.
 			if inst.Type == instancetype.VM.String() {
 				sizeStateValue, ok := device["size.state"]
@@ -1951,7 +2088,10 @@ func getInstanceLimits(inst api.Instance, keys []string, skipUnset bool) (map[st
 					return nil, fmt.Errorf("Failed parsing %q for instance %q in project %q", "size.state", inst.Name, inst.Project)
 				}
 
-				limit += sizeStateLimit
+				limit, err = addLimit(limit, sizeStateLimit)
+				if err != nil {
+					return nil, fmt.Errorf("Invalid %q for instance %q in project %q: %w", "size.state", inst.Name, inst.Project, err)
+				}
 			}
 		} else {
 			// Skip processing for 'limits.processes' if the instance type is VM,
@@ -1999,6 +2139,11 @@ var aggregateLimitConfigValueParsers = map[string]func(string) (int64, error){
 			return -1, err
 		}
 
+		// A negative value disables the instance limit and would lower the total.
+		if limit < 0 {
+			return -1, fmt.Errorf("Invalid value %q", value)
+		}
+
 		return int64(limit), nil
 	},
 	"limits.cpu": func(value string) (int64, error) {
@@ -2038,12 +2183,21 @@ func FilterUsedBy(authorizer auth.Authorizer, r *http.Request, entries []string)
 	// Filter the entries.
 	usedBy := []string{}
 	for _, entry := range entries {
+		var object auth.Object
+
 		entityType, projectName, location, pathArgs, err := cluster.URLToEntityType(entry)
 		if err != nil {
-			continue
+			// Network peers aren't an entity type, they follow their network.
+			networkName, networkProject, ok := networkPeerURL(entry)
+			if !ok {
+				continue
+			}
+
+			entityType = cluster.TypeNetwork
+			projectName = networkProject
+			pathArgs = []string{networkName}
 		}
 
-		var object auth.Object
 		switch entityType {
 		case cluster.TypeImage:
 			object = auth.ObjectImage(projectName, pathArgs[0])
@@ -2051,8 +2205,12 @@ func FilterUsedBy(authorizer auth.Authorizer, r *http.Request, entries []string)
 			object = auth.ObjectInstance(projectName, pathArgs[0])
 		case cluster.TypeNetwork:
 			object = auth.ObjectNetwork(projectName, pathArgs[0])
+		case cluster.TypeNetworkACL:
+			object = auth.ObjectNetworkACL(projectName, pathArgs[0])
 		case cluster.TypeProfile:
 			object = auth.ObjectProfile(projectName, pathArgs[0])
+		case cluster.TypeProject:
+			object = auth.ObjectProject(pathArgs[0])
 		case cluster.TypeStoragePool:
 			object = auth.ObjectStoragePool(pathArgs[0])
 		case cluster.TypeStorageVolume:
@@ -2074,6 +2232,26 @@ func FilterUsedBy(authorizer auth.Authorizer, r *http.Request, entries []string)
 	}
 
 	return usedBy
+}
+
+// networkPeerURL returns the network and project of a network peer URL.
+func networkPeerURL(entry string) (string, string, bool) {
+	u, err := url.Parse(entry)
+	if err != nil {
+		return "", "", false
+	}
+
+	parts := strings.Split(strings.Trim(u.Path, "/"), "/")
+	if len(parts) != 5 || parts[1] != "networks" || parts[3] != "peers" {
+		return "", "", false
+	}
+
+	projectName := u.Query().Get("project")
+	if projectName == "" {
+		projectName = api.ProjectDefaultName
+	}
+
+	return parts[2], projectName, true
 }
 
 // Return true if particular restriction in project is violated.
@@ -2130,6 +2308,57 @@ func AllowBackupCreation(tx *db.ClusterTx, projectName string) error {
 	return nil
 }
 
+// AllowBackupTarget returns an error if the project is restricted, as the server would upload the
+// backup to an arbitrary remote URL.
+func AllowBackupTarget(tx *db.ClusterTx, projectName string) error {
+	ctx := context.Background()
+	dbProject, err := cluster.GetProject(ctx, tx.Tx(), projectName)
+	if err != nil {
+		return err
+	}
+
+	project, err := dbProject.ToAPI(ctx, tx.Tx())
+	if err != nil {
+		return err
+	}
+
+	if util.IsTrue(project.Config["restricted"]) {
+		return api.StatusErrorf(http.StatusForbidden, "Restricted projects aren't allowed to upload backups to a remote target")
+	}
+
+	return nil
+}
+
+// AllowSnapshotImport checks the project's restrictions against a snapshot received through a copy or migration.
+func AllowSnapshotImport(tx *db.ClusterTx, projectName string, args db.InstanceArgs) error {
+	info, err := fetchProject(tx, projectName, true)
+	if err != nil {
+		return err
+	}
+
+	if info == nil || !util.IsTrue(info.Project.Config["restricted"]) {
+		return nil
+	}
+
+	profiles := make([]string, 0, len(args.Profiles))
+	for _, profile := range args.Profiles {
+		profiles = append(profiles, profile.Name)
+	}
+
+	snap := api.Instance{
+		Name:    args.Name,
+		Project: projectName,
+		Type:    args.Type.String(),
+		InstancePut: api.InstancePut{
+			Config:   args.Config,
+			Devices:  args.Devices.CloneNative(),
+			Profiles: profiles,
+		},
+	}
+
+	return checkRestrictions(info.Project, []api.Instance{snap}, nil)
+}
+
 // AllowSnapshotCreation returns an error if any project-specific restriction is violated
 // when creating a new snapshot in a project.
 func AllowSnapshotCreation(p *api.Project) error {
@@ -2180,6 +2409,35 @@ func AllowClusterGroup(p *api.Project, groupName string) error {
 	clusterGroupsAllowed := GetRestrictedClusterGroups(p)
 	if len(clusterGroupsAllowed) > 0 && !slices.Contains(clusterGroupsAllowed, groupName) {
 		return fmt.Errorf("Project isn't allowed to use this cluster group: %q", groupName)
+	}
+
+	return nil
+}
+
+// CheckMemberAllowed returns an error if the project isn't allowed to use the named cluster member.
+func CheckMemberAllowed(ctx context.Context, tx *db.ClusterTx, projectName string, memberName string) error {
+	dbProject, err := cluster.GetProject(ctx, tx.Tx(), projectName)
+	if err != nil {
+		return err
+	}
+
+	p, err := dbProject.ToAPI(ctx, tx.Tx())
+	if err != nil {
+		return err
+	}
+
+	if util.IsFalseOrEmpty(p.Config["restricted"]) || len(GetRestrictedClusterGroups(p)) == 0 {
+		return nil
+	}
+
+	member, err := tx.GetNodeByName(ctx, memberName)
+	if err != nil {
+		return err
+	}
+
+	err = AllowClusterMember(p, &member)
+	if err != nil {
+		return api.StatusErrorf(http.StatusForbidden, "%s", err.Error())
 	}
 
 	return nil

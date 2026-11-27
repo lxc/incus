@@ -419,7 +419,7 @@ func wrapStreamingBody(r *http.Request, bodyHash string, parsed *parsedAuthoriza
 
 	body := r.Body
 	r.Body = &readerCloser{
-		Reader: newChunkedReader(body, sign),
+		Reader: newChunkedReader(body, sign, r.ContentLength),
 		Closer: body,
 	}
 

@@ -1163,8 +1163,8 @@ func OVNPortGroupDeleteIfUnused(s *state.State, l logger.Logger, client *ovn.NB,
 				return nil
 			}
 
-			// Routed NICs have no network, and never use OVN.
-			if IsRoutedNIC(nicConfig) {
+			// NICs that aren't linked to a managed network can't be using an OVN network.
+			if nicConfig["network"] == "" {
 				return nil
 			}
 
@@ -1228,8 +1228,8 @@ func OVNPortGroupDeleteIfUnused(s *state.State, l logger.Logger, client *ovn.NB,
 				return nil
 			}
 
-			// Routed NICs have no network, and never use OVN.
-			if IsRoutedNIC(nicConfig) {
+			// NICs that aren't linked to a managed network can't be using an OVN network.
+			if nicConfig["network"] == "" {
 				return nil
 			}
 

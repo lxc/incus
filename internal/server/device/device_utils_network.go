@@ -93,6 +93,32 @@ func NetworkSetDevMAC(devName string, mac string) error {
 	return nil
 }
 
+// networkNICUsesVLANDevice checks whether a NIC uses the given parent and VLAN, resolving managed networks.
+func networkNICUsesVLANDevice(s *state.State, dev deviceConfig.Device, parent string, vlanID string, networks map[string]map[string]string) bool {
+	if dev["type"] != "nic" {
+		return false
+	}
+
+	devParent := dev["parent"]
+	devVLAN := dev["vlan"]
+	if dev["network"] != "" {
+		netConfig, found := networks[dev["network"]]
+		if !found {
+			n, err := network.LoadByName(s, api.ProjectDefaultName, dev["network"])
+			if err == nil {
+				netConfig = n.Config()
+			}
+
+			networks[dev["network"]] = netConfig
+		}
+
+		devParent = netConfig["parent"]
+		devVLAN = netConfig["vlan"]
+	}
+
+	return devParent == parent && devVLAN == vlanID
+}
+
 // networkRemoveInterfaceIfNeeded removes a network interface by name but only if no other instance is using it.
 func networkRemoveInterfaceIfNeeded(s *state.State, nic string, current instance.Instance, parent string, vlanID string) error {
 	// Check if it's used by another instance.
@@ -101,13 +127,14 @@ func networkRemoveInterfaceIfNeeded(s *state.State, nic string, current instance
 		return err
 	}
 
+	networks := map[string]map[string]string{}
 	for _, inst := range instances {
 		if inst.Name() == current.Name() && inst.Project().Name == current.Project().Name {
 			continue
 		}
 
 		for devName, dev := range inst.ExpandedDevices() {
-			if dev["type"] != "nic" || dev["vlan"] != vlanID || dev["parent"] != parent {
+			if !networkNICUsesVLANDevice(s, dev, parent, vlanID, networks) {
 				continue
 			}
 
@@ -139,9 +166,10 @@ func networkCreateVlanDeviceIfNeeded(s *state.State, parent string, vlanDevice s
 			return "", err
 		}
 
+		networks := map[string]map[string]string{}
 		for _, inst := range instances {
 			for devName, dev := range inst.ExpandedDevices() {
-				if dev["type"] != "nic" || dev["vlan"] != vlanID || dev["parent"] != parent {
+				if !networkNICUsesVLANDevice(s, dev, parent, vlanID, networks) {
 					continue
 				}
 
@@ -195,7 +223,25 @@ func networkSnapshotPhysicalNIC(hostName string, volatile map[string]string) err
 	}
 
 	volatile["last_state.hwaddr"] = mac
+
+	// Store the kind of device so that what comes back can be compared against it.
+	linkInfo, err := ip.LinkByName(hostName)
+	if err != nil {
+		return err
+	}
+
+	volatile["last_state.kind"] = networkLinkKind(linkInfo)
+
 	return nil
+}
+
+// networkLinkKind returns the kind of a link, using "physical" for those which don't have one.
+func networkLinkKind(linkInfo ip.LinkInfo) string {
+	if linkInfo.Kind == "" {
+		return "physical"
+	}
+
+	return linkInfo.Kind
 }
 
 // networkRestorePhysicalNIC restores NIC properties from volatile to what they were before it was attached.
@@ -203,6 +249,19 @@ func networkRestorePhysicalNIC(hostName string, volatile map[string]string) erro
 	// If we created the "physical" device and then it should be removed.
 	if util.IsTrue(volatile["last_state.created"]) {
 		return network.InterfaceRemove(hostName)
+	}
+
+	// Refuse a device of another kind handed back in place of the one the instance was given.
+	if volatile["last_state.kind"] != "" {
+		linkInfo, err := ip.LinkByName(hostName)
+		if err != nil {
+			return fmt.Errorf("Failed to get link info for %q: %w", hostName, err)
+		}
+
+		if networkLinkKind(linkInfo) != volatile["last_state.kind"] {
+			_ = network.InterfaceRemove(hostName)
+			return fmt.Errorf("Interface %q isn't the device given to the instance", hostName)
+		}
 	}
 
 	// Bring the interface down, as this is sometimes needed to change settings on the nic.
@@ -439,6 +498,54 @@ func networkVethFillFromVolatile(device deviceConfig.Device, volatile map[string
 	if device["hwaddr"] == "" {
 		device["hwaddr"] = volatile["hwaddr"]
 	}
+}
+
+// nicCheckRestrictedRoutes checks a NIC's host-side routes against the project's restricted.networks.subnets.
+func nicCheckRestrictedRoutes(p api.Project, config deviceConfig.Device, networkName string) error {
+	if !util.IsTrue(p.Config["restricted"]) || p.Config["restricted.devices.nic"] == "allow" {
+		return nil
+	}
+
+	var err error
+	var routes []*net.IPNet
+	for _, k := range []string{"ipv4.routes", "ipv6.routes", "ipv4.routes.external", "ipv6.routes.external"} {
+		if config[k] == "" {
+			continue
+		}
+
+		routes, err = network.SubnetParseAppend(routes, util.SplitNTrimSpace(config[k], ",", -1, false)...)
+		if err != nil {
+			return err
+		}
+	}
+
+	if len(routes) == 0 {
+		return nil
+	}
+
+	// Only the subnets listed for this network apply.
+	var allowed []*net.IPNet
+	for _, subnetRaw := range util.SplitNTrimSpace(p.Config["restricted.networks.subnets"], ",", -1, true) {
+		subnetNetwork, subnetStr, ok := strings.Cut(subnetRaw, ":")
+		if !ok || subnetNetwork != networkName {
+			continue
+		}
+
+		_, subnet, err := net.ParseCIDR(subnetStr)
+		if err != nil {
+			return err
+		}
+
+		allowed = append(allowed, subnet)
+	}
+
+	for _, route := range routes {
+		if !slices.ContainsFunc(allowed, func(subnet *net.IPNet) bool { return network.SubnetContains(subnet, route) }) {
+			return fmt.Errorf("Route %q not allowed in project", route.String())
+		}
+	}
+
+	return nil
 }
 
 // networkNICRouteAdd applies any static host-side routes configured for an instance NIC.
@@ -1915,6 +2022,9 @@ func isIPAvailable(ctx context.Context, address net.IP, parentInterface string) 
 	return false, nil
 }
 
+// networkVLANListMax bounds a VLAN list to the number of VLAN IDs.
+const networkVLANListMax = 4095
+
 // networkVLANListExpand takes in a list of raw VLAN values (string) that includes
 // different VLAN formats ("number" and "start-end") and convert them into a list of
 // expanded VLAN values in integer.
@@ -1924,6 +2034,11 @@ func networkVLANListExpand(rawVLANValues []string) ([]int, error) {
 		start, count, err := validate.ParseNetworkVLANRange(vlan)
 		if err != nil {
 			return nil, err
+		}
+
+		// There are only so many VLAN IDs.
+		if len(networkVLANList)+count > networkVLANListMax {
+			return nil, fmt.Errorf("Too many VLAN IDs (maximum is %d)", networkVLANListMax)
 		}
 
 		for i := start; i < start+count; i++ {

@@ -49,6 +49,9 @@ import (
 	"github.com/lxc/incus/v7/shared/validate"
 )
 
+// FileMaxSize bounds the files read whole from an instance volume, as images and backups supply them.
+const FileMaxSize = 32 * 1024 * 1024
+
 // ValidDevices is linked from instance/drivers.validDevices to validate device config.
 var ValidDevices func(s *state.State, p api.Project, instanceType instancetype.Type, localDevices deviceConfig.Devices, expandedDevices deviceConfig.Devices) error
 
@@ -570,10 +573,11 @@ func ResolveImage(ctx context.Context, tx *db.ClusterTx, projectName string, sou
 }
 
 // SuitableArchitectures returns a slice of architecture ids based on an instance create request.
+// It may contact a remote image server, so it must not be called from within a transaction.
 //
 // An empty list indicates that the request may be handled by any architecture.
 // A nil list indicates that we can't tell at this stage, typically for private images.
-func SuitableArchitectures(ctx context.Context, s *state.State, tx *db.ClusterTx, projectName string, sourceInst *cluster.Instance, sourceImageRef string, req api.InstancesPost) ([]int, error) {
+func SuitableArchitectures(ctx context.Context, s *state.State, projectName string, sourceInst *cluster.Instance, sourceImageRef string, req api.InstancesPost) ([]int, error) {
 	// Handle cases where the architecture is already provided.
 	if slices.Contains([]string{"migration", "none"}, req.Source.Type) && req.Architecture != "" {
 		id, err := osarch.ArchitectureID(req.Architecture)
@@ -603,7 +607,15 @@ func SuitableArchitectures(ctx context.Context, s *state.State, tx *db.ClusterTx
 	if req.Source.Type == "image" {
 		// Handle local images.
 		if req.Source.Server == "" {
-			_, img, err := tx.GetImageByFingerprintPrefix(ctx, sourceImageRef, cluster.ImageFilter{Project: &projectName})
+			var img *api.Image
+
+			err := s.DB.Cluster.Transaction(ctx, func(ctx context.Context, tx *db.ClusterTx) error {
+				var err error
+
+				_, img, err = tx.GetImageByFingerprintPrefix(ctx, sourceImageRef, cluster.ImageFilter{Project: &projectName})
+
+				return err
+			})
 			if err != nil {
 				return nil, err
 			}
@@ -729,6 +741,11 @@ func ValidName(instanceName string, isSnapshot bool) error {
 		// Snapshot part is more flexible, but doesn't allow space or / character.
 		if strings.ContainsAny(snapshotName, " /") {
 			return errors.New("Invalid instance snapshot name: Cannot contain space or / characters")
+		}
+
+		// The snapshot name is used as a path segment.
+		if slices.Contains([]string{"", ".", ".."}, snapshotName) {
+			return errors.New("Invalid instance snapshot name: Cannot be empty or a relative path")
 		}
 	} else {
 		if strings.Contains(instanceName, instance.SnapshotDelimiter) {

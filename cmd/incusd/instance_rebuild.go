@@ -8,6 +8,7 @@ import (
 	"net/http"
 
 	internalInstance "github.com/lxc/incus/v7/internal/instance"
+	"github.com/lxc/incus/v7/internal/server/auth"
 	"github.com/lxc/incus/v7/internal/server/db"
 	dbCluster "github.com/lxc/incus/v7/internal/server/db/cluster"
 	"github.com/lxc/incus/v7/internal/server/db/operationtype"
@@ -131,6 +132,14 @@ func instanceRebuildPost(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
+	// A local image may only be used by a caller allowed to view it.
+	if sourceImage != nil && req.Source.Server == "" {
+		err = s.Authorizer.CheckPermission(r.Context(), r, auth.ObjectImage(targetProject.Name, sourceImage.Fingerprint), auth.EntitlementCanView)
+		if err != nil {
+			return response.SmartError(err)
+		}
+	}
+
 	inst, err = instance.LoadByProjectAndName(s, targetProject.Name, name)
 	if err != nil {
 		return response.SmartError(err)
@@ -141,22 +150,40 @@ func instanceRebuildPost(d *Daemon, r *http.Request) response.Response {
 	}
 
 	run := func(op *operations.Operation) error {
-		if req.Source.Type == "none" {
-			return instanceRebuildFromEmpty(inst, op)
-		}
-
-		if req.Source.Server != "" {
+		if req.Source.Type != "none" && req.Source.Server != "" {
 			sourceImage, err = ensureDownloadedImageFitWithinBudget(context.TODO(), s, r, op, *targetProject, sourceImageRef, req.Source, inst.Type().String())
 			if err != nil {
 				return err
 			}
 		}
 
+		// Prevent concurrent operations on the instance while its root volume is replaced.
+		instOp, err := inst.LockExclusive()
+		if err != nil {
+			return fmt.Errorf("Failed getting exclusive access to instance: %w", err)
+		}
+
+		defer instOp.Done(nil)
+
+		// Reload the instance as it may have changed since the request was received.
+		inst, err = instance.LoadByProjectAndName(s, targetProject.Name, name)
+		if err != nil {
+			return err
+		}
+
+		if inst.IsRunning() {
+			return errors.New("Instance must be stopped to be rebuilt")
+		}
+
+		if req.Source.Type == "none" {
+			return instanceRebuildFromEmpty(inst, op)
+		}
+
 		if sourceImage == nil {
 			return errors.New("Image not provided for instance rebuild")
 		}
 
-		return instanceRebuildFromImage(context.TODO(), s, r, inst, sourceImage, op)
+		return instanceRebuildFromImage(context.TODO(), s, r, inst, sourceImage, instOp, op)
 	}
 
 	resources := map[string][]api.URL{}

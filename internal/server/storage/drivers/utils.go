@@ -30,6 +30,7 @@ import (
 	"github.com/lxc/incus/v7/shared/idmap"
 	"github.com/lxc/incus/v7/shared/logger"
 	"github.com/lxc/incus/v7/shared/subprocess"
+	"github.com/lxc/incus/v7/shared/units"
 	"github.com/lxc/incus/v7/shared/util"
 )
 
@@ -1114,8 +1115,13 @@ func BackupVolume(d Driver, v Volume, writer instancewriter.InstanceWriter, moun
 			logMsg := "Copying virtual machine config volume"
 
 			d.Logger().Debug(logMsg, logger.Ctx{"sourcePath": mountPath, "prefix": prefix})
-			err = filepath.Walk(mountPath, func(srcPath string, fi os.FileInfo, err error) error {
+			err = instancewriter.Walk(mountPath, func(srcPath string, fi os.FileInfo, err error) error {
 				if err != nil {
+					if errors.Is(err, fs.ErrNotExist) {
+						logger.Warnf("File vanished during export: %q, skipping", srcPath)
+						return nil
+					}
+
 					return err
 				}
 
@@ -1124,9 +1130,19 @@ func BackupVolume(d Driver, v Volume, writer instancewriter.InstanceWriter, moun
 					return nil
 				}
 
+				// Snapshot backup files hold the pool config.
+				if v.IsSnapshot() && srcPath == filepath.Join(mountPath, "backup.yaml") {
+					return nil
+				}
+
 				name := filepath.Join(prefix, strings.TrimPrefix(srcPath, mountPath))
 				err = writer.WriteFile(name, srcPath, fi, false)
 				if err != nil {
+					if errors.Is(err, fs.ErrNotExist) {
+						logger.Warnf("File vanished during export: %q, skipping", srcPath)
+						return nil
+					}
+
 					return fmt.Errorf("Error adding %q as %q to tarball: %w", srcPath, name, err)
 				}
 
@@ -1196,7 +1212,7 @@ func BackupVolume(d Driver, v Volume, writer instancewriter.InstanceWriter, moun
 		}
 	}
 
-	return filepath.Walk(mountPath, func(srcPath string, fi os.FileInfo, err error) error {
+	return instancewriter.Walk(mountPath, func(srcPath string, fi os.FileInfo, err error) error {
 		if err != nil {
 			if errors.Is(err, fs.ErrNotExist) {
 				logger.Warnf("File vanished during export: %q, skipping", srcPath)
@@ -1206,6 +1222,11 @@ func BackupVolume(d Driver, v Volume, writer instancewriter.InstanceWriter, moun
 			return fmt.Errorf("Error walking file during export: %q: %w", srcPath, err)
 		}
 
+		// Snapshot backup files hold the pool config.
+		if v.IsSnapshot() && srcPath == filepath.Join(mountPath, "backup.yaml") {
+			return nil
+		}
+
 		name := filepath.Join(prefix, strings.TrimPrefix(srcPath, mountPath))
 
 		// Write the file to the tarball with ignoreGrowth enabled so that if the
@@ -1213,6 +1234,11 @@ func BackupVolume(d Driver, v Volume, writer instancewriter.InstanceWriter, moun
 		// This means that the file in the tarball may be inconsistent.
 		err = writer.WriteFile(name, srcPath, fi, true)
 		if err != nil {
+			if errors.Is(err, fs.ErrNotExist) {
+				logger.Warnf("File vanished during export: %q, skipping", srcPath)
+				return nil
+			}
+
 			return fmt.Errorf("Error adding %q as %q to tarball: %w", srcPath, name, err)
 		}
 
@@ -1289,13 +1315,22 @@ func UnpackVolume(d Driver, vol Volume, r io.ReadSeeker, tarArgs []string, unpac
 		if err != nil {
 			return fmt.Errorf("Error starting unpack: %w", err)
 		}
+
+		// The backup's top-level entry can set the owner of the volume's top directory; for instance
+		// volumes put it back to root so the directory and its setuid files aren't reachable by its owner.
+		if vol.Type() != VolumeTypeCustom {
+			err = os.Chown(mountPath, 0, 0)
+			if err != nil {
+				return err
+			}
+		}
 	}
 
 	// Extract block file to block volume.
 	if vol.contentType == ContentTypeBlock {
 		srcFile := fmt.Sprintf("%s.%s", srcPrefix, genericVolumeBlockExtension)
 
-		tr, cancelFunc, err := archive.CompressedTarReader(context.Background(), r, unpacker, mountPath)
+		tr, cancelFunc, err := archive.CompressedTarReader(context.Background(), r, unpacker, mountPath, -1)
 		if err != nil {
 			return err
 		}
@@ -1304,6 +1339,14 @@ func UnpackVolume(d Driver, vol Volume, r io.ReadSeeker, tarArgs []string, unpac
 
 		unpackBlockVolume := func(hdr *tar.Header) error {
 			var allowUnsafeResize bool
+
+			// The filesystem stream may have replaced the block file inside the volume with a symlink.
+			if strings.HasPrefix(targetPath, internalUtil.AddSlash(mountPath)) {
+				fi, err := os.Lstat(targetPath)
+				if err == nil && !fi.Mode().IsRegular() {
+					return fmt.Errorf("Block volume file %q isn't a regular file", targetPath)
+				}
+			}
 
 			// Reset the disk.
 			if !cleared {
@@ -1320,6 +1363,18 @@ func UnpackVolume(d Driver, vol Volume, r io.ReadSeeker, tarArgs []string, unpac
 			}
 
 			defer logger.WarnOnErrorExcept(to.Close, []error{os.ErrClosed}, "Failed to close file")
+
+			// The project checked the declared size, bound the image to it with the migration path's rounding allowance.
+			if vol.ExpandedConfig("size") != "" {
+				sizeBytes, err := units.ParseByteSizeString(vol.ExpandedConfig("size"))
+				if err != nil {
+					return err
+				}
+
+				if sizeBytes > 0 && hdr.Size > sizeBytes+(4*1024*1024) {
+					return fmt.Errorf("Backup image size (%d) exceeds the volume size (%d)", hdr.Size, sizeBytes)
+				}
+			}
 
 			// Restore original size of volume from raw block backup file size.
 			d.Logger().Debug("Setting volume size from source", logger.Ctx{"source": srcFile, "target": targetPath, "size": hdr.Size})

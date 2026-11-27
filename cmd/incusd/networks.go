@@ -233,6 +233,11 @@ func networksGet(d *Daemon, r *http.Request) response.Response {
 	allProjects := util.IsTrue(r.FormValue("all-projects"))
 	unmanagedNetworkNames := []string{}
 
+	reqProjects, err := networkRequestProjects(s, r, reqProject, allProjects)
+	if err != nil {
+		return response.SmartError(err)
+	}
+
 	var networkNames map[string][]string
 
 	err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
@@ -320,7 +325,7 @@ func networksGet(d *Daemon, r *http.Request) response.Response {
 	for projectName, networks := range networkNames {
 		for _, networkName := range networks {
 			if mustLoadObjects {
-				netInfo, err := doNetworkGet(s, r, s.ServerClustered, projectName, reqProject.Config, networkName)
+				netInfo, err := doNetworkGet(s, r, s.ServerClustered, projectName, reqProjects, networkName)
 				if err != nil {
 					continue
 				}
@@ -338,7 +343,7 @@ func networksGet(d *Daemon, r *http.Request) response.Response {
 
 				fullResults = append(fullResults, netInfo)
 			} else {
-				ok, err := canAccessNetwork(s, r, projectName, reqProject.Config, networkName, !slices.Contains(unmanagedNetworkNames, networkName))
+				ok, err := canAccessNetwork(s, r, projectName, reqProjects, networkName, !slices.Contains(unmanagedNetworkNames, networkName))
 				if err != nil {
 					return response.SmartError(err)
 				}
@@ -415,16 +420,16 @@ func networksPost(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
-	networkCreateLock.Lock()
-	defer networkCreateLock.Unlock()
-
 	req := api.NetworksPost{}
 
-	// Parse the request.
+	// Parse the request before taking the lock, the client controls how long the read takes.
 	err = json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
 		return response.BadRequest(err)
 	}
+
+	networkCreateLock.Lock()
+	defer networkCreateLock.Unlock()
 
 	// Quick checks.
 	if req.Name == "" {
@@ -675,7 +680,8 @@ func networksPost(d *Daemon, r *http.Request) response.Response {
 	}
 
 	reverter.Add(func() {
-		_ = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
+		// The request context may be gone by the time the revert runs.
+		_ = s.DB.Cluster.Transaction(context.Background(), func(ctx context.Context, tx *db.ClusterTx) error {
 			return tx.DeleteNetwork(ctx, projectName, req.Name)
 		})
 	})
@@ -1064,7 +1070,7 @@ func networkGet(d *Daemon, r *http.Request) response.Response {
 
 	allNodes := s.ServerClustered && request.QueryParam(r, "target") == ""
 
-	n, err := doNetworkGet(s, r, allNodes, projectName, reqProject.Config, networkName)
+	n, err := doNetworkGet(s, r, allNodes, projectName, []*api.Project{reqProject}, networkName)
 	if err != nil {
 		return response.SmartError(err)
 	}
@@ -1074,8 +1080,49 @@ func networkGet(d *Daemon, r *http.Request) response.Response {
 	return response.SyncResponseETag(true, &n, etag)
 }
 
-// canAccessNetwork checks if the network can be viewed/accessed by the user.
-func canAccessNetwork(s *state.State, r *http.Request, projectName string, projectConfig map[string]string, networkName string, managed bool) (bool, error) {
+// networkRequestProjects returns the projects through which the networks are being accessed.
+// That's the requested project or, for an all-projects request, every project the caller can view.
+func networkRequestProjects(s *state.State, r *http.Request, reqProject *api.Project, allProjects bool) ([]*api.Project, error) {
+	if !allProjects {
+		return []*api.Project{reqProject}, nil
+	}
+
+	userHasPermission, err := s.Authorizer.GetPermissionChecker(r.Context(), r, auth.EntitlementCanView, auth.ObjectTypeProject)
+	if err != nil {
+		return nil, err
+	}
+
+	reqProjects := []*api.Project{}
+	err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
+		dbProjects, err := dbCluster.GetProjects(ctx, tx.Tx())
+		if err != nil {
+			return err
+		}
+
+		for _, dbProject := range dbProjects {
+			if !userHasPermission(auth.ObjectProject(dbProject.Name)) {
+				continue
+			}
+
+			apiProject, err := dbProject.ToAPI(ctx, tx.Tx())
+			if err != nil {
+				return err
+			}
+
+			reqProjects = append(reqProjects, apiProject)
+		}
+
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return reqProjects, nil
+}
+
+// canAccessNetwork checks if the network can be viewed/accessed by the user through one of the request projects.
+func canAccessNetwork(s *state.State, r *http.Request, projectName string, reqProjects []*api.Project, networkName string, managed bool) (bool, error) {
 	// Don't allow retrieving info about the local server interfaces when not using default project.
 	if projectName != api.ProjectDefaultName && !managed {
 		return false, nil
@@ -1102,18 +1149,24 @@ func canAccessNetwork(s *state.State, r *http.Request, projectName string, proje
 		}
 	}
 
-	// Check if project allows access to network.
-	if !project.NetworkAllowed(projectConfig, networkName, managed) {
-		return false, nil
+	// Check if a project using that network allows access to it.
+	for _, reqProject := range reqProjects {
+		if project.NetworkProjectForNameFromRecord(reqProject, networkName) != projectName {
+			continue
+		}
+
+		if project.NetworkAllowed(reqProject.Config, networkName, managed) {
+			return true, nil
+		}
 	}
 
-	return true, nil
+	return false, nil
 }
 
 // doNetworkGet returns information about the specified network.
 // If the network being requested is a managed network and allNodes is true then node specific config is removed.
 // Otherwise if allNodes is false then the network's local status is returned.
-func doNetworkGet(s *state.State, r *http.Request, allNodes bool, projectName string, reqProjectConfig map[string]string, networkName string) (api.Network, error) {
+func doNetworkGet(s *state.State, r *http.Request, allNodes bool, projectName string, reqProjects []*api.Project, networkName string) (api.Network, error) {
 	// Ignore veth pairs (for performance reasons).
 	if strings.HasPrefix(networkName, "veth") {
 		return api.Network{}, api.StatusErrorf(http.StatusNotFound, "Network not found")
@@ -1163,7 +1216,7 @@ func doNetworkGet(s *state.State, r *http.Request, allNodes bool, projectName st
 	}
 
 	// Validate access.
-	ok, err := canAccessNetwork(s, r, projectName, reqProjectConfig, networkName, netInfo != nil)
+	ok, err := canAccessNetwork(s, r, projectName, reqProjects, networkName, netInfo != nil)
 	if err != nil {
 		return api.Network{}, err
 	}
@@ -2353,7 +2406,7 @@ func networkStateGet(d *Daemon, r *http.Request) response.Response {
 	}
 
 	// Check if project allows access to network.
-	ok, err := canAccessNetwork(s, r, projectName, reqProject.Config, networkName, n != nil)
+	ok, err := canAccessNetwork(s, r, projectName, []*api.Project{reqProject}, networkName, n != nil)
 	if err != nil {
 		return response.SmartError(err)
 	}

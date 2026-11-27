@@ -384,7 +384,7 @@ func internalServerCertificatePut(d *Daemon, r *http.Request) response.Response 
 		return response.BadRequest(errors.New("Private key must be a PEM encoded key"))
 	}
 
-	cert, err := localtls.KeyPairFromRaw(certBytes, keyBytes)
+	_, err = localtls.KeyPairFromRaw(certBytes, keyBytes)
 	if err != nil {
 		return response.BadRequest(fmt.Errorf("Invalid certificate or key: %w", err))
 	}
@@ -395,6 +395,12 @@ func internalServerCertificatePut(d *Daemon, r *http.Request) response.Response 
 	err = internalUtil.WriteCert(s.OS.VarDir, "server", certBytes, keyBytes, nil)
 	if err != nil {
 		return response.SmartError(fmt.Errorf("Failed to write new server certificate: %w", err))
+	}
+
+	// Load it back from disk so the CA and CRL come along.
+	cert, err := internalUtil.LoadServerCert(s.OS.VarDir)
+	if err != nil {
+		return response.SmartError(err)
 	}
 
 	s.Endpoints.NetworkUpdateCert(cert)
@@ -463,8 +469,8 @@ func internalContainerOnStart(d *Daemon, r *http.Request) response.Response {
 }
 
 func internalContainerOnStopNS(d *Daemon, r *http.Request) response.Response {
-	// Wait until daemon is fully started.
-	<-d.waitReady.Done()
+	// Wait until the daemon state is ready, autostart may still be in progress.
+	<-d.stateReady.Done()
 
 	s := d.State()
 
@@ -496,8 +502,8 @@ func internalContainerOnStopNS(d *Daemon, r *http.Request) response.Response {
 }
 
 func internalContainerOnStop(d *Daemon, r *http.Request) response.Response {
-	// Wait until daemon is fully started.
-	<-d.waitReady.Done()
+	// Wait until the daemon state is ready, autostart may still be in progress.
+	<-d.stateReady.Done()
 
 	s := d.State()
 
@@ -526,8 +532,8 @@ func internalContainerOnStop(d *Daemon, r *http.Request) response.Response {
 }
 
 func internalVirtualMachineOnResize(d *Daemon, r *http.Request) response.Response {
-	// Wait until daemon is fully started.
-	<-d.waitReady.Done()
+	// Wait until the daemon state is ready, autostart may still be in progress.
+	<-d.stateReady.Done()
 
 	s := d.State()
 
@@ -929,6 +935,10 @@ func internalImportFromBackup(ctx context.Context, s *state.State, projectName s
 		backupConf.Container.Config = map[string]string{}
 	}
 
+	if backupConf.Container.ExpandedConfig == nil {
+		backupConf.Container.ExpandedConfig = map[string]string{}
+	}
+
 	if backupConf.Container.Devices == nil {
 		backupConf.Container.Devices = make(map[string]map[string]string)
 	}
@@ -974,6 +984,12 @@ func internalImportFromBackup(ctx context.Context, s *state.State, projectName s
 
 		backupConf.Container.Config[key] = value
 		backupConf.Container.ExpandedConfig[key] = value
+	}
+
+	// The root disk must stay on the pool the backup was imported to.
+	rootName, rootDev, _ := internalInstance.GetRootDiskDevice(backupConf.Container.Devices)
+	if rootName != "" && rootDev["pool"] != instancePoolName {
+		return fmt.Errorf("Root disk device pool %q doesn't match the import pool %q", rootDev["pool"], instancePoolName)
 	}
 
 	reverter := revert.New()

@@ -117,6 +117,9 @@ const qemuBlockDevIDPrefix = "incus_"
 // qemuDiskMaxWriteZeroes caps guest write-zeroes requests so the I/O limits get to pace them.
 const qemuDiskMaxWriteZeroes = 64 * 1024 * 1024
 
+// qemuAgentMaxResponseSize bounds the replies read from the agent, which the guest controls.
+const qemuAgentMaxResponseSize = 16 * 1024 * 1024
+
 // qemuMountTagMaxLength defines the maximum number of characters allowed for the mount tag added to the QEMU configuration.
 const qemuMountTagMaxLength = 30
 
@@ -501,7 +504,16 @@ func (d *qemu) agentClient(checkStarted bool) (*http.Client, error) {
 					TLSHandshakeTimeout:   time.Second * 3,
 				}
 
-				resp, err := client.Get("https://agent/")
+				// The guest answers the probe, don't let it hold the caller or the connection.
+				ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+				req, err := http.NewRequestWithContext(ctx, http.MethodGet, "https://agent/", nil)
+				if err != nil {
+					cancel()
+					return nil, err
+				}
+
+				resp, err := client.Do(req)
+				cancel()
 				if err == nil {
 					_ = resp.Body.Close()
 
@@ -3303,8 +3315,9 @@ func (d *qemu) advertiseVsockAddress() error {
 	}
 
 	agentArgs := &incus.ConnectionArgs{
-		SkipGetEvents: true,
-		SkipGetServer: true,
+		SkipGetEvents:   true,
+		SkipGetServer:   true,
+		MaxResponseSize: qemuAgentMaxResponseSize,
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
@@ -4397,7 +4410,18 @@ func (d *qemu) nvramFileName() (string, error) {
 		return "", err
 	}
 
-	return filepath.Base(target), nil
+	// The volume content isn't trusted, only a firmware variables name may be used.
+	name := filepath.Base(target)
+	names, err := d.nvramRunNames()
+	if err != nil {
+		return "", err
+	}
+
+	if !slices.Contains(names, name) {
+		return "", fmt.Errorf("Unexpected UEFI variables file name %q", name)
+	}
+
+	return name, nil
 }
 
 // nvramRunPath returns the local copy of the UEFI variables used while the VM runs.
@@ -4980,7 +5004,7 @@ func (d *qemu) templateApplyNow(trigger instance.TemplateTrigger, path string) e
 	}
 
 	// Parse the metadata.
-	content, err := os.ReadFile(fname)
+	content, err := readRegularFileInRoot(d.Path(), "metadata.yaml")
 	if err != nil {
 		return fmt.Errorf("Failed to read metadata: %w", err)
 	}
@@ -5023,6 +5047,10 @@ func (d *qemu) templateApplyNow(trigger instance.TemplateTrigger, path string) e
 	// Go through the templates.
 	for tplPath, tpl := range metadata.Templates {
 		err = func(tplPath string, tpl *api.ImageMetadataTemplate) error {
+			if tpl == nil {
+				return fmt.Errorf("Template %q has no definition", tplPath)
+			}
+
 			var w *os.File
 
 			// Check if the template should be applied now.
@@ -5051,8 +5079,8 @@ func (d *qemu) templateApplyNow(trigger instance.TemplateTrigger, path string) e
 				return fmt.Errorf("Couldn't access template file: %w", err)
 			}
 
-			if tplFileStat.Mode()&os.ModeSymlink == os.ModeSymlink {
-				return errors.New("Template file is a symlink")
+			if !tplFileStat.Mode().IsRegular() {
+				return errors.New("Template file isn't a regular file")
 			}
 
 			// Create the file itself.
@@ -5826,7 +5854,11 @@ func (d *qemu) generateQemuConfig(bs *qemuBootState, mountInfo *storagePools.Mou
 // It writes the config file inside the VM's log path.
 func (d *qemu) writeQemuConfigFile(configPath string) error {
 	// Write the config file to disk.
-	sb := qemuStringifyCfg(d.conf...)
+	sb, err := qemuStringifyCfg(d.conf...)
+	if err != nil {
+		return err
+	}
+
 	return os.WriteFile(configPath, []byte(sb.String()), 0o640)
 }
 
@@ -6141,17 +6173,18 @@ func rawImageOpts(rawPath string, prefix string) (string, error) {
 }
 
 // rawImageInfo returns the image information of a raw volume, local or RBD.
+// The raw format is forced, as the content of the volume is tenant controlled.
 func rawImageInfo(rawPath string) (*storageDrivers.ImageInfo, error) {
 	if !isRBDPath(rawPath) {
-		return storageDrivers.Qcow2Info(rawPath)
+		return storageDrivers.RawInfo(rawPath)
 	}
 
-	imageOpts, err := rawImageOpts(rawPath, "")
+	imageOpts, err := rawImageOpts(rawPath, "file.")
 	if err != nil {
 		return nil, err
 	}
 
-	imgJSON, err := subprocess.RunCommand("qemu-img", "info", "-U", "--output=json", "--image-opts", imageOpts)
+	imgJSON, err := subprocess.RunCommand("qemu-img", "info", "-U", "--output=json", "--image-opts", fmt.Sprintf("driver=raw,%s", imageOpts))
 	if err != nil {
 		return nil, err
 	}
@@ -6215,24 +6248,20 @@ func (d *qemu) removeImageMetadata(devName string) error {
 	return nil
 }
 
-// ensureMetadataImage creates the metadata file if needed.
-func (d *qemu) ensureMetadataImage(rawPath string, devName string) (string, string, error) {
+// ensureMetadataImage creates the metadata file if needed. The qcow2 argument must come from the
+// volume config, never from the disk's own content, which the tenant controls.
+func (d *qemu) ensureMetadataImage(rawPath string, devName string, qcow2 bool) (string, string, error) {
 	if rawPath == "" {
 		return "", "", errors.New("Raw disk path is empty")
 	}
 
-	imgInfo, err := rawImageInfo(rawPath)
-	if err != nil {
-		return "", "", err
-	}
-
-	if imgInfo.Format == storageDrivers.BlockVolumeTypeQcow2 {
+	if qcow2 {
 		// Image is qcow2 already, don't touch anything
 		return rawPath, "", nil
 	}
 
 	qcow2Dir := d.localImageMetadataDir()
-	err = os.MkdirAll(qcow2Dir, 0o700)
+	err := os.MkdirAll(qcow2Dir, 0o700)
 	if err != nil {
 		return "", "", fmt.Errorf("Failed creating metadata image directory: %w", err)
 	}
@@ -6379,7 +6408,7 @@ func (d *qemu) addRootDriveConfig(qemuDev map[string]any, mountInfo *storagePool
 		return nil, errors.New("No root disk path available from mount")
 	}
 
-	devPath, dataFilePath, err := d.ensureMetadataImage(mountInfo.DiskPath, rootDriveConf.DevName)
+	devPath, dataFilePath, err := d.ensureMetadataImage(mountInfo.DiskPath, rootDriveConf.DevName, mountInfo.Qcow2)
 	if err != nil {
 		return nil, err
 	}
@@ -6399,6 +6428,7 @@ func (d *qemu) addRootDriveConfig(qemuDev map[string]any, mountInfo *storagePool
 		Opts:         rootDriveConf.Opts,
 		TargetPath:   rootDriveConf.TargetPath,
 		Limits:       rootDriveConf.Limits,
+		Qcow2:        mountInfo.Qcow2 || dataFilePath != "",
 	}
 
 	if d.storagePool.Driver().Info().Remote {
@@ -6625,7 +6655,7 @@ func (d *qemu) addDriveConfig(qemuDev map[string]any, bootIndexes map[string]int
 
 	// Dependent disks on RBD get a metadata image like the root disk so they can hold persistent bitmaps.
 	if isRBDImage && d.isDependentDisk(driveConf.DevName) && driveConf.FSType != "iso9660" && !slices.Contains(driveConf.Opts, "ro") {
-		qcow2Path, dataFilePath, err := d.ensureMetadataImage(driveConf.DevPath, driveConf.DevName)
+		qcow2Path, dataFilePath, err := d.ensureMetadataImage(driveConf.DevPath, driveConf.DevName, driveConf.Qcow2)
 		if err != nil {
 			return nil, err
 		}
@@ -6639,6 +6669,7 @@ func (d *qemu) addDriveConfig(qemuDev map[string]any, bootIndexes map[string]int
 		if dataFilePath != "" {
 			driveConf.DevPath = qcow2Path
 			driveConf.DataFilePath = dataFilePath
+			driveConf.Qcow2 = true
 			isRBDImage = false
 		}
 	}
@@ -6686,7 +6717,7 @@ func (d *qemu) addDriveConfig(qemuDev map[string]any, bootIndexes map[string]int
 
 			// Dependent disks get a metadata image like the root disk so they can hold persistent bitmaps.
 			if d.isDependentDisk(driveConf.DevName) && driveConf.FSType != "iso9660" && !slices.Contains(driveConf.Opts, "ro") {
-				qcow2Path, dataFilePath, err := d.ensureMetadataImage(srcDevPath, driveConf.DevName)
+				qcow2Path, dataFilePath, err := d.ensureMetadataImage(srcDevPath, driveConf.DevName, driveConf.Qcow2)
 				if err != nil {
 					return nil, err
 				}
@@ -6700,6 +6731,7 @@ func (d *qemu) addDriveConfig(qemuDev map[string]any, bootIndexes map[string]int
 				if dataFilePath != "" {
 					driveConf.DevPath = qcow2Path
 					driveConf.DataFilePath = dataFilePath
+					driveConf.Qcow2 = true
 					srcDevPath = qcow2Path
 				}
 			}
@@ -6920,12 +6952,7 @@ func (d *qemu) addDriveConfig(qemuDev map[string]any, bootIndexes map[string]int
 				_ = m.RemoveFDFromFDSet(nodeName)
 			})
 
-			isQcow2, err := d.isQCOW2(srcDevPath)
-			if err != nil {
-				return fmt.Errorf("Failed checking disk format: %w", err)
-			}
-
-			if isQcow2 {
+			if driveConf.Qcow2 {
 				srcDevPathInfo, err := os.Stat(srcDevPath)
 				if err != nil {
 					return fmt.Errorf("Invalid source path %q: %w", srcDevPath, err)
@@ -7760,6 +7787,11 @@ func (d *qemu) qemuProcessMatches(cmdLine []byte) bool {
 	// The QEMU binary name varies by distribution (e.g. qemu-kvm on EL systems).
 	isQemu := bytes.Contains(cmdLine, []byte("qemu-system")) || bytes.Contains(cmdLine, []byte("qemu-kvm"))
 
+	// Without a UUID there is nothing to match the process against.
+	if d.localConfig["volatile.uuid"] == "" {
+		return false
+	}
+
 	return isQemu && bytes.Contains(cmdLine, []byte(d.localConfig["volatile.uuid"]))
 }
 
@@ -8213,6 +8245,14 @@ func (d *qemu) Rename(newName string, applyTemplateTrigger bool) error {
 	if d.IsRunning() {
 		return errors.New("Renaming of running instance not allowed")
 	}
+
+	// Setup a new operation so a rename can't race another operation on the instance.
+	op, err := operationlock.CreateWaitGet(d.Project().Name, d.Name(), d.op, operationlock.ActionRename, nil, false, false)
+	if err != nil {
+		return fmt.Errorf("Failed to create instance rename operation: %w", err)
+	}
+
+	defer op.Done(nil)
 
 	// Clean things up.
 	d.cleanup()
@@ -8960,7 +9000,13 @@ func (d *qemu) Update(args db.InstanceArgs, userRequested bool) error {
 			profileNames = append(profileNames, profile.Name)
 		}
 
-		return dbCluster.UpdateInstanceProfiles(ctx, tx.Tx(), object.ID, object.Project, profileNames)
+		err = dbCluster.UpdateInstanceProfiles(ctx, tx.Tx(), object.ID, object.Project, profileNames)
+		if err != nil {
+			return err
+		}
+
+		// Re-check the project limits with the new config recorded, concurrent updates each passed on the old one.
+		return project.CheckLimits(tx, d.project.Name)
 	})
 	if err != nil {
 		return fmt.Errorf("Failed to update database: %w", err)
@@ -9737,13 +9783,9 @@ func (d *qemu) Export(metaWriter io.Writer, rootfsWriter io.Writer, properties m
 	fPath := fmt.Sprintf("%s/rootfs.img", tmpPath)
 
 	// On some storage drivers (lvmcluster), the volume holds a qcow2 container rather than raw data.
+	// Take the format from the volume config, never from the disk's own (tenant-controlled) content.
 	srcFormat := "raw"
-	isQcow2, err := d.isQCOW2(mountInfo.DiskPath)
-	if err != nil {
-		return nil, fmt.Errorf("Failed checking disk format: %w", err)
-	}
-
-	if isQcow2 {
+	if mountInfo.Qcow2 {
 		srcFormat = storageDrivers.BlockVolumeTypeQcow2
 	}
 
@@ -10141,7 +10183,7 @@ func (d *qemu) MigrateSend(args instance.MigrateSendArgs) error {
 
 	// Only send the snapshots that the target requests when refreshing.
 	if respHeader.GetRefresh() {
-		volSourceArgs.Snapshots = respHeader.GetSnapshotNames()
+		volSourceArgs.Snapshots = localMigration.RequestedSnapshots(offerHeader.SnapshotNames, respHeader.GetSnapshotNames())
 		allSnapshots := volSourceArgs.Info.Config.VolumeSnapshots
 
 		// Ensure that only the requested snapshots are included in the migration index header.
@@ -11695,6 +11737,14 @@ func (d *qemu) MigrateReceive(args instance.MigrateReceiveArgs) error {
 		// A zero length Snapshots slice indicates volume only migration in
 		// VolumeTargetArgs. So if VolumeOnly was requested, do not populate them.
 		if args.Snapshots {
+			// Snapshots may not be allowed in the project.
+			if len(snapshots) > 0 && args.ClusterMoveSourceName != d.name {
+				err := project.AllowSnapshotCreation(&d.project)
+				if err != nil {
+					return err
+				}
+			}
+
 			volTargetArgs.Snapshots = make([]*migration.Snapshot, 0, len(snapshots))
 			for _, snap := range snapshots {
 				migrationSnapshot := &migration.Snapshot{Name: snap.Name}
@@ -11725,6 +11775,14 @@ func (d *qemu) MigrateReceive(args instance.MigrateReceiveArgs) error {
 						if snapLocalRootDiskDeviceKey != "" {
 							snapArgs.Devices[snapLocalRootDiskDeviceKey]["pool"] = parentStoragePool
 						}
+					}
+
+					// The snapshot config comes from the source, check it against the project.
+					err = d.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+						return project.AllowSnapshotImport(tx, d.project.Name, *snapArgs)
+					})
+					if err != nil {
+						return err
 					}
 
 					// Create the snapshot instance.
@@ -11982,7 +12040,23 @@ func (d *qemu) FileSFTPConn() (net.Conn, error) {
 	req.Header["Upgrade"] = []string{"sftp"}
 	req.Header["Connection"] = []string{"Upgrade"}
 
+	return agentUpgradeConn(httpTransport, req, "sftp")
+}
+
+// agentUpgradeConn sends an upgrade request to the agent and returns the upgraded connection.
+func agentUpgradeConn(httpTransport *http.Transport, req *http.Request, protocol string) (net.Conn, error) {
 	conn, err := httpTransport.DialContext(context.Background(), "tcp", "8443")
+	if err != nil {
+		return nil, err
+	}
+
+	reverter := revert.New()
+	defer reverter.Fail()
+
+	reverter.Add(func() { _ = conn.Close() })
+
+	// The agent is controlled by the guest, bound the time it gets to answer.
+	err = conn.SetDeadline(time.Now().Add(30 * time.Second))
 	if err != nil {
 		return nil, err
 	}
@@ -11998,18 +12072,34 @@ func (d *qemu) FileSFTPConn() (net.Conn, error) {
 		return nil, err
 	}
 
-	resp, err := http.ReadResponse(bufio.NewReader(tlsConn), req)
+	// Bound the size of the answer too.
+	resp, err := http.ReadResponse(bufio.NewReader(localUtil.MaxBytesReader(tlsConn, 1024*1024)), req)
 	if err != nil {
 		return nil, err
 	}
 
 	if resp.StatusCode != http.StatusSwitchingProtocols {
+		// Try to surface the agent error.
+		apiResp := api.Response{}
+
+		err = json.NewDecoder(resp.Body).Decode(&apiResp)
+		if err == nil && apiResp.Error != "" {
+			return nil, errors.New(apiResp.Error)
+		}
+
 		return nil, fmt.Errorf("Dialing failed: expected status code 101 got %d", resp.StatusCode)
 	}
 
-	if resp.Header.Get("Upgrade") != "sftp" {
+	if resp.Header.Get("Upgrade") != protocol {
 		return nil, errors.New("Missing or unexpected Upgrade header in response")
 	}
+
+	err = conn.SetDeadline(time.Time{})
+	if err != nil {
+		return nil, err
+	}
+
+	reverter.Success()
 
 	return tlsConn, nil
 }
@@ -12084,44 +12174,7 @@ func (d *qemu) PortForwardConn(address string, port int) (net.Conn, error) {
 	req.Header["Connection"] = []string{"Upgrade"}
 	req.Header.Set("Content-Type", "application/json")
 
-	conn, err := httpTransport.DialContext(context.Background(), "tcp", "8443")
-	if err != nil {
-		return nil, err
-	}
-
-	tlsConn := tls.Client(conn, httpTransport.TLSClientConfig)
-	err = tlsConn.Handshake()
-	if err != nil {
-		return nil, err
-	}
-
-	err = req.Write(tlsConn)
-	if err != nil {
-		return nil, err
-	}
-
-	resp, err := http.ReadResponse(bufio.NewReader(tlsConn), req)
-	if err != nil {
-		return nil, err
-	}
-
-	if resp.StatusCode != http.StatusSwitchingProtocols {
-		// Try to surface the agent error.
-		apiResp := api.Response{}
-
-		err = json.NewDecoder(resp.Body).Decode(&apiResp)
-		if err == nil && apiResp.Error != "" {
-			return nil, errors.New(apiResp.Error)
-		}
-
-		return nil, fmt.Errorf("Dialing failed: expected status code 101 got %d", resp.StatusCode)
-	}
-
-	if resp.Header.Get("Upgrade") != "tcp" {
-		return nil, errors.New("Missing or unexpected Upgrade header in response")
-	}
-
-	return tlsConn, nil
+	return agentUpgradeConn(httpTransport, req, "tcp")
 }
 
 // Console gets access to the instance's console.
@@ -12213,7 +12266,7 @@ func (d *qemu) Exec(req api.InstanceExecPost, stdin *os.File, stdout *os.File, s
 		return nil, err
 	}
 
-	agent, err := incus.ConnectIncusHTTP(nil, client)
+	agent, err := incus.ConnectIncusHTTP(&incus.ConnectionArgs{MaxResponseSize: qemuAgentMaxResponseSize}, client)
 	if err != nil {
 		d.logger.Error("Failed to connect to the agent", logger.Ctx{"err": err})
 		return nil, errors.New("Failed to connect to the agent")
@@ -12364,7 +12417,7 @@ func (d *qemu) Render() (any, any, error) {
 
 	instState.Description = d.description
 	instState.Architecture = d.architectureName
-	instState.Config = d.localConfig
+	instState.Config = maps.Clone(d.localConfig)
 	instState.CreatedAt = d.creationDate
 	instState.Devices = d.localDevices.CloneNative()
 	instState.Ephemeral = d.ephemeral
@@ -12679,7 +12732,7 @@ func (d *qemu) agentGetState() (*api.InstanceState, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
-	agent, err := incus.ConnectIncusHTTPWithContext(ctx, nil, client)
+	agent, err := incus.ConnectIncusHTTPWithContext(ctx, &incus.ConnectionArgs{MaxResponseSize: qemuAgentMaxResponseSize}, client)
 	if err != nil {
 		return nil, fmt.Errorf("Failed connecting to agent: %w", err)
 	}
@@ -13138,8 +13191,9 @@ func (d *qemu) devIncusEventSend(eventType string, eventMessage map[string]any) 
 	}
 
 	agentArgs := &incus.ConnectionArgs{
-		SkipGetEvents: true,
-		SkipGetServer: true,
+		SkipGetEvents:   true,
+		SkipGetServer:   true,
+		MaxResponseSize: qemuAgentMaxResponseSize,
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
@@ -13546,8 +13600,9 @@ func (d *qemu) getAgentMetrics() (*metrics.MetricSet, error) {
 	}
 
 	agentArgs := &incus.ConnectionArgs{
-		SkipGetEvents: true,
-		SkipGetServer: true,
+		SkipGetEvents:   true,
+		SkipGetServer:   true,
+		MaxResponseSize: qemuAgentMaxResponseSize,
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
@@ -13971,7 +14026,10 @@ func (d *qemu) postCPUHotplug(monitor *qmp.Monitor) error {
 	return nil
 }
 
-// ConsoleLog returns all output sent to the instance's console's ring buffer since startup.
+// qemuConsoleLogMaxSize bounds the console log kept while the VM runs.
+const qemuConsoleLogMaxSize = 8 * 1024 * 1024
+
+// ConsoleLog returns the most recent output sent to the instance's console's ring buffer.
 func (d *qemu) ConsoleLog() (string, error) {
 	// Setup a new operation, retrying if a concurrent retrieval just completed.
 	var op *operationlock.InstanceOperation
@@ -14020,8 +14078,8 @@ func (d *qemu) ConsoleLog() (string, error) {
 		}
 	}
 
-	// Read and return the complete log for this instance.
-	fullLog, err := os.ReadFile(d.ConsoleBufferLogPath())
+	// Read and return the end of the log for this instance.
+	fullLog, err := d.consoleLogTail()
 	if err != nil {
 		if errors.Is(err, fs.ErrNotExist) {
 			// If there's no log file yet, such as right at VM creation, return an empty string.
@@ -14031,7 +14089,43 @@ func (d *qemu) ConsoleLog() (string, error) {
 		return "", err
 	}
 
-	return string(fullLog), nil
+	return fullLog, nil
+}
+
+// consoleLogTail returns the last qemuConsoleLogMaxSize bytes of the console log, trimming the file to them.
+func (d *qemu) consoleLogTail() (string, error) {
+	logFile, err := os.OpenFile(d.ConsoleBufferLogPath(), os.O_RDWR, 0)
+	if err != nil {
+		return "", err
+	}
+
+	defer logger.WarnOnError(logFile.Close, "Failed to close log file")
+
+	fi, err := logFile.Stat()
+	if err != nil {
+		return "", err
+	}
+
+	offset := max(fi.Size()-qemuConsoleLogMaxSize, 0)
+	tail, err := io.ReadAll(io.NewSectionReader(logFile, offset, qemuConsoleLogMaxSize))
+	if err != nil {
+		return "", err
+	}
+
+	// Keep the file itself bounded too, it isn't rotated while the VM runs.
+	if offset > 0 {
+		err = logFile.Truncate(0)
+		if err != nil {
+			return "", err
+		}
+
+		_, err = logFile.WriteAt(tail, 0)
+		if err != nil {
+			return "", err
+		}
+	}
+
+	return string(tail), nil
 }
 
 // consoleSwapRBWithSocket swaps the qemu backend for the instance's console to a unix socket.
@@ -14587,15 +14681,6 @@ func (d *qemu) ExportQcow2Block(diskName string, blockIndex int) (func(), string
 		_ = migrationSock.Close()
 		_ = runDir.Close()
 	}, exportDiskPath, nil
-}
-
-func (d *qemu) isQCOW2(devPath string) (bool, error) {
-	imgInfo, err := storageDrivers.Qcow2Info(devPath)
-	if err != nil {
-		return false, err
-	}
-
-	return imgInfo.Format == storageDrivers.BlockVolumeTypeQcow2, nil
 }
 
 // qcow2L2CacheSize returns the qcow2 L2 cache size keeping a qcow2 file fully mapped, capped to a share of the memory limit.
@@ -15422,7 +15507,13 @@ func buildDataFileInfo(nodeName string, m *qmp.Monitor, driveConf deviceConfig.M
 // getNVRAM gets the NVRAM assuming the config volume is mounted and the NVRAM already has been
 // initialized.
 func (d *qemu) getNVRAM() (*uefi.Store, error) {
-	nvRAM, err := os.ReadFile(d.nvramEditPath())
+	// The NVRAM path is a link, only a known firmware variables file is read.
+	name, err := d.nvramFileName()
+	if err != nil {
+		return nil, fmt.Errorf("Failed opening NVRAM file: %w", err)
+	}
+
+	nvRAM, err := readRegularFileInRoot(filepath.Dir(d.nvramEditPath()), name)
 	if err != nil {
 		return nil, fmt.Errorf("Failed opening NVRAM file: %w", err)
 	}

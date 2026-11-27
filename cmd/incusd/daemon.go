@@ -142,6 +142,7 @@ type Daemon struct {
 	// Status control.
 	setupChan      chan struct{}      // Closed when basic Daemon setup is completed
 	waitReady      *cancel.Canceller  // Cancelled when fully ready
+	stateReady     *cancel.Canceller  // Cancelled once the state can serve instance hooks
 	shutdownCtx    context.Context    // Cancelled when shutdown starts.
 	shutdownCancel context.CancelFunc // Cancels the shutdownCtx to indicate shutdown starting.
 	shutdownDoneCh chan error         // Receives the result of the d.Stop() function and tells the daemon to end.
@@ -217,6 +218,7 @@ func newDaemon(config *DaemonConfig, osInfo *sys.OS) *Daemon {
 		os:             osInfo,
 		setupChan:      make(chan struct{}),
 		waitReady:      cancel.New(context.Background()),
+		stateReady:     cancel.New(context.Background()),
 		shutdownCtx:    shutdownCtx,
 		shutdownCancel: shutdownCancel,
 		shutdownDoneCh: make(chan error),
@@ -703,7 +705,7 @@ func (d *Daemon) Authenticate(w http.ResponseWriter, r *http.Request) (bool, str
 	if r.URL.Path == "/1.0/metrics" && peerCert != nil {
 		trusted, username := localUtil.CheckTrustState(*peerCert, trustedCerts[certificate.TypeMetrics], d.endpoints.NetworkCert(), trustCACertificates)
 		if trusted {
-			return true, username, api.AuthenticationMethodTLS, nil, nil
+			return true, d.trustStoreFingerprint(peerCert, username), api.AuthenticationMethodTLS, nil, nil
 		}
 
 		trusted, username = localUtil.CheckTrustStateIssuer(r.TLS.PeerCertificates, trustedCerts[certificate.TypeMetrics], d.endpoints.NetworkCert())
@@ -716,18 +718,48 @@ func (d *Daemon) Authenticate(w http.ResponseWriter, r *http.Request) (bool, str
 	if peerCert != nil {
 		trusted, username := localUtil.CheckTrustState(*peerCert, trustedCerts[certificate.TypeClient], d.endpoints.NetworkCert(), trustCACertificates)
 		if trusted {
-			return true, username, api.AuthenticationMethodTLS, nil, nil
+			username = d.trustStoreFingerprint(peerCert, username)
+			_, isMetrics := trustedCerts[certificate.TypeMetrics][username]
+			if !isMetrics {
+				return true, username, api.AuthenticationMethodTLS, nil, nil
+			}
 		}
 	}
 
 	// Validate TLS certificates issued by a trusted CA certificate.
 	trusted, username := localUtil.CheckTrustStateIssuer(r.TLS.PeerCertificates, trustedCerts[certificate.TypeClient], d.endpoints.NetworkCert())
-	if trusted {
+	_, isMetrics := trustedCerts[certificate.TypeMetrics][username]
+	if trusted && !isMetrics {
 		return true, username, api.AuthenticationMethodTLS, nil, nil
 	}
 
 	// Reject unauthorized.
 	return false, "", "", nil, nil
+}
+
+// trustStoreFingerprint maps a CA-issued certificate to its trust store entry by what the CA signed,
+// so a re-encoded signature can't shed the entry's restrictions. Returns the presented fingerprint
+// when there is no matching entry.
+func (d *Daemon) trustStoreFingerprint(cert *x509.Certificate, fingerprint string) string {
+	certs := d.clientCerts.GetCertificates()
+	certTypes := []certificate.Type{certificate.TypeClient, certificate.TypeMetrics}
+
+	for _, certType := range certTypes {
+		_, ok := certs[certType][fingerprint]
+		if ok {
+			return fingerprint
+		}
+	}
+
+	for _, certType := range certTypes {
+		for fp, entry := range certs[certType] {
+			if bytes.Equal(entry.RawTBSCertificate, cert.RawTBSCertificate) {
+				return fp
+			}
+		}
+	}
+
+	return fingerprint
 }
 
 // State creates a new State instance linked to our internal db and os.
@@ -827,6 +859,23 @@ func (d *Daemon) createCmd(restAPI *http.ServeMux, apiVersion string, c APIEndpo
 				}
 
 				_ = response.Unauthorized(err).Render(w)
+				return
+			}
+		}
+
+		// Drop client-supplied forwarded requestor headers; only a cluster member may set them.
+		if protocol != "cluster" {
+			for _, header := range request.ForwardedHeaders {
+				r.Header.Del(header)
+			}
+		}
+
+		// Block remote clients on startup, before the trust store and authorization config are loaded.
+		if !slices.Contains([]string{"unix", "cluster"}, protocol) {
+			select {
+			case <-d.setupChan:
+			default:
+				_ = response.Unavailable(errors.New("Daemon is starting up")).Render(w)
 				return
 			}
 		}
@@ -1110,13 +1159,33 @@ func (d *Daemon) Init() error {
 	return nil
 }
 
+// projectConfig returns the configuration of a project for the authorizer.
+func (d *Daemon) projectConfig(ctx context.Context, projectName string) (map[string]string, error) {
+	var config map[string]string
+
+	err := d.db.Cluster.Transaction(ctx, func(ctx context.Context, tx *db.ClusterTx) error {
+		dbProject, err := dbCluster.GetProject(ctx, tx.Tx(), projectName)
+		if err != nil {
+			return err
+		}
+
+		config, err = dbCluster.GetProjectConfig(ctx, tx.Tx(), dbProject.ID)
+		return err
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return config, nil
+}
+
 func (d *Daemon) init() error {
 	var err error
 
 	var dbWarnings []dbCluster.Warning
 
 	// Set up the authorization router.
-	d.authorizer, err = auth.NewRouter(d.shutdownCtx, logger.Log, d.clientCerts)
+	d.authorizer, err = auth.NewRouter(d.shutdownCtx, logger.Log, d.clientCerts, auth.WithProjectConfigFunc(d.projectConfig))
 	if err != nil {
 		return err
 	}
@@ -1694,7 +1763,9 @@ func (d *Daemon) init() error {
 
 		d.devmonitor, err = fsmonitor.New(d.State().ShutdownCtx, prefixPath)
 		if err != nil {
-			return err
+			// The kernel limits are shared with the containers, don't let them keep the daemon down.
+			logger.Warn("Failed to start the device monitor, device hotplug is unavailable", logger.Ctx{"err": err})
+			d.devmonitor = fsmonitor.NewNoop(prefixPath)
 		}
 
 		// Must occur after d.devmonitor has been initialized.
@@ -1808,6 +1879,9 @@ func (d *Daemon) init() error {
 
 	// Start all background tasks
 	d.tasks.Start(d.shutdownCtx)
+
+	// Instance hooks may run during autostart, the state is ready for them.
+	d.stateReady.Cancel()
 
 	// Restore instances
 	instancesStart(d.State(), instances)
@@ -2165,7 +2239,7 @@ func (d *Daemon) setupAuthorization(reload ...string) error {
 		}
 	}
 
-	return d.authorizer.Configure(d.globalConfig.AuthorizationClientRoutes(), optional)
+	return d.authorizer.Configure(d.globalConfig.AuthorizationClientRoutes(), optional, d.globalConfig.TrustCACertificates())
 }
 
 // setupAuthorizationScriptlet loads scriptlet driver.

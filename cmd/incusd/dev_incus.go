@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"net"
 	"net/http"
 	"os"
@@ -284,17 +285,24 @@ var handlers = []devIncusHandler{
 func hoistReq(f func(*Daemon, instance.Instance, http.ResponseWriter, *http.Request) response.Response, d *Daemon) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		conn := ucred.GetConnFromContext(r.Context())
-		cred := pidMapper.GetConnUcred(conn.(*net.UnixConn))
-		if cred == nil {
+		peer := pidMapper.GetConnPeer(conn.(*net.UnixConn))
+		if peer == nil {
 			http.Error(w, errPIDNotInContainer.Error(), http.StatusInternalServerError)
 			return
 		}
 
 		s := d.State()
 
-		c, err := findContainerForPid(cred.Pid, s)
+		c, err := findContainerForPid(peer.cred.Pid, s)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		// A PID can't be reused while its process exists, so the lookup was about our peer if it's still there.
+		err = unix.PidfdSendSignal(peer.pidfd, 0, nil, 0)
+		if err != nil {
+			http.Error(w, errPIDNotInContainer.Error(), http.StatusInternalServerError)
 			return
 		}
 
@@ -307,7 +315,7 @@ func hoistReq(f func(*Daemon, instance.Instance, http.ResponseWriter, *http.Requ
 			rootUID = uint32(uid)
 		}
 
-		if rootUID != cred.Uid {
+		if rootUID != peer.cred.Uid {
 			http.Error(w, "Access denied for non-root user", http.StatusUnauthorized)
 			return
 		}
@@ -324,7 +332,8 @@ func devIncusAPI(d *Daemon, f hoistFunc) http.Handler {
 		router.HandleFunc(handler.path, f(handler.f, d))
 	}
 
-	return router
+	// Limit request body size like the main API.
+	return http.MaxBytesHandler(router, 1024*1024)
 }
 
 /*
@@ -352,19 +361,38 @@ func devIncusAPI(d *Daemon, f hoistFunc) http.Handler {
  * from our http handlers, since there appears to be no way to pass information
  * around here.
  */
-var pidMapper = ConnPidMapper{m: map[*net.UnixConn]*unix.Ucred{}}
+var pidMapper = ConnPidMapper{m: map[*net.UnixConn]*devIncusPeer{}}
+
+// devIncusPeer is the identity of a connection's peer, pinned for the lifetime of the connection.
+type devIncusPeer struct {
+	cred  *unix.Ucred
+	pidfd int
+}
 
 type ConnPidMapper struct {
-	m     map[*net.UnixConn]*unix.Ucred
+	m     map[*net.UnixConn]*devIncusPeer
 	mLock sync.Mutex
 }
 
-// GetConnUcred returns the credentials for the provided connection, if any.
-func (m *ConnPidMapper) GetConnUcred(conn *net.UnixConn) *unix.Ucred {
+// GetConnPeer returns the peer identity for the provided connection, if any.
+func (m *ConnPidMapper) GetConnPeer(conn *net.UnixConn) *devIncusPeer {
 	m.mLock.Lock()
 	defer m.mLock.Unlock()
 
 	return m.m[conn]
+}
+
+func (m *ConnPidMapper) forget(conn *net.UnixConn) {
+	m.mLock.Lock()
+	defer m.mLock.Unlock()
+
+	peer, ok := m.m[conn]
+	if !ok {
+		return
+	}
+
+	_ = unix.Close(peer.pidfd)
+	delete(m.m, conn)
 }
 
 func (m *ConnPidMapper) ConnStateHandler(conn net.Conn, connState http.ConnState) {
@@ -378,11 +406,19 @@ func (m *ConnPidMapper) ConnStateHandler(conn net.Conn, connState http.ConnState
 		cred, err := linux.GetUcred(unixConn)
 		if err != nil {
 			logger.Debugf("Error getting ucred for conn %s", err)
-		} else {
-			m.mLock.Lock()
-			m.m[unixConn] = cred
-			m.mLock.Unlock()
+			return
 		}
+
+		// Hold a pidfd on the peer so requests can tell it apart from a later owner of its PID.
+		pidfd, err := linux.GetPeerPidfd(unixConn)
+		if err != nil {
+			logger.Debugf("Error getting peer pidfd for conn %s", err)
+			return
+		}
+
+		m.mLock.Lock()
+		m.m[unixConn] = &devIncusPeer{cred: cred, pidfd: pidfd}
+		m.mLock.Unlock()
 
 	case http.StateActive:
 		return
@@ -397,13 +433,9 @@ func (m *ConnPidMapper) ConnStateHandler(conn net.Conn, connState http.ConnState
 		 * more. Whatever the case, we want to forget about it since we
 		 * won't see it either.
 		 */
-		m.mLock.Lock()
-		delete(m.m, unixConn)
-		m.mLock.Unlock()
+		m.forget(unixConn)
 	case http.StateClosed:
-		m.mLock.Lock()
-		delete(m.m, unixConn)
-		m.mLock.Unlock()
+		m.forget(unixConn)
 	default:
 		logger.Debugf("Unknown state for connection %s", connState)
 	}
@@ -455,6 +487,18 @@ func containerNameFromCgroup(content string) (string, bool) {
 	return "", false
 }
 
+// readCmdline reads the start of a process command line, which the process itself controls.
+func readCmdline(pid int32) ([]byte, error) {
+	f, err := os.Open(fmt.Sprintf("/proc/%d/cmdline", pid))
+	if err != nil {
+		return nil, err
+	}
+
+	defer func() { _ = f.Close() }()
+
+	return io.ReadAll(io.LimitReader(f, 16*1024))
+}
+
 func findContainerForPid(pid int32, s *state.State) (instance.Container, error) {
 	/*
 	 * Try and figure out which container a pid is in. There is probably a
@@ -476,7 +520,7 @@ func findContainerForPid(pid int32, s *state.State) (instance.Container, error) 
 	origpid := pid
 
 	for pid > 1 {
-		cmdline, err := os.ReadFile(fmt.Sprintf("/proc/%d/cmdline", pid))
+		cmdline, err := readCmdline(pid)
 		if err != nil {
 			return nil, err
 		}

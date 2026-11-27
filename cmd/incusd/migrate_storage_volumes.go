@@ -14,6 +14,7 @@ import (
 	localMigration "github.com/lxc/incus/v7/internal/server/migration"
 	"github.com/lxc/incus/v7/internal/server/operations"
 	"github.com/lxc/incus/v7/internal/server/project"
+	"github.com/lxc/incus/v7/internal/server/response"
 	"github.com/lxc/incus/v7/internal/server/state"
 	storagePools "github.com/lxc/incus/v7/internal/server/storage"
 	storageDrivers "github.com/lxc/incus/v7/internal/server/storage/drivers"
@@ -208,7 +209,7 @@ func (s *migrationSourceWs) DoStorage(st *state.State, projectName string, poolN
 	// Only send the snapshots that the target requests when refreshing.
 	if respHeader.GetRefresh() {
 		volSourceArgs.Refresh = true
-		volSourceArgs.Snapshots = respHeader.GetSnapshotNames()
+		volSourceArgs.Snapshots = localMigration.RequestedSnapshots(offerHeader.SnapshotNames, respHeader.GetSnapshotNames())
 		allSnapshots := volSourceArgs.Info.Config.VolumeSnapshots
 
 		// Ensure that only the requested snapshots are included in the migration index header.
@@ -392,6 +393,19 @@ func (c *migrationSink) DoStorage(st *state.State, projectName string, poolName 
 	}
 
 	if c.refresh {
+		// Reject a refresh that would change the content type before deleting any target snapshots.
+		dbVol, err := storagePools.VolumeDBGet(pool, projectName, req.Name, storageDrivers.VolumeTypeCustom)
+		if err != nil && !response.IsNotFoundError(err) {
+			c.sendControl(err)
+			return err
+		}
+
+		if dbVol != nil && dbVol.ContentType != req.ContentType {
+			err := fmt.Errorf("Volume of content type %q cannot be refreshed from a volume of content type %q", dbVol.ContentType, req.ContentType)
+			c.sendControl(err)
+			return err
+		}
+
 		// Get the remote snapshots on the source.
 		sourceSnapshots := offerHeader.GetSnapshots()
 		sourceSnapshotComparable := make([]storagePools.ComparableSnapshot, 0, len(sourceSnapshots))
@@ -523,10 +537,10 @@ func (c *migrationSink) DoStorage(st *state.State, projectName string, poolName 
 				return errors.New(msg.GetMessage())
 			}
 
-			// The source can only tell us it failed (e.g. if
-			// checkpointing failed). We have to tell the source
-			// whether or not the restore was successful.
-			logger.Warn("Unknown message from migration source", logger.Ctx{"message": msg.GetMessage()})
+			// The source can only tell us it failed, anything else ends the migration.
+			c.disconnect()
+
+			return errors.New("Unexpected message from migration source")
 		}
 	}
 }

@@ -65,5 +65,10 @@ func GetExpiry(refDate time.Time, s string) (time.Time, error) {
 		time.Hour*time.Duration(expiry["H"]) + time.Minute*time.Duration(expiry["M"]) + time.Second*time.Duration(expiry["S"]),
 	)
 
+	// The database can't store dates past year 9999.
+	if t.Year() > 9999 {
+		return time.Time{}, ErrInvalidExpiry
+	}
+
 	return t, nil
 }

@@ -3,6 +3,7 @@ package certificate
 import (
 	"crypto/x509"
 	"encoding/pem"
+	"maps"
 	"sync"
 
 	"github.com/lxc/incus/v7/shared/api"
@@ -41,6 +42,14 @@ func (c *Cache) SetCertificates(certificates []*api.Certificate) {
 
 		c.certificates[certificate.Fingerprint] = cert
 	}
+}
+
+// GetAPICertificates returns a copy of the cached certificate records by fingerprint.
+func (c *Cache) GetAPICertificates() map[string]api.CertificatePut {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+
+	return maps.Clone(c.apiCertificates)
 }
 
 // GetCertificatesAndProjects returns certificate and project maps.

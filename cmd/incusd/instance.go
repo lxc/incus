@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"sync"
 	"time"
@@ -16,6 +17,7 @@ import (
 	ociSpecs "github.com/opencontainers/runtime-spec/specs-go"
 
 	internalInstance "github.com/lxc/incus/v7/internal/instance"
+	"github.com/lxc/incus/v7/internal/server/auth"
 	"github.com/lxc/incus/v7/internal/server/cluster"
 	"github.com/lxc/incus/v7/internal/server/db"
 	dbCluster "github.com/lxc/incus/v7/internal/server/db/cluster"
@@ -203,7 +205,7 @@ func instanceCreateFromImage(ctx context.Context, s *state.State, img *api.Image
 
 	// If dealing with an OCI image, parse the configuration and refresh the backup file.
 	if args.Type == instancetype.Container && inst.LocalConfig()["image.type"] == "oci" {
-		err = instanceApplyOCIConfig(inst, pool, nil)
+		err = instanceApplyOCIConfig(inst, pool, nil, instOp)
 		if err != nil {
 			return err
 		}
@@ -262,7 +264,7 @@ func instanceOCISpec(inst instance.Instance, pool storagePools.Pool) (*ociSpecs.
 
 // instanceApplyOCIConfig sets the config keys derived from the instance's OCI image that aren't set yet.
 // Keys still holding the values of the previous image are refreshed so only user overrides survive a rebuild.
-func instanceApplyOCIConfig(inst instance.Instance, pool storagePools.Pool, previous map[string]string) error {
+func instanceApplyOCIConfig(inst instance.Instance, pool storagePools.Pool, previous map[string]string, instOp *operationlock.InstanceOperation) error {
 	spec, err := instanceOCISpec(inst, pool)
 	if err != nil {
 		return err
@@ -301,10 +303,13 @@ func instanceApplyOCIConfig(inst instance.Instance, pool storagePools.Pool, prev
 		Snapshot:     inst.IsSnapshot(),
 	}
 
+	// Release the exclusive lock, as Update takes the instance operation lock itself.
+	instOp.Done(nil)
+
 	return inst.Update(args, false)
 }
 
-func instanceRebuildFromImage(ctx context.Context, s *state.State, r *http.Request, inst instance.Instance, img *api.Image, op *operations.Operation) error {
+func instanceRebuildFromImage(ctx context.Context, s *state.State, r *http.Request, inst instance.Instance, img *api.Image, instOp *operationlock.InstanceOperation, op *operations.Operation) error {
 	// Validate the type of the image matches the type of the instance.
 	imgType, err := instancetype.New(img.Type)
 	if err != nil {
@@ -348,7 +353,7 @@ func instanceRebuildFromImage(ctx context.Context, s *state.State, r *http.Reque
 			return err
 		}
 
-		err = instanceApplyOCIConfig(inst, pool, previous)
+		err = instanceApplyOCIConfig(inst, pool, previous, instOp)
 		if err != nil {
 			return err
 		}
@@ -502,6 +507,15 @@ func instanceCreateAsCopy(s *state.State, opts instanceCreateAsCopyOpts, op *ope
 			}
 		}()
 
+		// Snapshots may not be allowed in the target project.
+		if len(snapshots) > 0 {
+			p := inst.Project()
+			err = project.AllowSnapshotCreation(&p)
+			if err != nil {
+				return nil, err
+			}
+		}
+
 		instDevices := inst.LocalDevices()
 		for _, srcSnap := range snapshots {
 			snapLocalDevices := srcSnap.LocalDevices().Clone()
@@ -570,6 +584,14 @@ func instanceCreateAsCopy(s *state.State, opts instanceCreateAsCopyOpts, op *ope
 				Project:      opts.targetInstance.Project,
 				ExpiryDate:   srcSnap.ExpiryDate(),
 				CreationDate: srcSnap.CreationDate(),
+			}
+
+			// The snapshot config comes from the source, check it against the project.
+			err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+				return project.AllowSnapshotImport(tx, snapInstArgs.Project, snapInstArgs)
+			})
+			if err != nil {
+				return nil, err
 			}
 
 			// Create the snapshots.
@@ -665,22 +687,23 @@ func autoCreateInstanceSnapshots(ctx context.Context, s *state.State, instances 
 
 		l := logger.AddContext(logger.Ctx{"project": inst.Project().Name, "instance": inst.Name()})
 
+		// One instance's failure must not cost the others their snapshot.
 		snapshotName, err := instance.NextSnapshotName(s, inst, "snap%d")
 		if err != nil {
 			l.Error("Error retrieving next snapshot name", logger.Ctx{"err": err})
-			return err
+			continue
 		}
 
 		expiry, err := internalInstance.GetExpiry(time.Now(), inst.ExpandedConfig()["snapshots.expiry"])
 		if err != nil {
 			l.Error("Error getting snapshots.expiry date")
-			return err
+			continue
 		}
 
 		err = inst.Snapshot(snapshotName, expiry, false)
 		if err != nil {
 			l.Error("Error creating snapshot", logger.Ctx{"snapshot": snapshotName, "err": err})
-			return err
+			continue
 		}
 	}
 
@@ -705,7 +728,8 @@ func pruneExpiredInstanceSnapshots(ctx context.Context, snapshots []instance.Ins
 		err = snapshot.Delete(true, true)
 		instSnapshotsPruneRunning.Delete(snapshot.ID())
 		if err != nil {
-			return fmt.Errorf("Failed to delete expired instance snapshot %q in project %q: %w", snapshot.Name(), snapshot.Project().Name, err)
+			logger.Error("Failed to delete expired instance snapshot", logger.Ctx{"project": snapshot.Project().Name, "snapshot": snapshot.Name(), "err": err})
+			continue
 		}
 
 		logger.Debug("Deleted instance snapshot", logger.Ctx{"project": snapshot.Project().Name, "snapshot": snapshot.Name()})
@@ -933,6 +957,51 @@ func getSourceImageFromInstanceSource(ctx context.Context, s *state.State, tx *d
 	}
 
 	return sourceImage, nil
+}
+
+// checkAttachedAccess checks that the caller may view newly attached profiles and custom volumes.
+func checkAttachedAccess(s *state.State, r *http.Request, projectName string, profiles []string, curProfiles []string, devices map[string]map[string]string, curDevices map[string]map[string]string) error {
+	for _, name := range profiles {
+		if slices.Contains(curProfiles, name) {
+			continue
+		}
+
+		profileProject, err := project.ProfileProject(s.DB.Cluster, projectName)
+		if err != nil {
+			return err
+		}
+
+		err = s.Authorizer.CheckPermission(r.Context(), r, auth.ObjectProfile(profileProject.Name, name), auth.EntitlementCanView)
+		if err != nil {
+			return err
+		}
+	}
+
+	for name, dev := range devices {
+		if dev["type"] != "disk" || dev["pool"] == "" || dev["source"] == "" {
+			continue
+		}
+
+		cur := curDevices[name]
+		if cur != nil && cur["pool"] == dev["pool"] && cur["source"] == dev["source"] {
+			continue
+		}
+
+		volProject, err := project.StorageVolumeProject(s.DB.Cluster, projectName, db.StoragePoolVolumeTypeCustom)
+		if err != nil {
+			return err
+		}
+
+		volName, _, _ := api.GetParentAndSnapshotName(dev["source"])
+		location := storageVolumeAuthLocation(r.Context(), s, dev["pool"], volProject, volName, db.StoragePoolVolumeTypeCustom)
+
+		err = s.Authorizer.CheckPermission(r.Context(), r, auth.ObjectStorageVolume(volProject, dev["pool"], db.StoragePoolVolumeTypeNameCustom, volName, location), auth.EntitlementCanView)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 // instanceOperationLock acquires a lock for operating on an instance and returns the unlock function.

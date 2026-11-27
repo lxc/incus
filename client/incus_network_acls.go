@@ -105,7 +105,7 @@ func (r *ProtocolIncus) GetNetworkACLLogfile(name string) (io.ReadCloser, error)
 
 	// Check the return value for a cleaner error
 	if resp.StatusCode != http.StatusOK {
-		_, _, err := incusParseResponse(resp)
+		_, _, err := r.parseResponse(resp)
 		if err != nil {
 			return nil, err
 		}

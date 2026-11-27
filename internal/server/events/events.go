@@ -66,8 +66,30 @@ func (s *Server) SetLocalLocation(location string) {
 	s.location = location
 }
 
+// CloseListeners closes the listeners opened by a matching identity.
+func (s *Server) CloseListeners(match func(protocol string, username string) bool) {
+	matched := []*Listener{}
+
+	s.lock.Lock()
+	for _, listener := range s.listeners {
+		listener.lock.Lock()
+		if listener.username != "" && match(listener.protocol, listener.username) {
+			matched = append(matched, listener)
+		}
+
+		listener.lock.Unlock()
+	}
+
+	s.lock.Unlock()
+
+	// Close outside of the lock, closing logs and log entries are broadcast as events.
+	for _, listener := range matched {
+		listener.Close()
+	}
+}
+
 // AddListener creates and returns a new event listener.
-func (s *Server) AddListener(projectName string, allProjects bool, projectPermissionFunc auth.PermissionChecker, connection EventListenerConnection, messageTypes []string, excludeSources []EventSource, recvFunc EventHandler, excludeLocations []string) (*Listener, error) {
+func (s *Server) AddListener(projectName string, allProjects bool, serverEvents bool, projectPermissionFunc auth.PermissionChecker, connection EventListenerConnection, messageTypes []string, excludeSources []EventSource, recvFunc EventHandler, excludeLocations []string) (*Listener, error) {
 	if allProjects && projectName != "" {
 		return nil, errors.New("Cannot specify project name when listening for events on all projects")
 	}
@@ -89,6 +111,7 @@ func (s *Server) AddListener(projectName string, allProjects bool, projectPermis
 		},
 
 		allProjects:           allProjects,
+		serverEvents:          serverEvents,
 		projectName:           projectName,
 		projectPermissionFunc: projectPermissionFunc,
 		excludeSources:        excludeSources,
@@ -203,6 +226,11 @@ func (s *Server) broadcast(event api.Event, eventSource EventSource) error {
 			continue
 		}
 
+		// Events without a project are server-wide and describe other projects' resources.
+		if event.Project == "" && !listener.serverEvents {
+			continue
+		}
+
 		if sourceInSlice(eventSource, listener.excludeSources) {
 			continue
 		}
@@ -232,8 +260,20 @@ type Listener struct {
 	listenerCommon
 
 	allProjects           bool
+	serverEvents          bool
 	projectName           string
 	projectPermissionFunc auth.PermissionChecker
 	excludeSources        []EventSource
 	excludeLocations      []string
+	protocol              string
+	username              string
+}
+
+// SetRequestor records the identity the listener was opened with.
+func (l *Listener) SetRequestor(protocol string, username string) {
+	l.lock.Lock()
+	defer l.lock.Unlock()
+
+	l.protocol = protocol
+	l.username = username
 }

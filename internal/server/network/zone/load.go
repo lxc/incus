@@ -4,15 +4,14 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"strings"
 
 	incus "github.com/lxc/incus/v7/client"
 	serverCluster "github.com/lxc/incus/v7/internal/server/cluster"
 	"github.com/lxc/incus/v7/internal/server/db"
 	"github.com/lxc/incus/v7/internal/server/db/cluster"
+	"github.com/lxc/incus/v7/internal/server/project"
 	"github.com/lxc/incus/v7/internal/server/state"
 	"github.com/lxc/incus/v7/shared/api"
-	"github.com/lxc/incus/v7/shared/util"
 )
 
 // LoadByName loads and initializes a Network zone from the database by name.
@@ -121,20 +120,8 @@ func Create(s *state.State, projectName string, zoneInfo *api.NetworkZonesPost) 
 	}
 
 	// Validate restrictions.
-	if util.IsTrue(p.Config["restricted"]) {
-		found := false
-		for entry := range strings.SplitSeq(p.Config["restricted.networks.zones"], ",") {
-			entry = strings.TrimSpace(entry)
-
-			if zoneInfo.Name == entry || strings.HasSuffix(zoneInfo.Name, "."+entry) {
-				found = true
-				break
-			}
-		}
-
-		if !found {
-			return api.StatusErrorf(http.StatusForbidden, "Project isn't allowed to use this DNS zone")
-		}
+	if !project.NetworkZoneAllowed(p.Config, zoneInfo.Name) {
+		return api.StatusErrorf(http.StatusForbidden, "Project isn't allowed to use this DNS zone")
 	}
 
 	err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {

@@ -9,15 +9,58 @@ import (
 	"strings"
 	"time"
 
+	"github.com/flosch/pongo2/v6"
+
 	scriptletLoad "github.com/lxc/incus/v7/internal/server/scriptlet/load"
 	"github.com/lxc/incus/v7/shared/api"
 	"github.com/lxc/incus/v7/shared/units"
 	"github.com/lxc/incus/v7/shared/validate"
 )
 
+// IsSnapshotPattern checks that a snapshot name pattern is a valid template.
+func IsSnapshotPattern(value string) error {
+	_, err := pongo2.FromString(value)
+	if err != nil {
+		return fmt.Errorf("Invalid snapshot pattern: %w", err)
+	}
+
+	return nil
+}
+
 // IsUserConfig returns true if the config key is a user configuration.
 func IsUserConfig(key string) bool {
 	return strings.HasPrefix(key, "user.")
+}
+
+// isSyscallList validates a list of syscall names, each with an optional seccomp action other than notify.
+func isSyscallList(value string) error {
+	for line := range strings.SplitSeq(value, "\n") {
+		fields := strings.Fields(line)
+		if len(fields) == 0 {
+			continue
+		}
+
+		if !isSyscallName(fields[0]) {
+			return fmt.Errorf("Invalid syscall name %q", fields[0])
+		}
+
+		if len(fields) > 1 && !slices.Contains([]string{"allow", "errno", "kill", "trap", "log"}, fields[1]) {
+			return fmt.Errorf("Invalid syscall action %q", fields[1])
+		}
+	}
+
+	return nil
+}
+
+// isSyscallName checks that a string is made of the characters found in a syscall name.
+func isSyscallName(name string) bool {
+	for _, r := range name {
+		if (r < 'a' || r > 'z') && (r < 'A' || r > 'Z') && (r < '0' || r > '9') && r != '_' {
+			return false
+		}
+	}
+
+	return true
 }
 
 // isNvidiaConfigValue rejects line breaks that would allow injecting arbitrary directives into the generated LXC configuration.
@@ -464,7 +507,7 @@ var InstanceConfigKeysAny = map[string]func(value string) error{
 	//  defaultdesc: `snap%d`
 	//  liveupdate: no
 	//  shortdesc: Template for the snapshot name
-	"snapshots.pattern": validate.IsAny,
+	"snapshots.pattern": IsSnapshotPattern,
 
 	// gendoc:generate(entity=instance, group=snapshots, key=snapshots.expiry)
 	// Specify an expression like `1M 2H 3d 4w 5m 6y`.
@@ -1043,12 +1086,12 @@ var InstanceConfigKeysContainer = map[string]func(value string) error{
 	//  liveupdate: no
 	//  condition: container
 	//  shortdesc: List of syscalls to allow
-	"security.syscalls.allow": validate.IsAny,
+	"security.syscalls.allow": isSyscallList,
 
 	// Legacy configuration keys (old names).
 	"security.syscalls.blacklist_default": validate.Optional(validate.IsBool),
 	"security.syscalls.blacklist_compat":  validate.Optional(validate.IsBool),
-	"security.syscalls.blacklist":         validate.IsAny,
+	"security.syscalls.blacklist":         isSyscallList,
 
 	// gendoc:generate(entity=instance, group=security, key=security.syscalls.deny_default)
 	//
@@ -1079,7 +1122,7 @@ var InstanceConfigKeysContainer = map[string]func(value string) error{
 	//  liveupdate: no
 	//  condition: container
 	//  shortdesc: List of syscalls to deny
-	"security.syscalls.deny": validate.IsAny,
+	"security.syscalls.deny": isSyscallList,
 
 	// gendoc:generate(entity=instance, group=security, key=security.syscalls.intercept.bpf)
 	//
@@ -1179,7 +1222,7 @@ var InstanceConfigKeysContainer = map[string]func(value string) error{
 	//  shortdesc: Whether to handle the `sysinfo` system call
 	"security.syscalls.intercept.sysinfo": validate.Optional(validate.IsBool),
 
-	"security.syscalls.whitelist": validate.IsAny,
+	"security.syscalls.whitelist": isSyscallList,
 
 	// gendoc:generate(entity=instance, group=volatile, key=volatile.container.oci)
 	//
@@ -1539,7 +1582,7 @@ var ConfigDeviceVolatileKeys = map[string]func(value string) error{
 	// ---
 	//  type: string
 	//  shortdesc: Network device MAC address
-	"hwaddr": validate.IsAny,
+	"hwaddr": validate.Optional(validate.IsHardwareAddress),
 
 	// gendoc:generate(entity=instance, group=volatile, key=volatile.<name>.io.bus)
 	// The IO bus stores the actual IO bus being used, checked in case `io.bus=auto`.
@@ -1581,7 +1624,7 @@ var ConfigDeviceVolatileKeys = map[string]func(value string) error{
 	// ---
 	//  type: string
 	//  shortdesc: Network device original MAC
-	"last_state.hwaddr": validate.IsAny,
+	"last_state.hwaddr": validate.Optional(validate.IsHardwareAddress),
 
 	// gendoc:generate(entity=instance, group=volatile, key=volatile.<name>.last_state.ip_addresses)
 	// Comma-separated list of the last used IP addresses of the network device.
@@ -1589,6 +1632,13 @@ var ConfigDeviceVolatileKeys = map[string]func(value string) error{
 	//  type: string
 	//  shortdesc: Last used IP addresses
 	"last_state.ip_addresses": validate.IsListOf(validate.IsNetworkAddress),
+
+	// gendoc:generate(entity=instance, group=volatile, key=volatile.<name>.last_state.kind)
+	// The kind of physical device that was moved into an instance.
+	// ---
+	//  type: string
+	//  shortdesc: Network device original kind
+	"last_state.kind": validate.IsAny,
 
 	// gendoc:generate(entity=instance, group=volatile, key=volatile.<name>.last_state.mtu)
 	// The original MTU that was used when moving a physical device into an instance.
@@ -1644,7 +1694,7 @@ var ConfigDeviceVolatileKeys = map[string]func(value string) error{
 	// ---
 	//  type: string
 	//  shortdesc: SR-IOV virtual function original MAC
-	"last_state.vf.hwaddr": validate.IsAny,
+	"last_state.vf.hwaddr": validate.Optional(validate.IsHardwareAddress),
 
 	// gendoc:generate(entity=instance, group=volatile, key=volatile.<name>.last_state.vf.id)
 	// The ID used when moving a VF into an instance.

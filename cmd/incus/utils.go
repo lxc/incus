@@ -12,7 +12,9 @@ import (
 	"os/exec"
 	"os/signal"
 	"path"
+	"path/filepath"
 	"reflect"
+	"runtime"
 	"slices"
 	"sort"
 	"strconv"
@@ -756,6 +758,18 @@ func isStdin(p string) bool {
 	return slices.Contains([]string{"-", "/dev/stdin", "/dev/fd/0"}, p)
 }
 
+// createLocalFile opens a file like os.OpenFile, refusing to follow a symlink out of its directory.
+func createLocalFile(name string, flag int, perm os.FileMode) (*os.File, error) {
+	root, err := os.OpenRoot(filepath.Dir(name))
+	if err != nil {
+		return nil, err
+	}
+
+	defer logger.WarnOnError(root.Close, "Failed to close directory")
+
+	return root.OpenFile(filepath.Base(name), flag, perm)
+}
+
 // isStdout returns whether the provided path looks like stdout.
 func isStdout(p string) bool {
 	return slices.Contains([]string{"-", "/dev/stdout", "/dev/fd/1"}, p)
@@ -936,4 +950,40 @@ func parsePristineMode(m string) (fs.FileMode, error) {
 // randName returns a random name.
 func randName(prefix string, length int, suffix string) string {
 	return prefix + randString(length) + suffix
+}
+
+// nbdListen sets up the local NBD listener, defaulting to a private unix socket.
+func nbdListen(conf *config.Config, address string) (net.Listener, error) {
+	if address != "" {
+		return net.Listen("tcp", address)
+	}
+
+	// Same fallback as the console on Windows.
+	if runtime.GOOS == "windows" {
+		return net.Listen("tcp", "127.0.0.1:0")
+	}
+
+	if conf.ConfigDir == "" {
+		return nil, errors.New(i18n.G("No configuration directory available, an address must be specified"))
+	}
+
+	err := os.MkdirAll(conf.ConfigPath("sockets"), 0o700)
+	if err != nil {
+		return nil, err
+	}
+
+	// Generate a random file name.
+	f, err := os.CreateTemp(conf.ConfigPath("sockets"), "*.nbd")
+	if err != nil {
+		return nil, err
+	}
+
+	_ = f.Close()
+
+	err = os.Remove(f.Name())
+	if err != nil {
+		return nil, err
+	}
+
+	return net.Listen("unix", f.Name())
 }

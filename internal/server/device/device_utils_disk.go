@@ -202,7 +202,30 @@ func DiskMount(srcPath string, dstPath string, recursive bool, propagation strin
 	return nil
 }
 
-// DiskMountClear unmounts and removes the mount path used for disk shares.
+// DiskMountSetNoSuid sets nosuid on an existing mount, keeping its other flags, so a setuid file on
+// the source can't be run through the staging path by a host user who can reach it.
+func DiskMountSetNoSuid(mntPath string, recursive bool) error {
+	fd, err := unix.Open(mntPath, unix.O_PATH|unix.O_CLOEXEC, 0)
+	if err != nil {
+		return fmt.Errorf("Failed to open %q: %w", mntPath, err)
+	}
+
+	defer func() { _ = unix.Close(fd) }()
+
+	flags := uint(unix.AT_EMPTY_PATH)
+	if recursive {
+		flags |= unix.AT_RECURSIVE
+	}
+
+	err = unix.MountSetattr(fd, "", flags, &unix.MountAttr{Attr_set: unix.MOUNT_ATTR_NOSUID})
+	if err != nil {
+		return fmt.Errorf("Failed to set nosuid on %q: %w", mntPath, err)
+	}
+
+	return nil
+}
+
+// DiskMountClear unmounts and removes a staging mount path.
 func DiskMountClear(mntPath string) error {
 	if util.PathExists(mntPath) {
 		if linux.IsMountPoint(mntPath) {
@@ -366,7 +389,7 @@ func DiskVMVirtiofsSupported(inst instance.Instance) (string, error) {
 // Returns UnsupportedError error if the host system or instance does not support virtiosfd, returns normal error
 // type if process cannot be started for other reasons.
 // Returns revert function and listener file handle on success.
-func DiskVMVirtiofsdStart(execPath string, inst instance.Instance, socketPath string, pidPath string, logPath string, sharePath string, idmaps []idmap.Entry, cacheOption string) (func(), net.Listener, error) {
+func DiskVMVirtiofsdStart(execPath string, inst instance.Instance, socketPath string, pidPath string, logPath string, sharePath string, idmaps []idmap.Entry, restricted bool, cacheOption string) (func(), net.Listener, error) {
 	reverter := revert.New()
 	defer reverter.Fail()
 
@@ -427,7 +450,8 @@ func DiskVMVirtiofsdStart(execPath string, inst instance.Instance, socketPath st
 	// Start the virtiofsd process in non-daemon mode.
 	args := []string{"--fd=3", fmt.Sprintf("--cache=%s", cacheOption), fmt.Sprintf("--shared-dir=%s", sharePath)}
 
-	if len(idmaps) > 0 {
+	// For a restricted source path, translate even with an empty map so guest root is forbidden on it.
+	if restricted || len(idmaps) > 0 {
 		idmapSet := &idmap.Set{Entries: idmaps}
 		sort.Sort(idmapSet)
 

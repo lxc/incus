@@ -276,10 +276,10 @@ func TestCreateStoragePoolVolume_Snapshot(t *testing.T) {
 		_, err = tx.CreateStorageVolumeSnapshot(ctx, "default", "v1/snap0", "", 1, poolID, config, time.Now(), time.Time{})
 		require.NoError(t, err)
 
-		n := tx.GetNextStorageVolumeSnapshotIndex(ctx, "p1", "v1", 1, "snap%d")
+		n := tx.GetNextStorageVolumeSnapshotIndex(ctx, "default", "p1", "v1", 1, "snap%d")
 		assert.Equal(t, n, 1)
 
-		n = tx.GetNextStorageVolumeSnapshotIndex(ctx, "p2", "v1", 1, "snap%d")
+		n = tx.GetNextStorageVolumeSnapshotIndex(ctx, "default", "p2", "v1", 1, "snap%d")
 		assert.Equal(t, n, 0)
 
 		return nil

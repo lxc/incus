@@ -4,8 +4,8 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"slices"
 
+	"github.com/lxc/incus/v7/internal/server/db"
 	"github.com/lxc/incus/v7/internal/server/lifecycle"
 	"github.com/lxc/incus/v7/internal/server/project"
 	"github.com/lxc/incus/v7/internal/server/request"
@@ -43,8 +43,8 @@ func storagePoolVolumeTypeFileHandler(d *Daemon, r *http.Request) response.Respo
 		return response.BadRequest(err)
 	}
 
-	// Check that the storage volume type is valid.
-	if !slices.Contains(supportedVolumeTypes, volumeType) {
+	// Only custom volumes are served, so the type must match the authorized object.
+	if volumeType != db.StoragePoolVolumeTypeCustom {
 		return response.BadRequest(fmt.Errorf("Invalid storage volume type %q", volumeTypeName))
 	}
 
@@ -54,12 +54,18 @@ func storagePoolVolumeTypeFileHandler(d *Daemon, r *http.Request) response.Respo
 		return response.SmartError(err)
 	}
 
+	err = storagePoolVolumeUsedByDaemon(s, volumeProjectName, poolName, volumeName)
+	if err != nil {
+		return response.SmartError(err)
+	}
+
 	// Redirect to correct server if needed.
-	resp := forwardedResponseIfVolumeIsRemote(s, r, poolName, volumeProjectName, volumeName, volumeType)
+	resp := forwardedResponseIfTargetIsRemote(s, r)
 	if resp != nil {
 		return resp
 	}
 
+	resp = forwardedResponseIfVolumeIsRemote(s, r, poolName, volumeProjectName, volumeName, volumeType)
 	if resp != nil {
 		return resp
 	}
@@ -75,11 +81,16 @@ func storagePoolVolumeTypeFileHandler(d *Daemon, r *http.Request) response.Respo
 		return response.SmartError(err)
 	}
 
+	// Only filesystem volumes have a file tree; the mount path of other content types holds the disk image.
+	if volumeDB.ContentType != db.StoragePoolVolumeContentTypeNameFS {
+		return response.BadRequest(errors.New("Only filesystem volumes support file access"))
+	}
+
 	diskVolName := project.StorageVolume(volumeProjectName, volumeName)
 	vol := pool.GetVolume(storageDrivers.VolumeTypeCustom, storageDrivers.ContentTypeFS, diskVolName, volumeDB.Config)
 
 	// Parse the path.
-	path := r.FormValue("path")
+	path := request.QueryParam(r, "path")
 	if path == "" {
 		return response.BadRequest(errors.New("Missing path argument"))
 	}
@@ -180,14 +191,19 @@ func storageVolumeFileGet(s *state.State, vol storageDrivers.Volume, volumeProje
 	reverter := revert.New()
 	defer reverter.Fail()
 
-	client, err := vol.FileSFTP(s)
+	conn, err := vol.FileSFTPConn(s)
+	if err != nil {
+		return response.SmartError(err)
+	}
+
+	client, listing, err := fileSFTPListingClient(conn)
 	if err != nil {
 		return response.SmartError(err)
 	}
 
 	reverter.Add(func() { _ = client.Close() })
 
-	return fileSFTPGet(client, path, r, reverter, func() {
+	return fileSFTPGet(client, listing, path, r, reverter, func() {
 		s.Events.SendLifecycle(volumeProjectName, lifecycle.StorageVolumeFileRetrieved.Event(vol, string(vol.Type()), volumeProjectName, nil, logger.Ctx{"path": path}))
 	})
 }

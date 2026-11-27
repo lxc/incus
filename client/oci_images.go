@@ -30,6 +30,7 @@ import (
 
 type ociInfo struct {
 	Alias        string
+	Source       string
 	Name         string    `json:"Name"`
 	Digest       string    `json:"Digest"`
 	Created      time.Time `json:"Created"`
@@ -193,7 +194,7 @@ func (r *ProtocolOCI) GetImageFile(fingerprint string, req ImageFileRequest) (*I
 	imageTag := "latest"
 
 	stdout, err := r.runSkopeo(
-		"copy", info.Alias,
+		"copy", info.Source,
 		"--remove-signatures",
 		fmt.Sprintf("oci:%s:%s", filepath.Join(ociPath, "oci"), imageTag),
 	)
@@ -207,7 +208,7 @@ func (r *ProtocolOCI) GetImageFile(fingerprint string, req ImageFileRequest) (*I
 		req.ProgressHandler(ioprogress.ProgressData{Text: "Unpacking the OCI image"})
 	}
 
-	err = r.unpackOCIImage(filepath.Join(ociPath, "oci"), imageTag, filepath.Join(ociPath, "image"))
+	err = r.unpackOCIImage(filepath.Join(ociPath, "oci"), imageTag, filepath.Join(ociPath, "image"), req.MaxUnpackedSize)
 	if err != nil {
 		logger.Debug("Error unpacking OCI image", logger.Ctx{"image": filepath.Join(ociPath, "oci"), "err": err})
 		return nil, err
@@ -458,8 +459,18 @@ func (r *ProtocolOCI) GetImageAlias(name string) (*api.ImageAliasesEntry, string
 		return nil, "", err
 	}
 
+	// Pin the copy to the manifest that was inspected.
+	if info.Digest == "" {
+		err = errors.New("OCI image has no manifest digest")
+		r.errors[name] = err
+
+		return nil, "", err
+	}
+
+	imageWithoutTag, _, _ := strings.Cut(imageWithoutHash, ":")
 	info.Alias = name
-	info.Digest = r.computeFingerprint(info.Layers)
+	info.Source = fmt.Sprintf("%s@%s", imageWithoutTag, info.Digest)
+	info.Digest = r.computeFingerprint(info.Digest, info.Layers)
 
 	archID, err := osarch.ArchitectureID(info.Architecture)
 	if err != nil {
@@ -525,8 +536,10 @@ func (r *ProtocolOCI) ExportImage(_ string, _ api.ImageExportPost) (Operation, e
 	return nil, errors.New("Exporting images is not supported with OCI registry")
 }
 
-func (r *ProtocolOCI) computeFingerprint(layers []string) string {
+// computeFingerprint hashes the manifest digest and the layers, the latter differ per architecture.
+func (r *ProtocolOCI) computeFingerprint(digest string, layers []string) string {
 	h := sha256.New()
+	h.Write([]byte(digest))
 
 	for _, layer := range layers {
 		h.Write([]byte(layer))

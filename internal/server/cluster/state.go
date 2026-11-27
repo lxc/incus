@@ -81,6 +81,14 @@ func (s *stateWrapper) SetClusterCertificate(i cowsqltls.CertInfo) (cowsqltls.Ce
 		return nil, err
 	}
 
+	// The cluster CA certificate is a symlink against the regular server CA certificate.
+	if util.PathExists(filepath.Join(certDir, "server.ca")) && !util.PathExists(filepath.Join(certDir, "cluster.ca")) {
+		err := os.Symlink("server.ca", filepath.Join(certDir, "cluster.ca"))
+		if err != nil {
+			return nil, fmt.Errorf("Failed to symlink server CA cert to cluster CA cert: %w", err)
+		}
+	}
+
 	certInfo, err := tls.KeyPairAndCA(certDir, "cluster", tls.CertServer, true)
 	if err != nil {
 		return nil, err

@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"slices"
 	"time"
 
 	incus "github.com/lxc/incus/v7/client"
@@ -293,7 +294,101 @@ func updateCertificateCache(d *Daemon) {
 		// continue functioning, and hopefully the write will succeed on next update.
 	}
 
+	oldCerts := d.clientCerts.GetAPICertificates()
 	d.clientCerts.SetCertificates(certs)
+
+	// Connections opened with a certificate that lost trust or changed scope end here.
+	changed := []string{}
+	for fingerprint, oldCert := range oldCerts {
+		newCert, ok := d.clientCerts.GetAPICertificates()[fingerprint]
+		if !ok {
+			changed = append(changed, fingerprint)
+			continue
+		}
+
+		// Gaining access doesn't need the connections closed.
+		lostProject := slices.ContainsFunc(oldCert.Projects, func(project string) bool {
+			return !slices.Contains(newCert.Projects, project)
+		})
+
+		if newCert.Restricted && (!oldCert.Restricted || lostProject) {
+			changed = append(changed, fingerprint)
+		}
+	}
+
+	if len(changed) == 0 {
+		return
+	}
+
+	match := func(protocol string, username string) bool {
+		return protocol == api.AuthenticationMethodTLS && slices.Contains(changed, username)
+	}
+
+	s.Events.CloseListeners(match)
+	response.CloseUpgradedConnections(func(r *http.Request) bool {
+		return match(requestIdentity(r))
+	})
+}
+
+// requestIdentity returns the protocol and user name a request was authenticated with.
+func requestIdentity(r *http.Request) (string, string) {
+	protocol, ok := r.Context().Value(request.CtxProtocol).(string)
+	if !ok {
+		return "", ""
+	}
+
+	username, ok := r.Context().Value(request.CtxUsername).(string)
+	if !ok {
+		return protocol, ""
+	}
+
+	return protocol, username
+}
+
+// certificateCacheProjectRemoved reloads the trust cache everywhere after a project name was deleted or renamed.
+func certificateCacheProjectRemoved(ctx context.Context, s *state.State, projectName string) error {
+	var stale *api.Certificate
+
+	err := s.DB.Cluster.Transaction(ctx, func(ctx context.Context, tx *db.ClusterTx) error {
+		dbCerts, err := dbCluster.GetCertificates(ctx, tx.Tx())
+		if err != nil {
+			return err
+		}
+
+		for _, dbCert := range dbCerts {
+			cert, err := dbCert.ToAPI(ctx, tx.Tx())
+			if err != nil {
+				return err
+			}
+
+			if slices.Contains(cert.Projects, projectName) {
+				stale = cert
+				return nil
+			}
+		}
+
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+
+	// The cached project lists are what matter, the database link is already gone.
+	s.UpdateCertificateCache()
+
+	if stale == nil {
+		return nil
+	}
+
+	// Other members reload their cache on a certificate update notification.
+	notifier, err := cluster.NewNotifier(s, s.Endpoints.NetworkCert(), s.ServerCert(), cluster.NotifyAlive)
+	if err != nil {
+		return err
+	}
+
+	return notifier(func(client incus.InstanceServer) error {
+		return client.UpdateCertificate(stale.Fingerprint, stale.Writable(), "")
+	})
 }
 
 // updateCertificateCacheFromLocal loads trusted server certificates from local database into memory.
@@ -327,6 +422,41 @@ func updateCertificateCacheFromLocal(d *Daemon) error {
 	}
 
 	d.clientCerts.SetCertificates(certs)
+	return nil
+}
+
+// tokenOperationCheckExpiry fails if a token operation has expired.
+func tokenOperationCheckExpiry(s *state.State, op *api.Operation) error {
+	expiresAt, ok := op.Metadata["expiresAt"]
+	if !ok {
+		return nil
+	}
+
+	var expiry time.Time
+
+	// Depending on whether it's a local operation or not, expiry will either be a time.Time or a string.
+	if s.ServerName == op.Location {
+		expiry, ok = expiresAt.(time.Time)
+		if !ok {
+			return api.StatusErrorf(http.StatusInternalServerError, "Invalid expiry metadata")
+		}
+	} else {
+		expiryStr, ok := expiresAt.(string)
+		if !ok {
+			return api.StatusErrorf(http.StatusInternalServerError, "Invalid expiry metadata")
+		}
+
+		var err error
+		expiry, err = time.Parse(time.RFC3339Nano, expiryStr)
+		if err != nil {
+			return api.StatusErrorf(http.StatusInternalServerError, "Invalid expiry metadata")
+		}
+	}
+
+	if time.Now().After(expiry) {
+		return api.StatusErrorf(http.StatusForbidden, "Token has expired")
+	}
+
 	return nil
 }
 
@@ -371,29 +501,9 @@ func clusterMemberJoinTokenValid(s *state.State, r *http.Request, projectName st
 			return nil, fmt.Errorf("Failed to cancel operation %q: %w", foundOp.ID, err)
 		}
 
-		expiresAt, ok := foundOp.Metadata["expiresAt"]
-		if ok {
-			var expiry time.Time
-
-			// Depending on whether it's a local operation or not, expiry will either be a time.Time or a string.
-			if s.ServerName == foundOp.Location {
-				expiry, ok = expiresAt.(time.Time)
-				if !ok {
-					return nil, api.StatusErrorf(http.StatusInternalServerError, "Invalid expiry metadata")
-				}
-			} else {
-				expiryStr, ok := expiresAt.(string)
-				if !ok {
-					return nil, api.StatusErrorf(http.StatusInternalServerError, "Invalid expiry metadata")
-				}
-
-				expiry, _ = time.Parse(time.RFC3339Nano, expiryStr)
-			}
-
-			// Check if token has expired.
-			if time.Now().After(expiry) {
-				return nil, api.StatusErrorf(http.StatusForbidden, "Token has expired")
-			}
+		err = tokenOperationCheckExpiry(s, foundOp)
+		if err != nil {
+			return nil, err
 		}
 
 		return foundOp, nil
@@ -435,14 +545,9 @@ func certificateTokenValid(s *state.State, r *http.Request, addToken *api.Certif
 			return nil, fmt.Errorf("Failed to cancel operation %q: %w", foundOp.ID, err)
 		}
 
-		expiresAt, ok := foundOp.Metadata["expiresAt"]
-		if ok {
-			expiry, ok := expiresAt.(time.Time)
-
-			// Check if token has expired.
-			if ok && time.Now().After(expiry) {
-				return nil, api.StatusErrorf(http.StatusForbidden, "Token has expired")
-			}
+		err = tokenOperationCheckExpiry(s, foundOp)
+		if err != nil {
+			return nil, err
 		}
 
 		return foundOp, nil
@@ -1068,8 +1173,9 @@ func certificatePatch(d *Daemon, r *http.Request) response.Response {
 		return response.PreconditionFailed(err)
 	}
 
-	// Apply the changes.
+	// Apply the changes (on a copy, as the JSON decoder reuses existing slices).
 	req := *apiEntry
+	req.Projects = slices.Clone(apiEntry.Projects)
 	err = json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
 		return response.BadRequest(err)
@@ -1084,9 +1190,33 @@ func doCertificateUpdate(d *Daemon, dbInfo api.Certificate, req api.CertificateP
 	s := d.State()
 
 	if clientType == clusterRequest.ClientTypeNormal {
+		// The record was loaded before the body was read, which the client controls the timing of.
+		err := s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
+			dbCert, err := dbCluster.GetCertificate(ctx, tx.Tx(), dbInfo.Fingerprint)
+			if err != nil {
+				return err
+			}
+
+			current, err := dbCert.ToAPI(ctx, tx.Tx())
+			if err != nil {
+				return err
+			}
+
+			dbInfo = *current
+			return nil
+		})
+		if err != nil {
+			return response.SmartError(err)
+		}
+
 		// Prevent any type change.
 		if dbInfo.Type != req.Type {
 			return response.BadRequest(errors.New("The certificate type cannot be changed"))
+		}
+
+		// A server certificate's name is tied to its cluster member.
+		if dbInfo.Type == api.CertificateTypeServer && dbInfo.Name != req.Name {
+			return response.BadRequest(errors.New("The name of a server certificate cannot be changed"))
 		}
 
 		reqDBType, err := certificate.FromAPIType(req.Type)
@@ -1118,7 +1248,29 @@ func doCertificateUpdate(d *Daemon, dbInfo api.Certificate, req api.CertificateP
 		certProjects := req.Projects
 		if !userCanEditCertificate {
 			if r.TLS == nil {
-				response.Forbidden(errors.New("Cannot update certificate information"))
+				return response.Forbidden(errors.New("Cannot update certificate information"))
+			}
+
+			// Only the holder of the certificate may update it.
+			certBlock, _ := pem.Decode([]byte(dbInfo.Certificate))
+
+			oldCert, err := x509.ParseCertificate(certBlock.Bytes)
+			if err != nil {
+				// This should not happen
+				return response.InternalError(err)
+			}
+
+			trustedCerts := map[string]x509.Certificate{
+				dbInfo.Name: *oldCert,
+			}
+
+			trusted := false
+			if len(r.TLS.PeerCertificates) > 0 {
+				trusted, _ = localUtil.CheckTrustState(*r.TLS.PeerCertificates[0], trustedCerts, s.Endpoints.NetworkCert(), false)
+			}
+
+			if !trusted {
+				return response.Forbidden(errors.New("Certificate cannot be changed"))
 			}
 
 			// Ensure the user in not trying to change fields other than the certificate.
@@ -1145,24 +1297,9 @@ func doCertificateUpdate(d *Daemon, dbInfo api.Certificate, req api.CertificateP
 			certProjects = dbInfo.Projects
 
 			if req.Certificate != "" && dbInfo.Certificate != req.Certificate {
-				certBlock, _ := pem.Decode([]byte(dbInfo.Certificate))
-
-				oldCert, err := x509.ParseCertificate(certBlock.Bytes)
-				if err != nil {
-					// This should not happen
-					return response.InternalError(err)
-				}
-
-				trustedCerts := map[string]x509.Certificate{
-					dbInfo.Name: *oldCert,
-				}
-
-				trusted := false
-				if len(r.TLS.PeerCertificates) > 0 {
-					trusted, _ = localUtil.CheckTrustState(*r.TLS.PeerCertificates[0], trustedCerts, s.Endpoints.NetworkCert(), false)
-				}
-
-				if !trusted {
+				// A certificate trusted through the CA would stay trusted and only lose its restrictions.
+				trustedByCA, _ := localUtil.CheckTrustState(*oldCert, nil, s.Endpoints.NetworkCert(), s.GlobalConfig.TrustCACertificates())
+				if trustedByCA {
 					return response.Forbidden(errors.New("Certificate cannot be changed"))
 				}
 			}
@@ -1281,7 +1418,7 @@ func certificateDelete(d *Daemon, r *http.Request) response.Response {
 		// Non-admins are able to delete only their own certificate.
 		if !userCanEditCertificate {
 			if r.TLS == nil {
-				response.Forbidden(errors.New("Cannot delete certificate"))
+				return response.Forbidden(errors.New("Cannot delete certificate"))
 			}
 
 			certBlock, _ := pem.Decode([]byte(certInfo.Certificate))
@@ -1290,6 +1427,12 @@ func certificateDelete(d *Daemon, r *http.Request) response.Response {
 			if err != nil {
 				// This should not happen
 				return response.InternalError(err)
+			}
+
+			// A certificate trusted through the CA would stay trusted and only lose its restrictions.
+			trustedByCA, _ := localUtil.CheckTrustState(*cert, nil, s.Endpoints.NetworkCert(), s.GlobalConfig.TrustCACertificates())
+			if trustedByCA {
+				return response.Forbidden(errors.New("Certificate cannot be deleted"))
 			}
 
 			trustedCerts := map[string]x509.Certificate{

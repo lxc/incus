@@ -428,6 +428,16 @@ func api10Get(d *Daemon, r *http.Request) response.Response {
 		return response.SyncResponseETag(true, fullSrv, nil)
 	}
 
+	// Only those allowed to change the config get to see the credentials in it.
+	err = s.Authorizer.CheckPermission(r.Context(), r, auth.ObjectServer(), auth.EntitlementCanEdit)
+	if err != nil {
+		if !api.StatusErrorCheck(err, http.StatusForbidden) {
+			return response.SmartError(err)
+		}
+
+		daemonConfigHideSecrets(fullSrvConfig)
+	}
+
 	fullSrv.Config = fullSrvConfig
 
 	etag, err := daemonConfigETag(s, r)
@@ -918,6 +928,9 @@ func doAPI10UpdateTriggers(d *Daemon, nodeChanged, clusterChanged map[string]str
 			authorizationScriptletChanged = true
 
 		case "authorization.client.default", "authorization.client.unix", "authorization.client.tls", "authorization.client.tls-restricted", "authorization.client.oidc":
+			authorizationChanged = true
+
+		case "core.trust_ca_certificates":
 			authorizationChanged = true
 
 		case "storage.linstor.controller_connection", "storage.linstor.ca_cert", "storage.linstor.client_cert", "storage.linstor.client_key":

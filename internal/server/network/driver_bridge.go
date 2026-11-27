@@ -1987,6 +1987,11 @@ func (n *bridge) setup(oldConfig map[string]string) error {
 			dnsmasqCmd = append(dnsmasqCmd, "-S", fmt.Sprintf("/%s/", dnsDomain))
 		}
 
+		// Only use the generated names in managed mode, ignoring those supplied by DHCP clients.
+		if n.config["dns.mode"] == "" || n.config["dns.mode"] == "managed" {
+			dnsmasqCmd = append(dnsmasqCmd, "--dhcp-ignore-names")
+		}
+
 		// Don't serve the host's /etc/hosts entries.
 		if util.IsFalse(n.config["dns.include_hosts"]) {
 			dnsmasqCmd = append(dnsmasqCmd, "--no-hosts")
@@ -3507,7 +3512,8 @@ func (n *bridge) Leases(projectName string, clientType request.ClientType) ([]ap
 			mac := GetMACSlice(fields[1])
 			macStr := strings.Join(mac, ":")
 
-			if len(macStr) < 17 && fields[4] != "" {
+			// A short hardware address may be a DHCPv6 IAID, the MAC then ends the DUID.
+			if len(macStr) < 17 && len(fields[4]) >= 17 {
 				macStr = fields[4][len(fields[4])-17:]
 			}
 

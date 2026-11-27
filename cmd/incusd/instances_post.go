@@ -910,6 +910,16 @@ func createFromBackup(s *state.State, r *http.Request, projectName string, data 
 		return response.Forbidden(errors.New("Cluster member is evacuated"))
 	}
 
+	// The instance is restored on this member, so the project must be allowed to use it.
+	if s.ServerClustered {
+		err := s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
+			return project.CheckMemberAllowed(ctx, tx, projectName, s.ServerName)
+		})
+		if err != nil {
+			return response.SmartError(err)
+		}
+	}
+
 	reverter := revert.New()
 	defer reverter.Fail()
 
@@ -966,8 +976,8 @@ func createFromBackup(s *state.State, r *http.Request, projectName string, data 
 
 		defer logger.WarnOnError(func() error { return os.Remove(tarFile.Name()) }, "Failed to remove tarball file")
 
-		// Decompress to tarFile temporary file.
-		err = archive.ExtractWithFds(decomArgs[0], decomArgs[1:], nil, nil, tarFile)
+		// Decompress to tarFile temporary file, within the project's disk budget.
+		err = backupDecompress(decomArgs, tarFile, budget)
 		if err != nil {
 			return response.InternalError(err)
 		}
@@ -986,7 +996,7 @@ func createFromBackup(s *state.State, r *http.Request, projectName string, data 
 		return response.InternalError(err)
 	}
 
-	bInfo, err := backup.GetInfo(backupFile, s.OS, backupFile.Name())
+	bInfo, err := backup.GetInfo(backupFile, s.OS, backupFile.Name(), budget)
 	if err != nil {
 		return response.BadRequest(err)
 	}
@@ -1014,6 +1024,19 @@ func createFromBackup(s *state.State, r *http.Request, projectName string, data 
 
 	bInfo.Project = projectName
 
+	// Dependent volumes are created in the effective storage project, check that's allowed.
+	if len(bInfo.Config.DependentVolumes) > 0 {
+		storageProjectName, err := project.StorageVolumeProject(s.DB.Cluster, projectName, db.StoragePoolVolumeTypeCustom)
+		if err != nil {
+			return response.SmartError(err)
+		}
+
+		err = s.Authorizer.CheckPermission(r.Context(), r, auth.ObjectProject(storageProjectName), auth.EntitlementCanCreateStorageVolumes)
+		if err != nil {
+			return response.SmartError(err)
+		}
+	}
+
 	// Override pool.
 	if pool != "" {
 		bInfo.Pool = pool
@@ -1034,6 +1057,26 @@ func createFromBackup(s *state.State, r *http.Request, projectName string, data 
 		err = instance.ValidName(bInfo.Name+internalInstance.SnapshotDelimiter+snapName, true)
 		if err != nil {
 			return response.BadRequest(err)
+		}
+	}
+
+	// Snapshots may not be allowed in the project.
+	if len(bInfo.Snapshots) > 0 {
+		err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
+			dbProject, err := dbCluster.GetProject(ctx, tx.Tx(), projectName)
+			if err != nil {
+				return err
+			}
+
+			p, err := dbProject.ToAPI(ctx, tx.Tx())
+			if err != nil {
+				return err
+			}
+
+			return project.AllowSnapshotCreation(p)
+		})
+		if err != nil {
+			return response.SmartError(err)
 		}
 	}
 
@@ -1314,9 +1357,9 @@ func instancesPost(d *Daemon, r *http.Request) response.Response {
 		return createFromBackup(s, r, targetProjectName, r.Body, r.Header.Get("X-Incus-pool"), r.Header.Get("X-Incus-name"), r.Header.Get("X-Incus-config"), r.Header.Get("X-Incus-devices"))
 	}
 
-	// Parse the request
+	// Parse the request, applying the usual size limit to the JSON body.
 	req := api.InstancesPost{}
-	err := json.NewDecoder(r.Body).Decode(&req)
+	err := json.NewDecoder(http.MaxBytesReader(nil, r.Body, 1024*1024)).Decode(&req)
 	if err != nil {
 		return response.BadRequest(err)
 	}
@@ -1424,6 +1467,34 @@ func instancesPost(d *Daemon, r *http.Request) response.Response {
 		}
 	}
 
+	// A refresh overwrites an existing instance, which requires edit access to it.
+	if req.Source.Refresh && req.Name != "" {
+		var exists bool
+
+		err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
+			id, err := tx.GetInstanceID(ctx, targetProjectName, req.Name)
+			if err != nil && !response.IsNotFoundError(err) {
+				return err
+			}
+
+			exists = err == nil && id > 0
+
+			return nil
+		})
+		if err != nil {
+			return response.SmartError(err)
+		}
+
+		if exists {
+			err = s.Authorizer.CheckPermission(r.Context(), r, auth.ObjectInstance(targetProjectName, req.Name), auth.EntitlementCanEdit)
+			if err != nil {
+				return response.SmartError(err)
+			}
+		}
+	}
+
+	var allMembers []db.NodeInfo
+
 	err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
 		dbProject, err := dbCluster.GetProject(ctx, tx.Tx(), targetProjectName)
 		if err != nil {
@@ -1434,8 +1505,6 @@ func instancesPost(d *Daemon, r *http.Request) response.Response {
 		if err != nil {
 			return err
 		}
-
-		var allMembers []db.NodeInfo
 
 		if s.ServerClustered && !clusterNotification {
 			allMembers, err = tx.GetNodes(ctx)
@@ -1607,40 +1676,6 @@ func instancesPost(d *Daemon, r *http.Request) response.Response {
 			}
 		}
 
-		if s.ServerClustered && !clusterNotification && targetMemberInfo == nil {
-			architectures, err := instance.SuitableArchitectures(ctx, s, tx, targetProjectName, sourceInst, sourceImageRef, req)
-			if err != nil {
-				return err
-			}
-
-			// Use the default architecture from project or global config when the source
-			// doesn't dictate one or offers several (multi-architecture image aliases).
-			defaultArch := targetProject.Config["images.default_architecture"]
-			if defaultArch == "" {
-				defaultArch = s.GlobalConfig.ImagesDefaultArchitecture()
-			}
-
-			if defaultArch != "" {
-				defaultArchID, err := osarch.ArchitectureID(defaultArch)
-				if err != nil {
-					return err
-				}
-
-				if len(architectures) < 1 || slices.Contains(architectures, defaultArchID) {
-					architectures = []int{defaultArchID}
-				}
-			} else if len(architectures) < 1 {
-				architectures = nil // Don't exclude candidate members based on architecture.
-			}
-
-			clusterGroupsAllowed := project.GetRestrictedClusterGroups(targetProject)
-
-			candidateMembers, err = tx.GetCandidateMembers(ctx, allMembers, architectures, targetGroupName, clusterGroupsAllowed, s.GlobalConfig.OfflineThreshold())
-			if err != nil {
-				return err
-			}
-		}
-
 		if !clusterNotification {
 			// Check that the project's limits are not violated. Note this check is performed after
 			// automatically generated config values (such as ones from an InstanceType) have been set.
@@ -1652,6 +1687,58 @@ func instancesPost(d *Daemon, r *http.Request) response.Response {
 
 		return nil
 	})
+	if err != nil {
+		return response.SmartError(err)
+	}
+
+	// Contact the image server outside of the transaction, after the project checks.
+	if s.ServerClustered && !clusterNotification && targetMemberInfo == nil {
+		architectures, err := instance.SuitableArchitectures(r.Context(), s, targetProjectName, sourceInst, sourceImageRef, req)
+		if err != nil {
+			return response.SmartError(err)
+		}
+
+		// Use the default architecture from project or global config when the source
+		// doesn't dictate one or offers several (multi-architecture image aliases).
+		defaultArch := targetProject.Config["images.default_architecture"]
+		if defaultArch == "" {
+			defaultArch = s.GlobalConfig.ImagesDefaultArchitecture()
+		}
+
+		if defaultArch != "" {
+			defaultArchID, err := osarch.ArchitectureID(defaultArch)
+			if err != nil {
+				return response.SmartError(err)
+			}
+
+			if len(architectures) < 1 || slices.Contains(architectures, defaultArchID) {
+				architectures = []int{defaultArchID}
+			}
+		} else if len(architectures) < 1 {
+			architectures = nil // Don't exclude candidate members based on architecture.
+		}
+
+		clusterGroupsAllowed := project.GetRestrictedClusterGroups(targetProject)
+
+		err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
+			candidateMembers, err = tx.GetCandidateMembers(ctx, allMembers, architectures, targetGroupName, clusterGroupsAllowed, s.GlobalConfig.OfflineThreshold())
+
+			return err
+		})
+		if err != nil {
+			return response.SmartError(err)
+		}
+	}
+
+	// A local image may only be used by a caller allowed to view it.
+	if sourceImage != nil && req.Source.Server == "" {
+		err = s.Authorizer.CheckPermission(r.Context(), r, auth.ObjectImage(targetProjectName, sourceImage.Fingerprint), auth.EntitlementCanView)
+		if err != nil {
+			return response.SmartError(err)
+		}
+	}
+
+	err = checkAttachedAccess(s, r, targetProjectName, nil, nil, req.Devices, nil)
 	if err != nil {
 		return response.SmartError(err)
 	}

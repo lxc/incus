@@ -195,12 +195,14 @@ func (d *disk) CanMigrate() bool {
 
 // sourceIsCephFs returns true if the disks source config setting is a CephFS share.
 func (d *disk) sourceIsCephFs() bool {
-	return strings.HasPrefix(d.config["source"], "cephfs:")
+	// The source of a disk with a pool is always a volume name, whatever it looks like.
+	return d.config["pool"] == "" && strings.HasPrefix(d.config["source"], "cephfs:")
 }
 
 // sourceIsCeph returns true if the disks source config setting is a Ceph RBD.
 func (d *disk) sourceIsCeph() bool {
-	return strings.HasPrefix(d.config["source"], "ceph:")
+	// The source of a disk with a pool is always a volume name, whatever it looks like.
+	return d.config["pool"] == "" && strings.HasPrefix(d.config["source"], "ceph:")
 }
 
 // CanHotPlug returns whether the device can be managed whilst the instance is running.
@@ -520,7 +522,7 @@ func (d *disk) validateConfig(instConf instance.ConfigReader, partialValidation 
 		//  type: string
 		//  required: for file system disks
 		//  shortdesc: Path inside the instance where the disk will be mounted (only for file system disk devices)
-		"path": validate.IsAny,
+		"path": validateInstancePath,
 
 		// gendoc:generate(entity=devices, group=disk, key=io.cache)
 		// This controls the caching mode used for the disk device.
@@ -650,7 +652,7 @@ func (d *disk) validateConfig(instConf instance.ConfigReader, partialValidation 
 		return errors.New(`Root disk entry must have a "pool" property set`)
 	}
 
-	if d.config["pool"] != "" && slices.Contains([]string{diskSourceCloudInit, diskSourceAgent}, d.config["source"]) {
+	if d.config["pool"] != "" && IsSpecialDisk(d.config["source"]) {
 		return fmt.Errorf(`Disk entry with source %q cannot have a "pool" property set`, d.config["source"])
 	}
 
@@ -673,6 +675,19 @@ func (d *disk) validateConfig(instConf instance.ConfigReader, partialValidation 
 	// Check ceph options are only used when ceph or cephfs type source is specified.
 	if !d.sourceIsCeph() && !d.sourceIsCephFs() && (d.config["ceph.cluster_name"] != "" || d.config["ceph.user_name"] != "") {
 		return fmt.Errorf("Invalid options ceph.cluster_name/ceph.user_name for source %q", d.config["source"])
+	}
+
+	// A VM disk path ends up in a quoted qemu.conf value, which has no escaping.
+	if d.inst != nil && d.inst.Type() == instancetype.VM && strings.ContainsAny(d.config["path"], "\"\r\n") {
+		return errors.New(`Disk "path" may not contain quotes or line breaks`)
+	}
+
+	// An external ceph or cephfs source must name a <pool>/<volume> or <fs>/<path>, so a start can't index past a missing slash.
+	if d.sourceIsCeph() || d.sourceIsCephFs() {
+		_, cephSource, _ := strings.Cut(d.config["source"], ":")
+		if !strings.Contains(cephSource, "/") {
+			return fmt.Errorf("Invalid ceph or cephfs source %q, expected <name>/<path>", d.config["source"])
+		}
 	}
 
 	if (d.config["source"] == diskSourceTmpfs || d.config["source"] == diskSourceTmpfsOverlay) && d.config["path"] == "" {
@@ -753,14 +768,26 @@ func (d *disk) validateConfig(instConf instance.ConfigReader, partialValidation 
 				return fmt.Errorf("Failed loading custom volume: %w", err)
 			}
 
+			// Volumes holding the daemon's own data can't be attached.
+			if storageProjectName == api.ProjectDefaultName {
+				frag, err := storagePools.VolumeUsedByDaemon(d.state, d.pool.Name(), volName)
+				if err != nil {
+					return err
+				}
+
+				if frag != "" {
+					return errors.New("Volumes used by Incus itself cannot be attached")
+				}
+			}
+
 			// Check that block volumes are *only* attached to VM instances.
 			contentType, err := storagePools.VolumeContentTypeNameToContentType(dbVolume.ContentType)
 			if err != nil {
 				return err
 			}
 
-			// Check that the dependent disk is attached to exactly one instance.
-			if util.IsTrue(dbVolume.Config["dependent"]) {
+			// Check that the dependent disk is attached to exactly one instance, including when claimed here.
+			if util.IsTrue(dbVolume.Config["dependent"]) || util.IsTrue(d.config["dependent"]) {
 				count, err := d.getAttachedInstanceCount(storageProjectName, dbVolume)
 				if err != nil {
 					return err
@@ -1767,6 +1794,7 @@ func (d *disk) startVM() (*deviceConfig.RunConfig, error) {
 
 				mount.Opts = append(mount.Opts, d.detectVMPoolMountOpts()...)
 				mount.BackingPath = append(mount.BackingPath, mountInfo.BackingPath...)
+				mount.Qcow2 = mountInfo.Qcow2
 			}
 
 			if util.IsTrue(d.config["readonly"]) {
@@ -1832,7 +1860,7 @@ func (d *disk) startVM() (*deviceConfig.RunConfig, error) {
 					logPath := filepath.Join(d.inst.LogPath(), fmt.Sprintf("disk.%s.log", d.name))
 					_ = os.Remove(logPath) // Remove old log if needed.
 
-					revertFunc, unixListener, err := DiskVMVirtiofsdStart(d.state.OS.ExecPath, d.inst, sockPath, pidPath, logPath, mount.DevPath, rawIDMaps.Entries, d.config["io.cache"])
+					revertFunc, unixListener, err := DiskVMVirtiofsdStart(d.state.OS.ExecPath, d.inst, sockPath, pidPath, logPath, mount.DevPath, rawIDMaps.Entries, d.restrictedParentSourcePath != "", d.config["io.cache"])
 					if err != nil {
 						var errUnsupported UnsupportedError
 						if d.bus != "virtiofs" && errors.As(err, &errUnsupported) {
@@ -2513,6 +2541,13 @@ func (d *disk) createDevice(srcPath string) (func(), string, bool, error) {
 		return nil, "", false, err
 	}
 
+	// Prevent running a setuid file from the staging mount, which sits under a traversable directory.
+	err = DiskMountSetNoSuid(devPath, isRecursive)
+	if err != nil {
+		_ = DiskMountClear(devPath)
+		return nil, "", false, err
+	}
+
 	reverter.Add(func() { _ = DiskMountClear(devPath) })
 
 	cleanup := reverter.Clone().Fail // Clone before calling revert.Success() so we can return the Fail func.
@@ -2923,6 +2958,14 @@ func (d *disk) postStop() error {
 
 		// Parse the volume name and path.
 		volName, _ := internalInstance.SplitVolumeSource(d.config["source"])
+
+		// The pool may not have been loaded if validation failed before start.
+		if d.pool == nil {
+			d.pool, err = storagePools.LoadByName(d.state, d.config["pool"])
+			if err != nil {
+				return fmt.Errorf("Failed to get storage pool %q: %w", d.config["pool"], err)
+			}
+		}
 
 		_, err = d.pool.UnmountCustomVolume(storageProjectName, volName, nil)
 		if err != nil && !errors.Is(err, storageDrivers.ErrInUse) {

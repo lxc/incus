@@ -1011,6 +1011,15 @@ func (n *ovn) Validate(config map[string]string, clientType request.ClientType) 
 		return fmt.Errorf("Failed to load network restrictions from project %q: %w", n.project, err)
 	}
 
+	// Host interfaces and tunnels attach host traffic to the network, which a restricted project can't be trusted with.
+	if util.IsTrue(p.Config["restricted"]) {
+		for k := range config {
+			if k == "bridge.external_interfaces" || strings.HasPrefix(k, "tunnel.") {
+				return fmt.Errorf("Option %q isn't allowed in a restricted project", k)
+			}
+		}
+	}
+
 	// Check uplink network is valid and allowed in project.
 	var uplink *api.Network
 	projectRestrictedSubnets := []*net.IPNet{}
@@ -1095,14 +1104,35 @@ func (n *ovn) Validate(config map[string]string, clientType request.ClientType) 
 			continue
 		}
 
-		// Skip if unchanged and already created
-		if config[key] == n.config[key] && n.status == api.NetworkStatusCreated {
+		// Skip if unchanged on a network this member has already created.
+		if config[key] == n.config[key] && n.LocalStatus() == api.NetworkStatusCreated {
 			continue
 		}
 
 		ipAddress := net.ParseIP(config[key])
 		if ipAddress == nil {
-			continue
+			return fmt.Errorf("Invalid uplink address %q", config[key])
+		}
+
+		// A client-supplied address must come from the uplink's allocation ranges.
+		if clientType == request.ClientTypeNormal {
+			rangesKey := "ipv4.ovn.ranges"
+			if key == ovnVolatileUplinkIPv6 {
+				rangesKey = "ipv6.ovn.ranges"
+			}
+
+			if uplink.Config[rangesKey] == "" {
+				return fmt.Errorf("Uplink address %q can't be set without %q on the uplink", config[key], rangesKey)
+			}
+
+			ipRanges, err := parseIPRanges(uplink.Config[rangesKey])
+			if err != nil {
+				return err
+			}
+
+			if !ipInPointerRanges(ipAddress, ipRanges) {
+				return fmt.Errorf("Uplink address %q isn't within the uplink's %q", config[key], rangesKey)
+			}
 		}
 
 		err = n.validateUplinkAddressNotInUse(uplink.Name, ipAddress)
@@ -2053,7 +2083,13 @@ func (n *ovn) allocateUplinkPortIPs(uplinkNet Network, routerMAC net.HardwareAdd
 
 	// Decide whether we need to allocate new IP(s) and go to the expense of retrieving all allocated IPs.
 	if (uplinkIPv4Net != nil && routerExtPortIPv4 == nil) || (uplinkIPv6Net != nil && routerExtPortIPv6 == nil) {
-		err := n.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		// Forwards, load balancers and external routes may also use addresses from the uplink ranges.
+		externalSubnetsInUse, err := n.getExternalSubnetInUse(uplinkNet.Name())
+		if err != nil {
+			return nil, err
+		}
+
+		err = n.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
 			allAllocatedIPv4, allAllocatedIPv6, err := n.uplinkAllAllocatedIPs(ctx, tx, uplinkNet.Name())
 			if err != nil {
 				return fmt.Errorf("Failed to get all allocated IPs for uplink: %w", err)
@@ -2078,7 +2114,7 @@ func (n *ovn) allocateUplinkPortIPs(uplinkNet Network, routerMAC net.HardwareAdd
 					return fmt.Errorf("Failed to parse uplink IPv4 OVN ranges: %w", err)
 				}
 
-				routerExtPortIPv4, err = n.uplinkAllocateIP(ipRanges, allAllocatedIPv4)
+				routerExtPortIPv4, err = n.uplinkAllocateIP(ipRanges, allAllocatedIPv4, externalSubnetsInUse)
 				if err != nil {
 					return fmt.Errorf("Failed to allocate uplink IPv4 address: %w", err)
 				}
@@ -2103,7 +2139,7 @@ func (n *ovn) allocateUplinkPortIPs(uplinkNet Network, routerMAC net.HardwareAdd
 						return fmt.Errorf("Failed to parse uplink IPv6 OVN ranges: %w", err)
 					}
 
-					routerExtPortIPv6, err = n.uplinkAllocateIP(ipRanges, allAllocatedIPv6)
+					routerExtPortIPv6, err = n.uplinkAllocateIP(ipRanges, allAllocatedIPv6, externalSubnetsInUse)
 					if err != nil {
 						return fmt.Errorf("Failed to allocate uplink IPv6 address: %w", err)
 					}
@@ -2191,7 +2227,7 @@ func (n *ovn) uplinkAllAllocatedIPs(ctx context.Context, tx *db.ClusterTx, uplin
 }
 
 // uplinkAllocateIP allocates a free IP from one of the IP ranges.
-func (n *ovn) uplinkAllocateIP(ipRanges []*iprange.Range, allAllocated []net.IP) (net.IP, error) {
+func (n *ovn) uplinkAllocateIP(ipRanges []*iprange.Range, allAllocated []net.IP, externalSubnetsInUse []externalSubnetUsage) (net.IP, error) {
 	for _, ipRange := range ipRanges {
 		inc := big.NewInt(1)
 
@@ -2222,6 +2258,17 @@ func (n *ovn) uplinkAllocateIP(ipRanges []*iprange.Range, allAllocated []net.IP)
 			}
 
 			if !freeIP {
+				startBig.Add(startBig, inc)
+				continue
+			}
+
+			// Skip past any external subnet in use that contains the IP.
+			subnetIndex := slices.IndexFunc(externalSubnetsInUse, func(usage externalSubnetUsage) bool {
+				return SubnetContainsIP(&usage.subnet, ipAddress)
+			})
+
+			if subnetIndex >= 0 {
+				startBig.SetBytes(dhcpalloc.GetIP(&externalSubnetsInUse[subnetIndex].subnet, -1))
 				startBig.Add(startBig, inc)
 				continue
 			}
@@ -4555,11 +4602,28 @@ func (n *ovn) deleteExternalInterfaces() error {
 			return fmt.Errorf("Failed detaching external interface %q: %w", entry, err)
 		}
 
-		if len(entryParts) == 3 {
-			err = InterfaceRemove(entry)
-			if err != nil {
-				return fmt.Errorf("Failed removing external interface %q: %w", entry, err)
-			}
+		if len(entryParts) != 3 {
+			continue
+		}
+
+		// Only remove the VLAN interface the extended syntax describes, never a pre-existing one.
+		vlanID, err := strconv.Atoi(strings.TrimSpace(entryParts[2]))
+		if err != nil {
+			continue
+		}
+
+		linkInfo, err := ip.LinkByName(entry)
+		if err != nil {
+			return fmt.Errorf("Failed to get link info for external interface %q", entry)
+		}
+
+		if linkInfo.Kind != "vlan" || linkInfo.Parent != strings.TrimSpace(entryParts[1]) || linkInfo.VlanID != vlanID {
+			continue
+		}
+
+		err = InterfaceRemove(entry)
+		if err != nil {
+			return fmt.Errorf("Failed removing external interface %q: %w", entry, err)
 		}
 	}
 
@@ -4589,7 +4653,8 @@ func (n *ovn) Delete(clientType request.ClientType) error {
 	}
 
 	// Detach the external interfaces, removing those created from the extended syntax.
-	if n.config["bridge.external_interfaces"] != "" {
+	// A locally pending network never attached anything, so leave the host alone.
+	if n.config["bridge.external_interfaces"] != "" && n.LocalStatus() != api.NetworkStatusPending {
 		err = n.deleteExternalInterfaces()
 		if err != nil {
 			n.logger.Warn("Failed cleaning up external interfaces during delete, continuing with deletion", logger.Ctx{"err": err})
@@ -7925,6 +7990,22 @@ func (n *ovn) ForwardDelete(listenAddress string, clientType request.ClientType)
 			forward, err = dbRecord.ToAPI(ctx, tx.Tx())
 			if err != nil {
 				return err
+			}
+
+			return nil
+		})
+		if err != nil {
+			return err
+		}
+
+		// Refuse to release a listen address still used as the external address of an instance NIC.
+		listenIP := net.ParseIP(forward.ListenAddress)
+		err = UsedByInstanceDevices(n.state, n.Project(), n.Name(), n.Type(), func(inst db.InstanceArgs, nicName string, nicConfig map[string]string) error {
+			for _, keyPrefix := range []string{"ipv4", "ipv6"} {
+				extIP := net.ParseIP(nicConfig[fmt.Sprintf("%s.address.external", keyPrefix)])
+				if extIP != nil && extIP.Equal(listenIP) {
+					return api.StatusErrorf(http.StatusBadRequest, "Network forward is in use as the external address of an instance NIC")
+				}
 			}
 
 			return nil
