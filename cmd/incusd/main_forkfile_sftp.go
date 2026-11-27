@@ -21,11 +21,11 @@ func forkfileSFTPHandlers() sftp.Handlers {
 	return sftp.Handlers{FileGet: h, FilePut: h, FileCmd: h, FileList: h}
 }
 
-// forkfileOpen opens a regular file, refusing anything that could block or reach a device.
+// forkfileOpen opens a regular file or a directory (older clients open those), refusing anything else.
 func forkfileOpen(path string, flag int, mode os.FileMode) (*os.File, error) {
 	// Check ahead of the open so that device nodes don't get opened at all.
 	info, err := os.Stat(path)
-	if err == nil && !info.Mode().IsRegular() {
+	if err == nil && !info.Mode().IsRegular() && !info.IsDir() {
 		return nil, &os.PathError{Op: "open", Path: path, Err: syscall.EPERM}
 	}
 
@@ -45,7 +45,7 @@ func forkfileOpen(path string, flag int, mode os.FileMode) (*os.File, error) {
 		return nil, err
 	}
 
-	if !info.Mode().IsRegular() {
+	if !info.Mode().IsRegular() && !info.IsDir() {
 		_ = f.Close()
 		return nil, &os.PathError{Op: "open", Path: path, Err: syscall.EPERM}
 	}
