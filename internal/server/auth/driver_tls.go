@@ -89,6 +89,11 @@ func (t *TLS) CheckPermission(ctx context.Context, r *http.Request, object Objec
 		return api.StatusErrorf(http.StatusForbidden, "Certificate is restricted")
 	}
 
+	// The requested project decides which project's config the handler applies, so it must be one of ours.
+	if object.Type() != ObjectTypeProject && !slices.Contains(projectNames, details.ProjectName) {
+		return api.StatusErrorf(http.StatusForbidden, "User does not have permission for project %q", details.ProjectName)
+	}
+
 	// Check project level permissions against the certificates project list.
 	projectName := object.Project()
 	if slices.Contains(projectNames, projectName) {
