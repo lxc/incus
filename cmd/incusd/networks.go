@@ -428,8 +428,15 @@ func networksPost(d *Daemon, r *http.Request) response.Response {
 		return response.BadRequest(err)
 	}
 
-	networkCreateLock.Lock()
-	defer networkCreateLock.Unlock()
+	clientType := clusterRequest.UserAgentClientType(r.Header.Get("User-Agent"))
+
+	// Serialize the network creations started on this member. A cluster notification is part of a creation that
+	// the notifying member already serializes, and that member holds its own lock while it waits for this one:
+	// taking the lock here too deadlocks two members that create networks at the same time.
+	if clientType != clusterRequest.ClientTypeNotifier {
+		networkCreateLock.Lock()
+		defer networkCreateLock.Unlock()
+	}
 
 	// Quick checks.
 	if req.Name == "" {
@@ -512,8 +519,6 @@ func networksPost(d *Daemon, r *http.Request) response.Response {
 	u := api.NewURL().Path(version.APIVersion, "networks", req.Name).Project(projectName)
 
 	resp := response.SyncResponseLocation(true, nil, u.String())
-
-	clientType := clusterRequest.UserAgentClientType(r.Header.Get("User-Agent"))
 
 	if isClusterNotification(r) {
 		n, err := network.LoadByName(s, projectName, req.Name)
