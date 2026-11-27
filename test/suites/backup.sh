@@ -225,7 +225,8 @@ EOF
 "
             ;;
         zfs)
-            poolExtraConfig="zfs.pool_name=$(incus storage get "${poolName}" zfs.pool_name)
+            zfsPoolName=$(incus storage get "${poolName}" zfs.pool_name)
+            poolExtraConfig="zfs.pool_name=${zfsPoolName}
 "
             ;;
         ceph)
@@ -251,6 +252,23 @@ $(truenas_api_key)
         incus admin sql global "PRAGMA foreign_keys=ON; DELETE FROM instances WHERE name='c1'"
         incus admin sql global "PRAGMA foreign_keys=ON; DELETE FROM storage_volumes WHERE name='c1'"
         incus admin sql global "PRAGMA foreign_keys=ON; DELETE FROM storage_pools WHERE name='${poolName}'"
+
+        if [ "${poolDriver}" = "zfs" ]; then
+            # Recovery must refuse a dataset that was never used by Incus.
+            zfs create "${zfsPoolName}/empty"
+            ! cat << EOF | incus admin recover || false
+yes
+${poolName}
+${poolDriver}
+${zfsPoolName}/empty
+
+no
+yes
+yes
+EOF
+            [ "$(zfs list -H -r -o name "${zfsPoolName}/empty" | wc -l)" = "1" ]
+            zfs destroy "${zfsPoolName}/empty"
+        fi
 
         cat << EOF | incus admin recover
 yes
