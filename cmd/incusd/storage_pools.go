@@ -316,8 +316,15 @@ func storagePoolsGet(d *Daemon, r *http.Request) response.Response {
 func storagePoolsPost(d *Daemon, r *http.Request) response.Response {
 	s := d.State()
 
-	storagePoolCreateLock.Lock()
-	defer storagePoolCreateLock.Unlock()
+	clientType := clusterRequest.UserAgentClientType(r.Header.Get("User-Agent"))
+
+	// Serialize the storage pool creations started on this member. A cluster notification is part of a creation
+	// that the notifying member already serializes, and that member holds its own lock while it waits for this
+	// one: taking the lock here too deadlocks two members that create storage pools at the same time.
+	if clientType != clusterRequest.ClientTypeNotifier {
+		storagePoolCreateLock.Lock()
+		defer storagePoolCreateLock.Unlock()
+	}
 
 	req := api.StoragePoolsPost{}
 
@@ -354,8 +361,6 @@ func storagePoolsPost(d *Daemon, r *http.Request) response.Response {
 
 	lc := lifecycle.StoragePoolCreated.Event(req.Name, request.CreateRequestor(r), ctx)
 	resp := response.SyncResponseLocation(true, nil, lc.Source)
-
-	clientType := clusterRequest.UserAgentClientType(r.Header.Get("User-Agent"))
 
 	if isClusterNotification(r) {
 		// This is an internal request which triggers the actual
