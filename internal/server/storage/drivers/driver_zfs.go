@@ -135,9 +135,8 @@ func (d *zfs) Info() Info {
 }
 
 // ensureInitialDatasets creates missing initial datasets or configures existing ones with current policy.
-// Accepts warnOnExistingPolicyApplyError argument, if true will warn rather than fail if applying current policy
-// to an existing dataset fails.
-func (d *zfs) ensureInitialDatasets(warnOnExistingPolicyApplyError bool) error {
+// With existing set, policy errors only warn and a pool without any Incus dataset is refused.
+func (d *zfs) ensureInitialDatasets(existing bool) error {
 	// Build the list of datasets to query.
 	datasets := []string{d.config["zfs.pool_name"]}
 	for _, entry := range d.initialDatasets() {
@@ -172,6 +171,11 @@ func (d *zfs) ensureInitialDatasets(warnOnExistingPolicyApplyError bool) error {
 		currentConfig[fields[0]][fields[1]] = fields[2]
 	}
 
+	// Refuse to populate an existing pool (or dataset) that was never used by Incus.
+	if existing && !slices.ContainsFunc(datasets[1:], func(dataset string) bool { return currentConfig[dataset] != nil }) {
+		return fmt.Errorf("ZFS pool (or dataset) %q doesn't contain any Incus datasets", d.config["zfs.pool_name"])
+	}
+
 	// Check that the root dataset is correctly configured.
 	args = []string{}
 	for k, v := range zfsDefaultSettings {
@@ -195,7 +199,7 @@ func (d *zfs) ensureInitialDatasets(warnOnExistingPolicyApplyError bool) error {
 	if len(args) > 0 {
 		err := d.setDatasetProperties(d.config["zfs.pool_name"], args...)
 		if err != nil {
-			if !warnOnExistingPolicyApplyError {
+			if !existing {
 				return fmt.Errorf("Failed applying policy to existing dataset %q: %w", d.config["zfs.pool_name"], err)
 			}
 
@@ -224,7 +228,7 @@ func (d *zfs) ensureInitialDatasets(warnOnExistingPolicyApplyError bool) error {
 			if len(args) > 0 {
 				err := d.setDatasetProperties(datasetPath, args...)
 				if err != nil {
-					if !warnOnExistingPolicyApplyError {
+					if !existing {
 						return fmt.Errorf("Failed applying policy to existing dataset %q: %w", datasetPath, err)
 					}
 
