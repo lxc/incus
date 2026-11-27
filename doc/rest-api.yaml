@@ -1047,6 +1047,26 @@ definitions:
         title: DebugReportMetric represents a single metric from a systemd-report report.
         type: object
         x-go-package: github.com/lxc/incus-os/incus-osd/api
+    DebugStorageTrace:
+        properties:
+            actions:
+                description: I/O categories to trace using blktrace names such as "discard" or "write", defaults to all of them.
+                items:
+                    type: string
+                type: array
+                x-go-name: Actions
+            device:
+                description: Block device to trace, either a device name or a path under /dev.
+                type: string
+                x-go-name: Device
+            duration:
+                description: Seconds to trace for, defaults to 10 if unset, 0 traces until the request is canceled.
+                format: int64
+                type: integer
+                x-go-name: Duration
+        title: DebugStorageTrace defines the arguments for a block device trace request.
+        type: object
+        x-go-package: github.com/lxc/incus-os/incus-osd/api
     DevicesMap:
         description: |-
             DevicesMap type is used to hold incus devices configurations. In contrast to
